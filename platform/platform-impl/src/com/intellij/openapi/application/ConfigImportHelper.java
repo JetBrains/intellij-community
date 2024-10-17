@@ -28,10 +28,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager;
@@ -127,6 +124,24 @@ public final class ConfigImportHelper {
 
     ConfigImportSettings settings = findCustomConfigImportSettings();
     log.info("Custom ConfigImportSettings instance: " + settings);
+    if (customMigrationOption instanceof CustomConfigMigrationOption.MigratePluginsFromCustomPlace migratePluginsOption) {
+      var oldConfigDir = migratePluginsOption.getConfigLocation();
+      if (isConfigDirectory(oldConfigDir)) {
+        var oldPluginsDir = computeOldPluginsDir(oldConfigDir, null);
+        var newPluginsDir = newConfigDir.getFileSystem().getPath(PathManager.getPluginsPath());
+        ConfigImportOptions importOptions = createConfigImportOptions(settings, customMigrationOption, log);
+        try {
+          migratePlugins(oldPluginsDir, oldConfigDir, newPluginsDir, newConfigDir, importOptions, Predicates.alwaysFalse());
+        }
+        catch (IOException e) {
+          log.warn(e);
+        }
+      }
+      else {
+        logInfoAboutNotAcceptedConfigDirectory(log, "Custom plugins location", oldConfigDir);
+      }
+      return;
+    }
 
     List<String> otherProductPrefixes = settings != null ? settings.getProductsToImportFrom(args) : List.of();
     ConfigDirsSearchResult guessedOldConfigDirs = findConfigDirectories(newConfigDir, settings, otherProductPrefixes);
@@ -210,14 +225,8 @@ public final class ConfigImportHelper {
         oldConfigDir = oldConfigDirAndOldIdePath.first;
         Path oldIdeHome = oldConfigDirAndOldIdePath.second;
 
-        var configImportOptions = new ConfigImportOptions(log);
-        configImportOptions.importSettings = settings;
-        configImportOptions.mergeVmOptions = customMigrationOption instanceof CustomConfigMigrationOption.MergeConfigs;
-        
-        /* in remote dev host mode UI cannot be shown before `Application` is initialized because it replaces the standard `awt.toolkit` 
-           with com.intellij.platform.impl.toolkit.IdeToolkit which depends on `Application` */
-        configImportOptions.setHeadless(AppMode.isRemoteDevHost());
-        
+        var configImportOptions = createConfigImportOptions(settings, customMigrationOption, log);
+
         if (!guessedOldConfigDirs.fromSameProduct) {
           importScenarioStatistics = IMPORTED_FROM_OTHER_PRODUCT;
         }
@@ -288,6 +297,19 @@ public final class ConfigImportHelper {
         log.warn("The vmoptions file has changed, but the backend process wasn't restarted; custom vmoptions will be used on the next run only");
       }
     }
+  }
+
+  private static @NotNull ConfigImportOptions createConfigImportOptions(@Nullable ConfigImportSettings settings,
+                                                                        @Nullable CustomConfigMigrationOption customMigrationOption,
+                                                                        @NotNull Logger log) {
+    var configImportOptions = new ConfigImportOptions(log);
+    configImportOptions.importSettings = settings;
+    configImportOptions.mergeVmOptions = customMigrationOption instanceof CustomConfigMigrationOption.MergeConfigs;
+        
+        /* in remote dev host mode UI cannot be shown before `Application` is initialized because it replaces the standard `awt.toolkit` 
+           with com.intellij.platform.impl.toolkit.IdeToolkit which depends on `Application` */
+    configImportOptions.setHeadless(AppMode.isRemoteDevHost());
+    return configImportOptions;
   }
 
   private static void logInfoAboutNotAcceptedConfigDirectory(@NotNull Logger log, @NotNull String description, @NotNull Path path) {
@@ -832,16 +854,7 @@ public final class ConfigImportHelper {
       return;
     }
 
-    Path oldPluginsDir = oldConfigDir.resolve(PLUGINS);
-    if (!Files.isDirectory(oldPluginsDir)) {
-      oldPluginsDir = null;
-      if (oldIdeHome != null) {
-        oldPluginsDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_PLUGINS_PATH, ConfigImportHelper::defaultPluginsPath);
-      }
-      if (oldPluginsDir == null) {
-        oldPluginsDir = oldConfigDir.getFileSystem().getPath(defaultPluginsPath(getNameWithVersion(oldConfigDir)));
-      }
-    }
+    Path oldPluginsDir = computeOldPluginsDir(oldConfigDir, oldIdeHome);
 
     Path newPluginsDir = newConfigDir.getFileSystem().getPath(PathManager.getPluginsPath());
 
@@ -856,6 +869,20 @@ public final class ConfigImportHelper {
       String message = BootstrapBundle.message("import.settings.failed", IoErrorText.message(e));
       StartupErrorReporter.showWarning(BootstrapBundle.message("import.settings.failed.title"), message);
     }
+  }
+
+  private static @NotNull Path computeOldPluginsDir(@NotNull Path oldConfigDir, @Nullable Path oldIdeHome) {
+    Path oldPluginsDir = oldConfigDir.resolve(PLUGINS);
+    if (!Files.isDirectory(oldPluginsDir)) {
+      oldPluginsDir = null;
+      if (oldIdeHome != null) {
+        oldPluginsDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_PLUGINS_PATH, ConfigImportHelper::defaultPluginsPath);
+      }
+      if (oldPluginsDir == null) {
+        oldPluginsDir = oldConfigDir.getFileSystem().getPath(defaultPluginsPath(getNameWithVersion(oldConfigDir)));
+      }
+    }
+    return oldPluginsDir;
   }
 
   public static final class ConfigImportOptions {
