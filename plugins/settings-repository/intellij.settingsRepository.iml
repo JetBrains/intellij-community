@@ -12,6 +12,26 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="library" exported="" name="jetbrains.intellij.deps.eclipse.jgit" level="project" />
     <orderEntry type="module-library" exported="">
+      <library name="eclipse.jgit.ssh.apache.agent" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.eclipse.jgit:org.eclipse.jgit.ssh.apache.agent:6.6.1.202309021850-r">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.apache.agent/6.6.1.202309021850-r/org.eclipse.jgit.ssh.apache.agent-6.6.1.202309021850-r.jar">
+              <sha256sum>4ddd0cf1a7ece350b33f0a6b865e8fb777c30a2282a0fbd1754020a4e06af481</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.apache.agent/6.6.1.202309021850-r/org.eclipse.jgit.ssh.apache.agent-6.6.1.202309021850-r.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.apache.agent/6.6.1.202309021850-r/org.eclipse.jgit.ssh.apache.agent-6.6.1.202309021850-r-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.apache.agent/6.6.1.202309021850-r/org.eclipse.jgit.ssh.apache.agent-6.6.1.202309021850-r-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
       <library name="eclipse.jgit.ssh.apache" type="repository">
         <properties include-transitive-deps="false" maven-id="org.eclipse.jgit:org.eclipse.jgit.ssh.apache:6.6.1.202309021850-r">
           <verification>

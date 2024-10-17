@@ -13,6 +13,7 @@ import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.dircache.DirCacheCheckout
 import org.eclipse.jgit.errors.TransportException
 import org.eclipse.jgit.internal.JGitText
+import org.eclipse.jgit.internal.transport.sshd.agent.ConnectorFactoryProvider
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevSort
@@ -25,6 +26,7 @@ import org.eclipse.jgit.transport.RemoteConfig
 import org.eclipse.jgit.transport.Transport
 import org.eclipse.jgit.transport.SshSessionFactory
 import org.eclipse.jgit.transport.sshd.SshdSessionFactory
+import org.eclipse.jgit.transport.sshd.agent.ConnectorFactory
 import org.eclipse.jgit.treewalk.FileTreeIterator
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.jetbrains.annotations.NonNls
@@ -58,10 +60,15 @@ private fun isAuthFailedMessage(message: String): Boolean {
 }
 
 private fun ensureSshSessionFactory() {
-  var instance = SshSessionFactory.getInstance()
-  if (instance == null) {
-    instance = SshdSessionFactory()
-    SshSessionFactory.setInstance(instance)
+  var connectorFactoryInstance: ConnectorFactory? = ConnectorFactoryProvider.getDefaultFactory()
+  if (connectorFactoryInstance == null) {
+    connectorFactoryInstance = org.eclipse.jgit.internal.transport.sshd.agent.connector.Factory()
+    ConnectorFactoryProvider.setDefaultFactory(connectorFactoryInstance)
+  }
+  var sessionFactoryInstance = SshSessionFactory.getInstance()
+  if (sessionFactoryInstance == null) {
+    sessionFactoryInstance = SshdSessionFactory()
+    SshSessionFactory.setInstance(sessionFactoryInstance)
   }
 }
 
