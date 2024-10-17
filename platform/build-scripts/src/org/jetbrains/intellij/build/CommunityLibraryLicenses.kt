@@ -607,6 +607,10 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
+    LibraryLicense("JetBrains Jewel IDE LaF Bridge", url = "https://github.com/JetBrains/jewel", libraryName = "jetbrains.jewel.ide.laf.bridge.243")
+      .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
+      .suppliedByOrganizations(Suppliers.JETBRAINS),
+
     LibraryLicense("JetBrains Jewel Markdown IDE LaF Bridge Styling", libraryName = "jetbrains-jewel-markdown-laf-bridge-styling", url = "https://github.com/JetBrains/jewel")
       .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
@@ -1070,8 +1074,12 @@ object CommunityLibraryLicenses {
     LibraryLicense("Skiko", libraryName = "jetbrains.skiko.awt.compose", url = "https://github.com/JetBrains/skiko/")
       .apache("https://github.com/JetBrains/skiko/blob/master/LICENSE"),
 
-    LibraryLicense("Skiko Runtime", libraryName = "jetbrains.skiko.awt.runtime.all", url = "https://github.com/JetBrains/skiko/")
-      .apache("https://github.com/JetBrains/skiko/blob/master/LICENSE"),
+    LibraryLicense(
+      name = "Skiko Runtime",
+      libraryName = "jetbrains.skiko.awt.runtime.all",
+      additionalLibraryNames = listOf("jetbrains.skiko.awt.runtime.all.0.8.9"),
+      url = "https://github.com/JetBrains/skiko/"
+    ).apache("https://github.com/JetBrains/skiko/blob/master/LICENSE"),
 
     LibraryLicense(libraryName = "slf4j-api", url = "https://slf4j.org/")
       .mit("https://www.slf4j.org/license.html")

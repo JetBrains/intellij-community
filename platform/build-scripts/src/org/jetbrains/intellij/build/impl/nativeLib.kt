@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.PathUtilRt
 import com.intellij.util.lang.ZipFile
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.plus
 import kotlinx.coroutines.CoroutineScope
@@ -102,6 +103,14 @@ class NativeFilesMatcher(paths: List<String>, private val targetOs: Iterable<OsF
     @JvmField val arch: JvmArchitecture?,
   ) {
     override fun toString(): String = "$pathWithPrefix, path=$path, os=$osFamily, arch=$arch"
+  }
+
+  companion object {
+    fun isCompatibleWithTargetPlatform(name: String, os: PersistentList<OsFamily>, arch: JvmArchitecture?): Boolean {
+      val fileOs = OsFamilyDetector.detectOsFamily(name)?.first ?: error("Cannot determine native file OS Family")
+      val fileArch = determineArch(fileOs, name) ?: error("Cannot determine native file architecture")
+      return os.contains(fileOs) && (arch == null || fileArch.compatibleWithTarget(arch))
+    }
   }
 }
 
