@@ -113,6 +113,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 /**
  * tests general daemon behaviour/interruptibility/restart during highlighting
@@ -2284,7 +2285,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     HighlightInfoUpdaterImpl.ASSERT_INVARIANTS = true; Disposer.register(getTestRootDisposable(), () -> HighlightInfoUpdaterImpl.ASSERT_INVARIANTS = false);
     String finalText = initialText.replace("<caret>", textToType);
     configureByText(JavaFileType.INSTANCE, finalText);
-    HighlightInfoUpdaterImpl updater = (HighlightInfoUpdaterImpl)HighlightInfoUpdater.getInstance(getProject());
     assertEmpty(doHighlighting(HighlightSeverity.ERROR));
     runWithReparseDelay(0, () -> {
       for (int i=0; i<10; i++) {
@@ -2300,7 +2300,10 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
           //updater.assertNoDuplicates(myFile, getErrorsFromMarkup(markupModel), "errors from markup ");
           WriteCommandAction.runWriteCommandAction(getProject(), () -> {
             assertFalse(myDaemonCodeAnalyzer.isRunning());
-            type(finalText.charAt(o));
+            long stamp = myEditor.getDocument().getModificationStamp();
+            char charToType = finalText.charAt(o);
+            type(charToType);
+            assertNotSame(String.valueOf(charToType), stamp, myEditor.getDocument().getModificationStamp());
             assertFalse(myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile));
           });
           //updater.assertNoDuplicates(myFile, getErrorsFromMarkup(markupModel), "errors from markup ");
@@ -2338,6 +2341,19 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       .filter(Objects::nonNull)
       .filter(h -> h.getSeverity() == HighlightSeverity.ERROR)
       .toList();
+  }
+  private static void assertNoDuplicateInfosFromMarkup(MarkupModel model) {
+    List<HighlightInfo> infos = Arrays.stream(model.getAllHighlighters())
+          .map(m -> HighlightInfo.fromRangeHighlighter(m))
+          .filter(Objects::nonNull)
+          .toList();
+    Map<TextRange, List<HighlightInfo>> byRange = infos.stream().collect(Collectors.groupingBy(info -> TextRange.create(info)));
+    for (List<HighlightInfo> errors : byRange.values()) {
+      Set<String> set = ContainerUtil.map2Set(errors, e -> e.getDescription());
+      if (set.size() != errors.size()) {
+        fail("Duplicates: " + errors);
+      }
+    }
   }
 
   public void testMultiplePSIInvalidationsMustDelayTheirHighlightersRemovalForShortTimeToAvoidFlickering() {
