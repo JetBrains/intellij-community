@@ -484,13 +484,7 @@ public class IdeaNativeAgentProxyMirror {
     throws EvaluateException {
     long start = System.currentTimeMillis();
     ArrayType longArray = (ArrayType)context.getDebugProcess().findClass(context, "java.lang.Object[]", context.getClassLoader());
-    ArrayReference instancesArray = longArray.newInstance(references.size());
-    try {
-      instancesArray.setValues(references);
-    }
-    catch (InvalidTypeException | ClassNotLoadedException e) {
-      throw EvaluateExceptionUtil.createEvaluateException("Could not wrap objects with array", e);
-    }
+    ArrayReference instancesArray = DebuggerUtilsEx.mirrorOfArray(longArray, references, context);
     LOG.info("Wrapping values with array took " + (System.currentTimeMillis() - start) + " ms");
     return instancesArray;
   }
