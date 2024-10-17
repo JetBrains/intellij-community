@@ -45,6 +45,7 @@ import com.intellij.psi.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.UtilBundle;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.GridBag;
@@ -53,8 +54,6 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import kotlin.Lazy;
-import kotlin.LazyKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -585,61 +584,65 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   }
 
   protected class DefaultUIController extends AbstractUIController {
-    private final Lazy<List<AnAction>> myMenuActions = LazyKt.lazy(() -> { // only create actions when daemon widget used
+    // only create actions when daemon widget used
+    private final Supplier<List<AnAction>> menuActions = new SynchronizedClearableLazy<>(() -> {
       List<AnAction> result = new ArrayList<>();
       result.add(ActionManager.getInstance().getAction("ConfigureInspectionsAction"));
       result.add(DaemonEditorPopup.createGotoGroup());
       result.add(Separator.create());
-      result.add(new ShowImportTooltipAction());
+      result.add(new ShowImportTooltipAction(TrafficLightRenderer.this));
       return result;
     });
 
     @Override
     public @NotNull List<AnAction> getActions() {
-      return myMenuActions.getValue();
+      return menuActions.get();
     }
 
     @Override
     public boolean isToolbarEnabled() {
       return true;
     }
+  }
 
-    // Actions shouldn't be anonymous classes for statistics reasons.
-    private final class ShowImportTooltipAction extends ToggleAction {
-      private ShowImportTooltipAction() {
-        super(EditorBundle.message("iw.show.import.tooltip"));
-      }
+  // Actions shouldn't be anonymous classes for statistics reasons.
+  private static final class ShowImportTooltipAction extends ToggleAction {
+    private final TrafficLightRenderer myRenderer;
 
-      @Override
-      public boolean isSelected(@NotNull AnActionEvent e) {
-        PsiFile psiFile = getPsiFile();
-        return psiFile != null && myDaemonCodeAnalyzer.isImportHintsEnabled(psiFile);
-      }
+    private ShowImportTooltipAction(@NotNull TrafficLightRenderer renderer) {
+      super(EditorBundle.message("iw.show.import.tooltip"));
+      this.myRenderer = renderer;
+    }
 
-      @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.EDT;
-      }
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      PsiFile psiFile = myRenderer.getPsiFile();
+      return psiFile != null && myRenderer.myDaemonCodeAnalyzer.isImportHintsEnabled(psiFile);
+    }
 
-      @Override
-      public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        PsiFile psiFile = getPsiFile();
-        if (psiFile != null) {
-          myDaemonCodeAnalyzer.setImportHintsEnabled(psiFile, state);
-        }
-      }
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
 
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        super.update(e);
-        PsiFile psiFile = getPsiFile();
-        e.getPresentation().setEnabled(psiFile != null && myDaemonCodeAnalyzer.isAutohintsAvailable(psiFile));
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      PsiFile psiFile = myRenderer.getPsiFile();
+      if (psiFile != null) {
+        myRenderer.myDaemonCodeAnalyzer.setImportHintsEnabled(psiFile, state);
       }
+    }
 
-      @Override
-      public boolean isDumbAware() {
-        return true;
-      }
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      PsiFile psiFile = myRenderer.getPsiFile();
+      e.getPresentation().setEnabled(psiFile != null && myRenderer.myDaemonCodeAnalyzer.isAutohintsAvailable(psiFile));
+    }
+
+    @Override
+    public boolean isDumbAware() {
+      return true;
     }
   }
 
