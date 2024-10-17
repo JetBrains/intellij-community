@@ -1,11 +1,18 @@
 <component name="libraryTable">
-  <library name="kotlinc.allopen-compiler-plugin">
+  <library name="kotlinc.allopen-compiler-plugin" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:allopen-compiler-plugin-for-ide:2.1.20-dev-1873">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.1.20-dev-1873/allopen-compiler-plugin-for-ide-2.1.20-dev-1873.jar">
+          <sha256sum>c8adcf05d31e8c8b95c424ff7f4fcea7d1d2fd6c9bf240d4d195209ca4638247</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.1.255-dev-255/allopen-compiler-plugin-for-ide-2.1.255-dev-255.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.1.20-dev-1873/allopen-compiler-plugin-for-ide-2.1.20-dev-1873.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.1.255-dev-255/allopen-compiler-plugin-for-ide-2.1.255-dev-255-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.1.20-dev-1873/allopen-compiler-plugin-for-ide-2.1.20-dev-1873-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
