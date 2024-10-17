@@ -6,9 +6,9 @@
   <resource-bundle>messages.PerformanceTestingBundle</resource-bundle>
 
   <description><![CDATA[
-      Plugin for automated execution of test scripts, capturing performance snapshots
-      and gathering performance statistics.
-      ]]></description>
+    Plugin for automated execution of test scripts, capturing performance snapshots
+    and gathering performance statistics.
+  ]]></description>
 
   <content>
     <module name="intellij.performanceTesting.remoteDriver"/>
@@ -33,6 +33,9 @@
       <separator/>
       <add-to-group group-id="HelpDiagnosticTools" anchor="last"/>
     </group>
+
+    <action id="SimulateFreeze" internal="true" class="com.jetbrains.performancePlugin.actions.SimulateFreeze"
+            text="Simulate a Freeze"/>
   </actions>
 
   <extensionPoints>

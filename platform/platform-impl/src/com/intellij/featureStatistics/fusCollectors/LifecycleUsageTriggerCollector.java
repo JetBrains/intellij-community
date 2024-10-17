@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.collectors.fus.MethodNameRuleValidator;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
+import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,7 +28,7 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
 
-  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 70);
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 71);
 
   private static final EventField<Boolean> eapField = EventFields.Boolean("eap");
   private static final EventField<Boolean> testField = EventFields.Boolean("test");
@@ -63,7 +64,14 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
 
   private static final EventId FRAME_DEACTIVATED = LIFECYCLE.registerEvent("frame.deactivated");
 
-  private static final EventId1<Long> IDE_FREEZE = LIFECYCLE.registerEvent("ide.freeze", EventFields.Long("duration_ms"));
+  private static final EventId1<Long> IDE_FREEZE = LIFECYCLE.registerEvent("ide.freeze", EventFields.DurationMs);
+
+  private static final EventId2<PluginInfo, Long> IDE_FREEZE_REPORTED_PLUGIN =
+    LIFECYCLE.registerEvent("ide.freeze.plugin", EventFields.PluginInfo, EventFields.DurationMs);
+  private static final EventId1<PluginInfo> IDE_FREEZE_PLUGIN_DISABLED =
+    LIFECYCLE.registerEvent("ide.freeze.disabled.plugin", EventFields.PluginInfo);
+  private static final EventId1<PluginInfo> IDE_FREEZE_PLUGIN_IGNORED =
+    LIFECYCLE.registerEvent("ide.freeze.ignored.plugin", EventFields.PluginInfo);
 
   private static final ClassEventField errorField = EventFields.Class("error");
   private static final EventField<VMOptions.MemoryKind> memoryErrorKindField =
@@ -79,6 +87,7 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   private static final EventId IDE_CRASH_DETECTED = LIFECYCLE.registerEvent("ide.crash.detected");
 
   private static final EventId IDE_DEADLOCK_DETECTED = LIFECYCLE.registerEvent("ide.deadlock.detected");
+
 
   private enum ProjectOpenMode {New, Same, Attach}
   private static final EventField<ProjectOpenMode> projectOpenModeField = EventFields.Enum("mode", ProjectOpenMode.class, mode -> Strings.toLowerCase(mode.name()));
@@ -218,5 +227,17 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
 
   public static void onEarlyErrorsIgnored(int numErrors) {
     EARLY_ERRORS.log(numErrors);
+  }
+
+  public static void pluginFreezeReported(@NotNull PluginId pluginId, long durationMs) {
+    IDE_FREEZE_REPORTED_PLUGIN.log(getPluginInfoById(pluginId), durationMs);
+  }
+
+  public static void pluginDisabledOnFreeze(@NotNull PluginId id) {
+    IDE_FREEZE_PLUGIN_DISABLED.log(getPluginInfoById(id));
+  }
+
+  public static void pluginFreezeIgnored(@NotNull PluginId id) {
+    IDE_FREEZE_PLUGIN_IGNORED.log(getPluginInfoById(id));
   }
 }

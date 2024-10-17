@@ -3,21 +3,20 @@ package com.intellij.platform.diagnostic.plugin.freeze
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.PluginId
-import org.jetbrains.annotations.ApiStatus
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+
+private const val NOTIFICATION_COOLDOWN_DAYS: Long = 1L
 
 @Service(Service.Level.APP)
 @State(
   name = "PluginFreezes",
-  storages = [Storage(value = "pluginFreezes.xml")]
+  storages = [Storage(value = "pluginFreezes.xml", roamingType = RoamingType.DISABLED)]
 )
 internal class PluginsFreezesService : PersistentStateComponent<PluginsFreezesServiceState> {
   private var state: PluginsFreezesServiceState = PluginsFreezesServiceState()
 
   companion object {
-    private const val NOTIFICATION_COOLDOWN_DAYS = 1L
-
     @JvmStatic
     fun getInstance(): PluginsFreezesService = service()
   }
@@ -27,14 +26,19 @@ internal class PluginsFreezesService : PersistentStateComponent<PluginsFreezesSe
   }
 
   fun setLatestFreezeDate(pluginId: PluginId) {
-    state.latestNotificationData[pluginId.idString] = Instant.now().toString()
+    state.latestNotificationTime[pluginId.idString] = Instant.now().toString()
+  }
+
+  fun reset() {
+    state.latestNotificationTime.clear()
+    state.mutedPlugins.clear()
   }
 
   fun shouldBeIgnored(pluginId: PluginId): Boolean {
     val pluginIdString = pluginId.idString
     if (state.mutedPlugins[pluginIdString] == true) return true
 
-    val lastNotification = state.latestNotificationData[pluginIdString]?.let { Instant.parse(it) } ?: return false
+    val lastNotification = state.latestNotificationTime[pluginIdString]?.let { Instant.parse(it) } ?: return false
     return Instant.now().isBefore(lastNotification.plus(NOTIFICATION_COOLDOWN_DAYS, ChronoUnit.DAYS))
   }
 
@@ -45,8 +49,7 @@ internal class PluginsFreezesService : PersistentStateComponent<PluginsFreezesSe
   }
 }
 
-@ApiStatus.Internal
-data class PluginsFreezesServiceState(
-  var latestNotificationData: MutableMap<String, String> = mutableMapOf(),
+internal data class PluginsFreezesServiceState(
+  var latestNotificationTime: MutableMap<String, String> = mutableMapOf(),
   var mutedPlugins: MutableMap<String, Boolean> = mutableMapOf(),
 )
