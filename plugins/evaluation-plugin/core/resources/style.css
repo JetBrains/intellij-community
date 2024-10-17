@@ -69,7 +69,6 @@ button:focus {
 
 .session {
   position: relative;
-  display: block;
   font-weight: bold;
 }
 
@@ -131,8 +130,8 @@ button:focus {
   left: 0;
 }
 
-.autocomplete-items.popup-show-under-session {
-  top: 100%;
+.autocomplete-items-position {
+  position: relative;
 }
 
 .autocomplete-items div {

@@ -7,7 +7,7 @@ import com.intellij.cce.evaluation.SimpleFileEnvironment
 import com.intellij.cce.metric.Metric
 import com.intellij.cce.metric.PrecisionMetric
 import com.intellij.cce.metric.SessionsCountMetric
-import com.intellij.cce.report.BasicFileReportGenerator
+import com.intellij.cce.report.ConflictResolutionReportGenerator
 import com.intellij.cce.report.FileReportGenerator
 import com.intellij.cce.report.GeneratorDirectories
 import com.intellij.cce.workspace.Config
@@ -33,14 +33,10 @@ class ConflictResolutionFeature : StandaloneFeature<ConflictResolutionStrategy>(
     featuresStorages: List<FeaturesStorage>,
     fullLineStorages: List<FullLineLogsStorage>,
     dirs: GeneratorDirectories
-  ): FileReportGenerator = BasicFileReportGenerator(
+  ): FileReportGenerator = ConflictResolutionReportGenerator(
     filterName,
     comparisonFilterName,
     featuresStorages,
-    dirs,
-    externalVariables = mapOf(
-      "popup.show.under.session" to "true",
-      "suggestion.indent.preserve" to "true"
-    )
+    dirs
   )
 }

@@ -121,9 +121,6 @@ function updatePopup(sessionDiv) {
   const lookup = getLookup(sessionDiv)
   const popup = document.createElement("DIV")
   popup.setAttribute("class", "autocomplete-items")
-  if (EXTERNAL_VARIABLES["popup.show.under.session"] === "true") {
-    popup.classList.add("popup-show-under-session")
-  }
   const prefixDiv = document.createElement("DIV")
   prefixDiv.setAttribute("style", "background-color: lightgrey;")
   const codeElement = document.querySelector('.code');
@@ -154,7 +151,7 @@ function updatePopup(sessionDiv) {
       addSuggestions(sessionDiv, popup, lookup);
     }
   }
-  sessionDiv.appendChild(popup)
+  appendPopup(sessionDiv, popup)
 }
 
 // Add the `addDiffView` function
@@ -267,6 +264,11 @@ function createCodeElement(context) {
   code.innerHTML = `<b>File: ${context.filepath}</b><br><b>Type: ${context.type}</b><br><pre>${context.content}</pre>`
   code.style.whiteSpace = "inherit"
   return code
+}
+
+function appendPopup(session, popup) {
+  const target = session.querySelector(".autocomplete-items-position") ?? session
+  target.appendChild(popup)
 }
 
 function addButtonToCopyCompletionContext(context, sessionDiv, popup, lookup) {
@@ -559,9 +561,6 @@ function updateMultilinePopup(event) {
   const lookup = getLookup(sessionDiv)
   const popup = document.createElement("DIV")
   popup.setAttribute("class", "autocomplete-items")
-  if (EXTERNAL_VARIABLES["popup.show.under.session"] === "true") {
-    popup.classList.add("popup-show-under-session")
-  }
 
   addMultilineHeaders(popup, showSuggestion)
   let context = getMultilineContext(sessionDiv)
@@ -575,7 +574,7 @@ function updateMultilinePopup(event) {
   else {
     addMultilineAttachments(sessionDiv, popup, expectedText)
   }
-  sessionDiv.appendChild(popup)
+  appendPopup(sessionDiv, popup)
 }
 
 function addMultilineHeaders(popup, showSuggestion) {

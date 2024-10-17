@@ -12,8 +12,7 @@ open class BasicFileReportGenerator(
   filterName: String,
   comparisonFilterName: String,
   featuresStorages: List<FeaturesStorage>,
-  dirs: GeneratorDirectories,
-  private val externalVariables: Map<String, String> = mapOf(),
+  dirs: GeneratorDirectories
 ) : FileReportGenerator(featuresStorages, dirs, filterName, comparisonFilterName) {
 
   override fun getHtml(fileEvaluations: List<FileEvaluationInfo>, resourcePath: String, text: String): String {
@@ -49,6 +48,8 @@ open class BasicFileReportGenerator(
   }
 
   protected open fun textToInsert(session: Session): String = session.expectedText
+
+  protected open val externalVariables: Map<String, String> = mapOf()
 
   override val scripts: List<Resource> = listOf(Resource("/script.js", "../res/script.js"))
 
