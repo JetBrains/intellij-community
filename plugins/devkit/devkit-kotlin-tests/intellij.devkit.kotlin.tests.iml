@@ -16,7 +16,6 @@
     <orderEntry type="module" module-name="intellij.devkit.themes" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.devkit" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
-    <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.kotlin.devkit" />
 </module>
