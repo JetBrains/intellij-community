@@ -249,6 +249,14 @@ public class InlineParameterTest extends LightRefactoringTestCase {
       assertEquals("Parameter initializer depends on non-static class <b><code>ExpData.DD</code></b> which is not accessible inside the parameter's method", e.getMessage());
     }
   }
+  
+  public void testRefNonStaticClassArray() {
+    doTest(false);
+  }
+  
+  public void testNoWarning() {
+    doTest(false);
+  }
 
   public void testRefThisFromStatic() {
     try {

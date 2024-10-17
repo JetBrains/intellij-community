@@ -332,21 +332,23 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       final PsiElement element = expression.resolve();
-      if (element instanceof PsiMember member && !member.hasModifierProperty(PsiModifier.STATIC)) {
+      if (element instanceof PsiMember member && !member.hasModifierProperty(PsiModifier.STATIC) && !(member instanceof PsiClass)) {
         if (myMethod.hasModifierProperty(PsiModifier.STATIC)) {
           myConflicts.putValue(expression, JavaRefactoringBundle.message("inline.parameter.dependency.unavailable.in.parameter.method",
                                                                          RefactoringUIUtil.getDescription(element, false)));
         }
       }
-      if (element instanceof PsiMethod || element instanceof PsiField) {
+      else if (element instanceof PsiMethod || element instanceof PsiField) {
         if (!mySameClass && !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
           myConflicts.putValue(expression, JavaRefactoringBundle.message("inline.parameter.depends.on.non.static",
                                                                          RefactoringUIUtil.getDescription(element, true)));
-        } else if (!PsiUtil.isAccessible((PsiMember)element, myMethod, null)) {
+        }
+        else if (!PsiUtil.isAccessible((PsiMember)element, myMethod, null)) {
           myConflicts.putValue(expression, JavaRefactoringBundle.message("inline.parameter.dependency.unavailable.in.parameter.method",
                                                                          RefactoringUIUtil.getDescription(element, true)));
         }
-      } else if (element instanceof PsiParameter param && PsiTreeUtil.isAncestor(param.getDeclarationScope(), myInitializer, true)) {
+      }
+      else if (element instanceof PsiParameter param && PsiTreeUtil.isAncestor(param.getDeclarationScope(), myInitializer, true)) {
         boolean bound = false;
         for (PsiParameter parameter : myMethod.getParameterList().getParameters()) {
           if (parameter == myParameter) continue;
@@ -382,23 +384,16 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     }
 
     @Override
-    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
-      super.visitReferenceElement(reference);
-      if (myMethod.hasModifierProperty(PsiModifier.STATIC)) {
-        final PsiElement resolved = reference.resolve();
-        if (resolved instanceof PsiClass cls && (PsiUtil.isInnerClass(cls) || PsiUtil.isLocalClass(cls))) {
-          myConflicts.putValue(reference, JavaRefactoringBundle.message("inline.parameter.depends.on.non.static.class",
-                                                                        RefactoringUIUtil.getDescription(resolved, true)));
-        }
-      }
-    }
-
-    @Override
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       final PsiJavaCodeReferenceElement reference = expression.getClassOrAnonymousClassReference();
       if (reference != null && reference.resolve() instanceof PsiClass aClass) {
-        if (!PsiUtil.isAccessible(aClass, myMethod, null)) {
+        if (!expression.isArrayCreation() && myMethod.hasModifierProperty(PsiModifier.STATIC) &&
+            (PsiUtil.isInnerClass(aClass) || PsiUtil.isLocalClass(aClass))) {
+          myConflicts.putValue(reference, JavaRefactoringBundle.message("inline.parameter.depends.on.non.static.class",
+                                                                        RefactoringUIUtil.getDescription(aClass, true)));
+        }
+        else if (!PsiUtil.isAccessible(aClass, myMethod, null)) {
           myConflicts.putValue(expression, JavaRefactoringBundle.message("inline.parameter.dependency.unavailable.in.parameter.method",
                                                                          RefactoringUIUtil.getDescription(aClass, true)));
         }
