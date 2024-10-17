@@ -824,6 +824,46 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
                 runTest("../../idea/tests/testData/editor/optimizeImports/common/Overloads.kt");
             }
 
+            @TestMetadata("Overloads_invoke.kt")
+            public void testOverloads_invoke() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/Overloads_invoke.kt");
+            }
+
+            @TestMetadata("Overloads_invoke_noConflict.kt")
+            public void testOverloads_invoke_noConflict() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/Overloads_invoke_noConflict.kt");
+            }
+
+            @TestMetadata("Overloads_noConflict.kt")
+            public void testOverloads_noConflict() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/Overloads_noConflict.kt");
+            }
+
+            @TestMetadata("Overloads_sameFile.kt")
+            public void testOverloads_sameFile() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/Overloads_sameFile.kt");
+            }
+
+            @TestMetadata("Overloads_sameFile_2.kt")
+            public void testOverloads_sameFile_2() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/Overloads_sameFile_2.kt");
+            }
+
+            @TestMetadata("Overloads_sameFile_2_noConflict.kt")
+            public void testOverloads_sameFile_2_noConflict() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/Overloads_sameFile_2_noConflict.kt");
+            }
+
+            @TestMetadata("Overloads_sameFile_nestedCall.kt")
+            public void testOverloads_sameFile_nestedCall() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/Overloads_sameFile_nestedCall.kt");
+            }
+
+            @TestMetadata("Overloads_sameSignature.kt")
+            public void testOverloads_sameSignature() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/Overloads_sameSignature.kt");
+            }
+
             @TestMetadata("ProvideDelegate.kt")
             public void testProvideDelegate() throws Exception {
                 runTest("../../idea/tests/testData/editor/optimizeImports/common/ProvideDelegate.kt");
