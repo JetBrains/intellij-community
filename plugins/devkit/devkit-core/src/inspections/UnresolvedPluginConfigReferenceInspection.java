@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import org.jetbrains.annotations.ApiStatus;
@@ -47,10 +48,15 @@ public final class UnresolvedPluginConfigReferenceInspection extends DevKitUastI
         PsiElement element = node.getSourcePsi();
         if (element == null) return;
         for (PsiReference reference : element.getReferences()) {
-          if (reference instanceof PluginConfigReference &&
-              !reference.isSoft() &&
-              reference.resolve() == null) {
-            holder.registerProblem(reference);
+          if (reference instanceof PluginConfigReference && !reference.isSoft()) {
+            if (reference instanceof PsiPolyVariantReference polyVariantReference) {
+              if (polyVariantReference.multiResolve(false).length == 0) {
+                holder.registerProblem(reference);
+              }
+            }
+            else if (reference.resolve() == null) {
+              holder.registerProblem(reference);
+            }
           }
         }
       }

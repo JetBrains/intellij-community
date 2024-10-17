@@ -32,6 +32,23 @@ class KtActionReferenceTest : LightJavaCodeInsightFixtureTestCase() {
     """
   }
 
+  fun testResolveDuplicateActionId() {
+    val pluginXmlActions = pluginXmlActions("""
+      <action id="myAction"/>
+    """.trimIndent())
+    myFixture.createFile("plugin.xml", pluginXmlActions)
+    myFixture.createFile("anotherPlugin.xml", pluginXmlActions)
+    myFixture.configureByText("Caller.kt", """
+      fun usage(actionManager: com.intellij.openapi.actionSystem.ActionManager){
+      
+         actionManager.getAction("my<caret>Action")
+      
+      }
+    """.trimIndent())
+    myFixture.enableInspections(UnresolvedPluginConfigReferenceInspection::class.java)
+    myFixture.testHighlighting()
+  }
+
   fun testRenameAction() {
     myFixture.createFile("plugin.xml", pluginXmlActions("""
               <group id="myGroup"></group>
