@@ -316,7 +316,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         if (condition.textLength == 0) return true
         return isCompilationWarning(condition)
     }
-    
+
     private fun isFailingBranchInExhaustiveWhen(condition: KtWhenCondition): Boolean {
         val entry = condition.parent as? KtWhenEntry ?: return false
         val whenExpr = entry.parent as? KtWhenExpression ?: return false
@@ -538,11 +538,11 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 DfTypes.intValue(0), DfTypes.longValue(0) -> ConstantValue.ZERO
                 else -> ConstantValue.UNKNOWN
             }
-            return analyze(expression) { shouldSuppress(constant, expression) }
+            return analyze(expression) { shouldSuppress(constant, expression, true) }
         }
 
         context(KaSession)
-        private fun shouldSuppress(value: ConstantValue, expression: KtExpression): Boolean {
+        private fun shouldSuppress(value: ConstantValue, expression: KtExpression, ignoreSmartCasts: Boolean = false): Boolean {
             var parent = expression.parent
             if (parent is KtDotQualifiedExpression && parent.selectorExpression == expression) {
                 // Will be reported for parent qualified expression
@@ -577,7 +577,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 ConstantValue.TRUE -> {
                     //if (isUselessIsCheck(expression)) return true
                     if (isAndOrConditionWithNothingOperand(expression, KtTokens.OROR)) return true
-                    if (isSmartCastNecessary(expression, true)) return true
+                    if (!ignoreSmartCasts && isSmartCastNecessary(expression, true)) return true
                     if (isPairingConditionInWhen(expression)) return true
                     if (isAssertion(parent, true)) return true
                 }
@@ -585,7 +585,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 ConstantValue.FALSE -> {
                     //if (isUselessIsCheck(expression)) return true
                     if (isAndOrConditionWithNothingOperand(expression, KtTokens.ANDAND)) return true
-                    if (isSmartCastNecessary(expression, false)) return true
+                    if (!ignoreSmartCasts && isSmartCastNecessary(expression, false)) return true
                     if (isAssertion(parent, false)) return true
                 }
 
@@ -638,7 +638,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                     }
                     if (typeParameterType != null && expression.expectedType == typeParameterType) {
                         // Do not report always-null when an expected expression type is the same type parameter
-                        // as it's not possible to replace it with a null literal without an unchecked cast 
+                        // as it's not possible to replace it with a null literal without an unchecked cast
                         return true
                     }
                     if (expression is KtBinaryExpressionWithTypeRHS && expression.left.isNull()) {

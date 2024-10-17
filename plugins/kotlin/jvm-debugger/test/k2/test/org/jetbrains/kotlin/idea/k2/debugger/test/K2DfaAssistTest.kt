@@ -579,6 +579,44 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
         doTest(text) { _, _ -> }
     }
 
+    fun testSmartCastDoesNotAffectDebugging() {
+        val text = """
+            fun useNullable(clazz: Any?) {
+                <caret>if (clazz == null/*TRUE*/) return
+                /*unreachable_start*/with(clazz) {
+                    if (/*unreachable_start*/this !is String/*unreachable_end*/) /*unreachable_start*/return/*unreachable_end*/
+                    println(length)
+                }/*unreachable_end*/
+            }
+            
+            fun main() {
+                useNullable(null)
+            }
+        """.trimIndent()
+        doTest(text) { vm, frame ->
+            frame.addVariable(MockLocalVariable(vm, "clazz", vm.createReferenceType(Object::class.java), null))
+        }
+    }
+
+    fun testSmartCastDoesNotAffectDebugging2() {
+        val text = """
+            fun useNullable(clazz: Any?) {
+                <caret>if (clazz == null/*FALSE*/) /*unreachable_start*/return/*unreachable_end*/
+                with(clazz) {
+                    if (this !is String) return
+                    println(length)
+                }
+            }
+            
+            fun main() {
+                useNullable("foo")
+            }
+        """.trimIndent()
+        doTest(text) { vm, frame ->
+            frame.addVariable("clazz", MockValue.createValue("foo", String::class.java, vm))
+        }
+    }
+
     private fun doTest(text: String, mockValues: BiConsumer<MockVirtualMachine, MockStackFrame>) {
         doTest(text, mockValues, "Test.kt")
     }

@@ -241,12 +241,7 @@ class K2DfaAssistProvider : DfaAssistProvider {
             var psi = when (anchor) {
                 is KotlinAnchor.KotlinExpressionAnchor -> {
                     if (!shouldTrackExpressionValue(anchor.expression)) return
-                    if (KotlinConstantConditionsInspection.shouldSuppress(dfType, anchor.expression) &&
-                        dfType.tryNegate()
-                            ?.let { negated -> KotlinConstantConditionsInspection.shouldSuppress(negated, anchor.expression) } != false
-                    ) {
-                        return
-                    }
+                    if (KotlinConstantConditionsInspection.shouldSuppress(dfType, anchor.expression)) return
                     anchor.expression
                 }
 
