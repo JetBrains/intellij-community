@@ -5,7 +5,7 @@ import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtil.delete
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -26,7 +26,6 @@ internal class GitCherryPickProcess(
 ): GitApplyChangesProcess(
   project = project,
   commits = commits,
-  forceAutoCommit = true,
   operationName = GitBundle.message("cherry.pick.name"),
   appliedWord = GitBundle.message("cherry.pick.applied"),
   abortCommand = GitAbortOperationAction.CherryPick(),
@@ -55,15 +54,9 @@ internal class GitCherryPickProcess(
    * cherry-pick, i.e. until the CHERRY_PICK_HEAD exists.
    */
   override fun cleanupBeforeCommit(repository: GitRepository) {
-    if (autoCommit) { // `git cherry-pick -n` doesn't create the CHERRY_PICK_HEAD
-      removeCherryPickHead(repository)
-    }
-  }
-
-  private fun removeCherryPickHead(repository: GitRepository) {
     val cherryPickHeadFile = repository.getRepositoryFiles().cherryPickHead
     if (cherryPickHeadFile.exists()) {
-      val deleted = FileUtil.delete(cherryPickHeadFile)
+      val deleted = delete(cherryPickHeadFile)
       if (!deleted) {
         LOG.warn("Couldn't delete $cherryPickHeadFile")
       }
@@ -120,7 +113,7 @@ internal class GitCherryPickProcess(
       updateCherryPickIndicatorText(it, commit)
     }
     val result = Git.getInstance().cherryPick(
-      repository, commit.id.asString(), autoCommit, shouldAddSuffix(repository, commit.id),
+      repository, commit.id.asString(), AUTO_COMMIT, shouldAddSuffix(repository, commit.id),
       *listeners.toTypedArray()
     )
     indicator?.fraction = currentCommitCounter.toDouble() / totalCommitsToCherryPick
@@ -135,7 +128,8 @@ internal class GitCherryPickProcess(
         currentCommitCounter,
         totalCommitsToCherryPick
       )
-    } else {
+    }
+    else {
       DvcsBundle.message(
         "cherry.picking.process.commit.single",
         StringUtil.trimMiddle(commit.subject, 30)
@@ -148,5 +142,6 @@ internal class GitCherryPickProcess(
 
   companion object {
     private val LOG = thisLogger()
+    private val AUTO_COMMIT = true
   }
 }

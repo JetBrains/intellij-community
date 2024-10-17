@@ -184,83 +184,6 @@ class GitRevertTest : GitSingleRepoTest() {
     )
   }
 
-  fun `test reverting added file`() {
-    val file = file("r.txt")
-    val commit = file.create("initial\n").addCommit("Created r.txt").details()
-
-    vcsHelper.onCommit { msg ->
-      git("commit -am '$msg'")
-      true
-    }
-
-    `revert without auto-commit`(commit)
-
-    assertSuccessfulNotification("Revert successful", "${commit.id.toShortString()} ${commit.subject}")
-    assertFalse("File should have been deleted", file.exists())
-
-    val changes = VcsLogUtil.getDetails(logProvider, projectRoot, listOf("HEAD")).first().changes
-    val beforeRevision = createRevision(getFilePath(file.file), GitRevisionNumber.HEAD, project, Charset.defaultCharset())
-    assertOrderedEquals("Incorrect reverting commit", changes, Change(beforeRevision, null))
-  }
-
-  fun `test default commit message proposed on revert`() {
-    val file = file("r.txt")
-    file.create("initial\n").addCommit("Created r.txt")
-    val commit = file.append("second\n").addCommit("Append something").details()
-
-    var actualMessage = ""
-    vcsHelper.onCommit { msg ->
-      actualMessage = msg
-      true
-    }
-
-    `revert without auto-commit`(commit)
-
-    `assert commit dialog was shown`()
-    assertEquals("Commit message is incorrect", commitMessageForRevert(commit), actualMessage)
-  }
-
-  fun `test reverting commit doesn't preserve authorship of the original commit`() {
-    file("a.txt").create("initial\n").add()
-    git("commit --author='Original Author <original@example.com>' -m original_commit")
-    val commit = GitHistoryUtils.history(project, projectRoot, "-1").first()
-
-    vcsHelper.onCommit { false }
-
-    `revert without auto-commit`(commit)
-
-    val comment = commitMessageForRevert(commit)
-    val list = if (VcsApplicationSettings.getInstance().CREATE_CHANGELISTS_AUTOMATICALLY) {
-      changeListManager.assertChangeListExists(comment)
-    }
-    else {
-      changeListManager.defaultChangeList
-    }
-    val data = list.data
-    assertNull("There should be no author information in the changelist: $data", data)
-  }
-
-  fun `test revert commit which was renamed later`() {
-    val initialName = "a.txt"
-    file(initialName).create("initial\n").addCommit("create $initialName")
-    val commit = file(initialName).append("more\n").addCommit("add content").details()
-    val renamed = "renamed.txt"
-    git("mv $initialName $renamed")
-    commit("Rename $initialName to $renamed")
-
-    vcsHelper.onCommit { msg ->
-      git("commit -am '$msg'")
-      true
-    }
-
-    `revert without auto-commit`(commit)
-
-    assertSuccessfulNotification("Revert successful", "${commit.id.toShortString()} ${commit.subject}")
-    repo.assertCommitted {
-      modified(renamed)
-    }
-  }
-
   fun `test staged changes prevent revert with auto-commit`() {
     val commit = file("a.txt").create().addCommit("fix #1").details()
     file("c.txt").create().add()
@@ -274,13 +197,6 @@ class GitRevertTest : GitSingleRepoTest() {
     )
   }
 
-  private fun commitMessageForRevert(commit: VcsFullCommitDetails): String {
-    return """
-        Revert "${commit.subject}"
-
-        This reverts commit ${commit.id.toShortString()}""".trimIndent()
-  }
-
   private fun prepareRevertConflict(fileName: String) : VcsFullCommitDetails {
     val file = file(fileName).create("initial\n").addCommit("initial")
     val commitToRevert = file.append("to revert\n").addCommit("temp content").details()
@@ -290,11 +206,6 @@ class GitRevertTest : GitSingleRepoTest() {
 
   private fun revertAutoCommit(vararg commit: VcsFullCommitDetails) {
     updateChangeListManager()
-    GitRevertProcess(project, listOf(*commit), true).execute()
-  }
-
-  private fun `revert without auto-commit`(commit: VcsFullCommitDetails) {
-    updateChangeListManager()
-    GitRevertProcess(project, listOf(commit), false).execute()
+    GitRevertProcess(project, listOf(*commit)).execute()
   }
 }

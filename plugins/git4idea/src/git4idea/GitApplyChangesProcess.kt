@@ -62,7 +62,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 internal abstract class GitApplyChangesProcess(
   protected val project: Project,
   private val commits: List<VcsCommitMetadata>,
-  forceAutoCommit: Boolean,
   @Nls private val operationName: String,
   @Nls private val appliedWord: String,
   private val abortCommand: GitAbortOperationAction,
@@ -75,7 +74,6 @@ internal abstract class GitApplyChangesProcess(
   private val changeListManager = ChangeListManagerEx.getInstanceEx(project)
   private val vcsHelper = AbstractVcsHelper.getInstance(project)
   private val notificationsHandler = project.service<GitApplyChangesNotificationsHandler>()
-  protected val autoCommit = forceAutoCommit || !changeListManager.areChangeListsEnabled()
 
   protected abstract fun isEmptyCommit(result: GitCommandResult): Boolean
 
@@ -179,19 +177,9 @@ internal abstract class GitApplyChangesProcess(
       val result = applyChanges(repository, commit, listOf(conflictDetector, localChangesOverwrittenDetector, untrackedFilesDetector))
 
       if (result.success()) {
-        if (autoCommit) {
-          refreshChangedVfs(repository, startHash)
-          successfulCommits.add(commit)
-          return true
-        }
-        else {
-          refreshStagedVfs(repository.root)
-          VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(repository.root)
-          changeListManager.waitForUpdate()
-          strategy.afterChangesRefreshed()
-
-          return strategy.doUserCommit(successfulCommits, alreadyPicked)
-        }
+        refreshChangedVfs(repository, startHash)
+        successfulCommits.add(commit)
+        return true
       }
       else if (conflictDetector.isDetected) {
         val mergeCompleted = ConflictResolver(project, repository.root, commit.id.toShortString(),
