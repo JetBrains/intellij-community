@@ -39,7 +39,7 @@ internal object PositionedValueArgumentForJavaAnnotationFixFactories {
 
         val valueArguments = resolvedCall
             .argumentMapping
-            .filter(::mustBeNamed)
+            .filter { (expression, signature) -> mustArgumentBeNamed(expression, signature) }
             .map { (expr, signature) ->
                 ValueArgument(expr.createSmartPointer(), signature.name)
             }
@@ -47,10 +47,12 @@ internal object PositionedValueArgumentForJavaAnnotationFixFactories {
         return ReplaceWithNamedArgumentsFix(annotationEntry, valueArguments)
     }
 
-    private fun mustBeNamed(entry: Map.Entry<KtExpression, KaVariableSignature<KaValueParameterSymbol>>): Boolean {
-        val (expr, signature) = entry
+    private fun mustArgumentBeNamed(
+        expression: KtExpression,
+        signature: KaVariableSignature<KaValueParameterSymbol>,
+    ): Boolean {
         return signature.name != JvmAnnotationNames.DEFAULT_ANNOTATION_MEMBER_NAME
-                && (expr.parent as? KtValueArgument)?.isNamed() != true
+                && (expression.parent as? KtValueArgument)?.isNamed() != true
     }
 
     private class ReplaceWithNamedArgumentsFix(
