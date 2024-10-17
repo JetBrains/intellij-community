@@ -4,6 +4,7 @@ package com.intellij.ui.dsl.builder
 import com.intellij.ide.TooltipTitle
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.ObservableProperty
@@ -25,6 +26,7 @@ import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.event.ActionEvent
 import javax.swing.*
@@ -218,6 +220,20 @@ interface Row {
   fun button(@NlsContexts.Button text: String, actionListener: (event: ActionEvent) -> Unit): Cell<JButton>
 
   fun button(@NlsContexts.Button text: String, action: AnAction, @NonNls actionPlace: String = ActionPlaces.UNKNOWN): Cell<JButton>
+
+  /**
+   * This method is moved into an extension because Kotlin UI DSL is going to be moved into public API, but [ActionButton] is a part of impl API
+   * To fix compilation issue add `import com.intellij.ui.dsl.builder.actionButton`
+   */
+  @Deprecated("Use extension function com.intellij.ui.dsl.builder.ExtensionsKt.actionButton instead", level = DeprecationLevel.HIDDEN)
+  @ApiStatus.ScheduledForRemoval
+  fun actionButton(action: AnAction, @NonNls actionPlace: String = ActionPlaces.UNKNOWN): Cell<ActionButton> {
+    return actionButton(action, actionPlace)
+  }
+
+  @Deprecated("Use another segmentedButton method instead. API is different and text value must be assigned in new version of renderer",
+              level = DeprecationLevel.HIDDEN)
+  fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> @Nls String): SegmentedButton<T>
 
   /**
    * [renderer] converts values to visual presentation. Every presentation must have non-empty text, other properties are optional.

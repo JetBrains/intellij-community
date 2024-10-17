@@ -15690,6 +15690,8 @@ e:com.intellij.ui.dsl.builder.RightGap
 - s:valueOf(java.lang.String):com.intellij.ui.dsl.builder.RightGap
 - s:values():com.intellij.ui.dsl.builder.RightGap[]
 com.intellij.ui.dsl.builder.Row
+- b:actionButton(com.intellij.openapi.actionSystem.AnAction,java.lang.String):com.intellij.ui.dsl.builder.Cell
+- bs:actionButton$default(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.actionSystem.AnAction,java.lang.String,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - a:bottomGap(com.intellij.ui.dsl.builder.BottomGap):com.intellij.ui.dsl.builder.Row
 - a:browserLink(java.lang.String,java.lang.String):com.intellij.ui.dsl.builder.Cell
 - a:button(java.lang.String,com.intellij.openapi.actionSystem.AnAction,java.lang.String):com.intellij.ui.dsl.builder.Cell
@@ -15729,6 +15731,7 @@ com.intellij.ui.dsl.builder.Row
 - a:rowComment(java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction):com.intellij.ui.dsl.builder.Row
 - bs:rowComment$default(com.intellij.ui.dsl.builder.Row,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
 - a:scrollCell(javax.swing.JComponent):com.intellij.ui.dsl.builder.Cell
+- ba:segmentedButton(java.util.Collection,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.SegmentedButton
 - a:segmentedButton(java.util.Collection,kotlin.jvm.functions.Function2):com.intellij.ui.dsl.builder.SegmentedButton
 - a:slider(I,I,I,I):com.intellij.ui.dsl.builder.Cell
 - a:spinner(kotlin.ranges.ClosedRange,D):com.intellij.ui.dsl.builder.Cell
@@ -15747,6 +15750,8 @@ com.intellij.ui.dsl.builder.Row
 - a:visibleIf(com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.dsl.builder.Row
 - a:visibleIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.Row
 Ff:com.intellij.ui.dsl.builder.Row$DefaultImpls
+- bs:actionButton(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.actionSystem.AnAction,java.lang.String):com.intellij.ui.dsl.builder.Cell
+- bs:actionButton$default(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.actionSystem.AnAction,java.lang.String,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:button$default(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.actionSystem.AnAction,java.lang.String,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:comboBox$default(com.intellij.ui.dsl.builder.Row,java.util.Collection,javax.swing.ListCellRenderer,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:comboBox$default(com.intellij.ui.dsl.builder.Row,javax.swing.ComboBoxModel,javax.swing.ListCellRenderer,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
