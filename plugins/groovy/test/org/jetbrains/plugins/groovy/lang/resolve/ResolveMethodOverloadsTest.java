@@ -1,52 +1,55 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.lang.resolve
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.psi.PsiMethod
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.util.GroovyLatestTest
-import org.jetbrains.plugins.groovy.util.ResolveTest
-import org.junit.Test
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
+import org.jetbrains.plugins.groovy.util.ResolveTest;
+import org.junit.Test;
 
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
-import static com.intellij.psi.CommonClassNames.JAVA_UTIL_LIST
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_LIST;
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertTrue;
 
-@CompileStatic
-class ResolveMethodOverloadsTest extends GroovyLatestTest implements ResolveTest {
-
+public class ResolveMethodOverloadsTest extends GroovyLatestTest implements ResolveTest {
   @Test
-  void 'void argument List vs Object'() {
-    def method = resolveTest 'def foo(Object o); def foo(List l); void bar(); <caret>foo(bar())', GrMethod
-    assert method.parameterList.parameters.first().type.equalsToText(JAVA_LANG_OBJECT)
+  public void void_argument_List_vs_Object() {
+    GrMethod method = resolveTest("def foo(Object o); def foo(List l); void bar(); <caret>foo(bar())", GrMethod.class);
+    assertTrue(method.getParameterList().getParameters()[0].getType().equalsToText(JAVA_LANG_OBJECT));
   }
 
   @Test
-  void 'null argument List vs Object'() {
-    def method = resolveTest 'def foo(Object o); def foo(List l); <caret>foo(null)', GrMethod
-    assert method.parameterList.parameters.first().type.equalsToText(JAVA_LANG_OBJECT)
+  public void null_argument_List_vs_Object() {
+    GrMethod method = resolveTest("def foo(Object o); def foo(List l); <caret>foo(null)", GrMethod.class);
+    assertTrue(method.getParameterList().getParameters()[0].getType().equalsToText(JAVA_LANG_OBJECT));
   }
 
   @Test
-  void 'null argument List vs erased Object'() {
-    def method = resolveTest '''\
-def <R> void bar(List<R> l) {}
-def <R> void bar(R r) {}
-<caret>bar(null)
-''', PsiMethod
-    assert method.parameterList.parameters.last().type.equalsToText('R')
+  public void null_argument_List_vs_erased_Object() {
+    PsiMethod method = resolveTest("""
+                                     def <R> void bar(List<R> l) {}
+                                     def <R> void bar(R r) {}
+                                     <caret>bar(null)
+                                     """, PsiMethod.class);
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    assertTrue(parameters[parameters.length - 1].getType().equalsToText("R"));
   }
 
   @Test
-  void 'list equals null'() {
-    def method = resolveTest 'void usage(List<String> l) { l.<caret>equals(null) }', PsiMethod
-    assert method.containingClass.qualifiedName == JAVA_UTIL_LIST
-    assert method.parameterList.parameters.last().type.equalsToText(JAVA_LANG_OBJECT)
+  public void list_equals_null() {
+    PsiMethod method = resolveTest("void usage(List<String> l) { l.<caret>equals(null) }", PsiMethod.class);
+    assertEquals(JAVA_UTIL_LIST, method.getContainingClass().getQualifiedName());
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    assertTrue(parameters[parameters.length - 1].getType().equalsToText(JAVA_LANG_OBJECT));
   }
 
   @Test
-  void 'list == null'() {
-    def method = resolveTest 'void usage(List<String> l) { l <caret>== null }', PsiMethod
-    assert method.containingClass.qualifiedName == JAVA_UTIL_LIST
-    assert method.parameterList.parameters.last().type.equalsToText(JAVA_LANG_OBJECT)
+  public void list____null() {
+    PsiMethod method = resolveTest("void usage(List<String> l) { l <caret>== null }", PsiMethod.class);
+    assertEquals(JAVA_UTIL_LIST, method.getContainingClass().getQualifiedName());
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    assertTrue(parameters[parameters.length - 1].getType().equalsToText(JAVA_LANG_OBJECT));
   }
 }
