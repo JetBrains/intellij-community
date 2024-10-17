@@ -540,6 +540,31 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
         }
     }
 
+    fun testInlineLambdaThisSmartCast() {
+        val text = """
+            package org.jetbrains.kotlin.idea.k2.debugger.test
+            
+            class K2DfaAssistTest {
+              class Nested(val x:Int)
+            }
+            
+            fun useClazz(clazz: Any) {
+                with(clazz) {
+                    if (this is K2DfaAssistTest.Nested) {
+                        <caret>if (x > 3/*FALSE*/) /*unreachable_start*/println("hello")/*unreachable_end*/
+                    }
+                }
+            }
+            
+            fun main() {
+                useClazz(K2DfaAssistTest.Nested(1))
+            }
+        """
+        doTest(text) { vm, frame ->
+            frame.addVariable("\$this\$useClazz_u24lambda_u240", MockValue.createValue(Nested(1), vm))
+        }
+    }
+
     fun testJavaStaticField() {
         val text = """
             import java.io.File

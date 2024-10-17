@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
@@ -182,8 +183,10 @@ class KtVariableDescriptor(
                 val receiver = parent.receiverExpression
                 qualifier = createFromSimpleName(factory, receiver)
             } else {
-                val receiverParameter = (expr.resolveToCall()?.singleVariableAccessCall()
-                    ?.partiallyAppliedSymbol?.dispatchReceiver as? KaImplicitReceiverValue)?.symbol
+                var dispatchReceiver = expr.resolveToCall()?.singleVariableAccessCall()
+                    ?.partiallyAppliedSymbol?.dispatchReceiver
+                dispatchReceiver = (dispatchReceiver as? KaSmartCastedReceiverValue)?.original ?: dispatchReceiver
+                val receiverParameter = (dispatchReceiver as? KaImplicitReceiverValue)?.symbol
                         as? KaReceiverParameterSymbol
                 val functionLiteral = receiverParameter?.psi as? KtFunctionLiteral
                 val type = receiverParameter?.returnType
