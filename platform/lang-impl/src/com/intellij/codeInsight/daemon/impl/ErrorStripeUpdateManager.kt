@@ -8,6 +8,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorMarkupModel
@@ -17,7 +18,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.psi.PsiDocumentManager
@@ -149,20 +150,41 @@ class ErrorStripeUpdateManager(private val project: Project, private val corouti
     }
 
     val modality = ModalityState.defaultModalityState()
-    setTrafficLightOnEditor(
-      project = project,
-      editorMarkupModel = editorMarkupModel,
-      modalityState = modality,
-      createTrafficRenderer = {
-        val editor = editorMarkupModel.getEditor()
-        if (isEditorEligible(editor, file)) {
-          null
+    coroutineScope.launch {
+      val editor = editorMarkupModel.getEditor()
+      if (isEditorEligible(editor, file)) {
+        return@launch
+      }
+
+      val renderer = createRenderer(editor, file)
+      setTrafficLightOnEditor(
+        project = project,
+        editorMarkupModel = editorMarkupModel,
+        modalityState = modality,
+        renderer = renderer,
+      )
+    }
+  }
+
+  private suspend fun setTrafficLightOnEditor(
+    project: Project,
+    editorMarkupModel: EditorMarkupModel,
+    modalityState: ModalityState,
+    renderer: TrafficLightRenderer,
+  ) {
+    withContext(Dispatchers.EDT + modalityState.asContextElement()) {
+      val editor = editorMarkupModel.getEditor()
+      if (project.isDisposed() || editor.isDisposed()) {
+        LOG.debug {
+          "Traffic light won't be set to editor: project dispose=${project.isDisposed()}, editor dispose=${editor.isDisposed()}"
         }
-        else {
-          createRenderer(editor, file)
-        }
-      },
-    )
+        // would be registered in setErrorStripeRenderer() below
+        Disposer.dispose(renderer)
+      }
+      else {
+        editorMarkupModel.setErrorStripeRenderer(renderer)
+      }
+    }
   }
 
   @RequiresBackgroundThread
@@ -175,18 +197,18 @@ class ErrorStripeUpdateManager(private val project: Project, private val corouti
     return TrafficLightRenderer(project = project, editor = editor)
   }
 
-  private fun isEditorEligible(editor: Editor, psiFile: PsiFile): Boolean {
-    return ApplicationManager.getApplication().runReadAction(ThrowableComputable {
-      val isHighlightingAvailable = DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(psiFile)
+  private suspend fun isEditorEligible(editor: Editor, psiFile: PsiFile): Boolean {
+    val daemonCodeAnalyzer = project.serviceAsync<DaemonCodeAnalyzer>()
+    return readAction {
+      val isHighlightingAvailable = daemonCodeAnalyzer.isHighlightingAvailable(psiFile)
       val isPsiValid = psiFile.isValid()
       val isEditorDispose = editor.isDisposed()
-
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Editor params for rendering traffic light " +
-                  "(isEditorDispose=$isEditorDispose, isPsiValid=$isPsiValid, isHighlightingAvailable=$isHighlightingAvailable")
-      }
+        LOG.debug {
+          "Editor params for rendering traffic light " +
+          "(isEditorDispose=$isEditorDispose, isPsiValid=$isPsiValid, isHighlightingAvailable=$isHighlightingAvailable"
+        }
       isEditorDispose || !isPsiValid || !isHighlightingAvailable
-    })
+    }
   }
 }
 
