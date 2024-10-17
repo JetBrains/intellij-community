@@ -41,7 +41,7 @@ class InlineCompletionLogsContainer() {
   /**
    * Share (in percents) of requests that should be fully logged (otherwise, only basic fields).
    * Can be different for Cloud and Local.
-   * [newValue] Should be in the [1,100] interval.
+   * [newValue] Should be in the `[1,100]` interval.
    */
   fun setFullLogsShare(newValue: Int) {
     check(newValue in 1..100) { "Share should be in [1,100] interval" }
