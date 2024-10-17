@@ -171,7 +171,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
             }
           }
 
-          if (index >= Int.MAX_VALUE) {
+          if (index >= row.rightIndex) {
             cc.horizontal.gapBefore = BoundSize(null, null, null, true, null)
           }
 

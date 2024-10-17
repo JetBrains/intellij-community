@@ -61,6 +61,15 @@ abstract class Row : Cell(), RowBuilder {
   @set:ApiStatus.ScheduledForRemoval
   abstract var visible: Boolean
 
+  @PublishedApi
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
+  internal abstract fun alignRight()
+
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
+  abstract fun largeGapAfter()
+
   /**
    * Shares cell between components.
    *

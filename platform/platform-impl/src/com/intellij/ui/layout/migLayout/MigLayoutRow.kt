@@ -69,6 +69,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   }
 
   val components: MutableList<JComponent> = SmartList()
+  var rightIndex: Int = Int.MAX_VALUE
 
   private var lastComponentConstraintsWithSplit: CC? = null
 
@@ -361,7 +362,14 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
   }
 
-  private fun largeGapAfter() {
+  override fun alignRight() {
+    if (rightIndex != Int.MAX_VALUE) {
+      throw IllegalStateException("right allowed only once")
+    }
+    rightIndex = components.size
+  }
+
+  override fun largeGapAfter() {
     gapAfter = "${spacing.largeVerticalGap}px!"
   }
 
@@ -397,6 +405,7 @@ private class CellBuilderImpl<T : JComponent>(
   override val component: T,
   private val viewComponent: JComponent = component
 ) : CellBuilder<T> {
+  private var applyIfEnabled = false
   private var property: GraphProperty<*>? = null
 
   override fun withGraphProperty(property: GraphProperty<*>): CellBuilder<T> {
@@ -440,10 +449,29 @@ private class CellBuilderImpl<T : JComponent>(
     return this
   }
 
+  override fun enabled(isEnabled: Boolean) {
+    viewComponent.isEnabled = isEnabled
+  }
+
   override fun enableIf(predicate: ComponentPredicate): CellBuilder<T> {
     viewComponent.isEnabled = predicate()
     predicate.addListener { viewComponent.isEnabled = it }
     return this
+  }
+
+  override fun visibleIf(predicate: ComponentPredicate): CellBuilder<T> {
+    viewComponent.isVisible = predicate()
+    predicate.addListener { viewComponent.isVisible = it }
+    return this
+  }
+
+  override fun applyIfEnabled(): CellBuilder<T> {
+    applyIfEnabled = true
+    return this
+  }
+
+  override fun shouldSaveOnApply(): Boolean {
+    return !(applyIfEnabled && !viewComponent.isEnabled)
   }
 
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -457,6 +485,13 @@ private class CellBuilderImpl<T : JComponent>(
   override fun constraints(vararg constraints: CCFlags): CellBuilder<T> {
     builder.updateComponentConstraints(viewComponent) {
       overrideFlags(this, constraints)
+    }
+    return this
+  }
+
+  override fun withLargeLeftGap(): CellBuilder<T> {
+    builder.updateComponentConstraints(viewComponent) {
+      horizontal.gapBefore = gapToBoundSize(builder.spacing.largeHorizontalGap, true)
     }
     return this
   }
