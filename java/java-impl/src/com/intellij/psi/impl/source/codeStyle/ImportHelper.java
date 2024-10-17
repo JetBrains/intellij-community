@@ -152,7 +152,7 @@ public final class ImportHelper{
     Object2IntMap<String> packageToCountMap = new Object2IntOpenHashMap<>();
     Object2IntMap <String> classToCountMap = new Object2IntOpenHashMap<>();
     for (Import anImport : resultList) {
-      String packageOrClassName = ImportUtils.getPackageOrClassName(anImport.name());
+      String packageOrClassName = StringUtil.getPackageName(anImport.name());
       if (packageOrClassName.isEmpty()) continue;
       Object2IntMap<String> map = anImport.isStatic() ? classToCountMap : packageToCountMap;
       map.put(packageOrClassName, map.getOrDefault(packageOrClassName, 0) + 1);
@@ -175,7 +175,7 @@ public final class ImportHelper{
     PackageEntry[] entries = settings.IMPORT_LAYOUT_TABLE.getEntries();
     for (int i = 0; i < imports.size(); i++) {
       Import anImport = imports.get(i);
-      entryForName[i] = findEntryIndex(ImportUtils.getPackageOrClassName(anImport.name()),
+      entryForName[i] = findEntryIndex(StringUtil.getPackageName(anImport.name()),
                                        settings.LAYOUT_STATIC_IMPORTS_SEPARATELY && anImport.isStatic(), entries);
     }
 
@@ -207,7 +207,7 @@ public final class ImportHelper{
     Set<String> namesToUseSingle = new HashSet<>();
     for (Import anImport : imports) {
       String name = anImport.name();
-      String prefix = ImportUtils.getPackageOrClassName(name);
+      String prefix = StringUtil.getPackageName(name);
       if (prefix.isEmpty()) continue;
       boolean isImplicitlyImported = checker.isImplicitlyImported(name, anImport.isStatic());
       if (!onDemandImports.contains(prefix) && !isImplicitlyImported) continue;
@@ -384,7 +384,7 @@ public final class ImportHelper{
     for (Import importedName : imports) {
       String name = importedName.name();
       boolean isStatic = importedName.isStatic();
-      String packageOrClassName = ImportUtils.getPackageOrClassName(name);
+      String packageOrClassName = StringUtil.getPackageName(name);
       boolean implicitlyImported = implicitImportContext.isImplicitlyImported(name, isStatic);
       boolean useOnDemand = implicitlyImported || packagesOrClassesToImportOnDemand.contains(packageOrClassName);
       Import current = new Import(packageOrClassName, isStatic);
@@ -434,7 +434,7 @@ public final class ImportHelper{
     if (!ImportFilter.shouldImport(file, className)) {
       return false;
     }
-    String packageName = ImportUtils.getPackageOrClassName(className);
+    String packageName = StringUtil.getPackageName(className);
     String shortName = PsiNameHelper.getShortClassName(className);
 
     PsiImportStatement unusedSingleImport = findUnusedSingleImport(file, shortName, className);
@@ -630,7 +630,7 @@ public final class ImportHelper{
     for (PsiClass ref1 : refs) {
       String className = ref1.getQualifiedName();
       if (className == null) continue;
-      if (ImportUtils.getPackageOrClassName(className).equals(packageName)) {
+      if (StringUtil.getPackageName(className).equals(packageName)) {
         PsiJavaCodeReferenceElement ref = file.findImportReferenceTo(ref1);
         if (ref != null) {
           array.add(ref);
@@ -834,14 +834,7 @@ public final class ImportHelper{
   int findEntryIndex(@NotNull PsiImportStatementBase statement) {
     PsiJavaCodeReferenceElement ref = statement.getImportReference();
     if (ref == null) return -1;
-    String packageName;
-    if (statement.isOnDemand()) {
-      packageName = ref.getCanonicalText();
-    }
-    else {
-      String className = ref.getCanonicalText();
-      packageName = ImportUtils.getPackageOrClassName(className);
-    }
+    String packageName = statement.isOnDemand() ? ref.getCanonicalText() : StringUtil.getPackageName(ref.getCanonicalText());
     return findEntryIndex(packageName,
                           mySettings.LAYOUT_STATIC_IMPORTS_SEPARATELY && statement instanceof PsiImportStaticStatement,
                           mySettings.IMPORT_LAYOUT_TABLE.getEntries());
