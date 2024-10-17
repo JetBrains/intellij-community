@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -578,7 +579,7 @@ public final class ImportUtils {
           if (importReference == null) continue;
           String referenceName = importReference.getQualifiedName();
           if (referenceName == null) continue;
-          myStaticImportStatements.put(staticStatement.isOnDemand() ? referenceName : getPackageOrClassName(referenceName),
+          myStaticImportStatements.put(staticStatement.isOnDemand() ? referenceName : StringUtil.getPackageName(referenceName),
                                        staticStatement);
         }
         else if (anImport instanceof PsiImportModuleStatement moduleStatement) {
@@ -592,7 +593,7 @@ public final class ImportUtils {
     }
 
     public boolean isImplicitlyImported(String qName, boolean isStatic) {
-      String packageOrClassName = getPackageOrClassName(qName);
+      String packageOrClassName = StringUtil.getPackageName(qName);
       String className = ClassUtil.extractClassName(qName);
       if (!isStatic) {
         for (PsiImportModuleStatement psiImportModuleStatement : myModulesStatements) {
@@ -619,11 +620,6 @@ public final class ImportUtils {
       }
       return false;
     }
-  }
-
-  public static @NotNull String getPackageOrClassName(@NotNull String className){
-    int dotIndex = className.lastIndexOf('.');
-    return dotIndex < 0 ? "" : className.substring(0, dotIndex);
   }
 
   private static boolean memberReferenced(PsiMember member, PsiElement context) {
