@@ -61,6 +61,8 @@ interface RectangleRef {
   fun getCenterY(): Double
 }
 
+val RectangleRef.center get() = Point(getCenterX().toInt(), getCenterY().toInt())
+
 fun printableString(toPrint: String): String {
   val resultString = toPrint.let {
     val maxLength = 600

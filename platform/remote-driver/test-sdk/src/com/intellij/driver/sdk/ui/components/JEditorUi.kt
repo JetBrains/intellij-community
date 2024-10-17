@@ -8,6 +8,7 @@ import com.intellij.driver.sdk.*
 import com.intellij.driver.sdk.remoteDev.BeControlClass
 import com.intellij.driver.sdk.remoteDev.EditorComponentImplBeControlBuilder
 import com.intellij.driver.sdk.ui.Finder
+import com.intellij.driver.sdk.ui.center
 import com.intellij.driver.sdk.ui.remote.Component
 import org.intellij.lang.annotations.Language
 import java.awt.Point
@@ -36,6 +37,11 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   val editor: Editor by lazy { editorComponent.getEditor() }
 
   fun isEditable() = editorComponent.isEditable()
+
+  fun clickInlay(inlay: Inlay) {
+    val inlayCenter = driver.withContext(OnDispatcher.EDT) { inlay.getBounds() }.center
+    click(inlayCenter)
+  }
 
   fun getInlayHints(): List<InlayHint> {
     val hints = mutableListOf<InlayHint>()

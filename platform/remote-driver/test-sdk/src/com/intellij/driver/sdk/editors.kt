@@ -5,6 +5,7 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.client.service
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.remoteDev.GuestNavigationService
+import com.intellij.driver.sdk.ui.RectangleRef
 import java.awt.Point
 import kotlin.time.Duration.Companion.seconds
 
@@ -17,9 +18,10 @@ interface Editor {
   fun getVirtualFile(): VirtualFile
   fun getLineHeight(): Int
   fun offsetToVisualPosition(offset: Int): VisualPosition
-  fun visualPositionToXY(visible: VisualPosition): Point
+  fun visualPositionToXY(visualPosition: VisualPosition): Point
   fun getInlayModel(): InlayModel
   fun getColorsScheme(): EditorColorsScheme
+  fun logicalPositionToOffset(logicalPosition: LogicalPosition): Int
 }
 @Remote("com.intellij.openapi.editor.VisualPosition")
 interface VisualPosition {
@@ -49,6 +51,7 @@ interface InlayModel {
 interface Inlay {
   fun getRenderer(): EditorCustomElementRenderer
   fun getOffset(): Int
+  fun getBounds(): RectangleRef
 }
 
 @Remote("com.intellij.openapi.editor.EditorCustomElementRenderer")
