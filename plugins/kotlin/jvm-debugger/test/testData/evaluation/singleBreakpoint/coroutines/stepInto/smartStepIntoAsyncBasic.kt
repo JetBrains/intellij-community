@@ -3,21 +3,34 @@
 
 import kotlinx.coroutines.*
 
+suspend fun foo(i: Int) {
+    coroutineScope {
+        if (i == 34) {
+            //Breakpoint!
+            "".toString()
+        }
+        val res = async(Dispatchers.Default) {
+            delay(10)
+            delay(10)
+            "After delay $i"
+        }
+        res.join()
+        println("Obtained result $res")
+    }
+    println("coroutineScope completed $i")
+}
+
+private suspend fun foo(lambda: suspend () -> Unit) {
+    lambda()
+    "".toString()
+}
+
 fun main() {
     runBlocking {
-        for (i in 0 .. 100) {
-            if (i == 34) {
-                //Breakpoint!
-                "".toString()
+        for (i in 0 .. 1000) {
+            launch {
+                foo(i)
             }
-            val res = async {
-                delay(10)
-                delay(10)
-                "After delay $i"
-            }
-            res.join()
-            println("Obtained result $res")
-            i.toString()
         }
     }
 }
