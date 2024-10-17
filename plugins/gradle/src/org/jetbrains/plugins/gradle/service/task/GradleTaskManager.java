@@ -125,14 +125,16 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     }
   }
 
-  private void executeTasks(@NotNull ExternalSystemTaskId id,
-                            @NotNull List<String> tasks,
-                            @NotNull String projectPath,
-                            @NotNull GradleExecutionSettings settings,
-                            @Nullable String jvmParametersSetup,
-                            @NotNull ExternalSystemTaskNotificationListener listener,
-                            @NotNull ProjectConnection connection,
-                            @NotNull CancellationToken cancellationToken) {
+  private static void executeTasks(
+    @NotNull ExternalSystemTaskId id,
+    @NotNull List<String> tasks,
+    @NotNull String projectPath,
+    @NotNull GradleExecutionSettings settings,
+    @Nullable String jvmParametersSetup,
+    @NotNull ExternalSystemTaskNotificationListener listener,
+    @NotNull ProjectConnection connection,
+    @NotNull CancellationToken cancellationToken
+  ) {
     BuildEnvironment buildEnvironment = null;
     try {
       buildEnvironment = GradleExecutionHelper.getBuildEnvironment(connection, id, listener, cancellationToken, settings);
@@ -165,7 +167,6 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       else {
         ((TestLauncher)operation).run();
       }
-      GradleTaskResultListener.EP_NAME.forEachExtensionSafe(ext -> ext.onSuccess(id, projectPath));
     }
     catch (RuntimeException e) {
       LOG.debug("Gradle build launcher error", e);

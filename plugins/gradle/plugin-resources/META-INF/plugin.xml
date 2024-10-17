@@ -47,8 +47,6 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.targetEnvironmentAware" interface="org.jetbrains.plugins.gradle.execution.target.GradleTargetEnvironmentAware"
                     dynamic="true"/>
-    <extensionPoint qualifiedName= "org.jetbrains.plugins.gradle.taskResultListener" interface="org.jetbrains.plugins.gradle.service.task.GradleTaskResultListener"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.executionHelperExtension"
                     interface="org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension"
                     dynamic="true"/>
