@@ -24,7 +24,7 @@ internal class ArrayListEelRelativePath private constructor(
     return true
   }
 
-  override fun resolveE(other: EelPath.Relative): ArrayListEelRelativePath {
+  override fun resolve(other: EelPath.Relative): ArrayListEelRelativePath {
     val result = mutableListOf<String>()
     result += parts
     if (other != EMPTY) {
@@ -36,7 +36,7 @@ internal class ArrayListEelRelativePath private constructor(
     return ArrayListEelRelativePath(result)
   }
 
-  override fun getChildE(name: String): ArrayListEelRelativePath =
+  override fun getChild(name: String): ArrayListEelRelativePath =
     when {
       name.isEmpty() -> throw EelPathException(name, "Empty child name is not allowed")
       "/" in name -> throw EelPathException(name, "Invalid symbol in child name: /")
@@ -121,7 +121,7 @@ internal class ArrayListEelRelativePath private constructor(
       // Not optimal, but DRY.
       var result = ArrayListEelRelativePath(listOf())
       for (part in parts) {
-        result = result.getChildE(part)
+        result = result.getChild(part)
       }
       return result
     }

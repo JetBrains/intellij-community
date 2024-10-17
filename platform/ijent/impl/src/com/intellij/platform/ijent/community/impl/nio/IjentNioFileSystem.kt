@@ -70,8 +70,8 @@ class IjentNioFileSystem internal constructor(
       is IjentFileSystemPosixApi -> EelPath.Absolute.OS.UNIX
       is IjentFileSystemWindowsApi -> EelPath.Absolute.OS.WINDOWS
     }
-    return EelPath.parseE(first, os)
-      .resolveE(EelPath.Relative.buildE(*more))
+    return EelPath.parse(first, os)
+      .resolve(EelPath.Relative.build(*more))
       .toNioPath()
   }
 

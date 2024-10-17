@@ -54,7 +54,7 @@ internal fun Path.toEelPath(): EelPath =
 
     isAbsolute -> throw InvalidPathException(toString(), "This path can't be converted to IjentPath")
 
-    else -> EelPath.Relative.parseE(toString())
+    else -> EelPath.Relative.parse(toString())
   }
 
 internal fun <T> fsBlocking(body: suspend () -> T): T = invokeSuspending(body)

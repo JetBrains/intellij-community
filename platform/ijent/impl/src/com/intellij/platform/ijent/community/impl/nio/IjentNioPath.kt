@@ -39,7 +39,7 @@ class IjentNioPath internal constructor(
 
   override fun getFileName(): IjentNioPath? =
     EelPath.Relative
-      .parseE(eelPath.fileName)
+      .parse(eelPath.fileName)
       .toNioPath()
       .takeIf { it.nameCount > 0 }
 
@@ -83,20 +83,20 @@ class IjentNioPath internal constructor(
 
   override fun normalize(): IjentNioPath =
     when (eelPath) {
-      is EelPath.Absolute -> eelPath.normalizeE().toNioPath()
+      is EelPath.Absolute -> eelPath.normalize().toNioPath()
       is EelPath.Relative -> eelPath.normalize().toNioPath()
     }
 
   override fun resolve(other: Path): IjentNioPath =
     when (val otherIjentPath = other.toEelPath()) {
       is EelPath.Absolute -> otherIjentPath.toNioPath()  // TODO is it the desired behaviour?
-      is EelPath.Relative -> eelPath.resolveE(otherIjentPath).toNioPath()
+      is EelPath.Relative -> eelPath.resolve(otherIjentPath).toNioPath()
     }
 
   override fun relativize(other: Path): IjentNioPath =
     when (val otherIjentPath = other.toEelPath()) {
       is EelPath.Absolute -> when (eelPath) {
-        is EelPath.Absolute -> eelPath.relativizeE(otherIjentPath).toNioPath()
+        is EelPath.Absolute -> eelPath.relativize(otherIjentPath).toNioPath()
         is EelPath.Relative -> throw InvalidPathException("$this.relativize($other)",
                                                           "Can't relativize these paths")
       }
@@ -125,7 +125,7 @@ class IjentNioPath internal constructor(
   override fun toRealPath(vararg options: LinkOption): IjentNioPath =
     when (eelPath) {
       is EelPath.Absolute ->
-        eelPath.normalizeE()
+        eelPath.normalize()
           .let { normalizedPath ->
             if (LinkOption.NOFOLLOW_LINKS in options)
               normalizedPath

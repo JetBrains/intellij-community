@@ -6,7 +6,7 @@ import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi
 import com.intellij.platform.eel.fs.EelFileSystemWindowsApi
-import com.intellij.platform.eel.fs.getPathE
+import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.EelUserPosixInfoImpl
 import com.intellij.platform.eel.provider.EelUserWindowsInfoImpl
@@ -15,7 +15,7 @@ import java.nio.file.Path
 
 internal class LocalEelPathMapper(private val eelApi: EelApi) : EelPathMapper {
   override fun getOriginalPath(path: Path): EelPath.Absolute {
-    return eelApi.fs.getPathE(path.toString())
+    return eelApi.fs.getPath(path.toString())
   }
 
   override suspend fun maybeUploadPath(path: Path, scope: CoroutineScope, options: EelFileSystemApi.CreateTemporaryDirectoryOptions): EelPath.Absolute {

@@ -205,7 +205,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
             .getOrThrowFileSystemException()
             .asSequence()
             .map { (childName, childStat) ->
-              val childIjentPath = dir.eelPath.getChildE(childName)
+              val childIjentPath = dir.eelPath.getChild(childName)
               val childAttrs = when (childStat) {
                 is EelPosixFileInfo -> IjentNioPosixFileAttributes(childStat)
                 is EelWindowsFileInfo -> TODO()
@@ -219,7 +219,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
             .getOrThrowFileSystemException()
             .asSequence()
             .map { childName ->
-              val childIjentPath = dir.eelPath.getChildE(childName)
+              val childIjentPath = dir.eelPath.getChild(childName)
               IjentNioPath(childIjentPath, nioFs, null)
             }
         }

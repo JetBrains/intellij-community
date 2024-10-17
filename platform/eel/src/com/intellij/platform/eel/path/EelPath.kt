@@ -26,9 +26,9 @@ sealed interface EelPath {
   companion object {
     @Throws(EelPathException::class)
     @JvmStatic
-    fun parseE(raw: String, os: OS?): EelPath =
+    fun parse(raw: String, os: OS?): EelPath =
       ArrayListEelAbsolutePath.parseOrNull(raw, os)
-      ?: Relative.parseE(raw)
+      ?: Relative.parse(raw)
   }
 
   val fileName: String
@@ -101,7 +101,7 @@ sealed interface EelPath {
    * It should fail in cases like Absolute("/").resolve(Relative("..")).
    */
   @Throws(EelPathException::class)
-  fun resolveE(other: Relative): EelPath
+  fun resolve(other: Relative): EelPath
 
   /**
    * ```kotlin
@@ -114,7 +114,7 @@ sealed interface EelPath {
    * ```
    */
   @Throws(EelPathException::class)
-  fun getChildE(name: String): EelPath
+  fun getChild(name: String): EelPath
 
   override fun toString(): String
 
@@ -122,7 +122,7 @@ sealed interface EelPath {
     companion object {
       @JvmStatic
       @Throws(EelPathException::class)
-      fun parseE(raw: String): Relative =
+      fun parse(raw: String): Relative =
         ArrayListEelRelativePath.parse(raw)
 
       /**
@@ -130,15 +130,15 @@ sealed interface EelPath {
        */
       @JvmStatic
       @Throws(EelPathException::class)
-      fun buildE(vararg parts: String): Relative =
-        buildE(listOf(*parts))
+      fun build(vararg parts: String): Relative =
+        build(listOf(*parts))
 
       /**
        * The parts of the path must not contain / or \.
        */
       @JvmStatic
       @Throws(EelPathException::class)
-      fun buildE(parts: List<String>): Relative =
+      fun build(parts: List<String>): Relative =
         ArrayListEelRelativePath.build(parts)
 
       @JvmField
@@ -151,10 +151,10 @@ sealed interface EelPath {
     fun startsWith(other: Relative): Boolean
 
     @Throws(EelPathException::class)
-    override fun resolveE(other: Relative): Relative
+    override fun resolve(other: Relative): Relative
 
     @Throws(EelPathException::class)
-    override fun getChildE(name: String): Relative
+    override fun getChild(name: String): Relative
 
     override fun compareTo(other: Relative): Int
 
@@ -182,18 +182,18 @@ sealed interface EelPath {
   interface Absolute : EelPath, Comparable<Absolute> {
     companion object {
       @JvmStatic
-      fun parseE(raw: String, os: OS?): Absolute =
+      fun parse(raw: String, os: OS?): Absolute =
         ArrayListEelAbsolutePath.parseOrNull(raw, os)
         ?: throw EelPathException(raw, "Not an absolute path")
 
       @JvmStatic
       @Throws(EelPathException::class)
-      fun buildE(vararg parts: String): Absolute =
-        buildE(listOf(*parts), null)
+      fun build(vararg parts: String): Absolute =
+        build(listOf(*parts), null)
 
       @JvmStatic
       @Throws(EelPathException::class)
-      fun buildE(parts: List<String>, os: OS?): Absolute =
+      fun build(parts: List<String>, os: OS?): Absolute =
         ArrayListEelAbsolutePath.build(parts, os)
     }
 
@@ -213,11 +213,11 @@ sealed interface EelPath {
 
     /** See [java.nio.file.Path.normalize] */
     @Throws(EelPathException::class)
-    fun normalizeE(): Absolute
+    fun normalize(): Absolute
 
     /** See [java.nio.file.Path.resolve] */
     @Throws(EelPathException::class)
-    override fun resolveE(other: Relative): Absolute
+    override fun resolve(other: Relative): Absolute
 
     /**
      * See [java.nio.file.Path.relativize].
@@ -228,10 +228,10 @@ sealed interface EelPath {
      * ```
      */
     @Throws(EelPathException::class)
-    fun relativizeE(other: Absolute): Relative
+    fun relativize(other: Absolute): Relative
 
     @Throws(EelPathException::class)
-    override fun getChildE(name: String): Absolute
+    override fun getChild(name: String): Absolute
 
     fun scan(): Sequence<Absolute>
 
@@ -243,7 +243,7 @@ sealed interface EelPath {
   }
 }
 
-operator fun EelPath.div(part: String): EelPath = resolveE(EelPath.Relative.parseE(part))
+operator fun EelPath.div(part: String): EelPath = resolve(EelPath.Relative.parse(part))
 
 @Throws(InvalidPathException::class)
 fun <P : EelPath, E : EelPathError> EelResult<P, E>.getOrThrow(): P = getOrThrow { throw InvalidPathException(it.raw, it.reason) }

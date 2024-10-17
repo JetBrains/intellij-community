@@ -13,7 +13,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.fs.EelFileSystemApi
-import com.intellij.platform.eel.fs.getPathE
+import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.ijent.tunnels.forwardLocalPort
 import com.intellij.platform.util.coroutines.channel.ChannelInputStream
@@ -141,7 +141,7 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
     override val targetRoot: String,
   ) : UploadableVolume, DownloadableVolume {
     private fun targetRootPath(): Path {
-      return eel.mapper.toNioPath(eel.fs.getPathE(targetRoot))
+      return eel.mapper.toNioPath(eel.fs.getPath(targetRoot))
     }
 
     override fun upload(relativePath: String, targetProgressIndicator: TargetProgressIndicator) {
@@ -172,7 +172,7 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
               val options = EelFileSystemApi.createTemporaryDirectoryOptions()
 
               targetRootPath.prefix?.let(options::prefix)
-              targetRootPath.parentDirectory?.let(eel.fs::getPathE)?.let(options::parentDirectory)
+              targetRootPath.parentDirectory?.let(eel.fs::getPath)?.let(options::parentDirectory)
               options.deleteOnExit(true)
 
               eel.fs.createTemporaryDirectory(options).toString()
