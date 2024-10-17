@@ -32,10 +32,11 @@ private val kotlinMethodType = MethodType.methodType(KSerializer::class.java)
 @SettingsInternalApi
 @Internal
 class KotlinxSerializationBinding(aClass: Class<*>) : Binding, RootBinding {
-  @JvmField
-  val serializer: KSerializer<Any>
+  private val serializer: KSerializer<Any>
 
   init {
+    // use `in` as it fixes memory leak - JDK impl hold reference to a created method handle, and we cannot unload the plugin
+    val lookup = lookup.`in`(aClass)
     val findStaticGetter = lookup.findStaticGetter(aClass, "Companion", aClass.classLoader.loadClass(aClass.name + "\$Companion"))
     val companion = findStaticGetter.invoke()
     @Suppress("UNCHECKED_CAST")
