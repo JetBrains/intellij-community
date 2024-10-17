@@ -1,3 +1,3 @@
 // "Remove EXPRESSION target" "true"
 annotation class Ann
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RestrictedRetentionForExpressionAnnotationFactory$RemoveExpressionTargetFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveExpressionTargetFix
