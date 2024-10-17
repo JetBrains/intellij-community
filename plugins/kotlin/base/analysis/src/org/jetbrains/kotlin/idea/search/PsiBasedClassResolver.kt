@@ -11,11 +11,12 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.analysis.api.imports.getDefaultImports
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.asJava.ImpreciseResolveResult
 import org.jetbrains.kotlin.asJava.ImpreciseResolveResult.*
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.getDefaultImports
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -168,7 +169,10 @@ class PsiBasedClassResolver @TestOnly constructor(private val targetClassFqName:
             in packagesWithTypeAliases -> return UNSURE
         }
 
-        for (importPath in file.getDefaultImports()) {
+        val project = file.project
+        val kaModule = KaModuleProvider.getModule(project, file, useSiteModule = null)
+        for (defaultImports in kaModule.targetPlatform.getDefaultImports(project).defaultImports) {
+            val importPath = defaultImports.importPath
             result = analyzeSingleImport(result, importPath.fqName, importPath.isAllUnder, importPath.alias?.asString())
             if (result == Result.Ambiguity) return UNSURE
         }

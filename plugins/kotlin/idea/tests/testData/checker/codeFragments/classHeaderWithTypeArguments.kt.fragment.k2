@@ -1,1 +1,1 @@
-this.foo(<error descr="[ARGUMENT_TYPE_MISMATCH] Argument type mismatch: actual type is 'kotlin.String', but 'T' was expected.">"a"</error>)
+this.foo(<error descr="[ARGUMENT_TYPE_MISMATCH] Argument type mismatch: actual type is 'kotlin.String', but 'T (of class A<T>)' was expected.">"a"</error>)

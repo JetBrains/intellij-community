@@ -16,7 +16,7 @@ fun a() {
 
     with(d) out@{
         with(4) {
-            this@out.field
+            field
         }
     }
 }

@@ -15,16 +15,14 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.getDefaultImports
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
-import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.codeInsight.K2StatisticsInfoProvider
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
-import org.jetbrains.kotlin.idea.highlighter.kotlinUnresolvedReferenceKinds
 import org.jetbrains.kotlin.idea.highlighter.KotlinUnresolvedReferenceKind
 import org.jetbrains.kotlin.idea.highlighter.KotlinUnresolvedReferenceKind.UnresolvedDelegateFunction
+import org.jetbrains.kotlin.idea.highlighter.kotlinUnresolvedReferenceKinds
 import org.jetbrains.kotlin.idea.quickfix.ImportFixHelper
 import org.jetbrains.kotlin.idea.quickfix.ImportPrioritizer
 import org.jetbrains.kotlin.idea.util.positionContext.*
@@ -152,11 +150,16 @@ object ImportQuickFixProvider {
 
         val containingKtFile = position.containingKtFile
 
-        val analyzerServices = containingKtFile.platform.findAnalyzerServices(position.project)
-        val defaultImports = analyzerServices.getDefaultImports(position.languageVersionSettings, includeLowPriorityImports = true)
-        val excludedImports = analyzerServices.excludedImports
+        val defaultImports = containingKtFile.getDefaultImports(useSiteModule)
 
-        val isImported = { fqName: FqName -> ImportPath(fqName, isAllUnder = false).isImported(defaultImports, excludedImports) }
+        val isImported = { fqName: FqName ->
+            ImportPath(fqName, isAllUnder = false)
+                .isImported(
+                    defaultImports.defaultImports.map { it.importPath },
+                    defaultImports.excludedFromDefaultImports.map { it.fqName }
+                )
+        }
+
         val importPrioritizer = ImportPrioritizer(containingKtFile, isImported)
         val expressionImportWeigher = ExpressionImportWeigher.createWeigher(position)
 

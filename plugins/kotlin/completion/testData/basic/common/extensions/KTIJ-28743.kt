@@ -1,4 +1,5 @@
-// IGNORE_K2
+// FIR_IDENTICAL
+// FIR_COMPARISON
 fun CharSequence.fooBar() {}
 
 open class Foo(private val element: CharSequence)

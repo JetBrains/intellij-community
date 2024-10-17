@@ -2294,6 +2294,11 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                 runTest("../testData/evaluation/singleBreakpoint/unsignedArrayOf.kt");
             }
 
+            @TestMetadata("unsignedConst.kt")
+            public void testUnsignedConst() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/unsignedConst.kt");
+            }
+
             @TestMetadata("unusedTransitiveDependencies.kt")
             public void testUnusedTransitiveDependencies() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/unusedTransitiveDependencies.kt");

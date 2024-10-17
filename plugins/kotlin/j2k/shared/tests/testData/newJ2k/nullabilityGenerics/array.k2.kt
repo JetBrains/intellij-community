@@ -1,5 +1,5 @@
 // ERROR: Initializer type mismatch: expected 'kotlin.Array<kotlin.String>', actual 'kotlin.Array<kotlin.String?>'.
-// ERROR: Type mismatch: inferred type is 'kotlin.Array<T?>', but 'kotlin.Array<kotlin.String>' was expected.
+// ERROR: Type mismatch: inferred type is 'kotlin.Array<T? (of fun <T> arrayOfNulls)>', but 'kotlin.Array<kotlin.String>' was expected.
 // ERROR: Return type mismatch: expected 'kotlin.Array<kotlin.String>', actual 'kotlin.Array<kotlin.String?>'.
 // TODO support array initializers
 internal class ArrayArgument {
