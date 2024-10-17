@@ -7,12 +7,11 @@ import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.EelUserWindowsInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.path.EelPathError
 import java.nio.ByteBuffer
 import kotlin.Throws
 
-fun EelFileSystemApi.getPathE(string: String, vararg other: String): EelPath.Absolute {
-  return EelPath.Absolute.buildE(listOf(string, *other), when (this) {
+fun EelFileSystemApi.getPath(string: String, vararg other: String): EelPath.Absolute {
+  return EelPath.Absolute.build(listOf(string, *other), when (this) {
     is EelFileSystemPosixApi -> EelPath.Absolute.OS.UNIX
     is EelFileSystemWindowsApi -> EelPath.Absolute.OS.WINDOWS
     else -> throw UnsupportedOperationException("Unsupported OS: ${this::class.java}")

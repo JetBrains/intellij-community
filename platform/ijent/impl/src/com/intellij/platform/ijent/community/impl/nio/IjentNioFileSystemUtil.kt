@@ -12,6 +12,7 @@ import com.intellij.util.text.nullize
 import kotlinx.coroutines.Dispatchers
 import java.io.IOException
 import java.nio.file.*
+import kotlin.Throws
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.startCoroutine
@@ -54,7 +55,7 @@ internal fun Path.toEelPath(): EelPath =
 
     isAbsolute -> throw InvalidPathException(toString(), "This path can't be converted to IjentPath")
 
-    else -> EelPath.Relative.parseE(toString())
+    else -> EelPath.Relative.parse(toString())
   }
 
 internal fun <T> fsBlocking(body: suspend () -> T): T = invokeSuspending(body)

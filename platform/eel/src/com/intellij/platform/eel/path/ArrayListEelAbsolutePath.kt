@@ -1,7 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.path
 
-import com.intellij.platform.eel.EelResult
+import kotlin.Throws
+
 
 internal class ArrayListEelAbsolutePath private constructor(
   private val _root: Root,
@@ -33,7 +34,7 @@ internal class ArrayListEelAbsolutePath private constructor(
     root.fileName == other.root.fileName &&
     (0..<other.nameCount).all { getName(it) == other.getName(it) }
 
-  override fun normalizeE(): EelPath.Absolute {
+  override fun normalize(): EelPath.Absolute {
     val result = mutableListOf<String>()
     for (part in parts) {
       when (part) {
@@ -56,7 +57,7 @@ internal class ArrayListEelAbsolutePath private constructor(
     return ArrayListEelAbsolutePath(_root, result)
   }
 
-  override fun resolveE(other: EelPath.Relative): EelPath.Absolute {
+  override fun resolve(other: EelPath.Relative): EelPath.Absolute {
     val result = parts.toMutableList()
     for (index in 0..<other.nameCount) {
       val name = other.getName(index).fileName
@@ -69,7 +70,7 @@ internal class ArrayListEelAbsolutePath private constructor(
     return ArrayListEelAbsolutePath(_root, result)
   }
 
-  override fun getChildE(name: String): EelPath.Absolute {
+  override fun getChild(name: String): EelPath.Absolute {
     val error = checkFileName(name)
     return if (error == null)
       ArrayListEelAbsolutePath(_root, parts + name)
@@ -108,7 +109,7 @@ internal class ArrayListEelAbsolutePath private constructor(
     if (parts.isEmpty()) return EelPath.Relative.EMPTY
 
     require(index in parts.indices) { "$index !in ${parts.indices}" }
-    return EelPath.Relative.buildE(parts[index])
+    return EelPath.Relative.build(parts[index])
   }
 
   override fun endsWith(other: EelPath.Relative): Boolean {
@@ -134,7 +135,7 @@ internal class ArrayListEelAbsolutePath private constructor(
     return nameCount - other.nameCount
   }
 
-  override fun relativizeE(other: EelPath.Absolute): EelPath.Relative {
+  override fun relativize(other: EelPath.Absolute): EelPath.Relative {
     if (root != other.root) {
       throw EelPathException(other.root.toString(), "The other path has a different root")
     }
@@ -155,7 +156,7 @@ internal class ArrayListEelAbsolutePath private constructor(
       result += other.getName(index).fileName
     }
 
-    return EelPath.Relative.buildE(result)
+    return EelPath.Relative.build(result)
   }
 
   override fun equals(other: Any?): Boolean =
