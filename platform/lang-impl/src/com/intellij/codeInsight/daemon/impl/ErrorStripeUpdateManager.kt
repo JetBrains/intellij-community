@@ -1,15 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorMarkupModel
@@ -28,6 +26,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
@@ -36,17 +35,13 @@ private val LOG = logger<ErrorStripeUpdateManager>()
 private val EP_NAME = ExtensionPointName<TrafficLightRendererContributor>("com.intellij.trafficLightRendererContributor")
 
 @Service(Service.Level.PROJECT)
-class ErrorStripeUpdateManager(private val project: Project, coroutineScope: CoroutineScope) {
+class ErrorStripeUpdateManager(private val project: Project, private val coroutineScope: CoroutineScope) {
   init {
     EP_NAME.addChangeListener(coroutineScope) {
-      val psiDocumentManager = PsiDocumentManager.getInstance(project)
-      for (fileEditor in FileEditorManager.getInstance(project).getAllEditors()) {
-        if (fileEditor is TextEditor) {
-          val editor = fileEditor.getEditor()
-          val file = psiDocumentManager.getCachedPsiFile(editor.getDocument())
-          repaintErrorStripePanel(editor, file)
-        }
-      }
+      launchRepaintErrorStripePanel(
+        editors = FileEditorManager.getInstance(project).getAllEditors().mapNotNull { (it as? TextEditor)?.editor },
+        getFileAsCached = true,
+      )
     }
   }
 
@@ -55,6 +50,53 @@ class ErrorStripeUpdateManager(private val project: Project, coroutineScope: Cor
     fun getInstance(project: Project): ErrorStripeUpdateManager = project.service()
   }
 
+  @ApiStatus.Internal
+  fun launchRepaintErrorStripePanel(editors: List<Editor>, getFileAsCached: Boolean) {
+    if (editors.isEmpty() || !project.isInitialized()) {
+      return
+    }
+
+    val models = editors.mapNotNull { it.markupModel as? EditorMarkupModel }
+    if (models.isEmpty()) {
+      return
+    }
+
+    coroutineScope.launch {
+      callRepaintErrorStripePanel(models, getFileAsCached)
+    }
+  }
+
+  @JvmName("launchRepaintErrorStripePanel")
+  internal fun launchRepaintErrorStripePanel(model: EditorMarkupModel, file: PsiFile?) {
+    coroutineScope.launch {
+      asyncRepaintErrorStripePanel(model, file)
+    }
+  }
+
+  private suspend fun callRepaintErrorStripePanel(
+    models: List<EditorMarkupModel>,
+    getFileAsCached: Boolean,
+  ) {
+    val psiDocumentManager = project.serviceAsync<PsiDocumentManager>()
+    for (model in models) {
+      val editor = model.editor.takeIf { !it.isDisposed } ?: continue
+      val file = readAction {
+        val document = editor.getDocument()
+        if (getFileAsCached) psiDocumentManager.getCachedPsiFile(document) else psiDocumentManager.getPsiFile(document)
+      }
+      asyncRepaintErrorStripePanel(model, file)
+    }
+  }
+
+  @ApiStatus.Internal
+  fun launchRepaintErrorStripePanel(editor: Editor, file: PsiFile?) {
+    val model = editor.markupModel as? EditorMarkupModel ?: return
+    coroutineScope.launch {
+      asyncRepaintErrorStripePanel(model, file)
+    }
+  }
+
+  @Deprecated("Use launchRepaintErrorStripePanel(List<Editor>) or launchRepaintErrorStripePanel(Editor, PsiFile) instead")
   @RequiresEdt
   fun repaintErrorStripePanel(editor: Editor, psiFile: PsiFile?) {
     if (!project.isInitialized()) {
@@ -66,23 +108,23 @@ class ErrorStripeUpdateManager(private val project: Project, coroutineScope: Cor
       markup.setErrorPanelPopupHandler(DaemonEditorPopup(project, editor))
       markup.setErrorStripTooltipRendererProvider(DaemonTooltipRendererProvider(project, editor))
       markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().errorStripeMarkMinHeight)
-      if (psiFile != null) {
+      if (psiFile != null && psiFile.isValid) {
         setOrRefreshErrorStripeRenderer(markup, psiFile)
       }
     }
   }
 
-  @ApiStatus.Internal
-  suspend fun asyncRepaintErrorStripePanel(markup: EditorMarkupModel, psiFile: PsiFile?) {
+  internal suspend fun asyncRepaintErrorStripePanel(markup: EditorMarkupModel, psiFile: PsiFile?) {
     if (!project.isInitialized()) {
       return
     }
 
+    val errorStripeMarkMinHeight = serviceAsync<DaemonCodeAnalyzerSettings>().errorStripeMarkMinHeight
     withContext(Dispatchers.EDT) {
       writeIntentReadAction {
         markup.setErrorPanelPopupHandler(DaemonEditorPopup(project, markup.editor))
         markup.setErrorStripTooltipRendererProvider(DaemonTooltipRendererProvider(project, markup.editor))
-        markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().errorStripeMarkMinHeight)
+        markup.setMinMarkHeight(errorStripeMarkMinHeight)
         if (psiFile != null) {
           setOrRefreshErrorStripeRenderer(markup, psiFile)
         }
@@ -156,14 +198,10 @@ private class EssentialHighlightingModeListener : RegistryValueListener {
         return
       }
 
-      val psiDocumentManager = PsiDocumentManager.getInstance(project)
-      val stripeUpdateManager = ErrorStripeUpdateManager.getInstance(project)
-      for (fileEditor in allEditors) {
-        if (fileEditor is TextEditor) {
-          val editor = fileEditor.getEditor()
-          stripeUpdateManager.repaintErrorStripePanel(editor = editor, psiFile = psiDocumentManager.getCachedPsiFile(editor.getDocument()))
-        }
-      }
+      ErrorStripeUpdateManager.getInstance(project).launchRepaintErrorStripePanel(
+        editors = allEditors.mapNotNull { (it as? TextEditor)?.editor },
+        getFileAsCached = true,
+      )
 
       // Run all checks after disabling essential highlighting
       if (!value.asBoolean()) {
