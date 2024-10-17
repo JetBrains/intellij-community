@@ -13,11 +13,13 @@ import com.intellij.util.containers.toMultiMap
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.asJava.toLightElements
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProductionOrTest
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.core.getFqNameByDirectory
@@ -86,6 +88,14 @@ private fun PsiNamedElement.lightIsVisibleTo(usage: PsiElement): Boolean {
     }
 }
 
+private fun KaModule.isFriendDependencyFor(other: KaModule): Boolean {
+        return when (this) {
+            in other.directFriendDependencies,
+            in other.transitiveDependsOnDependencies -> true
+            else -> false
+        }
+    }
+
 /**
  * Check whether the moved external usages are still visible towards their non-physical declaration.
  */
@@ -101,9 +111,13 @@ internal fun checkVisibilityConflictForNonMovedUsages(
                 val usageElement = usageInfo.element ?: return@tryFindConflict null
                 val referencedDeclaration = usageInfo.upToDateReferencedElement as? KtNamedDeclaration ?: return@tryFindConflict null
                 analyze(referencedDeclaration) {
+                    val usageKaModule = usageElement.module?.toKaSourceModuleForProductionOrTest()
+                    val referencedDeclarationKaModule = targetDir.module?.toKaSourceModuleForProductionOrTest()
                     val isVisible = when (referencedDeclaration.symbol.visibility) {
                         KaSymbolVisibility.PRIVATE -> false
-                        KaSymbolVisibility.INTERNAL -> usageElement.module == targetDir.module
+                        KaSymbolVisibility.INTERNAL -> usageElement.module == targetDir.module ||
+                                (referencedDeclarationKaModule != null && usageKaModule != null &&
+                                        referencedDeclarationKaModule.isFriendDependencyFor(usageKaModule))
                         else -> true
                     }
                     if (!isVisible) usageElement.createVisibilityConflict(referencedDeclaration) else null
@@ -154,6 +168,8 @@ fun checkVisibilityConflictsForInternalUsages(
     targetPkg: FqName,
     targetDir: PsiDirectory
 ): MultiMap<PsiElement, String> {
+    val usageKaModule = targetDir.module?.toKaSourceModuleForProductionOrTest()
+
     return topLevelDeclarationsToMove
         .flatMap { it.internalUsageElements() }
         .mapNotNull { refExpr -> (refExpr.internalUsageInfo ?: return@mapNotNull null) }
@@ -164,6 +180,7 @@ fun checkVisibilityConflictsForInternalUsages(
                 val referencedDeclaration = usageInfo.upToDateReferencedElement as? PsiNamedElement ?: return@tryFindConflict null
                 val isVisible = if (referencedDeclaration is KtNamedDeclaration) {
                     analyze(referencedDeclaration) {
+                        val referencedDeclarationKaModule = referencedDeclaration.module?.toKaSourceModuleForProductionOrTest()
                         val symbol = referencedDeclaration.symbol
                         val visibility = if (symbol is KaConstructorSymbol) {
                             (symbol.containingSymbol as? KaClassSymbol)?.let { classSymbol ->
@@ -174,7 +191,9 @@ fun checkVisibilityConflictsForInternalUsages(
                         }
                         when (visibility) {
                             KaSymbolVisibility.PRIVATE -> false
-                            KaSymbolVisibility.INTERNAL -> referencedDeclaration.module == targetDir.module
+                            KaSymbolVisibility.INTERNAL -> referencedDeclaration.module == targetDir.module ||
+                                    (referencedDeclarationKaModule != null && usageKaModule != null &&
+                                            referencedDeclarationKaModule.isFriendDependencyFor(usageKaModule))
                             KaSymbolVisibility.PROTECTED ->  {
                                 val refererSymbol = usageElement.getStrictParentOfType<KtNamedDeclaration>()?.symbol
                                 if (refererSymbol != null) {
