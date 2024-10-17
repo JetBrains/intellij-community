@@ -16,6 +16,7 @@ class TomlFileTypeTest : TomlTestBase() {
     fun `test Cargo lock`() = doTest("Cargo.lock")
     fun `test Cargo toml orig`() = doTest("Cargo.toml.orig")
     fun `test Gopkg lock`() = doTest("Gopkg.lock")
+    fun `test PDM lock file`() = doTest("pdm.lock")
     fun `test Pipfile`() = doTest("Pipfile")
     fun `test Poetry lock file`() = doTest("poetry.lock")
     fun `test Cargo config`() = doTest(".cargo/config")
