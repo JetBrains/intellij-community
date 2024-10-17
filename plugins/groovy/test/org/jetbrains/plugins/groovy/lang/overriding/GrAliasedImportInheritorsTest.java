@@ -1,136 +1,140 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package org.jetbrains.plugins.groovy.lang.overriding
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.overriding;
 
-import com.intellij.psi.search.searches.DirectClassInheritorsSearch
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-@CompileStatic
-class GrAliasedImportInheritorsTest extends LightGroovyTestCase {
+import java.util.Collection;
+import java.util.Iterator;
 
-  void 'test aliased import'() {
-    def iface = myFixture.addClass '''
-package pckg;
+public class GrAliasedImportInheritorsTest extends LightGroovyTestCase {
+  public void test_aliased_import() {
+    PsiClass iface = myFixture.addClass("""
+                                          package pckg;
+                                          public interface MyInterface {}
+                                          """);
 
-public interface MyInterface {}
-'''
-    myFixture.addFileToProject 'a.groovy', """\
-import pckg.MyInterface as Roo
+    myFixture.addFileToProject("a.groovy", """
+      import pckg.MyInterface as Roo
+      
+      class MyClass implements Roo {}
+      enum MyEnum implements Roo {}
+      trait MyTrait implements Roo {}
+      new Roo() {}
+      """);
 
-class MyClass implements Roo {}
-enum MyEnum implements Roo {}
-trait MyTrait implements Roo {}
-new Roo() {}
-"""
-    def inheritors = DirectClassInheritorsSearch.search(iface).findAll()
-    assert inheritors.size() == 4
+    Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search(iface).findAll();
+    assertEquals(4, inheritors.size());
   }
 
-  void 'test aliased import with generics'() {
-    def iface = myFixture.addClass '''
-package pckg;
+  public void test_aliased_import_with_generics() {
+    final PsiClass iface = myFixture.addClass("""
+                                                package pckg;
+                                                public interface MyInterface<T> {}
+                                                """);
 
-public interface MyInterface<T> {}
-'''
-    myFixture.addFileToProject 'a.groovy', """\
-import pckg.MyInterface as Roo
+    myFixture.addFileToProject("a.groovy", """
+      import pckg.MyInterface as Roo
+      
+      class MyClass implements Roo<
+      String> {}
+      enum MyEnum implements Roo<? extends Integer> {}
+      trait MyTrait implements Roo<Long
+      > {}
+      new Roo<Double>() {}
+      """);
 
-class MyClass implements Roo<
-String> {}
-enum MyEnum implements Roo<? extends Integer> {}
-trait MyTrait implements Roo<Long
-> {}
-new Roo<Double>() {}
-"""
-    def inheritors = DirectClassInheritorsSearch.search(iface).findAll()
-    assert inheritors.size() == 4
-    inheritors.each {
-      def type = (it as GrTypeDefinition).getSuperTypes(false).find {
-        it.resolve() == iface
-      }
-      assert type != null
-      def resolveResult = type.resolveGenerics()
-      assert resolveResult.element == iface
-      assert resolveResult.substitutor.substitute(iface.typeParameters.first())
+    Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search(iface).findAll();
+    assertEquals(4, inheritors.size());
+    for (PsiClass inheritor : inheritors) {
+      PsiClassType type = ContainerUtil.find(((GrTypeDefinition)inheritor).getSuperTypes(false), t -> t.resolve() == iface);
+      assertNotNull(type);
+      PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
+      assertEquals(iface, resolveResult.getElement());
+      assertNotNull(resolveResult.getSubstitutor().substitute(iface.getTypeParameters()[0]));
     }
   }
 
-  void 'test aliased import fqn'() {
-    myFixture.addClass '''\
-package foo;
-public interface Foo{}
-'''
-    def iface = myFixture.addClass('''\
-package bar;
-public interface Bar{}
-''')
-    myFixture.addFileToProject 'a.groovy', '''\
-package test
+  public void test_aliased_import_fqn() {
+    myFixture.addClass("""
+                         package foo;
+                         public interface Foo{}
+                         """);
 
-import foo.Foo as Bar
+    PsiClass iface = myFixture.addClass("""
+                                          package bar;
+                                          public interface Bar{}
+                                          """);
 
-new bar.Bar(){}
-'''
-    def inheritors = DirectClassInheritorsSearch.search(iface).findAll()
-    assert inheritors.size() == 1
-    def clazz = inheritors.first()
-    assert clazz
-    assert clazz instanceof GrAnonymousClassDefinition
+    myFixture.addFileToProject("a.groovy", """
+      package test
+      
+      import foo.Foo as Bar
+      
+      new bar.Bar(){}
+      """);
+
+    Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search(iface).findAll();
+    assertEquals(1, inheritors.size());
+
+    Iterator<PsiClass> iterator = inheritors.iterator();
+    assertTrue(iterator.hasNext());
+    PsiClass clazz = iterator.next();
+    assertNotNull(clazz);
+    assertTrue(clazz instanceof GrAnonymousClassDefinition);
   }
 
-  void 'test aliased import redefined in same package'() {
-    def iface = myFixture.addClass('''\
-package foo;
-public interface Foo {}
-''')
-    myFixture.addClass '''\
-package test;
-public class Bar {}
-'''
-    myFixture.addFileToProject 'test/a.groovy', '''\
-package test
+  public void test_aliased_import_redefined_in_same_package() {
+    PsiClass iface = myFixture.addClass("""
+                                          package foo;
+                                          public interface Foo {}
+                                          """);
 
-import foo.Foo as Bar
+    myFixture.addClass("""
+                         package test;
+                         public class Bar {}
+                         """);
 
-new Bar() {} // inherits foo.Foo
-'''
-    def inheritors = DirectClassInheritorsSearch.search(iface).findAll()
-    assert inheritors.size() == 1
-    assert inheritors.first()
+    myFixture.addFileToProject("test/a.groovy", """
+      package test
+      
+      import foo.Foo as Bar
+      
+      new Bar() {} // inherits foo.Foo
+      """);
+
+    Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search(iface).findAll();
+    assertEquals(1, inheritors.size());
+    Iterator<PsiClass> iterator = inheritors.iterator();
+    assertTrue(iterator.hasNext());
+    assertNotNull(iterator.next());
   }
 
-  void 'test aliased import redefined in same file'() {
-    def iface = myFixture.addClass('''\
-package foo;
-public interface Foo {}
-''')
-    myFixture.addFileToProject 'test/a.groovy', '''\
-package test
+  public void test_aliased_import_redefined_in_same_file() {
+    PsiClass iface = myFixture.addClass("""
+                                          package foo;
+                                          public interface Foo {}
+                                          """);
 
-import foo.Foo as Bar
+    myFixture.addFileToProject("test/a.groovy", """
+      package test
+      
+      import foo.Foo as Bar
+      
+      class Bar {}
+      
+      new Bar() {} // inherits foo.Foo
+      """);
 
-class Bar {}
-
-new Bar() {} // inherits foo.Foo
-'''
-    def inheritors = DirectClassInheritorsSearch.search(iface).findAll()
-    assert inheritors.size() == 1
-    assert inheritors.first()
+    Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search(iface).findAll();
+    assertEquals(1, inheritors.size());
+    Iterator<PsiClass> iterator = inheritors.iterator();
+    assertTrue(iterator.hasNext());
+    assertNotNull(iterator.next());
   }
 }
