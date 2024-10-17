@@ -2676,6 +2676,11 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
             runTest("testData/evaluation/multiplatform/inlineFunWithDefaultArgument.kt");
         }
 
+        @TestMetadata("inlineInCommonModule.kt")
+        public void testInlineInCommonModule() throws Exception {
+            runTest("testData/evaluation/multiplatform/inlineInCommonModule.kt");
+        }
+
         @TestMetadata("interface.kt")
         public void testInterface() throws Exception {
             runTest("testData/evaluation/multiplatform/interface.kt");
