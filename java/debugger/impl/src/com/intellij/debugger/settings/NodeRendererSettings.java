@@ -4,7 +4,6 @@ package com.intellij.debugger.settings;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.collections.visualizer.CollectionVisualizerEvaluator;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.JavaValuePresentation;
 import com.intellij.debugger.engine.evaluation.*;
@@ -567,7 +566,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
   }
 
-  private static class ListObjectRenderer extends CompoundReferenceRenderer {
+  private static class ListObjectRenderer extends CollectionReferenceRenderer {
     ListObjectRenderer(NodeRendererSettings rendererSettings, ArrayRenderer arrayRenderer) {
       super(rendererSettings,
             "List",
@@ -575,7 +574,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
             createExpressionArrayChildrenRenderer("toArray()", "!isEmpty()", arrayRenderer));
       setClassName(CommonClassNames.JAVA_UTIL_LIST);
       setIsApplicableChecker(type -> DebuggerUtilsAsync.instanceOf(type, getClassName()));
-      setFullValueEvaluator(CollectionVisualizerEvaluator.createFor(getClassName()));
     }
 
     @Override

@@ -9,7 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import javax.swing.JComponent
 
 interface CollectionVisualizer {
-  fun applicableFor(collectionClass: String): Boolean
+  fun applicableFor(evaluationContext: EvaluationContextImpl, descriptor: ValueDescriptor): Boolean
 
   fun createComponent(
     project: Project,
@@ -21,8 +21,8 @@ interface CollectionVisualizer {
   companion object {
     private val EP_NAME = ExtensionPointName.create<CollectionVisualizer>("com.intellij.debugger.collectionVisualizer")
 
-    fun findApplicable(collectionClass: String): CollectionVisualizer? {
-      return EP_NAME.findFirstSafe { it.applicableFor(collectionClass) }
+    fun findApplicable(evaluationContext: EvaluationContextImpl, descriptor: ValueDescriptor): CollectionVisualizer? {
+      return EP_NAME.findFirstSafe { it.applicableFor(evaluationContext, descriptor) }
     }
   }
 }
