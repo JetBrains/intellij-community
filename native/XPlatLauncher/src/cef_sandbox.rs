@@ -4,13 +4,13 @@ pub struct CefScopedSandboxInfo {
     pub ptr: *mut std::os::raw::c_void,
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 extern "C" {
     pub fn cef_sandbox_info_create() -> *mut std::os::raw::c_void;
     pub fn cef_sandbox_info_destroy(sandbox_info: *mut std::os::raw::c_void);
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 impl CefScopedSandboxInfo {
     #[allow(clippy::new_without_default)]
     pub fn new() -> CefScopedSandboxInfo {
@@ -18,7 +18,7 @@ impl CefScopedSandboxInfo {
     }
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 impl Drop for CefScopedSandboxInfo {
     fn drop(&mut self) {
         unsafe { cef_sandbox_info_destroy(self.ptr); }

@@ -313,7 +313,7 @@ fn get_configuration(is_remote_dev: bool, exe_path: &Path, started_via_remote_de
     }
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 fn init_cef_sandbox(jre_home: &Path, sandbox_subprocess: bool) -> Result<Option<CefScopedSandboxInfo>> {
     debug!("** Initializing CEF sandbox");
     let cef_sandbox = CefScopedSandboxInfo::new();
@@ -338,7 +338,7 @@ fn init_cef_sandbox(jre_home: &Path, sandbox_subprocess: bool) -> Result<Option<
     Ok(Some(cef_sandbox))
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(not(all(target_os = "windows", feature = "cef")))]
 fn init_cef_sandbox(_jre_home: &Path, _sandbox_subprocess: bool) -> Result<Option<CefScopedSandboxInfo>> {
     Ok(None)
 }
@@ -359,7 +359,7 @@ fn get_full_vm_options(configuration: &dyn LaunchConfiguration, _cef_sandbox: &O
     let class_path = configuration.get_class_path()?.join(CLASS_PATH_SEPARATOR);
     vm_options.push(jvm_property!("java.class.path", class_path));
 
-    #[cfg(target_os = "windows")]
+    #[cfg(all(target_os = "windows", feature = "cef"))]
     {
         if let Some(cef_sandbox) = _cef_sandbox {
             vm_options.push(jvm_property!("jcef.sandbox.ptr", format!("{:016X}", cef_sandbox.ptr as usize)));

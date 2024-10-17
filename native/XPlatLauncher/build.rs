@@ -6,14 +6,18 @@
 #[cfg(target_os = "windows")]
 use {
     anyhow::{bail, Context, Result},
+    std::env,
+    std::path::{Path, PathBuf},
+    winresource::WindowsResource,
+};
+
+#[cfg(all(target_os = "windows", feature = "cef"))]
+use {
     reqwest::blocking::Client,
     sha1::{Digest, Sha1},
-    std::env,
     std::fs::File,
     std::io::Read,
-    std::path::{Path, PathBuf},
     std::process::Command,
-    winresource::WindowsResource,
 };
 
 #[cfg(target_os = "windows")]
@@ -34,12 +38,15 @@ fn main() {
     #[cfg(target_os = "windows")]
     {
         cargo!("rerun-if-changed=build.rs");
+        
+        #[cfg(feature = "cef")]
         link_cef().expect("Failed to link with CEF");
+        
         embed_metadata().expect("Failed to embed metadata");
     }
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 fn link_cef() -> Result<()> {
     let cef_version = "122.1.9+gd14e051+chromium-122.0.6261.94";
 
@@ -58,7 +65,7 @@ fn link_cef() -> Result<()> {
     Ok(())
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 pub fn download_cef(version: &str, platform: &str, working_dir: &Path) -> Result<PathBuf> {
     let cef_distribution = &format!("cef_binary_{version}_{platform}_minimal");
 
@@ -93,7 +100,7 @@ pub fn download_cef(version: &str, platform: &str, working_dir: &Path) -> Result
     Ok(extract_dir)
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 fn download_to_file(client: &Client, src: &str, dest: &Path) -> Result<()> {
     fs_remove(dest)?;
 
@@ -114,7 +121,7 @@ fn download_to_file(client: &Client, src: &str, dest: &Path) -> Result<()> {
     Ok(())
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 fn verify_sha1_checksum(file: &Path, expected: &str) -> Result<()> {
     trace!("Verifying checksum of {file:?}");
 
@@ -135,7 +142,7 @@ fn verify_sha1_checksum(file: &Path, expected: &str) -> Result<()> {
     Ok(())
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 fn extract_tar_bz2(archive: &Path, dest: &Path, extract_marker: &Path) -> Result<()> {
     trace!("Will extract {archive:?} to {dest:?}");
 
@@ -204,7 +211,7 @@ fn extract_tar_bz2(archive: &Path, dest: &Path, extract_marker: &Path) -> Result
     Ok(())
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 fn is_7z_available_in_path() -> bool {
     let status = Command::new("7z")
         .arg("--help")
@@ -213,7 +220,7 @@ fn is_7z_available_in_path() -> bool {
     status.is_ok()
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 fn link_cef_sandbox(cef_dir: &Path) -> Result<()> {
     let cef_lib_search_path = &cef_dir.join("Release").canonicalize()?;
     let cef_lib_search_path_string = get_non_unc_string(cef_lib_search_path)?;
@@ -259,7 +266,7 @@ fn link_cef_sandbox(cef_dir: &Path) -> Result<()> {
     Ok(())
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 fn get_file_name(path: &Path) -> Result<String> {
     let result = path.file_name()
         .context(format!("Failed to get filename from {path:?}"))?
@@ -289,7 +296,7 @@ fn embed_metadata() -> Result<()> {
     res.compile().context("Failed to embed resources")
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 fn get_non_unc_string(path: &Path) -> Result<String> {
     let result = path
         .to_str()
@@ -300,7 +307,7 @@ fn get_non_unc_string(path: &Path) -> Result<String> {
     Ok(result)
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 fn fs_remove(path: &Path) -> Result<()> {
     trace!("Will remove {path:?}");
 
