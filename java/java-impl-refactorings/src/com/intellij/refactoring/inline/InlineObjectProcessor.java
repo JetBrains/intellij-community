@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -321,7 +321,7 @@ public final class InlineObjectProcessor extends BaseRefactoringProcessor {
   }
 
   private static boolean isStatelessSuperClass(PsiClassType psiType, Set<PsiClass> checked) {
-    if (TypeUtils.isJavaLangObject(psiType)) return true;
+    if (TypeUtils.isJavaLangObject(psiType) || TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_RECORD, psiType)) return true;
     PsiClass psiClass = psiType.resolve();
     if (psiClass == null || !checked.add(psiClass)) return false;
     PsiMethod[] constructors = psiClass.getConstructors();

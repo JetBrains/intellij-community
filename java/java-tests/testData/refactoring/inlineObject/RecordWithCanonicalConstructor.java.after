@@ -1,0 +1,9 @@
+class RecordWithCompactConstructor {
+  void test() {
+      System.out.println("John");
+  }
+
+  record Person(String name, int age) {
+    Person {}
+  }
+}
