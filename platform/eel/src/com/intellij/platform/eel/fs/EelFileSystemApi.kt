@@ -11,6 +11,15 @@ import com.intellij.platform.eel.path.EelPathError
 import java.nio.ByteBuffer
 import kotlin.Throws
 
+fun EelFileSystemApi.getPathE(string: String, vararg other: String): EelPath.Absolute {
+  return EelPath.Absolute.buildE(listOf(string, *other), when (this) {
+    is EelFileSystemPosixApi -> EelPath.Absolute.OS.UNIX
+    is EelFileSystemWindowsApi -> EelPath.Absolute.OS.WINDOWS
+    else -> throw UnsupportedOperationException("Unsupported OS: ${this::class.java}")
+  })
+}
+
+@Deprecated("Use `getPathE`")
 fun EelFileSystemApi.getPath(string: String, vararg other: String): EelResult<out EelPath.Absolute, EelPathError> {
   return EelPath.Absolute.build(listOf(string, *other), when (this) {
     is EelFileSystemPosixApi -> EelPath.Absolute.OS.UNIX
