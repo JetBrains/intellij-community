@@ -8029,6 +8029,230 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral")
+    public static class CanSimplifyDollarLiteral extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("beforeAndAfterBlockExpression.kt")
+        public void testBeforeAndAfterBlockExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/beforeAndAfterBlockExpression.kt");
+        }
+
+        @TestMetadata("beforeAndAfterEscapeSequence.kt")
+        public void testBeforeAndAfterEscapeSequence() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/beforeAndAfterEscapeSequence.kt");
+        }
+
+        @TestMetadata("beforeAndAfterSimpleNameExpression.kt")
+        public void testBeforeAndAfterSimpleNameExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/beforeAndAfterSimpleNameExpression.kt");
+        }
+
+        @TestMetadata("blockSlashEscapeOnlyFirst.kt")
+        public void testBlockSlashEscapeOnlyFirst() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/blockSlashEscapeOnlyFirst.kt");
+        }
+
+        @TestMetadata("blockSlashEscapingMixed.kt")
+        public void testBlockSlashEscapingMixed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/blockSlashEscapingMixed.kt");
+        }
+
+        @TestMetadata("canEscapeAllBeforeNumber.kt")
+        public void testCanEscapeAllBeforeNumber() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/canEscapeAllBeforeNumber.kt");
+        }
+
+        @TestMetadata("multipleBlockEscapedDollars.kt")
+        public void testMultipleBlockEscapedDollars() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/multipleBlockEscapedDollars.kt");
+        }
+
+        @TestMetadata("multipleSlashEscapedDollars.kt")
+        public void testMultipleSlashEscapedDollars() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/multipleSlashEscapedDollars.kt");
+        }
+
+        @TestMetadata("noPrefixSimplifiableBeforeBlockExpression.kt")
+        public void testNoPrefixSimplifiableBeforeBlockExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/noPrefixSimplifiableBeforeBlockExpression.kt");
+        }
+
+        @TestMetadata("noPrefixSingleQuoteBlockEscape.kt")
+        public void testNoPrefixSingleQuoteBlockEscape() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/noPrefixSingleQuoteBlockEscape.kt");
+        }
+
+        @TestMetadata("noPrefixSingleQuoteBlockEscapeBeforeBacktick.kt")
+        public void testNoPrefixSingleQuoteBlockEscapeBeforeBacktick() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/noPrefixSingleQuoteBlockEscapeBeforeBacktick.kt");
+        }
+
+        @TestMetadata("noPrefixSingleQuoteBlockEscapeBeforeLetter.kt")
+        public void testNoPrefixSingleQuoteBlockEscapeBeforeLetter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/noPrefixSingleQuoteBlockEscapeBeforeLetter.kt");
+        }
+
+        @TestMetadata("noPrefixSingleQuoteBlockEscapeBeforeUnderscore.kt")
+        public void testNoPrefixSingleQuoteBlockEscapeBeforeUnderscore() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/noPrefixSingleQuoteBlockEscapeBeforeUnderscore.kt");
+        }
+
+        @TestMetadata("noPrefixSingleQuoteBlockEscapeNoReplacement.kt")
+        public void testNoPrefixSingleQuoteBlockEscapeNoReplacement() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/noPrefixSingleQuoteBlockEscapeNoReplacement.kt");
+        }
+
+        @TestMetadata("noPrefixSingleQuoteMultipleReplacements.kt")
+        public void testNoPrefixSingleQuoteMultipleReplacements() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/noPrefixSingleQuoteMultipleReplacements.kt");
+        }
+
+        @TestMetadata("noPrefixSingleQuoteSlashEscape.kt")
+        public void testNoPrefixSingleQuoteSlashEscape() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/noPrefixSingleQuoteSlashEscape.kt");
+        }
+
+        @TestMetadata("noPrefixSingleQuoteSlashEscapeBeforeBackticks.kt")
+        public void testNoPrefixSingleQuoteSlashEscapeBeforeBackticks() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/noPrefixSingleQuoteSlashEscapeBeforeBackticks.kt");
+        }
+
+        @TestMetadata("noPrefixSingleQuoteSlashEscapeBeforeLetter.kt")
+        public void testNoPrefixSingleQuoteSlashEscapeBeforeLetter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/noPrefixSingleQuoteSlashEscapeBeforeLetter.kt");
+        }
+
+        @TestMetadata("noPrefixSingleQuoteSlashEscapeBeforeUnderscore.kt")
+        public void testNoPrefixSingleQuoteSlashEscapeBeforeUnderscore() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/noPrefixSingleQuoteSlashEscapeBeforeUnderscore.kt");
+        }
+
+        @TestMetadata("noPrefixSingleQuoteSlashEscapeNoReplacement.kt")
+        public void testNoPrefixSingleQuoteSlashEscapeNoReplacement() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/noPrefixSingleQuoteSlashEscapeNoReplacement.kt");
+        }
+
+        @TestMetadata("noPrefixTripleQuote.kt")
+        public void testNoPrefixTripleQuote() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/noPrefixTripleQuote.kt");
+        }
+
+        @TestMetadata("noPrefixTripleQuoteBeforeBacktick.kt")
+        public void testNoPrefixTripleQuoteBeforeBacktick() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/noPrefixTripleQuoteBeforeBacktick.kt");
+        }
+
+        @TestMetadata("noPrefixTripleQuoteBeforeBlock.kt")
+        public void testNoPrefixTripleQuoteBeforeBlock() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/noPrefixTripleQuoteBeforeBlock.kt");
+        }
+
+        @TestMetadata("noPrefixTripleQuoteBeforeLetter.kt")
+        public void testNoPrefixTripleQuoteBeforeLetter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/noPrefixTripleQuoteBeforeLetter.kt");
+        }
+
+        @TestMetadata("noPrefixTripleQuoteBeforeUnderscore.kt")
+        public void testNoPrefixTripleQuoteBeforeUnderscore() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/noPrefixTripleQuoteBeforeUnderscore.kt");
+        }
+
+        @TestMetadata("noPrefixTripleQuoteMultipleReplacements.kt")
+        public void testNoPrefixTripleQuoteMultipleReplacements() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/noPrefixTripleQuoteMultipleReplacements.kt");
+        }
+
+        @TestMetadata("noPrefixTripleQuoteNonEscapingBackslashes.kt")
+        public void testNoPrefixTripleQuoteNonEscapingBackslashes() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/noPrefixTripleQuoteNonEscapingBackslashes.kt");
+        }
+
+        @TestMetadata("notApplicableBacktickIdentifier.kt")
+        public void testNotApplicableBacktickIdentifier() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/notApplicableBacktickIdentifier.kt");
+        }
+
+        @TestMetadata("notApplicableBlockEscapedAfterDollar.kt")
+        public void testNotApplicableBlockEscapedAfterDollar() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/notApplicableBlockEscapedAfterDollar.kt");
+        }
+
+        @TestMetadata("notApplicableBlockEscapedBeforeDollar.kt")
+        public void testNotApplicableBlockEscapedBeforeDollar() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/notApplicableBlockEscapedBeforeDollar.kt");
+        }
+
+        @TestMetadata("notApplicableCurlyBraces.kt")
+        public void testNotApplicableCurlyBraces() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/notApplicableCurlyBraces.kt");
+        }
+
+        @TestMetadata("notApplicableSlashEscapedAfterDollar.kt")
+        public void testNotApplicableSlashEscapedAfterDollar() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/notApplicableSlashEscapedAfterDollar.kt");
+        }
+
+        @TestMetadata("notApplicableSlashEscapedBeforeDollar.kt")
+        public void testNotApplicableSlashEscapedBeforeDollar() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/notApplicableSlashEscapedBeforeDollar.kt");
+        }
+
+        @TestMetadata("notApplicableUnderscoredIdentifier.kt")
+        public void testNotApplicableUnderscoredIdentifier() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/notApplicableUnderscoredIdentifier.kt");
+        }
+
+        @TestMetadata("prefix4Safe.kt")
+        public void testPrefix4Safe() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/prefix4Safe.kt");
+        }
+
+        @TestMetadata("prefix4SafeLong.kt")
+        public void testPrefix4SafeLong() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/prefix4SafeLong.kt");
+        }
+
+        @TestMetadata("prefix4Unsafe.kt")
+        public void testPrefix4Unsafe() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/prefix4Unsafe.kt");
+        }
+
+        @TestMetadata("singleBlockEscapedDollar.kt")
+        public void testSingleBlockEscapedDollar() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/singleBlockEscapedDollar.kt");
+        }
+
+        @TestMetadata("singleDollarPrefixSingleQuoteMultipleReplacements.kt")
+        public void testSingleDollarPrefixSingleQuoteMultipleReplacements() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/singleDollarPrefixSingleQuoteMultipleReplacements.kt");
+        }
+
+        @TestMetadata("singleDollarPrefixTripleQuoteMultipleReplacements.kt")
+        public void testSingleDollarPrefixTripleQuoteMultipleReplacements() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/singleDollarPrefixTripleQuoteMultipleReplacements.kt");
+        }
+
+        @TestMetadata("singleSlashEscapedDollar.kt")
+        public void testSingleSlashEscapedDollar() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/singleSlashEscapedDollar.kt");
+        }
+
+        @TestMetadata("slashBlockEscapeOnlyFirst.kt")
+        public void testSlashBlockEscapeOnlyFirst() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/slashBlockEscapeOnlyFirst.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)

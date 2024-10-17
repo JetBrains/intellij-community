@@ -16,8 +16,6 @@ val dollarLiteralExpressions: Array<String> = arrayOf(
     "'$'", "\"$\""
 )
 
-private object PrefixedStringTemplateUtils
-
 /**
  * Convert this string template to a new one with the specified interpolation prefix length.
  * The content of the template does not change.
@@ -67,7 +65,7 @@ fun KtStringTemplateExpression.changeInterpolationPrefix(
         if (isDestinationSingleQuoted) {
             factory.createStringTemplate(contentText)
         } else {
-            // hack until KtPsiFactory has a triple-quoted template generation
+            // hack until KtPsiFactory has a triple-quoted template generation, KTIJ-31681
             factory.createExpression("\"\"\"$contentText\"\"\"") as KtStringTemplateExpression
         }
     } else {
@@ -250,7 +248,24 @@ fun KtStringTemplateEntry.unescapeIfPossible(newPrefixLength: Int): KtStringTemp
  * println("\$`"); println("`")
  * ```
  */
-fun KtLiteralStringTemplateEntry.canBeConsideredIdentifierOrBlock(): Boolean {
-    val firstChar = text.firstOrNull() ?: return false
-    return firstChar.isLetter() || firstChar == '_' || firstChar == '{' || firstChar == '`'
+fun KtLiteralStringTemplateEntry.canBeConsideredIdentifierOrBlock(): Boolean =
+    text.firstOrNull()?.canBeStartOfIdentifierOrBlock() == true
+
+fun Char.canBeStartOfIdentifierOrBlock(): Boolean {
+    @Suppress("KotlinConstantConditions") // K2 inspection false positive, `isLetter` returns false for these chars KTIJ-31678
+    return isLetter() || this == '_' || this == '{' || this == '`'
+}
+
+fun KtStringTemplateEntry.isEscapedDollar(): Boolean {
+    return when (this) {
+        is KtEscapeStringTemplateEntry -> {
+            return unescapedValue == "$"
+        }
+
+        is KtBlockStringTemplateEntry -> {
+            expression?.text in dollarLiteralExpressions
+        }
+
+        else -> false
+    }
 }
