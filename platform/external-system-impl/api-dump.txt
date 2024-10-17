@@ -160,11 +160,7 @@ f:com.intellij.openapi.externalSystem.service.ExternalSystemTaskProgressIndicato
 - f:getInstanceOrDefault(com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.externalSystem.service.ExternalSystemTaskProgressIndicatorUpdater
 com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade
 - java.rmi.Remote
-- sf:NULL_OBJECT:com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade
-- a:applyProgressManager(com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager):V
-- a:applySettings(com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings):V
-- a:getResolver():com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver
-- a:getTaskManager():com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager
+- getTaskManager():com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager
 a:com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemRunConfigurationProducer
 - com.intellij.execution.actions.RunConfigurationProducer
 - p:<init>():V
@@ -798,25 +794,8 @@ a:com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewProject
 - p:validateArtifactId(com.intellij.ui.layout.ValidationInfoBuilder):com.intellij.openapi.ui.ValidationInfo
 - p:validateGroupId(com.intellij.ui.layout.ValidationInfoBuilder):com.intellij.openapi.ui.ValidationInfo
 f:com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewProjectWizardStep$Companion
-com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager
-- java.rmi.Remote
-- sf:NULL_OBJECT:com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager
-- a:beforeCancel(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
-- a:onCancel(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
-- a:onEnd(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
-- a:onEnvironmentPrepared(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
-- a:onFailure(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.Exception):V
-- a:onStart(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.String):V
-- a:onStatusChange(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent):V
-- a:onSuccess(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
-- a:onTaskOutput(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.String,Z):V
-com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver
-- java.rmi.Remote
-- sf:NULL_OBJECT:com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver
-- a:resolveProjectInfo(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.String,Z,com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings,com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy):com.intellij.openapi.externalSystem.model.DataNode
 com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager
 - java.rmi.Remote
-- sf:NULL_OBJECT:com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager
 - a:cancelTask(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):Z
 - executeTasks(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.util.List,java.lang.String,com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings,java.lang.String):V
 a:com.intellij.openapi.externalSystem.service.settings.AbstractExternalProjectSettingsControl

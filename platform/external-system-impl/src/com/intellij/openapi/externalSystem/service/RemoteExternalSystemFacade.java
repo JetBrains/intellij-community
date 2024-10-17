@@ -8,6 +8,8 @@ import com.intellij.openapi.externalSystem.service.remote.RawExternalSystemProje
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,9 +25,10 @@ import java.util.Set;
  * The main idea is that we don't want to use it directly from an ide process (to avoid unnecessary heap/perm gen pollution, 
  * memory leaks etc). So, we use it at external process and current class works as a facade to it from ide process.
  */
+@ApiStatus.NonExtendable
 public interface RemoteExternalSystemFacade<S extends ExternalSystemExecutionSettings> extends Remote, ExternalSystemTaskAware {
 
-  /** <a href="http://en.wikipedia.org/wiki/Null_Object_pattern">Null object</a> for {@link RemoteExternalSystemFacade}. */
+  @ApiStatus.Internal
   RemoteExternalSystemFacade<?> NULL_OBJECT = new RemoteExternalSystemFacade<>() {
     @NotNull
     @Override
@@ -37,7 +40,7 @@ public interface RemoteExternalSystemFacade<S extends ExternalSystemExecutionSet
 
     @NotNull
     @Override
-    public RemoteExternalSystemTaskManager<ExternalSystemExecutionSettings> getTaskManager() {
+    public RemoteExternalSystemTaskManager<ExternalSystemExecutionSettings> getTaskManagerImpl() {
       return RemoteExternalSystemTaskManager.NULL_OBJECT;
     }
 
@@ -80,16 +83,26 @@ public interface RemoteExternalSystemFacade<S extends ExternalSystemExecutionSet
    * @throws IllegalStateException  in case of inability to create the service
    */
   @NotNull
+  @ApiStatus.Internal
   RemoteExternalSystemProjectResolver<S> getResolver() throws RemoteException, IllegalStateException;
 
   /**
    * Exposes {@code 'run external system task'} service which works at another process.
    *
    * @return external system build manager
-   * @throws RemoteException  in case of inability to create the service
+   * @throws RemoteException in case of inability to create the service
+   * @deprecated {@link RemoteExternalSystemTaskManager} should never be used in favor of
+   * {@link ExternalSystemUtil#runTask(TaskExecutionSpec)}
    */
   @NotNull
-  RemoteExternalSystemTaskManager<S> getTaskManager() throws RemoteException;
+  @Deprecated(forRemoval = true)
+  default RemoteExternalSystemTaskManager<S> getTaskManager() throws RemoteException {
+    return getTaskManagerImpl();
+  }
+
+  @NotNull
+  @ApiStatus.Internal
+  RemoteExternalSystemTaskManager<S> getTaskManagerImpl() throws RemoteException;
 
   /**
    * Asks remote external system process to apply given settings.
@@ -97,6 +110,7 @@ public interface RemoteExternalSystemFacade<S extends ExternalSystemExecutionSet
    * @param settings            settings to apply
    * @throws RemoteException    in case of unexpected I/O exception during processing
    */
+  @ApiStatus.Internal
   void applySettings(@NotNull S settings) throws RemoteException;
 
   /**
@@ -105,6 +119,7 @@ public interface RemoteExternalSystemFacade<S extends ExternalSystemExecutionSet
    * @param progressManager  progress manager to use
    * @throws RemoteException    in case of unexpected I/O exception during processing
    */
+  @ApiStatus.Internal
   void applyProgressManager(@NotNull RemoteExternalSystemProgressNotificationManager progressManager) throws RemoteException;
 
   /**

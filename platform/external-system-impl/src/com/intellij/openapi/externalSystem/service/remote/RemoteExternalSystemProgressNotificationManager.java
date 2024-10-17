@@ -2,6 +2,7 @@ package com.intellij.openapi.externalSystem.service.remote;
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.rmi.Remote;
@@ -12,6 +13,7 @@ import java.rmi.RemoteException;
  * <p/>
  * Implementations of this interface are expected to be thread-safe.
  */
+@ApiStatus.Internal
 public interface RemoteExternalSystemProgressNotificationManager extends Remote {
 
   RemoteExternalSystemProgressNotificationManager NULL_OBJECT = new RemoteExternalSystemProgressNotificationManager() {

@@ -111,9 +111,9 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
     try {
       var manager = ExternalSystemFacadeManager.getInstance();
       var facade = manager.getFacade(project, projectPath, projectSystemId);
-      var taskManager = facade.getTaskManager();
+      var taskManager = facade.getTaskManagerImpl();
       //noinspection unchecked
-      taskManager.executeTasks(id, myTasksToExecute, projectPath, settings, myJvmParametersSetup);
+      taskManager.executeTasksImpl(id, myTasksToExecute, projectPath, settings, myJvmParametersSetup);
     }
     finally {
       activity.finished();
@@ -124,7 +124,7 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
   protected boolean doCancel() throws Exception {
     var manager = ExternalSystemFacadeManager.getInstance();
     var facade = manager.getFacade(getIdeProject(), getExternalProjectPath(), getExternalSystemId());
-    var taskManager = facade.getTaskManager();
+    var taskManager = facade.getTaskManagerImpl();
     return taskManager.cancelTask(getId());
   }
 

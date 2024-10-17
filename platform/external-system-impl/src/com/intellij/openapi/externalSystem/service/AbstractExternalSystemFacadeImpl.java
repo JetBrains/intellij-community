@@ -3,7 +3,10 @@ package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.execution.rmi.RemoteServer;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
-import com.intellij.openapi.externalSystem.model.task.*;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.service.remote.*;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
@@ -81,7 +84,7 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
 
   @SuppressWarnings("unchecked")
   @Override
-  public @NotNull RemoteExternalSystemTaskManager<S> getTaskManager() {
+  public @NotNull RemoteExternalSystemTaskManager<S> getTaskManagerImpl() {
     try {
       return getService(RemoteExternalSystemTaskManager.class, myTaskManager);
     }
