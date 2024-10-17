@@ -28,6 +28,7 @@ import com.sun.jdi.ObjectReference
 import com.sun.jdi.PrimitiveType
 import com.sun.jdi.Value
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaJavaFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
@@ -43,6 +44,7 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.org.objectweb.asm.Type as AsmType
 
 class K2DfaAssistProvider : DfaAssistProvider {
@@ -153,6 +155,20 @@ class K2DfaAssistProvider : DfaAssistProvider {
                 val pointer = descriptor.pointer
                 analyze(anchor) {
                     val symbol = pointer.restoreSymbol()
+                    if (symbol is KaJavaFieldSymbol && symbol.isStatic) {
+                        val classId = (symbol.containingDeclaration as? KaNamedClassSymbol)?.classId
+                        if (classId != null) {
+                            val declaringClasses = proxy.virtualMachine.classesByName(JvmClassName.byClassId(classId).internalName.replace("/", "."))
+                            if (declaringClasses.size == 1) {
+                                val declaringClass = declaringClasses.first()
+                                val field = DebuggerUtils.findField(declaringClass, symbol.name.identifier)
+                                if (field != null && field.isStatic) {
+                                    return postprocess(declaringClass.getValue(field))
+                                }
+                            }
+                        }
+                        return null
+                    }
                     if (symbol is KaVariableSymbol) {
                         var name = symbol.name.asString()
                         if (inlined) {

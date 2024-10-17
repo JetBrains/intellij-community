@@ -5,6 +5,8 @@ import com.intellij.codeInspection.dataFlow.jvm.descriptors.JvmVariableDescripto
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
@@ -34,7 +36,7 @@ class KtVariableDescriptor(
         when (val result = analyze(module) {
             when (val symbol = pointer.restoreSymbol()) {
                 is KaValueParameterSymbol, is KaEnumEntrySymbol -> return@analyze true
-                is KaPropertySymbol -> return@analyze symbol.isVal
+                is KaPropertySymbol, is KaJavaFieldSymbol -> return@analyze symbol.isVal
                 is KaLocalVariableSymbol -> {
                     if (symbol.isVal) return@analyze true
                     val psiElement = symbol.psi?.parent as? KtElement
@@ -157,6 +159,10 @@ class KtVariableDescriptor(
                 // property in an object: singleton, can track
                 return varFactory.createVariableValue(symbol.variableDescriptor(), null)
             }
+            if (symbol is KaJavaFieldSymbol && symbol.isStatic) {
+                // Java static field, can track
+                return varFactory.createVariableValue(symbol.variableDescriptor(), null)
+            }
             if (symbol.psi?.parent is KtFile) {
                 // top-level declaration
                 return varFactory.createVariableValue(symbol.variableDescriptor(), null)
@@ -195,11 +201,18 @@ class KtVariableDescriptor(
             return qualifier
         }
 
-        private fun isTrackableProperty(target: KaVariableSymbol?) =
+        private fun isTrackableProperty(target: KaVariableSymbol?): Boolean {
+            return isJavaField(target) || isKotlinProperty(target)
+        }
+
+        private fun isKotlinProperty(target: KaVariableSymbol?) =
             target is KaPropertySymbol && target.getter?.isDefault != false && target.setter?.isDefault != false
                     && !target.isDelegatedProperty && target.modality == KaSymbolModality.FINAL
                     && !target.isExtension
                     && target.backingFieldSymbol?.annotations?.contains(JvmStandardClassIds.VOLATILE_ANNOTATION_CLASS_ID) == false
+
+        private fun isJavaField(target: KaVariableSymbol?) =
+            target is KaJavaFieldSymbol && (target.psi as? PsiField)?.hasModifierProperty(PsiModifier.VOLATILE) == false
     }
 }
 

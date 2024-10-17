@@ -540,6 +540,20 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
         }
     }
 
+    fun testJavaStaticField() {
+        val text = """
+            import java.io.File
+            
+            fun main() {
+              <caret>sideEffect()
+              if (File.separator == "!"/*FALSE*/) /*unreachable_start*/{
+                println("unexpected")
+              }/*unreachable_end*/
+            }
+        """.trimIndent()
+        doTest(text) { _, _ -> }
+    }
+
     private fun doTest(text: String, mockValues: BiConsumer<MockVirtualMachine, MockStackFrame>) {
         doTest(text, mockValues, "Test.kt")
     }
