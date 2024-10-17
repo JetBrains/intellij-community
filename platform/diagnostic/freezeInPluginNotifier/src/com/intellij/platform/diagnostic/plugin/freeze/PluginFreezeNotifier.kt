@@ -8,6 +8,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
@@ -21,6 +22,8 @@ internal class PluginFreezeNotifier : EditorNotificationProvider {
   private val freezeStorageService = PluginsFreezesService.getInstance()
 
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
+    if (!Registry.get("ide.diagnostics.notification.freezes.in.plugins").asBoolean()) return null
+
     val frozenPlugin = freezeWatcher.getFreezeReason() ?: return null
     val pluginDescriptor = PluginManagerCore.getPlugin(frozenPlugin) ?: return null
     val application = ApplicationManager.getApplication()
