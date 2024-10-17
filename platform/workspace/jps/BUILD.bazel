@@ -1,11 +1,11 @@
 ### auto-generated section `build` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 java_library(
   name = "resources",
-  resources = glob(["resources/**/*"])
+  resources = glob(["resources/**/*"], allow_empty=True, exclude = ["**/module-info.java"])
 )
 
 create_kotlinc_options(
@@ -18,7 +18,7 @@ kt_jvm_library(
   name = "workspace-jps",
   module_name = "intellij.platform.workspace.jps",
   visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j11",
   kotlinc_opts = ":custom",
   deps = [

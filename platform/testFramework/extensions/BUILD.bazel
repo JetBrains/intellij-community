@@ -1,0 +1,35 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"], allow_empty=True, exclude = ["**/module-info.java"])
+)
+
+kt_jvm_library(
+  name = "testExtensions",
+  module_name = "intellij.platform.testExtensions",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@community//platform/util",
+    "@community//platform/testFramework",
+    "@community//platform/util/jdom:util-jdom",
+    "@libraries//:memoryfilesystem",
+    "@libraries//:assertj-core",
+    "@libraries//:snakeyaml",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/core-ui",
+    "@libraries//:junit-jupiter-api",
+  ],
+  exports = [
+    "@libraries//:memoryfilesystem",
+    "@libraries//:assertj-core",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

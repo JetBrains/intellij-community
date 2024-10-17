@@ -1,0 +1,23 @@
+### auto-generated section `build` start
+load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  x_optin = ["kotlin.time.ExperimentalTime"]
+)
+
+kt_jvm_library(
+  name = "tools-ide-util-common",
+  module_name = "intellij.tools.ide.util.common",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = ":custom",
+  deps = [
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@libraries//:kotlin-stdlib",
+  ]
+)
+### auto-generated section `build` end

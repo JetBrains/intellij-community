@@ -4,14 +4,14 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 java_library(
   name = "resources",
-  resources = glob(["resources/**/*"])
+  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
 )
 
 kt_jvm_library(
   name = "groovy-jps",
   module_name = "intellij.groovy.jps",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
   javac_opts = "//:j11",
   kotlinc_opts = "//:k11",
   deps = [

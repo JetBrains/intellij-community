@@ -1,0 +1,23 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "vcs-log",
+  module_name = "intellij.platform.vcs.log",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/util-rt",
+    "@community//platform/vcs-log/graph-api:vcs-log-graph",
+    "@community//platform/core-api:core",
+    "@community//platform/vcs-api/vcs-api-core:vcs-core",
+    "@community//platform/editor-ui-api:editor",
+    "@community//platform/vcs-api:vcs",
+    "@libraries//:kotlin-stdlib",
+    "@community//platform/core-ui",
+  ],
+  exports = ["@community//platform/vcs-log/graph-api:vcs-log-graph"]
+)
+### auto-generated section `build` end

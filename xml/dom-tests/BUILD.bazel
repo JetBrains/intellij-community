@@ -1,0 +1,17 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+kt_jvm_test(
+  name = "xml-dom-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//java/java-impl",
+    "@libraries//:assertj-core",
+    "@community//tools/intellij.tools.ide.metrics.benchmark:tools-ide-metrics-benchmark",
+    "@community//platform/libraries/cglib:libraries-cglib",
+  ]
+)
+### auto-generated section `build` end

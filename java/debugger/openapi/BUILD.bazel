@@ -1,0 +1,33 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+)
+
+kt_jvm_library(
+  name = "java-debugger",
+  module_name = "intellij.java.debugger",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//java/execution/openapi:java-execution",
+    "@community//java/jsp-openapi:jsp",
+    "@community//java/java-psi-api:java-psi",
+    "@community//resources-en:java-resources-en",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/platform-api:ide",
+    "@community//platform/lang-api:lang",
+    "@community//platform/xdebugger-api:debugger",
+    "@community//platform/core-ui",
+    "@community//platform/platform-util-io:ide-util-io",
+    "@libraries//:kotlin-stdlib",
+  ],
+  exports = ["@community//platform/xdebugger-api:debugger"],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

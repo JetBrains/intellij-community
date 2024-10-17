@@ -1,0 +1,61 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+)
+
+java_library(
+  name = "compatibilityResources",
+  resources = glob(["compatibilityResources/**/*"], exclude = ["**/module-info.java"])
+)
+
+kt_jvm_library(
+  name = "java",
+  module_name = "intellij.java",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/util",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/forms_rt:java-guiForms-rt",
+    "@community//platform/extensions",
+    "@community//platform/icons",
+    "@community//xml/openapi:xml",
+    "@community//platform/platform-api:ide",
+    "@community//platform/lang-api:lang",
+    "@community//platform/vcs-api:vcs",
+    "@community//xml/dom-openapi:xml-dom",
+    "@community//resources-en:java-resources-en",
+    "@community//java/java-psi-api:java-psi",
+    "@community//java/java-indexing-api:java-indexing",
+    "@community//java/java-analysis-api:java-analysis",
+    "@community//platform/util/ui:util-ui",
+    "@community//platform/core-ui",
+    "@community//platform/external-system-api:externalSystem",
+    "@community//platform/workspace/jps:workspace-jps",
+    "@community//platform/backend/workspace:backend-workspace",
+    "@libraries//:kotlin-stdlib",
+  ],
+  exports = [
+    "@community//platform/util",
+    "@community//platform/extensions",
+    "@community//xml/openapi:xml",
+    "@community//platform/platform-api:ide",
+    "@community//platform/lang-api:lang",
+    "@community//platform/vcs-api:vcs",
+    "@community//resources-en:java-resources-en",
+    "@community//java/java-psi-api:java-psi",
+    "@community//java/java-indexing-api:java-indexing",
+    "@community//java/java-analysis-api:java-analysis",
+  ],
+  runtime_deps = [
+    ":resources",
+    ":compatibilityResources",
+  ]
+)
+### auto-generated section `build` end

@@ -51,6 +51,16 @@ internal class Target(private val type: String) : Renderable {
     option("visibility", targets)
   }
 
+  internal fun glob(list: List<String>, exclude: List<String> = listOf("**/module-info.java")) = object : Renderable {
+    override fun render(): String {
+      val excluded = exclude.takeIf { it.isNotEmpty() }?.joinToString(",\n    ") { formatValue(it) }?.let {
+        ", exclude = [$it]"
+      }.orEmpty()
+      // allow_empty - avoid detection of whether we have Kotlin/Java files or not
+      return "glob([${list.joinToString(", ") { formatValue(it) }}], allow_empty = True$excluded)"
+    }
+  }
+
   override fun render(): String {
     val renderedAttributes = attributes.map { (key, value) ->
       "  $key = ${formatValue(value)}"
@@ -86,11 +96,5 @@ private fun formatValue(value: Any?): String {
     false -> "False"
     is Renderable -> value.render()
     else -> value.toString()
-  }
-}
-
-internal fun Target.glob(list: List<String>) = object : Renderable {
-  override fun render(): String {
-    return "glob([" + list.joinToString(", ") { "\"$it\"" } + "])"
   }
 }

@@ -1,0 +1,9 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+  name = "java-resources",
+  visibility = ["//visibility:public"],
+  resources = glob(["src/**/*"], exclude = ["**/module-info.java"])
+)
+### auto-generated section `build` end

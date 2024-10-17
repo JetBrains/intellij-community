@@ -1,0 +1,19 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "uast-ide",
+  module_name = "intellij.platform.uast.ide",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/lang-api:lang",
+    "@community//platform/platform-impl:ide-impl",
+    "@community//uast/uast-common:uast",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:streamex",
+  ]
+)
+### auto-generated section `build` end

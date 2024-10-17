@@ -1,0 +1,78 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+)
+
+kt_jvm_library(
+  name = "vcs-impl",
+  module_name = "intellij.platform.vcs.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@community//platform/vcs-api:vcs",
+    "@community//platform/platform-api:ide",
+    "@community//platform/platform-impl:ide-impl",
+    "@community//platform/lang-api:lang",
+    "@community//jps/model-serialization:jps-model-serialization",
+    "@libraries//:guava",
+    "@community//platform/lang-impl",
+    "@libraries//:gson",
+    "@community//platform/diff-impl",
+    "@community//platform/vcs-log/api:vcs-log",
+    "@libraries//:swingx-core",
+    "@libraries//:miglayout-swing",
+    "@libraries//:streamex",
+    "@community//platform/statistics",
+    "@community//platform/util",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/core-ui",
+    "@community//platform/built-in-server:builtInServer-impl",
+    "@community//platform/editor-ui-ex:editor-ex",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@community//platform/code-style-impl:codeStyle-impl",
+    "@community//platform/platform-util-io-impl:ide-util-io-impl",
+    "@libraries//:caffeine",
+    "@community//platform/workspace/storage:workspace-storage",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
+    "@community//platform/analysis-impl",
+    "@community//platform/ide-core-impl",
+    "@libraries//:opentelemetry-sdk",
+    "@libraries//:opentelemetry-semconv",
+    "@community//platform/workspace/jps:workspace-jps",
+    "@community//platform/backend/workspace:backend-workspace",
+    "@community//platform/diagnostic",
+    "@community//platform/util/ui:util-ui",
+    "@community//platform/util/coroutines:util-coroutines",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@libraries//:kotlinx-serialization-json-jvm",
+    "@community//libraries/microba:libraries-microba",
+  ],
+  exports = ["@community//platform/vcs-api:vcs"],
+  runtime_deps = [":resources"]
+)
+
+kt_jvm_test(
+  name = "vcs-impl_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    ":vcs-impl",
+    "@community//platform/testFramework",
+    "@community//platform/testFramework/junit5:testFramework-junit5",
+    "@community//tools/intellij.tools.ide.metrics.benchmark:tools-ide-metrics-benchmark",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

@@ -1,0 +1,16 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+kt_jvm_test(
+  name = "jps-model-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["**/*.kt", "**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/testFramework",
+    "@libraries//:assertj-core",
+    "@community//platform/testFramework/extensions:testExtensions",
+  ]
+)
+### auto-generated section `build` end

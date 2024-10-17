@@ -1,0 +1,96 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"], allow_empty=True, exclude = ["**/module-info.java"])
+)
+
+kt_jvm_library(
+  name = "testFramework",
+  module_name = "intellij.platform.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/lang-api:lang",
+    "@community//platform/lang-impl",
+    "@community//platform/execution-impl",
+    "@community//platform/editor-ui-ex:editor-ex",
+    "@libraries//:junit",
+    "@community//platform/platform-impl:ide-impl",
+    "@community//platform/testFramework/bootstrap:tools-testsBootstrap",
+    "@community//platform/analysis-impl",
+    "@community//java/java-runtime:java-rt",
+    "@libraries//:kotlin-stdlib",
+    "@community//platform/boot",
+    "@libraries//:jetCheck",
+    "@community//platform/testFramework/core:testFramework-core",
+    "@community//platform/service-container:serviceContainer",
+    "@community//platform/workspace/jps:workspace-jps",
+    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
+    "@community//platform/workspace/storage:workspace-storage",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@community//platform/util-class-loader:util-classLoader",
+    "@community//platform/core-ui",
+    "@community//platform/code-style-impl:codeStyle-impl",
+    "@community//platform/platform-util-io:ide-util-io",
+    "@community//platform/platform-util-io-impl:ide-util-io-impl",
+    "@community//platform/platform-util-netty:ide-util-netty",
+    "@libraries//:junit-platform-launcher.provided",
+    "@libraries//:junit-jupiter-api.provided",
+    "@libraries//:junit-jupiter-params.provided",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/testFramework/common:testFramework-common",
+    "@community//platform/backend/workspace:backend-workspace",
+    "@community//platform/util/coroutines:util-coroutines",
+    "@libraries//:assertj-core",
+  ],
+  exports = [
+    "@community//platform/lang-api:lang",
+    "@community//platform/lang-impl",
+    "@community//platform/execution-impl",
+    "@libraries//:junit",
+    "@community//platform/platform-impl:ide-impl",
+    "@community//java/java-runtime:java-rt",
+    "@community//xml/dom-impl:xml-dom-impl",
+    "@community//images",
+    "@community//RegExpSupport:regexp",
+    "@libraries//:jetCheck",
+    "@community//platform/testFramework/core:testFramework-core",
+    "@community//platform/core-ui",
+    "@libraries//:junit-jupiter-api.provided",
+    "@libraries//:junit-jupiter-params.provided",
+    "@community//platform/testFramework/common:testFramework-common",
+  ],
+  runtime_deps = [
+    ":resources",
+    "@community//resources-en:java-resources-en",
+    "@community//xml/dom-impl:xml-dom-impl",
+    "@community//images",
+    "@community//RegExpSupport:regexp",
+  ]
+)
+
+kt_jvm_test(
+  name = "testFramework_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    ":testFramework",
+    "@libraries//:jackson-core",
+    "@libraries//:jackson-databind",
+    "@libraries//:jackson-module-kotlin",
+    "@libraries//:httpmime",
+    "@libraries//:mockwebserver",
+    "@libraries//:okhttp",
+    "@community//platform/testFramework/junit5:testFramework-junit5",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

@@ -1,6 +1,6 @@
 ### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_javac_options(
   name = "custom-javac-options",
@@ -16,7 +16,7 @@ kt_jvm_library(
   name = "ui-jcef",
   module_name = "intellij.platform.ui.jcef",
   visibility = ["//visibility:public"],
-  srcs = glob(["jcef/**/*.kt", "jcef/**/*.java"]),
+  srcs = glob(["jcef/**/*.kt", "jcef/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
   javac_opts = ":custom-javac-options",
   kotlinc_opts = "//:k17",
   deps = [

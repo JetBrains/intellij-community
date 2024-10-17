@@ -1,0 +1,23 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "libraries-cglib",
+  module_name = "intellij.libraries.cglib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@libraries//:cglib-nodep",
+    "@community//platform/util/base:util-base",
+    "@community//platform/util-rt",
+    "@community//platform/util",
+    "@community//platform/core-api:core",
+    "@community//platform/core-impl",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/util-class-loader:util-classLoader",
+  ],
+  exports = ["@libraries//:cglib-nodep"]
+)
+### auto-generated section `build` end

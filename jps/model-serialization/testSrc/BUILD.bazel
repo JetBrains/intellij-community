@@ -1,0 +1,17 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+kt_jvm_test(
+  name = "jps-model-serialization-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["**/*.kt", "**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/testFramework/junit5:testFramework-junit5",
+    "@community//jps/model-impl/testSrc:jps-model-tests",
+    "@community//platform/testFramework/extensions:testExtensions",
+    "@community//platform/util/jdom:util-jdom",
+  ]
+)
+### auto-generated section `build` end

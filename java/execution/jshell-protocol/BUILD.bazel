@@ -1,0 +1,25 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+kt_jvm_library(
+  name = "java-jshell-protocol",
+  module_name = "intellij.java.jshell.protocol",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j11",
+  kotlinc_opts = "//:k11"
+)
+
+kt_jvm_test(
+  name = "java-jshell-protocol_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testStrc/**/*.kt", "testStrc/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j11",
+  kotlinc_opts = "//:k11",
+  deps = [
+    ":java-jshell-protocol",
+    "@libraries//:junit",
+  ]
+)
+### auto-generated section `build` end

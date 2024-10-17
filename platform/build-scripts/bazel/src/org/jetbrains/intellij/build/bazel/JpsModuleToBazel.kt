@@ -32,6 +32,7 @@ class JpsModuleToBazel {
       generator.addModuleToQueue(nameToModule.getValue("intellij.platform.buildScripts"))
       generator.addModuleToQueue(nameToModule.getValue("intellij.platform.buildScripts.bazel"))
       generator.addModuleToQueue(nameToModule.getValue("intellij.platform.images"))
+      generator.addModuleToQueue(nameToModule.getValue("intellij.tools.ide.metrics.benchmark"))
       generator.addModuleToQueue(nameToModule.getValue("intellij.xml.impl"))
       generator.generate()
 
@@ -55,7 +56,7 @@ class JpsModuleToBazel {
 private fun generateCommunityLibraryBuild(projectDir: Path, generator: BazelBuildFileGenerator) {
   val bazelFileUpdater = BazelFileUpdater(projectDir.resolve("community/build/libraries/BUILD.bazel"))
   buildFile(bazelFileUpdater, "maven-libraries") {
-    for (lib in generator.libs.sortedBy { it.targetName }) {
+    for (lib in generator.libs.groupBy { it.targetName }.flatMap { (_, values) -> listOf(values.maxByOrNull { it.targetName }!!) }) {
       if (lib.targetName == "bifurcan" || lib.targetName == "kotlinx-collections-immutable-jvm") {
         continue
       }
@@ -105,7 +106,6 @@ private data class Library(
 private class BazelBuildFileGenerator(
   private val projectDir: Path,
   project: JpsProject,
-  private val productionOnly: Boolean = true,
 ) {
   private val javaExtensionService = JpsJavaExtensionService.getInstance()
   private val projectJavacSettings = javaExtensionService.getCompilerConfiguration(project)
@@ -159,8 +159,13 @@ private class BazelBuildFileGenerator(
     val contentRoot = moduleDescriptor.contentRoot
     val fileUpdater = BazelFileUpdater(contentRoot.resolve("BUILD.bazel"))
     buildFile(fileUpdater, "build") {
-      val sources = computeSources(module, contentRoot, JavaSourceRootType.SOURCE)
+      val sources = computeSources(module = module, contentRoot = contentRoot, type = JavaSourceRootType.SOURCE)
       val resources = module.sourceRoots.filter { it.rootType == JavaResourceRootType.RESOURCE }
+
+      val testSources = computeSources(module = module, contentRoot = contentRoot, type = JavaSourceRootType.TEST_SOURCE)
+      //todo testResources
+      @Suppress("UnusedVariable", "unused")
+      val testResources = module.sourceRoots.filter { it.rootType == JavaResourceRootType.TEST_RESOURCE }
 
       val resourceDependencies = mutableListOf<String>()
 
@@ -169,19 +174,19 @@ private class BazelBuildFileGenerator(
         generateResources(resources = resources, isResourceOnly = isResourceOnly, module = module, resourceDependencies = resourceDependencies, contentRoot = contentRoot)
       }
 
+      val libraryTargetName = jpsModuleNameToBazelBuildName(module)
+      val jvmTarget = getLanguageLevel(module)
+      val kotlincOptionsLabel = computeKotlincOptions(module = module, jvmTarget = jvmTarget) ?: "//:k$jvmTarget"
+      val javacOptionsLabel = computeJavacOptions(module, jvmTarget) ?: "//:j$jvmTarget"
+
       if (!isResourceOnly) {
         load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
         target("kt_jvm_library") {
-          option("name", jpsModuleNameToBazelBuildName(module))
+          option("name", libraryTargetName)
           option("module_name", module.name)
           visibility(arrayOf("//visibility:public"))
           option("srcs", glob(sources))
-
-          val jvmTarget = getLanguageLevel(module)
-          var kotlincOptionsLabel = computeKotlincOptions(module = module, jvmTarget = jvmTarget) ?: "//:k$jvmTarget"
-          var javacOptionsLabel = computeJavacOptions(module, jvmTarget) ?: "//:j$jvmTarget"
-
           option("javac_opts", javacOptionsLabel)
           option("kotlinc_opts", kotlincOptionsLabel)
 
@@ -189,9 +194,19 @@ private class BazelBuildFileGenerator(
         }
       }
 
-      if (resources.isEmpty() && sources.isEmpty()) {
-        //todo support generation for test-only modules
-        return
+      if (testSources.isNotEmpty()) {
+        load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+        target("kt_jvm_test") {
+          option("name", libraryTargetName + "_test")
+          visibility(arrayOf("//visibility:public"))
+          option("srcs", glob(testSources))
+          option("javac_opts", javacOptionsLabel)
+          option("kotlinc_opts", kotlincOptionsLabel)
+
+          val additionalDeps = if (isResourceOnly) emptyList() else listOf(":$libraryTargetName")
+          generateDeps(module = module, resourceDependencies = resourceDependencies, additionalDeps = additionalDeps, isTest = true)
+        }
       }
     }
     fileUpdater.save()
@@ -301,15 +316,21 @@ private class BazelBuildFileGenerator(
     val languageLevel = javaExtensionService.getLanguageLevel(module)
     return when {
       languageLevel == LanguageLevel.JDK_1_7 || languageLevel == LanguageLevel.JDK_1_8 -> "8"
-      languageLevel == LanguageLevel.JDK_11 -> "11"
+      languageLevel == LanguageLevel.JDK_1_9 || languageLevel == LanguageLevel.JDK_11 -> "11"
       languageLevel == LanguageLevel.JDK_17 -> "17"
       languageLevel != null -> error("Unsupported language level: $languageLevel")
       else -> "17"
     }
   }
 
-  private fun Target.generateDeps(module: JpsModule, resourceDependencies: List<String>) {
+  private fun Target.generateDeps(
+    module: JpsModule,
+    resourceDependencies: List<String>,
+    isTest: Boolean = false,
+    additionalDeps: List<String> = emptyList(),
+  ) {
     val deps = ArrayList<String>()
+    deps.addAll(additionalDeps)
     val exports = mutableListOf<String>()
     val runtimeDeps = mutableListOf<String>()
 
@@ -318,22 +339,14 @@ private class BazelBuildFileGenerator(
     for (element in module.dependenciesList.dependencies) {
       val dependencyExtension = javaExtensionService.getDependencyExtension(element) ?: continue
       val scope = dependencyExtension.scope
-      if (productionOnly && !isProductionRuntime(withTests = false, scope = scope)) {
-        continue
-      }
 
       if (element is JpsModuleDependency) {
         val dependency = element.moduleReference.resolve()!!
         // todo runtime dependency (getBazelDependencyLabel() is null only because fake "main" modules do not have content roots, and we don't know where to create BUILD file)
         val label = getBazelDependencyLabel(dependency) ?: continue
-        if (scope == JpsJavaDependencyScope.RUNTIME) {
-          runtimeDeps.add(label)
-        }
-        else {
-          deps.add(label)
-        }
+        addDep(isTest = isTest, scope = scope, deps = deps, libLabel = label, runtimeDeps = runtimeDeps)
         addModuleToQueue(dependency)
-        if (dependencyExtension.isExported) {
+        if (dependencyExtension.isExported && !isTest) {
           exports.add(label)
         }
       }
@@ -342,7 +355,10 @@ private class BazelBuildFileGenerator(
         val library = untypedLib.asTyped(JpsRepositoryLibraryType.INSTANCE)
         if (library == null) {
           val targetName = untypedLib.name.lowercase()
-          deps.add("@community//lib:$targetName")
+          // todo module-level libs
+          if (!targetName.startsWith('#')) {
+            deps.add("@community//lib:$targetName")
+          }
           continue
         }
 
@@ -356,14 +372,9 @@ private class BazelBuildFileGenerator(
         }
 
         val libLabel = "@libraries//:$targetName"
-        if (scope == JpsJavaDependencyScope.RUNTIME) {
-          runtimeDeps.add(libLabel)
-        }
-        else {
-          deps.add(libLabel)
-        }
+        addDep(isTest = isTest, scope = scope, deps = deps, libLabel = libLabel, runtimeDeps = runtimeDeps)
 
-        if (dependencyExtension.isExported) {
+        if (dependencyExtension.isExported && !isTest) {
           exports.add(libLabel)
         }
 
@@ -384,7 +395,6 @@ private class BazelBuildFileGenerator(
       }
     }
 
-
     if (deps.isNotEmpty()) {
       option("deps", deps)
     }
@@ -395,12 +405,27 @@ private class BazelBuildFileGenerator(
       option("runtime_deps", runtimeDeps)
     }
   }
+}
 
-  private fun isProductionRuntime(withTests: Boolean, scope: JpsJavaDependencyScope): Boolean {
-    if (withTests && scope.isIncludedIn(JpsJavaClasspathKind.TEST_RUNTIME)) {
-      return true
+private fun addDep(
+  isTest: Boolean,
+  scope: JpsJavaDependencyScope,
+  deps: ArrayList<String>,
+  libLabel: String,
+  runtimeDeps: MutableList<String>,
+) {
+  when {
+    isTest -> {
+      if (scope == JpsJavaDependencyScope.TEST) {
+        deps.add(libLabel)
+      }
     }
-    return scope.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) || scope.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_COMPILE)
+    scope == JpsJavaDependencyScope.RUNTIME -> {
+      runtimeDeps.add(libLabel)
+    }
+    scope == JpsJavaDependencyScope.COMPILE || scope == JpsJavaDependencyScope.PROVIDED -> {
+      deps.add(libLabel)
+    }
   }
 }
 

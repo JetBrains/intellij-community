@@ -1,0 +1,21 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "java-execution",
+  module_name = "intellij.java.execution",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//java/openapi:java",
+    "@community//resources:java-resources",
+    "@libraries//:kotlin-stdlib",
+    "@community//platform/util/concurrency",
+    "@community//platform/util/ui:util-ui",
+    "@community//platform/core-ui",
+    "@community//platform/platform-util-io:ide-util-io",
+  ]
+)
+### auto-generated section `build` end

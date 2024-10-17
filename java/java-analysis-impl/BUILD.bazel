@@ -1,0 +1,50 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+)
+
+kt_jvm_library(
+  name = "java-analysis-impl",
+  module_name = "intellij.java.analysis.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/analysis-impl",
+    "@community//java/java-indexing-impl",
+    "@community//java/java-psi-impl",
+    "@community//platform/projectModel-impl",
+    "@community//java/java-analysis-api:java-analysis",
+    "@community//resources-en:java-resources-en",
+    "@community//xml/xml-psi-impl",
+    "@community//platform/platform-api:ide",
+    "@libraries//:asm-all",
+    "@libraries//:streamex",
+    "@libraries//:kotlin-stdlib",
+    "@community//java/openapi:java",
+    "@community//platform/util/ui:util-ui",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/workspace/storage:workspace-storage",
+    "@libraries//:icu4j",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/workspace/jps:workspace-jps",
+    "@community//platform/backend/workspace:backend-workspace",
+    "@community//java/java-frontback-impl",
+    "@community//platform/editor-ui-ex:editor-ex",
+  ],
+  exports = [
+    "@community//platform/analysis-impl",
+    "@community//java/java-indexing-impl",
+    "@community//java/java-psi-impl",
+    "@community//platform/projectModel-impl",
+    "@community//java/java-analysis-api:java-analysis",
+    "@community//java/java-frontback-impl",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

@@ -1,0 +1,63 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+)
+
+kt_jvm_library(
+  name = "inspect",
+  module_name = "intellij.platform.inspect",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@community//platform/core-api:core",
+    "@community//platform/extensions",
+    "@community//platform/analysis-api:analysis",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/analysis-impl",
+    "@community//platform/vcs-api/vcs-api-core:vcs-core",
+    "@community//platform/platform-impl:ide-impl",
+    "@community//platform/diff-api:diff",
+    "@community//platform/vcs-api:vcs",
+    "@libraries//:streamex",
+    "@community//platform/diff-impl",
+    "@community//platform/boot",
+    "@libraries//:cli-parser",
+    "@community//platform/platform-util-io:ide-util-io",
+    "@libraries//:snakeyaml",
+    "@community//platform/ide-core-impl",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@libraries//:jackson-databind",
+    "@libraries//:jsoup",
+    "@libraries//:jackson-core",
+    "@libraries//:kotlinx-serialization-json-jvm",
+    "@libraries//:kotlinx-serialization-core-jvm",
+  ],
+  exports = [
+    "@community//platform/core-api:core",
+    "@community//platform/extensions",
+  ],
+  runtime_deps = [":resources"]
+)
+
+kt_jvm_test(
+  name = "inspect_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    ":inspect",
+    "@community//platform/testFramework",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

@@ -1,17 +1,18 @@
 ### auto-generated section `build` start
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
 java_library(
   name = "resources",
-  resources = glob(["resources/**/*"])
+  resources = glob(["resources/**/*"], allow_empty=True, exclude = ["**/module-info.java"])
 )
 
 kt_jvm_library(
   name = "ijent",
   module_name = "intellij.platform.ijent",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   deps = [
@@ -21,6 +22,20 @@ kt_jvm_library(
     "@community//platform/eel",
   ],
   exports = ["@community//platform/eel"],
+  runtime_deps = [":resources"]
+)
+
+kt_jvm_test(
+  name = "ijent_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    ":ijent",
+    "@libraries//:junit-jupiter-api",
+    "@libraries//:kotest-assertions-core-jvm",
+  ],
   runtime_deps = [":resources"]
 )
 ### auto-generated section `build` end

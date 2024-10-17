@@ -1,0 +1,53 @@
+### auto-generated section `build` start
+load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  x_optin = ["kotlin.time.ExperimentalTime"]
+)
+
+kt_jvm_library(
+  name = "tools-ide-metrics-collector",
+  module_name = "intellij.tools.ide.metrics.collector",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = ":custom",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@community//platform/core-api:core",
+    "@libraries//:jackson-core",
+    "@libraries//:jackson-databind",
+    "@libraries//:jackson-module-kotlin",
+    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
+    "@community//platform/diagnostic/telemetry.exporters:diagnostic-telemetry-exporters",
+    "@libraries//:opentelemetry-sdk",
+    "@libraries//:opentelemetry-semconv",
+    "@community//tools/intellij.tools.ide.util.common:tools-ide-util-common",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@libraries//:kotlinx-serialization-json-jvm",
+    "@libraries//:intellij-deps-fastutil",
+  ]
+)
+
+kt_jvm_test(
+  name = "tools-ide-metrics-collector_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = ":custom",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    ":tools-ide-metrics-collector",
+    "@libraries//:kotest-assertions-core-jvm",
+    "@libraries//:junit-jupiter-api",
+    "@libraries//:mockito-core",
+    "@libraries//:mockito-junit-jupiter",
+    "@libraries//:assertj-core",
+  ]
+)
+### auto-generated section `build` end

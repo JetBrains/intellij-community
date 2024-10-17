@@ -1,11 +1,12 @@
 ### auto-generated section `build` start
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
 kt_jvm_library(
   name = "objectSerializer",
   module_name = "intellij.platform.objectSerializer",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   plugins = ["@libraries//:serialization_plugin"],
@@ -25,6 +26,19 @@ kt_jvm_library(
     "@libraries//:kotlinx-serialization-json-jvm",
     "@community//platform/util/xmlDom:util-xmlDom",
     "@community//platform/settings",
+  ]
+)
+
+kt_jvm_test(
+  name = "objectSerializer_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testInternalSrc/**/*.kt", "testInternalSrc/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    ":objectSerializer",
+    "@libraries//:assertj-core",
   ]
 )
 ### auto-generated section `build` end

@@ -1,0 +1,26 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "xml-dom-impl",
+  module_name = "intellij.xml.dom.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//xml/dom-openapi:xml-dom",
+    "@community//xml/impl:xml-impl",
+    "@community//platform/util",
+    "@community//platform/platform-api:ide",
+    "@community//platform/platform-impl:ide-impl",
+    "@community//platform/lang-api:lang",
+    "@community//platform/lang-impl",
+    "@community//xml/openapi:xml",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/core-ui",
+    "@community//platform/libraries/cglib:libraries-cglib",
+  ],
+  exports = ["@community//xml/dom-openapi:xml-dom"]
+)
+### auto-generated section `build` end

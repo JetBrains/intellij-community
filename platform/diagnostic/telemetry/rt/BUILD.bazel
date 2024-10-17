@@ -1,11 +1,12 @@
 ### auto-generated section `build` start
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
 kt_jvm_library(
   name = "diagnostic-telemetry-rt",
   module_name = "intellij.platform.diagnostic.telemetry.rt",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j8",
   kotlinc_opts = "//:k8",
   deps = [
@@ -13,6 +14,18 @@ kt_jvm_library(
     "@libraries//:opentelemetry-sdk",
     "@community//platform/util-rt",
     "@libraries//:annotations",
+  ]
+)
+
+kt_jvm_test(
+  name = "diagnostic-telemetry-rt_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  javac_opts = "//:j8",
+  kotlinc_opts = "//:k8",
+  deps = [
+    ":diagnostic-telemetry-rt",
+    "@libraries//:junit-jupiter-api",
   ]
 )
 ### auto-generated section `build` end

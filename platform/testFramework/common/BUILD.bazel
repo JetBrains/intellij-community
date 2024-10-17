@@ -1,0 +1,49 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"], allow_empty=True, exclude = ["**/module-info.java"])
+)
+
+kt_javac_options(
+  name = "custom-javac-options",
+  x_ep_disable_all_checks = True,
+  warn = "off",
+  add_exports = ["java.desktop/sun.awt=ALL-UNNAMED"]
+)
+
+kt_jvm_library(
+  name = "testFramework-common",
+  module_name = "intellij.platform.testFramework.common",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  javac_opts = ":custom-javac-options",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/bootstrap/coroutine:bootstrap-coroutine",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@libraries//:jbr-api",
+    "@community//platform/boot",
+    "@community//platform/util-class-loader:util-classLoader",
+    "@community//platform/platform-impl/bootstrap:ide-bootstrap",
+    "@community//platform/util",
+    "@community//platform/core-api:core",
+    "@community//platform/ide-core-impl",
+    "@community//platform/analysis-impl",
+    "@community//platform/service-container:serviceContainer",
+    "@community//platform/indexing-api:indexing",
+    "@community//platform/lang-impl",
+    "@community//platform/platform-util-netty:ide-util-netty",
+    "@community//platform/platform-impl:ide-impl",
+    "@community//platform/testFramework/core:testFramework-core",
+    "@community//platform/diagnostic",
+    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
+    "@libraries//:annotations",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

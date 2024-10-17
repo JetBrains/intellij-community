@@ -1,0 +1,45 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+)
+
+kt_jvm_library(
+  name = "relaxng",
+  module_name = "intellij.relaxng",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/lang-api:lang",
+    "@community//xml/impl:xml-impl",
+    "@community//xml/dom-openapi:xml-dom",
+    "@community//platform/lang-impl",
+    "@libraries//:isorelax",
+    "@libraries//:jing",
+    "@community//platform/util/nanoxml:util-nanoxml",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/core-ui",
+    "@community//platform/util/jdom:util-jdom",
+  ],
+  runtime_deps = [":resources"]
+)
+
+kt_jvm_test(
+  name = "relaxng_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    ":relaxng",
+    "@community//platform/testFramework",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

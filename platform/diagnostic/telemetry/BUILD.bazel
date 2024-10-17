@@ -1,11 +1,12 @@
 ### auto-generated section `build` start
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
 kt_jvm_library(
   name = "diagnostic-telemetry",
   module_name = "intellij.platform.diagnostic.telemetry",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j8",
   kotlinc_opts = "//:k8",
   deps = [
@@ -18,5 +19,18 @@ kt_jvm_library(
     "@community//platform/diagnostic",
   ],
   exports = ["@community//platform/diagnostic"]
+)
+
+kt_jvm_test(
+  name = "diagnostic-telemetry_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  javac_opts = "//:j8",
+  kotlinc_opts = "//:k8",
+  deps = [
+    ":diagnostic-telemetry",
+    "@libraries//:junit-jupiter-api",
+    "@libraries//:kotest-assertions-core-jvm",
+  ]
 )
 ### auto-generated section `build` end

@@ -1,0 +1,45 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"], allow_empty=True, exclude = ["**/module-info.java"])
+)
+
+kt_jvm_library(
+  name = "tools-ide-metrics-benchmark",
+  module_name = "intellij.tools.ide.metrics.benchmark",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:jackson-core",
+    "@libraries//:jackson-databind",
+    "@libraries//:jackson-module-kotlin",
+    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
+    "@community//tools/intellij.tools.ide.metrics.collector:tools-ide-metrics-collector",
+    "@community//tools/intellij.tools.ide.util.common:tools-ide-util-common",
+    "@community//platform/testFramework",
+    "@libraries//:opentelemetry-sdk",
+    "@community//platform/boot",
+  ],
+  runtime_deps = [":resources"]
+)
+
+kt_jvm_test(
+  name = "tools-ide-metrics-benchmark_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    ":tools-ide-metrics-benchmark",
+    "@community//platform/testFramework/junit5:testFramework-junit5",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

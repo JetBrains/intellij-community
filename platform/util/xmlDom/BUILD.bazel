@@ -5,7 +5,7 @@ kt_jvm_library(
   name = "util-xmlDom",
   module_name = "intellij.platform.util.xmlDom",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j8",
   kotlinc_opts = "//:k8",
   plugins = ["@libraries//:serialization_plugin"],
