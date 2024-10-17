@@ -468,6 +468,13 @@
                      level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PotentialDeadlockInServiceInitializationInspection"/>
 
+    <localInspection language="JVM"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="false" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.CanBeDumbAwareInspection"
+                     key="inspection.can.be.dumb.aware.name"/>
+
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
 
