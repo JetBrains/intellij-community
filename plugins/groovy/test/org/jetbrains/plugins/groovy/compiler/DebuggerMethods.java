@@ -14,7 +14,6 @@ import com.intellij.debugger.impl.DebuggerContextUtil;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.*;
@@ -51,25 +50,25 @@ public interface DebuggerMethods extends CompilerMethods {
     return DebuggerManagerEx.getInstanceEx(getProject()).getContext().getDebuggerSession();
   }
 
-  default void runDebugger(final RunProfile configuration, Runnable cl) throws ExecutionException {
-    EdtTestUtil.runInEdtAndWait(
-      () -> runConfiguration(DefaultDebugExecutor.class, new ProcessListener() {
-        @Override
-        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-          if (outputType.equals(ProcessOutputTypes.STDERR)) {
-            System.out.println(event.getText());
-          }
-        }
-      }, configuration, null)
-    );
-    getLogger().debug("after start");
+  default void runDebugger(final RunProfile configuration, Runnable cl) throws RuntimeException {
     try {
+      EdtTestUtil.runInEdtAndWait(
+        () -> runConfiguration(DefaultDebugExecutor.class, new ProcessListener() {
+          @Override
+          public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+            if (outputType.equals(ProcessOutputTypes.STDERR)) {
+              System.out.println(event.getText());
+            }
+          }
+        }, configuration, null)
+      );
+      getLogger().debug("after start");
       cl.run();
     }
     catch (Throwable t) {
       //noinspection CallToPrintStackTrace
       t.printStackTrace();
-      throw t;
+      throw new RuntimeException(t);
     }
     finally {
       final DebugProcessImpl process = getDebugProcess();
@@ -94,7 +93,7 @@ public interface DebuggerMethods extends CompilerMethods {
       .addLineBreakpoint(FileDocumentManager.getInstance().getDocument(file), line));
   }
 
-  default SuspendContextImpl waitForBreakpoint() throws InterruptedException {
+  default SuspendContextImpl waitForBreakpoint() throws RuntimeException {
     getLogger().debug("waitForBreakpoint");
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
@@ -109,7 +108,12 @@ public interface DebuggerMethods extends CompilerMethods {
     while (i++ < ourTimeout / 10 &&
            suspendManager.getPausedContext() == null &&
            !process.getProcessHandler().isProcessTerminated()) {
-      Thread.sleep(10);
+      try {
+        Thread.sleep(10);
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
     }
     SuspendContextImpl context = suspendManager.getPausedContext();
     assertNotNull("too long process, terminated=" + process.getProcessHandler().isProcessTerminated(), context);
