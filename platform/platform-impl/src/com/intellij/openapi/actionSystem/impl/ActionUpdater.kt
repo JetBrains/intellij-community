@@ -684,6 +684,9 @@ private fun reportSlowEdtOperation(action: Any,
                                    operationName: String,
                                    currentEDTPerformMillis: Long,
                                    edtTraces: List<Throwable>?) {
+  if (application.isUnitTestMode) {
+    return
+  }
   var edtTraces1 = edtTraces
   val throwable: Throwable = PluginException.createByClass(
     elapsedReport(currentEDTPerformMillis, true, operationName) + REVISE_AUT_MSG_SUFFIX, null, action.javaClass)
