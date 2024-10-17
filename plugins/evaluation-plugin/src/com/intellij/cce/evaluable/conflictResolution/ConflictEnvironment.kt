@@ -9,6 +9,7 @@ import com.intellij.cce.interpreter.InterpretFilter
 import com.intellij.cce.interpreter.InterpretationHandler
 import com.intellij.cce.interpreter.InterpretationOrder
 import java.nio.file.Path
+import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.readText
@@ -34,7 +35,7 @@ class ConflictEnvironment(
   ) : EvaluationChunk {
     override val name: String = "${fileConflict.hash} - ${fileConflict.fileName}"
     override val datasetName: String = datasetRef.name
-    override val presentationText: String = readText("result")
+    override val presentationText: String = readText("target")
 
     override fun evaluate(
       handler: InterpretationHandler,
@@ -46,7 +47,7 @@ class ConflictEnvironment(
         base = readText("base"),
         parent1 = readText("parent1"),
         parent2 = readText("parent2"),
-        target = readText("result"),
+        target = readText("target"),
       )
 
       val resolvedConflicts = conflictResolver.resolveConflicts(props)
@@ -125,12 +126,12 @@ ${conflicts.text(TextLabel.PARENT_2, conflictIndex).trimEnd()}
 
   private fun Path.conflicts() = listDirectoryEntries()
     .flatMap { repoDir ->
-      repoDir.listDirectoryEntries().map {
-        val (hash, conflictCount, fileName) = it.name.split(" - ")
+      repoDir.listDirectoryEntries().filter { it.isDirectory() }.map {
+        val (hash, fileName, conflictCount) = it.name.split(" - ")
         FileConflict(hash, fileName, conflictCount.toInt(), it)
       }
     }
-    .sortedBy { "${it.hash} ${it.fileName}" }
+    .sortedBy { "${it.path.parent.name} ${it.hash} ${it.fileName}" }
 
   private data class FileConflict(val hash: String, val fileName: String, val conflictCount: Int, val path: Path)
 }
