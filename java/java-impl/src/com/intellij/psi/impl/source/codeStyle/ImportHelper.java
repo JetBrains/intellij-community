@@ -390,7 +390,7 @@ public final class ImportHelper{
       Import current = new Import(packageOrClassName, isStatic);
       if (namesToUseSingle.remove(name)) {
         if (useOnDemand && importedPackagesOrClasses.contains(current)) {
-          buffer.insert(buffer.lastIndexOf("import"), "import " + (isStatic ? "static " : "") + name + ";\n");
+          buffer.insert(buffer.lastIndexOf("import "), "import " + (isStatic ? "static " : "") + name + ";\n");
           continue;
         }
         useOnDemand = false;

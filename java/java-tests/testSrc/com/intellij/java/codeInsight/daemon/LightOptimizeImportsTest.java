@@ -243,6 +243,49 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
     myFixture.checkResult(result);
   }
 
+  public void testConflictInPackageWithImportInName() {
+    myFixture.addClass("package a.importb; public class A {}");
+    myFixture.addClass("package a.importb; public class B {}");
+    myFixture.addClass("package a.importb; public class Boolean {}"); // conflict with java.lang.Process
+
+    @Language("JAVA")
+    String text = """
+      package a;
+      
+      import a.importb.A;
+      import a.importb.B;
+      import a.importb.Boolean;
+      
+      public class Main {
+          public static void main(String[] args) {
+              A a;
+              B b;
+              Boolean boo;
+          }
+      }""";
+    myFixture.configureByText(JavaFileType.INSTANCE, text);
+
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    javaSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 1;
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
+
+    @Language("JAVA")
+    String result = """
+      package a;
+      
+      import a.importb.Boolean;
+      import a.importb.*;
+      
+      public class Main {
+          public static void main(String[] args) {
+              A a;
+              B b;
+              Boolean boo;
+          }
+      }""";
+    myFixture.checkResult(result);
+  }
+
   public void testStaticImportOnMethodFromSuperClass() {
     myFixture.addClass("""
                          package p; public class A {
