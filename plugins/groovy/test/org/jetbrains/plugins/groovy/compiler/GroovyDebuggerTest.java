@@ -273,24 +273,30 @@ public class GroovyDebuggerTest extends GroovyCompilerTestCase implements Debugg
 
     runDebugger(file, () -> {
       waitForBreakpoint();
-      assert myClass.get().equals(getSourcePosition().getFile().getVirtualFile());
+      assertEquals(myClass.get(), getSourcePosition().getFile().getVirtualFile());
       eval("a", "2");
     });
   }
 
-  public void test_groovy_source_named_java_in_lib_source() throws IOException {
+  public void test_groovy_source_named_java_in_lib_source() {
     final TempDirTestFixtureImpl tempDir = new TempDirTestFixtureImpl();
     EdtTestUtil.runInEdtAndWait(() -> {
-      disposeOnTearDown(() -> {
-        try {
-          tempDir.tearDown();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      });
-      tempDir.createFile("pkg/java.groovy", "class java {}");
-      PsiTestUtil.addLibrary(getModule(), "lib", tempDir.getFile("").getPath(), ArrayUtil.EMPTY_STRING_ARRAY, new String[]{""});
+      try {
+        tempDir.setUp();
+        disposeOnTearDown(() -> {
+          try {
+            tempDir.tearDown();
+          }
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        });
+        tempDir.createFile("pkg/java.groovy", "class java {}");
+        PsiTestUtil.addLibrary(getModule(), "lib", tempDir.getFile("").getPath(), ArrayUtil.EMPTY_STRING_ARRAY, new String[]{""});
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
     });
 
     ActionsKt.runReadAction(() -> {
@@ -371,7 +377,7 @@ public class GroovyDebuggerTest extends GroovyCompilerTestCase implements Debugg
     addBreakpoint("module1/Scr.groovy", 0);
     runDebugger(scr, () -> {
       waitForBreakpoint();
-      assert scr.equals(getSourcePosition().getFile());
+      assertEquals(scr, getSourcePosition().getFile());
     });
   }
 

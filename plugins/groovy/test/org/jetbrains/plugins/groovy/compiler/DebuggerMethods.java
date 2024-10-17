@@ -93,7 +93,7 @@ public interface DebuggerMethods extends CompilerMethods {
       .addLineBreakpoint(FileDocumentManager.getInstance().getDocument(file), line));
   }
 
-  default SuspendContextImpl waitForBreakpoint() throws RuntimeException {
+  default void waitForBreakpoint() throws RuntimeException {
     getLogger().debug("waitForBreakpoint");
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
@@ -117,7 +117,6 @@ public interface DebuggerMethods extends CompilerMethods {
     }
     SuspendContextImpl context = suspendManager.getPausedContext();
     assertNotNull("too long process, terminated=" + process.getProcessHandler().isProcessTerminated(), context);
-    return context;
   }
 
   default void resume() {
@@ -128,9 +127,11 @@ public interface DebuggerMethods extends CompilerMethods {
   }
 
   default SourcePosition getSourcePosition() {
-    final EvaluationContextImpl context = evaluationContext();
-    Computable<SourcePosition> a = () -> ContextUtil.getSourcePosition(context);
-    return ApplicationManager.getApplication().runReadAction(a);
+    return managed(() -> {
+      final EvaluationContextImpl context = evaluationContext();
+      Computable<SourcePosition> a = () -> ContextUtil.getSourcePosition(context);
+      return ApplicationManager.getApplication().runReadAction(a);
+    });
   }
 
   default EvaluationContextImpl evaluationContext() {
