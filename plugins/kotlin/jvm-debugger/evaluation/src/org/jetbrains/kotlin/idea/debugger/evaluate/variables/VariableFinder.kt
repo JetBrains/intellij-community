@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.variables
 
+import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.engine.evaluation.AdditionalContextProvider
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
@@ -487,8 +488,7 @@ class VariableFinder(val context: ExecutionContext) {
             ?.allInterfaces()?.firstOrNull { it.name() == Continuation::class.java.name }
             ?: return null
 
-        val getContextMethod = continuationType
-            .methodsByName("getContext", "()Lkotlin/coroutines/CoroutineContext;").firstOrNull()
+        val getContextMethod = DebuggerUtils.findMethod(continuationType, "getContext", "()Lkotlin/coroutines/CoroutineContext;")
             ?: return null
 
         return context.invokeMethod(continuation, getContextMethod, emptyList()) as? ObjectReference
@@ -561,8 +561,7 @@ class VariableFinder(val context: ExecutionContext) {
         }
 
         val delegateValue = rawValue as? ObjectReference ?: return rawValue
-        val getValueMethod = delegateValue.referenceType()
-            .methodsByName("getValue", "()Ljava/lang/Object;").firstOrNull()
+        val getValueMethod = DebuggerUtils.findMethod(delegateValue.referenceType(), "getValue", "()Ljava/lang/Object;")
             ?: return rawValue
 
         return context.invokeMethod(delegateValue, getValueMethod, emptyList())

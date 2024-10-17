@@ -1,9 +1,7 @@
-/*
- * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
- * Use is subject to license terms.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.mockJDI.types;
 
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.mockJDI.MockLocation;
 import com.intellij.debugger.mockJDI.MockVirtualMachine;
 import com.intellij.debugger.mockJDI.members.MockConstructor;
@@ -291,11 +289,11 @@ public abstract class MockReferenceType extends MockType implements ReferenceTyp
       reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
         @Override
         public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-          final List<Method> methods = MockReferenceType.this.methodsByName(name, desc);
-          if (methods.isEmpty()) {
+          Method method = DebuggerUtils.findMethod(MockReferenceType.this, name, desc);
+          if (method == null) {
             return super.visitMethod(access, name, desc, signature, exceptions);
           }
-          return new LineNumbersEvaluatingVisitor(stratum, methods.get(0));
+          return new LineNumbersEvaluatingVisitor(stratum, method);
         }
       }, 0);
     }

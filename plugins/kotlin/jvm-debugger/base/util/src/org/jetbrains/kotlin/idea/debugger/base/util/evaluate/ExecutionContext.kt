@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.debugger.base.util.evaluate
 
 import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
@@ -14,6 +13,7 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.openapi.project.Project
 import com.sun.jdi.*
 import com.sun.jdi.request.EventRequest
+import org.jetbrains.kotlin.idea.debugger.base.util.findMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.hopelessAware
 import org.jetbrains.org.objectweb.asm.Type
 
@@ -180,21 +180,17 @@ sealed class BaseExecutionContext(val evaluationContext: EvaluationContextImpl) 
         methodSignature: String,
         vararg params: Value
     ): Value? {
-        return invokeMethod(ref, findSingleMethod(type, name, methodSignature), params.asList())
+        return invokeMethod(ref, type.findMethod(name, methodSignature), params.asList())
     }
 
     /**
      * static method invocation
      */
     private fun findAndInvoke(type: ClassType, name: String, methodSignature: String? = null, vararg params: Value): Value? {
-        return invokeMethod(type, findSingleMethod(type, name, methodSignature), params.asList())
+        return invokeMethod(type, type.findMethod(name, methodSignature), params.asList())
     }
 
     private fun findAndInvoke(instance: ObjectReference, name: String, methodSignature: String? = null, vararg params: Value): Value? {
-        return invokeMethod(instance, findSingleMethod(instance.referenceType(), name, methodSignature), params.asList())
+        return invokeMethod(instance, instance.referenceType().findMethod(name, methodSignature), params.asList())
     }
-}
-
-private fun findSingleMethod(type: ReferenceType, name: String, methodSignature: String?): Method {
-    return DebuggerUtils.findMethod(type, name, methodSignature) ?: error("Method {$name} {$methodSignature} not found")
 }
