@@ -554,7 +554,8 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
   }
 
   @RequiresEdt
-  private fun InlineCompletionSession.guardCaretModifications() {
+  @ApiStatus.Internal
+  protected fun InlineCompletionSession.guardCaretModifications() {
     val listener = object : InlineSessionWiseCaretListener() {
       override var completionOffset: Int
         get() = if (!context.isDisposed) context.expectedStartOffset else -1

@@ -26,6 +26,7 @@ class InsertInlineCompletionAction : EditorAction(InsertInlineCompletionHandler(
   }
 }
 
+// TODO support for RemDev
 @ApiStatus.Internal
 abstract class SwitchInlineCompletionVariantAction protected constructor(
   direction: Direction
