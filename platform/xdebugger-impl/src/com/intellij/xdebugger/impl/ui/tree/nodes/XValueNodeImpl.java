@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.editor.Document;
@@ -133,8 +133,9 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
           final Document document = FileDocumentManager.getInstance().getDocument(file);
           if (document == null) return;
 
-          if (position.getLine() >= 0) {
-            XDebuggerInlayUtil.getInstance(session.getProject()).createLineEndInlay(XValueNodeImpl.this, session, position);
+          int line = position.getLine();
+          if (line >= 0) {
+            XDebuggerInlayUtil.getInstance(session.getProject()).createLineEndInlay(XValueNodeImpl.this, session, file, line);
           }
         }
       };
