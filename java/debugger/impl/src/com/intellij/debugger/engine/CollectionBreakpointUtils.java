@@ -89,7 +89,7 @@ public final class CollectionBreakpointUtils {
       public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
         try {
           requestsManager.deleteRequest(this);
-          Field field = referenceType.fieldByName(fieldName);
+          Field field = DebuggerUtils.findField(referenceType, fieldName);
           Value trueValue = debugProcess.getVirtualMachineProxy().mirrorOf(value);
           ((ClassType)referenceType).setValue(field, trueValue);
         }

@@ -10,6 +10,7 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
@@ -152,7 +153,7 @@ public final class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBr
     VirtualMachineProxy vm = debugProcess.getVirtualMachineProxy();
     try {
       RequestManagerImpl manager = debugProcess.getRequestsManager();
-      Field field = refType.fieldByName(getFieldName());
+      Field field = DebuggerUtils.findField(refType, getFieldName());
       if (field == null) {
         manager.setInvalid(this, JavaDebuggerBundle.message("error.invalid.breakpoint.missing.field.in.class",
                                                             getFieldName(), refType.name()));

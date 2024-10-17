@@ -12,6 +12,7 @@ import com.intellij.codeInspection.dataFlow.types.DfReferenceType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
+import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.dfaassist.DebuggerDfaListener
 import com.intellij.debugger.engine.dfaassist.DfaAssistProvider
 import com.intellij.debugger.jdi.StackFrameProxyEx
@@ -191,7 +192,7 @@ class K2DfaAssistProvider : DfaAssistProvider {
                         }
                     }
                     if (symbol is KaVariableSymbol && type != null) {
-                        val field = type.fieldByName(symbol.name.asString())
+                        val field = DebuggerUtils.findField(type, symbol.name.asString())
                         if (field != null) {
                             return postprocess(jdiQualifier.getValue(field))
                         }

@@ -9,6 +9,7 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
+import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.dfaassist.DebuggerDfaListener
 import com.intellij.debugger.engine.dfaassist.DfaAssistProvider
 import com.intellij.debugger.jdi.StackFrameProxyEx
@@ -104,8 +105,7 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
         } else {
             val jdiQualifier = getJdiValueForDfaVariable(proxy, qualifier, anchor)
             if (jdiQualifier is ObjectReference && psiVariable is KtCallableDeclaration) {
-                val type = jdiQualifier.referenceType()
-                val field = type.fieldByName(psiVariable.name)
+                val field = psiVariable.name?.let { DebuggerUtils.findField(jdiQualifier.referenceType(), it) }
                 if (field != null) {
                     return postprocess(jdiQualifier.getValue(field))
                 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.dfaassist.java;
 
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
@@ -121,7 +121,7 @@ public final class JavaDfaAssistProvider implements DfaAssistProvider {
         ReferenceType type = ((ObjectReference)qualifierValue).referenceType();
         PsiClass psiClass = ((PsiField)element).getContainingClass();
         if (psiClass != null && type.name().equals(JVMNameUtil.getClassVMName(psiClass))) {
-          Field field = type.fieldByName(((PsiField)element).getName());
+          Field field = DebuggerUtils.findField(type, ((PsiField)element).getName());
           if (field != null) {
             return DfaAssistProvider.wrap(((ObjectReference)qualifierValue).getValue(field));
           }
@@ -159,7 +159,7 @@ public final class JavaDfaAssistProvider implements DfaAssistProvider {
       if (thisRef != null) {
         ReferenceType type = thisRef.referenceType();
         if (type instanceof ClassType && type.isPrepared()) {
-          Field field = type.fieldByName("val$" + varName);
+          Field field = DebuggerUtils.findField(type, "val$" + varName);
           if (field != null) {
             return DfaAssistProvider.wrap(thisRef.getValue(field));
           }
@@ -173,7 +173,7 @@ public final class JavaDfaAssistProvider implements DfaAssistProvider {
         if (name != null) {
           ReferenceType type = ContainerUtil.getOnlyItem(proxy.getVirtualMachine().classesByName(name));
           if (type != null && type.isPrepared()) {
-            Field field = type.fieldByName(((PsiField)psi).getName());
+            Field field = DebuggerUtils.findField(type, ((PsiField)psi).getName());
             if (field != null && field.isStatic()) {
               return DfaAssistProvider.wrap(type.getValue(field));
             }

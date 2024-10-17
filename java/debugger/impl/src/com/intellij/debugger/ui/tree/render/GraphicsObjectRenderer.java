@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -29,14 +29,14 @@ public final class GraphicsObjectRenderer extends CompoundRendererProvider {
     return (evaluationContext, valueDescriptor) -> {
       try {
         ObjectReference value = (ObjectReference)valueDescriptor.getValue();
-        Field surfaceField = ((ClassType)value.type()).fieldByName("surfaceData");
+        Field surfaceField = DebuggerUtils.findField(((ClassType)value.type()), "surfaceData");
         if (surfaceField == null) return null;
         ObjectReference surfaceDataValue = (ObjectReference)value.getValue(surfaceField);
         if (surfaceDataValue == null) return null;
 
-        Field imgField = ((ReferenceType)surfaceDataValue.type()).fieldByName("bufImg"); // BufImgSurfaceData
+        Field imgField = DebuggerUtils.findField(((ReferenceType)surfaceDataValue.type()), "bufImg"); // BufImgSurfaceData
         if (imgField == null) {
-          imgField = ((ReferenceType)surfaceDataValue.type()).fieldByName("offscreenImage"); // CGLSurfaceData
+          imgField = DebuggerUtils.findField(((ReferenceType)surfaceDataValue.type()), "offscreenImage"); // CGLSurfaceData
         }
         if (imgField == null) return null;
 

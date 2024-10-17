@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace;
 
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.streams.StreamDebuggerBundle;
@@ -92,7 +93,7 @@ public class EvaluateExpressionTracer implements StreamTracer {
   @Nullable
   private static String tryExtractExceptionMessage(@NotNull ObjectReference exception) {
     final ReferenceType type = exception.referenceType();
-    final Field messageField = type.fieldByName("detailMessage");
+    final Field messageField = DebuggerUtils.findField(type, "detailMessage");
     if (messageField == null) return null;
     final Value message = exception.getValue(messageField);
     if (message instanceof StringReference) {

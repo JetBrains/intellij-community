@@ -508,7 +508,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static ThreeState getEffectiveAssertionStatus(@NotNull Location location) {
     ReferenceType type = location.declaringType();
     if (type instanceof ClassType) {
-      Field field = type.fieldByName("$assertionsDisabled");
+      Field field = DebuggerUtils.findField(type, "$assertionsDisabled");
       if (field != null && field.isStatic() && field.isSynthetic()) {
         Value value = type.getValue(field);
         if (value instanceof BooleanValue) {

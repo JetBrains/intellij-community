@@ -7,6 +7,7 @@
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.JavaDebuggerBundle;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -70,7 +71,7 @@ public class FieldEvaluator implements Evaluator {
   private Field findField(@Nullable Type t) {
     if (t instanceof ClassType cls) {
       if (myTargetClassFilter.acceptClass(cls)) {
-        return cls.fieldByName(myFieldName);
+        return DebuggerUtils.findField(cls, myFieldName);
       }
       for (final InterfaceType interfaceType : cls.interfaces()) {
         final Field field = findField(interfaceType);
@@ -82,7 +83,7 @@ public class FieldEvaluator implements Evaluator {
     }
     else if (t instanceof InterfaceType iface) {
       if (myTargetClassFilter.acceptClass(iface)) {
-        return iface.fieldByName(myFieldName);
+        return DebuggerUtils.findField(iface, myFieldName);
       }
       for (final InterfaceType interfaceType : iface.superinterfaces()) {
         final Field field = findField(interfaceType);
@@ -107,7 +108,7 @@ public class FieldEvaluator implements Evaluator {
     if (object instanceof ReferenceType refType) {
       Field field = findField(refType);
       if (field == null || !field.isStatic()) {
-        field = refType.fieldByName(myFieldName);
+        field = DebuggerUtils.findField(refType, myFieldName);
       }
       if (field == null || !field.isStatic()) {
         throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.no.static.field", myFieldName));
@@ -131,7 +132,7 @@ public class FieldEvaluator implements Evaluator {
 
       Field field = findField(refType);
       if (field == null) {
-        field = refType.fieldByName(myFieldName);
+        field = DebuggerUtils.findField(refType, myFieldName);
       }
 
       if (field == null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.dfaassist;
 
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
@@ -18,6 +18,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyEx;
@@ -237,7 +238,7 @@ public class DebuggerDfaRunner {
                 classLoaderClass = classLoaderClass.superclass();
               }
               if (classLoaderClass != null) {
-                Field parent = classLoaderClass.fieldByName("parent");
+                Field parent = DebuggerUtils.findField(classLoaderClass, "parent");
                 if (parent != null) {
                   loaders = StreamEx.iterate(
                       classLoader, Objects::nonNull, loader -> ObjectUtils.tryCast(loader.getValue(parent), ClassLoaderReference.class))

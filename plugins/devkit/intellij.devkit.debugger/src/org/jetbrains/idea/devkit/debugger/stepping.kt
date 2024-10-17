@@ -56,7 +56,7 @@ private data class ThreadState(val reference: ObjectReference, var state: Boolea
   fun setNonCancellable(suspendContext: SuspendContextImpl, value: Boolean) {
     if (value == state) return
     state = value
-    val field = (reference.type() as ClassType).fieldByName("inNonCancelableSection") ?: return
+    val field = DebuggerUtils.findField(reference.referenceType(), "inNonCancelableSection") ?: return
     reference.setValue(field, booleanValue(suspendContext, value))
   }
 }

@@ -179,7 +179,7 @@ public final class AsyncStacksUtils {
       public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
         try {
           requestsManager.deleteRequest(this);
-          ((ClassType)referenceType).setValue(referenceType.fieldByName("DEBUG"), process.getVirtualMachineProxy().mirrorOf(true));
+          ((ClassType)referenceType).setValue(DebuggerUtils.findField(referenceType, "DEBUG"), process.getVirtualMachineProxy().mirrorOf(true));
         }
         catch (Exception e) {
           LOG.warn("Error setting agent debug mode", e);

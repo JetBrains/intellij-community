@@ -5,6 +5,7 @@ package com.intellij.debugger.actions;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -87,7 +88,7 @@ public final class ThreadDumpAction extends DumbAwareAction {
       buffer.append("\"").append(threadName).append("\"");
       ReferenceType referenceType = threadReference.referenceType();
       if (referenceType != null) {
-        Field daemon = referenceType.fieldByName("daemon");
+        Field daemon = DebuggerUtils.findField(referenceType, "daemon");
         if (daemon != null) {
           Value value = threadReference.getValue(daemon);
           if (value instanceof BooleanValue && ((BooleanValue)value).booleanValue()) {
@@ -96,7 +97,7 @@ public final class ThreadDumpAction extends DumbAwareAction {
           }
         }
 
-        Field priority = referenceType.fieldByName("priority");
+        Field priority = DebuggerUtils.findField(referenceType, "priority");
         if (priority != null) {
           Value value = threadReference.getValue(priority);
           if (value instanceof IntegerValue) {
@@ -104,7 +105,7 @@ public final class ThreadDumpAction extends DumbAwareAction {
           }
         }
 
-        Field tid = referenceType.fieldByName("tid");
+        Field tid = DebuggerUtils.findField(referenceType, "tid");
         if (tid != null) {
           Value value = threadReference.getValue(tid);
           if (value instanceof LongValue) {

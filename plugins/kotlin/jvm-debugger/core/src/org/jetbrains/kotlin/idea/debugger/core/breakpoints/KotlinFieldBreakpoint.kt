@@ -103,7 +103,7 @@ class KotlinFieldBreakpoint(
 
             when (breakpointType) {
                 BreakpointType.FIELD -> {
-                    val field = refType.fieldByName(getFieldName())
+                    val field = DebuggerUtils.findField(refType, getFieldName())
                     if (field != null) {
                         val manager = debugProcess.requestsManager
                         if (properties.watchModification && vm.canWatchFieldModification()) {

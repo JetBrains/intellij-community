@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy
 
 import com.intellij.debugger.engine.DebuggerUtils
@@ -38,12 +38,12 @@ class CoroutineScopeExtractor(
         fun create(evaluationContext: EvaluationContext): CoroutineScopeExtractor {
             try {
                 val jobType = evaluationContext.findClass("kotlinx.coroutines.Job")
-                val jobKeyField = jobType?.fieldByName("Key")
-                val jobKey: Value?
-                if (jobType != null && jobKeyField != null) {
-                    jobKey = jobType.getValue(jobKeyField)
-                } else {
-                    jobKey = null
+                var jobKey: Value? = null
+                if (jobType != null) {
+                    val jobKeyField = DebuggerUtils.findField(jobType, "Key")
+                    if (jobKeyField != null) {
+                        jobKey = jobType.getValue(jobKeyField)
+                    }
                 }
 
                 val continuationType = evaluationContext.findClass("kotlin.coroutines.Continuation")

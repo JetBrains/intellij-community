@@ -168,8 +168,10 @@ open class JDIEval(
     }
 
     private fun findField(fieldDesc: FieldDescription, receiver: ReferenceType? = null): Field {
-        receiver?.fieldByName(fieldDesc.name)?.let { return it }
-        fieldDesc.ownerType.asReferenceType().fieldByName(fieldDesc.name)?.let { return it }
+        if (receiver != null) {
+            DebuggerUtils.findField(receiver, fieldDesc.name)?.let { return it }
+        }
+        DebuggerUtils.findField(fieldDesc.ownerType.asReferenceType(), fieldDesc.name)?.let { return it }
 
         throwBrokenCodeException(NoSuchFieldError("Field not found: $fieldDesc"))
     }

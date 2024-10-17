@@ -197,7 +197,7 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
                   // TODO: no signature check for now
                   ReferenceType methodType = ((ObjectReference)methodValue).referenceType();
                   return myTargetMethodName.equals(
-                    ((StringReference)((ObjectReference)methodValue).getValue(methodType.fieldByName("name"))).value());
+                    ((StringReference)((ObjectReference)methodValue).getValue(DebuggerUtils.findField(methodType, "name"))).value());
                 }
               }
             }

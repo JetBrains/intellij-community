@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.variables
 
+import com.intellij.debugger.engine.DebuggerUtils
 import com.sun.jdi.*
 import org.jetbrains.kotlin.fileClasses.internalNameWithoutInnerClasses
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
@@ -37,7 +38,7 @@ class EvaluatorValueConverter(val context: ExecutionContext) {
                 return value
             }
 
-            val field = type.fieldByName("element") ?: return value
+            val field = DebuggerUtils.findField(type, "element") ?: return value
             return value.getValue(field)
         }
     }
@@ -180,7 +181,7 @@ class EvaluatorValueConverter(val context: ExecutionContext) {
             val ref = context.newInstance(refTypeClass, constructor, emptyList())
             context.keepReference(ref)
 
-            val elementField = refTypeClass.fieldByName("element") ?: error("'element' field not found")
+            val elementField = DebuggerUtils.findField(refTypeClass, "element") ?: error("'element' field not found")
             ref.setValue(elementField, value)
             return ref
         }

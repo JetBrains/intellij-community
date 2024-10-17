@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -57,7 +58,7 @@ public final class InstrumentationTracker {
             Value value = ContainerUtil.getFirstItem(DebuggerUtilsEx.getArgumentValues(event.thread().frame(0)));
             if (value instanceof ArrayReference) {
               ((ArrayReference)value).getValues().forEach(v -> {
-                Value aClass = ((ObjectReference)v).getValue(((ReferenceType)v.type()).fieldByName("mClass"));
+                Value aClass = ((ObjectReference)v).getValue(DebuggerUtils.findField(((ReferenceType)v.type()), "mClass"));
                 noticeRedefineClass(((ClassObjectReference)aClass).reflectedType());
               });
             }

@@ -175,11 +175,11 @@ class VariableFinder(val context: ExecutionContext) {
     private fun findFieldVariable(kind: VariableKind.FieldVar): Result? {
         val thisObject = thisObject()
         if (thisObject != null) {
-            val field = thisObject.referenceType().fieldByName(kind.fieldName) ?: return null
+            val field = DebuggerUtils.findField(thisObject.referenceType(), kind.fieldName) ?: return null
             return Result(thisObject.getValue(field))
         } else {
             val containingType = frameProxy.safeLocation()?.declaringType() ?: return null
-            val field = containingType.fieldByName(kind.fieldName) ?: return null
+            val field = DebuggerUtils.findField(containingType, kind.fieldName) ?: return null
             return Result(containingType.getValue(field))
         }
     }

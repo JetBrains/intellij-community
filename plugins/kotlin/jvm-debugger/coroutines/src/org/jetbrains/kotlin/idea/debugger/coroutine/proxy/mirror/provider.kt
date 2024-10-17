@@ -34,12 +34,12 @@ class MethodDelegate<T>(val name: String, val signature: String? = null) : ReadO
 class FieldMirrorDelegate<T, F>(val name: String,
                                 private val mirrorProvider: MirrorProvider<T, F>) : ReadOnlyProperty<ReferenceTypeProvider, FieldEvaluator.MirrorFieldEvaluator<T, F>> {
     override fun getValue(thisRef: ReferenceTypeProvider, property: KProperty<*>): FieldEvaluator.MirrorFieldEvaluator<T, F> {
-        return FieldEvaluator.MirrorFieldEvaluator(thisRef.getCls().fieldByName(name), thisRef, mirrorProvider)
+        return FieldEvaluator.MirrorFieldEvaluator(DebuggerUtils.findField(thisRef.getCls(), name), thisRef, mirrorProvider)
     }
 }
 
 class FieldDelegate<T>(val name: String) : ReadOnlyProperty<ReferenceTypeProvider, FieldEvaluator<T>> {
     override fun getValue(thisRef: ReferenceTypeProvider, property: KProperty<*>): FieldEvaluator<T> {
-        return FieldEvaluator.DefaultFieldEvaluator(thisRef.getCls().fieldByName(name), thisRef)
+        return FieldEvaluator.DefaultFieldEvaluator(DebuggerUtils.findField(thisRef.getCls(), name), thisRef)
     }
 }

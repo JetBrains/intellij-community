@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -37,7 +37,7 @@ public class DeconstructionPatternEvaluator extends PatternEvaluator {
       boolean res = DebuggerUtils.instanceOf(refType, typeName);
       for (int i = 0; i < myComponentEvaluators.size() && res; i++) {
         PatternEvaluator componentEvaluator = myComponentEvaluators.get(i);
-        Field field = refType.fieldByName(myRecordComponentNames.get(i));
+        Field field = DebuggerUtils.findField(refType, myRecordComponentNames.get(i));
         res = componentEvaluator.match(objRef.getValue(field), context);
       }
       if (res && myVariableEvaluator != null) {
