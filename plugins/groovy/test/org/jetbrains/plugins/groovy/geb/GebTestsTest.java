@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.geb;
 
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.LibraryLightProjectDescriptor;
 import org.jetbrains.plugins.groovy.RepositoryTestLibrary;
 import org.jetbrains.plugins.groovy.TestLibrary;
@@ -12,6 +13,13 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilit
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 public class GebTestsTest extends LightJavaCodeInsightFixtureTestCase {
+  private static final TestLibrary LIB_GEB =
+    new RepositoryTestLibrary("org.codehaus.geb:geb-core:0.7.2", "org.codehaus.geb:geb-junit4:0.7.2", "org.codehaus.geb:geb-spock:0.7.2",
+                              "org.codehaus.geb:geb-testng:0.7.2");
+
+  public static LightProjectDescriptor DESCRIPTOR = new LibraryLightProjectDescriptor(
+    GroovyProjectDescriptors.LIB_GROOVY_1_6.plus(LIB_GEB));
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
@@ -66,7 +74,7 @@ public class GebTestsTest extends LightJavaCodeInsightFixtureTestCase {
       """);
 
     TestUtils.checkCompletionContains(myFixture, "at", "url");
-    assert !myFixture.getLookupElementStrings().contains("content");
+    assertFalse(myFixture.getLookupElementStrings().contains("content"));
   }
 
   public void testResolveFromParent() {
@@ -94,7 +102,7 @@ public class GebTestsTest extends LightJavaCodeInsightFixtureTestCase {
           button { $('button') }
           formField { String name -> $('input', name: name) }
         }
-       \s
+      
         def someMethod() {
           <caret>
         }
@@ -111,7 +119,7 @@ public class GebTestsTest extends LightJavaCodeInsightFixtureTestCase {
           button { $('button') }
           formField { String name -> $('input', name: name) }
         }
-       \s
+      
         def someMethod() {
           <caret>
         }
@@ -128,7 +136,7 @@ public class GebTestsTest extends LightJavaCodeInsightFixtureTestCase {
         static content = {
           formField { String name -> $('input', name: name) }
         }
-       \s
+      
         def someMethod() {
           formField('username').<caret>
         }
@@ -247,17 +255,17 @@ public class GebTestsTest extends LightJavaCodeInsightFixtureTestCase {
 
     myFixture.renameElementAtCaret("aaa777");
 
-    assert b.getText().equals("""
-                                class B extends A {
-                                  static at = {
-                                    def x = aaa777
-                                  }
-                                
-                                  static content = {
-                                    ttt { bbb + aaa777.length() }
-                                  }
-                                }
-                                """);
+    assertEquals("""
+                   class B extends A {
+                     static at = {
+                       def x = aaa777
+                     }
+                   
+                     static content = {
+                       ttt { bbb + aaa777.length() }
+                     }
+                   }
+                   """, b.getText());
 
     myFixture.checkResult("""
                             class A extends geb.Page {
@@ -272,9 +280,4 @@ public class GebTestsTest extends LightJavaCodeInsightFixtureTestCase {
                             }
                             """);
   }
-
-  private static final TestLibrary LIB_GEB =
-    new RepositoryTestLibrary("org.codehaus.geb:geb-core:0.7.2", "org.codehaus.geb:geb-junit4:0.7.2", "org.codehaus.geb:geb-spock:0.7.2",
-                              "org.codehaus.geb:geb-testng:0.7.2");
-  public static final LightProjectDescriptor DESCRIPTOR = new LibraryLightProjectDescriptor(LIB_GROOVY_1_6.plus(LIB_GEB));
 }
