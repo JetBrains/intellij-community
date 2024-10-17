@@ -2,14 +2,11 @@
 package git4idea;
 
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeBuilder;
@@ -49,7 +46,9 @@ import git4idea.stash.ui.GitStashContentProviderKt;
 import git4idea.status.GitChangeProvider;
 import git4idea.update.GitUpdateEnvironment;
 import git4idea.vfs.GitVFSListener;
+import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.CoroutineScopeKt;
 import org.jetbrains.annotations.*;
 
 import java.util.Collections;
@@ -60,6 +59,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
+
+import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
+import static com.intellij.util.concurrency.AppJavaExecutorUtil.executeOnPooledIoThread;
 
 /**
  * Git VCS implementation
@@ -72,8 +74,7 @@ public final class GitVcs extends AbstractVcs {
   private static final Logger LOG = Logger.getInstance(GitVcs.class.getName());
   private static final VcsKey ourKey = createKey(NAME);
 
-  private final AtomicReference<Disposable> myDisposable = new AtomicReference<>();
-  @NotNull private final CoroutineScope coroutineScope;
+  private final AtomicReference<CoroutineScope> myActiveScope = new AtomicReference<>();
   private GitVFSListener myVFSListener; // a VFS listener that tracks file addition, deletion, and renaming.
 
   private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true); // The command read/write lock
@@ -83,9 +84,8 @@ public final class GitVcs extends AbstractVcs {
     return Objects.requireNonNull(gitVcs);
   }
 
-  public GitVcs(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
+  public GitVcs(@NotNull Project project) {
     super(project, NAME);
-    this.coroutineScope = coroutineScope;
   }
 
   public ReadWriteLock getCommandLock() {
@@ -196,22 +196,21 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   protected void activate() {
-    Disposable disposable = Disposer.newDisposable();
-    // do not leak Project if 'deactivate' is never called
-    Disposer.register(GitDisposable.getInstance(myProject), disposable);
+    CoroutineScope globalScope = GitDisposable.getInstance(myProject).getCoroutineScope();
+    CoroutineScope activeScope = childScope(globalScope, "GitVcs", EmptyCoroutineContext.INSTANCE, true);
+
     // workaround the race between 'activate' and 'deactivate'
-    Disposable oldDisposable = myDisposable.getAndSet(disposable);
-    if (oldDisposable != null) Disposer.dispose(oldDisposable);
+    CoroutineScope oldScope = myActiveScope.getAndSet(activeScope);
+    if (oldScope != null) CoroutineScopeKt.cancel(oldScope, null);
 
-    BackgroundTaskUtil.executeOnPooledThread(disposable, ()
-      -> GitExecutableManager.getInstance().testGitExecutableVersionValid(myProject));
+    executeOnPooledIoThread(activeScope, () -> GitExecutableManager.getInstance().testGitExecutableVersionValid(myProject));
 
-    myVFSListener = GitVFSListener.createInstance(this, disposable, coroutineScope);
+    myVFSListener = GitVFSListener.createInstance(this, activeScope);
     // make sure to read the registry before opening commit dialog
     myProject.getService(VcsUserRegistry.class);
 
-    GitAnnotationsListener.registerListener(myProject, disposable);
-    GitAdvancedSettingsListener.registerListener(myProject, disposable);
+    GitAnnotationsListener.registerListener(myProject, activeScope);
+    GitAdvancedSettingsListener.registerListener(myProject, activeScope);
 
     GitUserRegistry.getInstance(myProject).activate();
     GitBranchIncomingOutgoingManager.getInstance(myProject).activate();
@@ -220,8 +219,9 @@ public final class GitVcs extends AbstractVcs {
   @Override
   protected void deactivate() {
     myVFSListener = null;
-    Disposable disposable = myDisposable.getAndSet(null);
-    if (disposable != null) Disposer.dispose(disposable);
+
+    CoroutineScope oldScope = myActiveScope.getAndSet(null);
+    if (oldScope != null) CoroutineScopeKt.cancel(oldScope, null);
   }
 
   @Override

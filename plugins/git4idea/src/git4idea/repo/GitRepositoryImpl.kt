@@ -258,7 +258,7 @@ class GitRepositoryImpl private constructor(
       return GitRepositoryImpl(project, root, gitDir, parentDisposable).apply {
         val initialRepoInfo = repoInfo
         val updater = GitRepositoryUpdater(this, this.repositoryFiles)
-        updater.installListeners(this)
+        updater.installListeners()
         notifyIfRepoChanged(this, null, initialRepoInfo)
         this.untrackedFilesHolder.invalidate()
       }

@@ -42,8 +42,8 @@ internal class GitRepositoryUpdater(
     reftableDir = VcsUtil.getVirtualFile(repositoryFiles.reftableFile)
   }
 
-  fun installListeners(parentDisposable: Disposable) {
-    Disposer.register(parentDisposable, this)
+  fun installListeners() {
+    Disposer.register(repository, this)
     AsyncVfsEventsPostProcessor.getInstance().addListener(this, repository.coroutineScope)
   }
 

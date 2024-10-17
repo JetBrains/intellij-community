@@ -5,17 +5,21 @@
 package com.intellij.util.concurrency
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
+import kotlin.Throws
 
 /**
  * Only for Java clients and only if you cannot rewrite in Kotlin and use coroutines (as you should).
@@ -36,6 +40,17 @@ fun executeOnPooledIoThread(task: Runnable) {
 fun executeOnPooledIoThread(coroutineScope: CoroutineScope, task: Runnable) {
   coroutineScope.launch(Dispatchers.IO) {
     task.run()
+  }
+}
+
+/**
+ * Only for Java clients and only if you cannot rewrite in Kotlin and use coroutines (as you should).
+ */
+@Internal
+@ApiStatus.Obsolete
+fun CoroutineScope.awaitCancellationAndDispose(disposable: Disposable) {
+  awaitCancellationAndInvoke {
+    Disposer.dispose(disposable)
   }
 }
 
