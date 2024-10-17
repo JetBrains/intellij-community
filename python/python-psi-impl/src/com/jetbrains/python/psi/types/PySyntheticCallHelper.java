@@ -115,6 +115,9 @@ public final class PySyntheticCallHelper {
         functions,
         function -> matchesByArgumentTypesOnTypesOnly(function, receiverType, arguments, context)
       );
+      if (matchingOverloads.isEmpty()) {
+        return Collections.emptyList();
+      }
       if (matchingOverloads.size() > 1) {
         boolean someArgumentsHaveUnknownType = ContainerUtil.exists(arguments, arg -> arg == null);
         if (someArgumentsHaveUnknownType) {
