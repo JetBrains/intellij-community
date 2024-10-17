@@ -6,4 +6,6 @@ import org.jetbrains.annotations.ApiStatus
 // TODO docs
 @ApiStatus.Internal
 @ApiStatus.NonExtendable
-interface RemDevAggregatorInlineCompletionProvider : InlineCompletionProvider
+interface RemDevAggregatorInlineCompletionProvider : InlineCompletionProvider {
+  val currentProviderId: InlineCompletionProviderID?
+}

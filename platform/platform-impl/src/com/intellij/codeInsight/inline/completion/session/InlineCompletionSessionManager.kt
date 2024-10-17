@@ -2,12 +2,18 @@
 package com.intellij.codeInsight.inline.completion.session
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
+import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.Editor
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 
-internal abstract class InlineCompletionSessionManager {
+@ApiStatus.Internal
+abstract class InlineCompletionSessionManager(private val editor: Editor) {
 
   private var currentSession: InlineCompletionSession? = null
 
@@ -20,15 +26,31 @@ internal abstract class InlineCompletionSessionManager {
   @RequiresEdt
   protected abstract fun onUpdate(session: InlineCompletionSession, result: UpdateSessionResult)
 
+  protected open fun onCreated(): Unit = Unit
+
+  protected open fun onRemoved(): Unit = Unit
+
   @RequiresEdt
-  fun sessionCreated(newSession: InlineCompletionSession) {
+  fun createSession(
+    provider: InlineCompletionProvider,
+    request: InlineCompletionRequest,
+    disposable: Disposable,
+  ): InlineCompletionSession {
+    ThreadingAssertions.assertEventDispatchThread()
+
     check(currentSession == null) { "Session already exists." }
+    val newSession = InlineCompletionSession.init(editor, provider, request, disposable)
     currentSession = newSession
+    onCreated()
+    return newSession
   }
 
   @RequiresEdt
-  fun sessionRemoved() {
+  fun removeSession() {
+    ThreadingAssertions.assertEventDispatchThread()
     check(currentSession != null) { "Session does not exist." }
+    InlineCompletionSession.remove(editor)
+    onRemoved()
     currentSession = null
   }
 
@@ -126,7 +148,8 @@ internal abstract class InlineCompletionSessionManager {
     return this !is InlineCompletionEvent.InlineLookupEvent
   }
 
-  internal sealed interface UpdateSessionResult {
+  @ApiStatus.Internal
+  sealed interface UpdateSessionResult {
     data object Succeeded : UpdateSessionResult
 
     data object Emptied : UpdateSessionResult

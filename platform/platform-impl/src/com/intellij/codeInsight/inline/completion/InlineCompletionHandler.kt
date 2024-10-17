@@ -67,13 +67,17 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
 ) {
   private val executor = SafeInlineCompletionExecutor(scope)
   private val eventListeners = EventDispatcher.create(InlineCompletionEventListener::class.java)
-  private val sessionManager = createSessionManager()
   private val typingTracker = InlineCompletionTypingTracker(parentDisposable)
 
   @ApiStatus.Internal
   protected val completionState: InlineCompletionState = InlineCompletionState()
 
-  private val invalidationListeners = EventDispatcher.create(InlineCompletionInvalidationListener::class.java)
+  @ApiStatus.Internal
+  protected val sessionManager: InlineCompletionSessionManager = createSessionManager()
+
+  @ApiStatus.Internal
+  protected val invalidationListeners: EventDispatcher<InlineCompletionInvalidationListener> =
+    EventDispatcher.create(InlineCompletionInvalidationListener::class.java)
 
   init {
     addEventListener(InlineCompletionUsageTracker.Listener()) // todo remove
@@ -86,10 +90,23 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
 
   // TODO docs
   @ApiStatus.Internal
+  @ApiStatus.NonExtendable
   protected abstract fun startSessionOrNull(
     request: InlineCompletionRequest,
     provider: InlineCompletionProvider
   ): InlineCompletionSession?
+
+  @ApiStatus.Internal
+  @ApiStatus.NonExtendable
+  protected abstract fun doHide(context: InlineCompletionContext, finishType: FinishType)
+
+  @ApiStatus.Internal
+  @ApiStatus.NonExtendable
+  protected abstract fun createSessionManager(): InlineCompletionSessionManager
+
+  @ApiStatus.Internal
+  @ApiStatus.NonExtendable
+  protected abstract fun afterInsert(providerId: InlineCompletionProviderID)
 
   fun addEventListener(listener: InlineCompletionEventListener) {
     eventListeners.addListener(listener)
@@ -155,7 +172,6 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
 
       // At this point, the previous session must be removed, otherwise, `init` will throw.
       val newSession = startSessionOrNull(request, provider) ?: return
-      sessionManager.sessionCreated(newSession)
       newSession.guardCaretModifications()
 
       executor.switchJobSafely(newSession::assignJob) {
@@ -174,7 +190,9 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
     ThreadingAssertions.assertWriteAccess()
 
     val session = InlineCompletionSession.getOrNull(editor) ?: return
-    val providerId = session.provider.id
+    val actualProviderId = session.provider.let { provider ->
+      if (provider is RemDevAggregatorInlineCompletionProvider) provider.currentProviderId ?: provider.id else provider.id
+    }
     val context = session.context
     val offset = context.startOffset() ?: return
     traceBlocking(InlineCompletionEventType.Insert)
@@ -194,18 +212,14 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
 
     LookupManager.getActiveLookup(editor)?.hideLookup(false) //TODO: remove this
 
-    // The session is completely destroyed at this moment, so it's safe to send a new event
-    invokeEvent(InlineCompletionEvent.SuggestionInserted(editor, providerId))
+    afterInsert(actualProviderId)
   }
 
   @RequiresEdt
   fun hide(context: InlineCompletionContext, finishType: FinishType = FinishType.OTHER) {
     ThreadingAssertions.assertEventDispatchThread()
     LOG.assertTrue(!context.isDisposed)
-    traceBlocking(InlineCompletionEventType.Hide(finishType, context.isCurrentlyDisplaying()))
-
-    InlineCompletionSession.remove(editor)
-    sessionManager.sessionRemoved()
+    doHide(context, finishType)
   }
 
   fun cancel(finishType: FinishType = FinishType.OTHER) {
@@ -215,6 +229,12 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
         hide(it, finishType)
       }
     }
+  }
+
+  @ApiStatus.Internal
+  protected fun performHardHide(context: InlineCompletionContext, finishType: FinishType) {
+    traceBlocking(InlineCompletionEventType.Hide(finishType, context.isCurrentlyDisplaying()))
+    sessionManager.removeSession()
   }
 
   private fun isCompletionSuppressed(editor: Editor): Boolean = isInlinePromptShown(editor)
@@ -415,8 +435,11 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
     if (!remDevAggregatorAllowed && this is RemDevAggregatorInlineCompletionProvider) {
       return false
     }
-    if (event is InlineCompletionEvent.WithSpecificProvider && event.providerId != this@isEnabledConsideringEventRequirements.id) {
-      return false
+    if (event is InlineCompletionEvent.WithSpecificProvider) {
+      // Only [RemDevAggregatorInlineCompletionProvider] can use others' events
+      if (event.providerId != this@isEnabledConsideringEventRequirements.id && this !is RemDevAggregatorInlineCompletionProvider) {
+        return false
+      }
     }
     return isEnabled(event)
   }
@@ -448,44 +471,6 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
     val presentable = element.toPresentable()
     presentable.render(editor, endOffset() ?: startOffset)
     state.addElement(presentable)
-  }
-
-  private fun createSessionManager(): InlineCompletionSessionManager {
-    return object : InlineCompletionSessionManager() {
-      override fun onUpdate(session: InlineCompletionSession, result: UpdateSessionResult) {
-        ThreadingAssertions.assertEventDispatchThread()
-        when (result) {
-          UpdateSessionResult.Emptied -> hide(session.context, FinishType.TYPED)
-          UpdateSessionResult.Succeeded -> Unit
-          is UpdateSessionResult.Invalidated -> {
-            val finishType = result.getInvalidationFinishType()
-            if (finishType == FinishType.INVALIDATED) {
-              when (val reason = result.reason) {
-                is UpdateSessionResult.Invalidated.Reason.Event -> {
-                  invalidationListeners.multicaster.onInvalidatedByEvent(reason.event)
-                }
-                UpdateSessionResult.Invalidated.Reason.UnclassifiedDocumentChange -> {
-                  invalidationListeners.multicaster.onInvalidatedByUnclassifiedDocumentChange()
-                }
-              }
-            }
-            hide(session.context, finishType)
-          }
-        }
-      }
-
-      private fun UpdateSessionResult.Invalidated.getInvalidationFinishType(): FinishType {
-        return when (reason) {
-          is UpdateSessionResult.Invalidated.Reason.Event -> {
-            when (reason.event) {
-              is InlineCompletionEvent.Backspace -> FinishType.BACKSPACE_PRESSED
-              else -> FinishType.INVALIDATED
-            }
-          }
-          UpdateSessionResult.Invalidated.Reason.UnclassifiedDocumentChange -> FinishType.INVALIDATED
-        }
-      }
-    }
   }
 
   @RequiresEdt
@@ -602,13 +587,6 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
 
   // Utils for inheritors
   // -----------------------------------
-  // TODO maybe re-think this section
-  @RequiresEdt
-  @ApiStatus.Internal
-  protected fun initSession(request: InlineCompletionRequest, provider: InlineCompletionProvider): InlineCompletionSession {
-    ThreadingAssertions.assertEventDispatchThread()
-    return InlineCompletionSession.init(editor, provider, request, parentDisposable)
-  }
 
   @RequiresEdt
   @ApiStatus.Internal
@@ -616,6 +594,37 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
     ThreadingAssertions.assertEventDispatchThread()
     executor.switchJobSafely(newSession::assignJob) {
       invokeRequest(request, newSession)
+    }
+  }
+
+  @ApiStatus.Internal
+  protected abstract class InlineCompletionSessionManagerBase(editor: Editor) : InlineCompletionSessionManager(editor) {
+
+    abstract fun executeHide(
+      context: InlineCompletionContext,
+      finishType: FinishType,
+      invalidatedResult: UpdateSessionResult.Invalidated?
+    )
+
+    override fun onUpdate(session: InlineCompletionSession, result: UpdateSessionResult) {
+      ThreadingAssertions.assertEventDispatchThread()
+      when (result) {
+        UpdateSessionResult.Emptied -> executeHide(session.context, FinishType.TYPED, null)
+        UpdateSessionResult.Succeeded -> Unit
+        is UpdateSessionResult.Invalidated -> executeHide(session.context, result.getInvalidationFinishType(), result)
+      }
+    }
+
+    private fun UpdateSessionResult.Invalidated.getInvalidationFinishType(): FinishType {
+      return when (val reason = reason) {
+        is UpdateSessionResult.Invalidated.Reason.Event -> {
+          when (reason.event) {
+            is InlineCompletionEvent.Backspace -> FinishType.BACKSPACE_PRESSED
+            else -> FinishType.INVALIDATED
+          }
+        }
+        UpdateSessionResult.Invalidated.Reason.UnclassifiedDocumentChange -> FinishType.INVALIDATED
+      }
     }
   }
 
