@@ -39,8 +39,8 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
   private boolean hideOverloads = true;
   private boolean isDisposed = false;
   private int myRealOffset = -1;
+  private int numOfSignatures = 0;
   private CreateParameterInfoContext myCreateContext;
-  private Object[] myObjectsToShow;
 
   private static final EnumMap<ParameterFlag, ParameterInfoUIContextEx.Flag> PARAM_FLAG_TO_UI_FLAG = new EnumMap<>(Map.of(
     ParameterFlag.HIGHLIGHT, ParameterInfoUIContextEx.Flag.HIGHLIGHT,
@@ -70,7 +70,7 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
       Object[] infoArr = infos.toArray();
       setDisplayAllOverloadsState(infoArr, hideOverloads);
       context.setItemsToShow(infoArr);
-      myObjectsToShow = infoArr;
+      numOfSignatures = getNumOfSignatures(infoArr);
       return argumentList;
     }
 
@@ -102,7 +102,6 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
    */
   @Override
   public void updateParameterInfo(@NotNull PyArgumentList argumentList, @NotNull UpdateParameterInfoContext context) {
-    myObjectsToShow = context.getObjectsToView();
     final int allegedCursorOffset = context.getOffset(); // this is already shifted backwards to skip spaces
 
     if (!argumentList.getTextRange().contains(allegedCursorOffset) && argumentList.getText().endsWith(")")) {
@@ -163,7 +162,7 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
 
   @Override
   public JComponent createBottomComponent() {
-    int numOfOverloads = getNumOfSignatures() - 1;
+    int numOfOverloads = numOfSignatures - 1;
 
     JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     panel.setBorder(JBUI.Borders.empty(5, 0, 0, 5));
@@ -200,7 +199,7 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
 
   @Override
   public void updateBottomComponent(@NotNull JComponent component) {
-    int numOfOverloads = getNumOfSignatures() - 1;
+    int numOfOverloads = numOfSignatures - 1;
     if (numOfOverloads >= 1) {
       Component comp = component.getComponent(0);
       if (comp instanceof ActionLink actionLink) {
@@ -219,9 +218,9 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
            : PyBundle.message("param.info.show.less");
   }
 
-  private int getNumOfSignatures() {
-    if (myObjectsToShow != null) {
-      return myObjectsToShow.length;
+  private static int getNumOfSignatures(Object[] objectsToShow) {
+    if (objectsToShow != null) {
+      return objectsToShow.length;
     }
     return 0;
   }
@@ -236,8 +235,8 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
 
   private void resetDisplayState() {
     myRealOffset = -1;
+    numOfSignatures = 0;
     hideOverloads = true;
-    myObjectsToShow = null;
   }
 
   private static String getRepresentationToShow(PyParameterInfoUtils.ParameterDescription description,
