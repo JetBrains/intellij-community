@@ -75,6 +75,7 @@ import org.jetbrains.concurrency.Promises;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeSelectionEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
@@ -121,8 +122,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   // read from different threads
   // written from EDT only
   private volatile @Nullable CancellablePromise<?> myLastAutoscrollPromise;
-
-  private StructureViewFloatingToolbar floatingToolbar;
 
 
   public StructureViewComponent(@Nullable FileEditor editor,
@@ -246,6 +245,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     addTreeKeyListener();
     addTreeMouseListeners();
+    addTreeSelectionListener();
     restoreState();
   }
 
@@ -297,6 +297,18 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private void addTreeKeyListener() {
     EditSourceOnEnterKeyHandler.install(getTree());
     getTree().addKeyListener(new PsiCopyPasteManager.EscapeHandler());
+  }
+
+  private void addTreeSelectionListener() {
+    getTree().addTreeSelectionListener((TreeSelectionEvent e) -> {
+      Optional.ofNullable(e.getPath())
+        .map(path -> getTree().getPathBounds(path))
+        .ifPresent(pathBounds -> {
+          if (getContent() instanceof MyLayeredPane myLayeredPane) {
+            myLayeredPane.repaintFloatingToolbar(pathBounds.y);
+          }
+        });
+    });
   }
 
   @Override
@@ -981,7 +993,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     public void processMouseEvent(MouseEvent event) {
       if (event.getID() == MouseEvent.MOUSE_PRESSED) requestFocus();
       if (myTreeModel instanceof StructureViewModel.ActionHandler actionHandler) {
-        updateFloatingToolbar(event);
         boolean handled = processCustomEventHandler(actionHandler, event);
         if (handled) {
           event.consume();
@@ -989,20 +1000,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         }
       }
       super.processMouseEvent(event);
-    }
-
-    private void updateFloatingToolbar(MouseEvent event) {
-      if (event.getClickCount() != 1 || event.getID() != MouseEvent.MOUSE_PRESSED) return;
-      Optional.ofNullable(getClosestPathForLocation(event.getX(), event.getY()))
-        .map(path -> getPathBounds(path))
-        .filter(bounds -> event.getX() >= bounds.x && event.getY() < bounds.y + bounds.height)
-        .ifPresent(pathBounds -> {
-          int scrollDy = 0;
-          if (getParent().getParent() instanceof JBScrollPane scrollParent) {
-            scrollDy = scrollParent.getVerticalScrollBar().getValue();
-          }
-          floatingToolbar.repaintOnYWithDy(pathBounds.y, scrollDy);
-        });
     }
 
     private boolean processCustomEventHandler(StructureViewModel.ActionHandler actionHandler, MouseEvent event) {
@@ -1195,7 +1192,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   private class MyLayeredPane extends JBLayeredPane {
 
-    private final JComponent mainComponent;
+    private final JScrollPane mainComponent;
+    private final StructureViewFloatingToolbar floatingToolbar;
     private final boolean isLogical;
 
     MyLayeredPane(JScrollPane mainComponent, boolean isLogical) {
@@ -1216,6 +1214,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
           component.setBounds(isLogical ? 12 : 0, 0, bounds.width, bounds.height);
         }
       }
+    }
+
+    public void repaintFloatingToolbar(int y) {
+      int scrollDy = mainComponent.getVerticalScrollBar().getValue();
+      floatingToolbar.repaintOnYWithDy(y, scrollDy);
     }
 
     @Override
