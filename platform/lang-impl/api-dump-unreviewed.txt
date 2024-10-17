@@ -2458,7 +2458,6 @@ c:com.intellij.codeInsight.daemon.impl.TrafficLightRenderer
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.editor.markup.ErrorStripeRenderer
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document):V
-- p:<init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):V
 - p:createUIController():com.intellij.openapi.editor.markup.UIController
 - pf:createUIController(com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.markup.UIController
 - dispose():V
@@ -2466,12 +2465,11 @@ c:com.intellij.codeInsight.daemon.impl.TrafficLightRenderer
 - p:getDaemonCodeAnalyzerStatus(com.intellij.codeInsight.daemon.impl.SeverityRegistrar):com.intellij.codeInsight.daemon.impl.TrafficLightRenderer$DaemonCodeAnalyzerStatus
 - getErrorCounts():I[]
 - pf:getProject():com.intellij.openapi.project.Project
-- getSeverityRegistrar():com.intellij.codeInsight.daemon.impl.SeverityRegistrar
+- f:getSeverityRegistrar():com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 - getStatus():com.intellij.openapi.editor.markup.AnalyzerStatus
-- p:getUIController():com.intellij.openapi.editor.markup.UIController
+- f:invalidate():V
 - isValid():Z
-- p:refresh(com.intellij.openapi.editor.impl.EditorMarkupModelImpl):V
-- s:setTrafficLightOnEditor(com.intellij.openapi.project.Project,com.intellij.openapi.editor.ex.EditorMarkupModel,com.intellij.openapi.application.ModalityState,java.util.function.Supplier):V
+- refresh(com.intellij.openapi.editor.ex.EditorMarkupModel):V
 pc:com.intellij.codeInsight.daemon.impl.TrafficLightRenderer$AbstractUIController
 - canClosePopup():Z
 - fillHectorPanels(java.awt.Container,com.intellij.util.ui.GridBag):V
@@ -2482,7 +2480,7 @@ pc:com.intellij.codeInsight.daemon.impl.TrafficLightRenderer$AbstractUIControlle
 - toggleProblemsView():V
 pc:com.intellij.codeInsight.daemon.impl.TrafficLightRenderer$DefaultUIController
 - com.intellij.codeInsight.daemon.impl.TrafficLightRenderer$AbstractUIController
-- p:<init>(com.intellij.codeInsight.daemon.impl.TrafficLightRenderer):V
+- <init>(com.intellij.codeInsight.daemon.impl.TrafficLightRenderer):V
 - getActions():java.util.List
 - isToolbarEnabled():Z
 com.intellij.codeInsight.daemon.impl.TrafficLightRendererContributor

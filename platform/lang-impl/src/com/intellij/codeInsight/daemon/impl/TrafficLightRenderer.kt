@@ -21,22 +21,19 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
-import com.intellij.openapi.editor.impl.EditorMarkupModelImpl
 import com.intellij.openapi.editor.impl.event.MarkupModelListener
 import com.intellij.openapi.editor.markup.*
 import com.intellij.openapi.options.ConfigurationException
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -44,11 +41,9 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SlowOperations
 import com.intellij.util.UtilBundle.message
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.GridBag
-import groovy.transform.Internal
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntBinaryOperator
 import it.unimi.dsi.fastutil.objects.Object2IntMaps
@@ -56,7 +51,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Container
-import javax.swing.JComponent
+import java.util.concurrent.CancellationException
 
 open class TrafficLightRenderer private constructor(
   project: Project,
@@ -68,7 +63,9 @@ open class TrafficLightRenderer private constructor(
   private val daemonCodeAnalyzer: DaemonCodeAnalyzerImpl
   val severityRegistrar: SeverityRegistrar
   private val errorCount = Object2IntMaps.synchronize(Object2IntOpenHashMap<HighlightSeverity>())
-  protected val uIController: UIController
+  @JvmField
+  @ApiStatus.Internal
+  protected val uiController: UIController
   // true if getPsiFile() is in library sources
   private val inLibrary: Boolean
   private val shouldHighlight: Boolean
@@ -81,7 +78,7 @@ open class TrafficLightRenderer private constructor(
 
   constructor(project: Project, document: Document) : this(project = project, document = document, editor = null)
 
-  @Internal
+  @ApiStatus.Internal
   constructor(project: Project, editor: Editor) : this(project = project, document = editor.getDocument(), editor = editor)
 
   init {
@@ -94,7 +91,7 @@ open class TrafficLightRenderer private constructor(
     this.severityRegistrar = SeverityRegistrar.getSeverityRegistrar(this.project)
 
     init(project, document)
-    uIController = if (editor == null) createUIController() else createUIController(editor)
+    uiController = if (editor == null) createUIController() else createUIController(editor)
     data class Stuff(
       @JvmField val fileHighlightingSettings: MutableMap<Language, FileHighlightingSetting>,
       @JvmField val inLibrary: Boolean,
@@ -126,7 +123,7 @@ open class TrafficLightRenderer private constructor(
     fileHighlightingSettings = info.fileHighlightingSettings
     inLibrary = info.inLibrary
     shouldHighlight = info.shouldHighlight
-    highlightingSettingsModificationCount = HighlightingSettingsPerFile.getInstance(project).getModificationCount()
+    highlightingSettingsModificationCount = HighlightingSettingsPerFile.getInstance(project).modificationCount
   }
 
   private fun init(project: Project, document: Document) {
@@ -154,13 +151,13 @@ open class TrafficLightRenderer private constructor(
 
   open val errorCounts: IntArray
     /**
-     * Returns a new instance of an array filled with a number of highlighters with a given severity.
-     * `errorCount[idx]` equals to a number of highlighters of severity with index `idx` in this markup model.
+     * Returns a new instance of an array filled with a number of highlighters with given severity.
+     * `errorCount[index]` equals to a number of highlighters of severity with index `idx` in this markup model.
      * Severity index can be obtained via [SeverityRegistrar.getSeverityIdx].
      */
     get() = cachedErrors.clone()
 
-  open fun refresh(editorMarkupModel: EditorMarkupModelImpl?) {
+  open fun refresh(editorMarkupModel: EditorMarkupModel?) {
     val severities = severityRegistrar.allSeverities
     if (cachedErrors.size != severities.size) {
       cachedErrors = IntArray(severities.size)
@@ -199,7 +196,7 @@ open class TrafficLightRenderer private constructor(
         if (psiFile == null) return false
       }
       val settings = HighlightingSettingsPerFile.getInstance(psiFile!!.getProject())
-      return settings.getModificationCount() == highlightingSettingsModificationCount
+      return settings.modificationCount == highlightingSettingsModificationCount
     }
 
   @ApiStatus.Internal
@@ -208,12 +205,18 @@ open class TrafficLightRenderer private constructor(
     // all passes are done
     var errorAnalyzingFinished: Boolean = false
 
-    var passes: MutableList<ProgressableTextEditorHighlightingPass> = mutableListOf()
+    @JvmField
+    internal var passes: List<ProgressableTextEditorHighlightingPass> = listOf()
+    @JvmField
     var errorCounts: IntArray = ArrayUtilRt.EMPTY_INT_ARRAY
+    @JvmField
     var reasonWhyDisabled: @Nls String? = null
+    @JvmField
     var reasonWhySuspended: @Nls String? = null
 
+    @JvmField
     var heavyProcessType: HeavyProcessLatch.Type? = null
+    @JvmField
     // by default, full inspect mode is expected
     internal var minimumLevel = FileHighlightingSetting.FORCE_HIGHLIGHTING
 
@@ -222,7 +225,7 @@ open class TrafficLightRenderer private constructor(
                              + "; pass statuses: " + passes.size + "; "))
       for (passStatus in passes) {
         s.append(
-          String.format("(%s %2.0f%% %b)", passStatus.getPresentableName(), passStatus.getProgress() * 100, passStatus.isFinished()))
+          String.format("(%s %2.0f%% %b)", passStatus.presentableName, passStatus.getProgress() * 100, passStatus.isFinished))
       }
       s.append("; error counts: ").append(errorCounts.size).append(": ").append(IntArrayList(errorCounts))
       if (reasonWhyDisabled != null) {
@@ -281,9 +284,9 @@ open class TrafficLightRenderer private constructor(
     var shouldHighlight = languages.isEmpty()
 
     for (entry in fileHighlightingSettings.entries) {
-      val level: FileHighlightingSetting = entry.value!!
+      val level = entry.value
       shouldHighlight = shouldHighlight or (level != FileHighlightingSetting.SKIP_HIGHLIGHTING)
-      status.minimumLevel = if (status.minimumLevel.compareTo(level) < 0) status.minimumLevel else level
+      status.minimumLevel = if (status.minimumLevel < level) status.minimumLevel else level
     }
     shouldHighlight = shouldHighlight and this.shouldHighlight
 
@@ -300,15 +303,11 @@ open class TrafficLightRenderer private constructor(
     }
 
     status.errorCounts = this.errorCounts
-    status.passes = ContainerUtil.filter<ProgressableTextEditorHighlightingPass?>(
-      daemonCodeAnalyzer.getPassesToShowProgressFor(document),
-      Condition { p: ProgressableTextEditorHighlightingPass? ->
-        !StringUtil.isEmpty(
-          p!!.getPresentableName()) && p.getProgress() >= 0
-      })
+    status.passes = daemonCodeAnalyzer.getPassesToShowProgressFor(document)
+      .filter { !it.presentableName.isNullOrEmpty() && it.getProgress() >= 0 }
 
     status.errorAnalyzingFinished = daemonCodeAnalyzer.isAllAnalysisFinished(psiFile)
-    if (!daemonCodeAnalyzer.isUpdateByTimerEnabled()) {
+    if (!daemonCodeAnalyzer.isUpdateByTimerEnabled) {
       status.reasonWhySuspended = DaemonBundle.message("process.title.highlighting.is.paused.temporarily")
     }
     fillDaemonCodeAnalyzerErrorsStatus(status, severityRegistrar)
@@ -321,13 +320,13 @@ open class TrafficLightRenderer private constructor(
 
   override fun getStatus(): AnalyzerStatus {
     // this method is rather expensive and PSI-related, need to execute in BGT and cache the result to show in EDT later
-    ApplicationManager.getApplication().assertIsNonDispatchThread()
-    ApplicationManager.getApplication().assertReadAccessAllowed()
+    ThreadingAssertions.assertBackgroundThread()
+    ThreadingAssertions.assertReadAccess()
     if (PowerSaveMode.isEnabled()) {
       return AnalyzerStatus(AllIcons.General.InspectionsPowerSaveMode,
                             InspectionsBundle.message("code.analysis.is.disabled.in.power.save.mode"),
                             "",
-                            this.uIController).withState(InspectionsState.DISABLED)
+                            this.uiController).withState(InspectionsState.DISABLED)
     }
     val status = getDaemonCodeAnalyzerStatus(this.severityRegistrar)
 
@@ -336,26 +335,29 @@ open class TrafficLightRenderer private constructor(
     val state: InspectionsState?
     val isDumb = isDumb(this.project)
 
-    val statusItems: MutableList<SeverityStatusItem> = ArrayList<SeverityStatusItem>()
+    val statusItems = ArrayList<SeverityStatusItem>()
     val errorCounts = status.errorCounts
     for (i in errorCounts.indices.reversed()) {
       val count = errorCounts[i]
-      if (count > 0) {
-        val severity = severityRegistrar.getSeverityByIndex(i)
-        if (severity != null) {
-          val icon = severityRegistrar.getRendererIconBySeverity(severity,
-                                                                 status.minimumLevel == FileHighlightingSetting.FORCE_HIGHLIGHTING)
-          var next: SeverityStatusItem? = SeverityStatusItem(severity, icon, count, severity.getCountMessage(count))
-          while (!statusItems.isEmpty()) {
-            val merged = StatusItemMerger.runMerge(ContainerUtil.getLastItem<SeverityStatusItem?>(statusItems), next!!)
-            if (merged == null) break
-
-            statusItems.removeAt(statusItems.size - 1)
-            next = merged
-          }
-          statusItems.add(next!!)
-        }
+      if (count <= 0) {
+        continue
       }
+
+      val severity = severityRegistrar.getSeverityByIndex(i) ?: continue
+      val icon = severityRegistrar.getRendererIconBySeverity(severity,
+                                                             status.minimumLevel == FileHighlightingSetting.FORCE_HIGHLIGHTING)
+      var next = SeverityStatusItem(
+        severity = severity,
+        icon = icon,
+        problemCount = count,
+        countMessage = severity.getCountMessage(count),
+      )
+      while (!statusItems.isEmpty()) {
+        val merged = StatusItemMerger.runMerge(statusItems.lastOrNull()!!, next) ?: break
+        statusItems.removeAt(statusItems.size - 1)
+        next = merged
+      }
+      statusItems.add(next)
     }
 
     if (status.errorAnalyzingFinished) {
@@ -386,7 +388,7 @@ open class TrafficLightRenderer private constructor(
         icon = statusItems[0].icon,
         title = title,
         details = "",
-        controller = this.uIController,
+        controller = this.uiController,
       )
         .withNavigation(true)
         .withState(state)
@@ -405,17 +407,20 @@ open class TrafficLightRenderer private constructor(
           })
       }
     }
-    if (StringUtil.isNotEmpty(status.reasonWhyDisabled)) {
-      return AnalyzerStatus(AllIcons.General.InspectionsTrafficOff,
-                            DaemonBundle.message("no.analysis.performed"),
-                            status.reasonWhyDisabled!!,
-                            this.uIController).withTextStatus(DaemonBundle.message("iw.status.off")).withState(InspectionsState.OFF)
+    if (!status.reasonWhyDisabled.isNullOrEmpty()) {
+      return AnalyzerStatus(
+        icon = AllIcons.General.InspectionsTrafficOff,
+        title = DaemonBundle.message("no.analysis.performed"),
+        details = status.reasonWhyDisabled!!,
+        controller = this.uiController,
+      ).withTextStatus(DaemonBundle.message("iw.status.off")).withState(InspectionsState.OFF)
     }
-    if (StringUtil.isNotEmpty(status.reasonWhySuspended)) {
+    if (!status.reasonWhySuspended.isNullOrEmpty()) {
       return AnalyzerStatus(
         icon = AllIcons.General.InspectionsPause,
         title = DaemonBundle.message("analysis.suspended"),
-        details = status.reasonWhySuspended!!, controller = this.uIController,
+        details = status.reasonWhySuspended!!,
+        controller = this.uiController,
       )
         .withState(InspectionsState.PAUSED)
         .withTextStatus(if (status.heavyProcessType != null) status.heavyProcessType.toString() else DaemonBundle.message("iw.status.paused"))
@@ -429,13 +434,13 @@ open class TrafficLightRenderer private constructor(
         AllIcons.General.InspectionsOKEmpty
       }
       return if (isDumb) {
-        AnalyzerStatus(icon = AllIcons.General.InspectionsPause, title = title, details = details, controller = this.uIController)
+        AnalyzerStatus(icon = AllIcons.General.InspectionsPause, title = title, details = details, controller = uiController)
           .withTextStatus(message("heavyProcess.type.indexing"))
           .withState(InspectionsState.INDEXING)
           .withAnalyzingType(AnalyzingType.SUSPENDED)
       }
       else {
-        AnalyzerStatus(icon = inspectionsCompletedIcon, title = title, details = details, controller = uIController)
+        AnalyzerStatus(icon = inspectionsCompletedIcon, title = title, details = details, controller = uiController)
       }
     }
 
@@ -443,7 +448,7 @@ open class TrafficLightRenderer private constructor(
       icon = AllIcons.General.InspectionsEye,
       title = DaemonBundle.message("no.errors.or.warnings.found"),
       details = details,
-      controller = this.uIController,
+      controller = this.uiController,
     )
       .withTextStatus(DaemonBundle.message("iw.status.analyzing"))
       .withState(InspectionsState.ANALYZING)
@@ -473,7 +478,7 @@ open class TrafficLightRenderer private constructor(
       ThreadingAssertions.assertBackgroundThread()
     }
 
-    @Suppress("RemoveRedundantQualifierName")
+    @Suppress("RemoveRedundantQualifierName", "RedundantSuppression")
     override fun getAvailableLevels(): List<InspectionsLevel?> {
       return when {
         inLibrary -> java.util.List.of(InspectionsLevel.NONE, InspectionsLevel.SYNTAX)
@@ -486,25 +491,23 @@ open class TrafficLightRenderer private constructor(
 
     override fun getHighlightLevels(): List<LanguageHighlightLevel> {
       return fileHighlightingSettings.entries.map { entry ->
-        LanguageHighlightLevel(langID = entry.key!!.id, level = FileHighlightingSetting.toInspectionsLevel(entry.value!!))
+        LanguageHighlightLevel(langID = entry.key.id, level = FileHighlightingSetting.toInspectionsLevel(entry.value))
       }
     }
 
     override fun setHighLightLevel(level: LanguageHighlightLevel) {
       val psiFile = psiFile
-      if (psiFile != null && !project.isDisposed() && !highlightLevels.contains(level)) {
-        val viewProvider = psiFile.getViewProvider()
-
-        val language = Language.findLanguageByID(level.langID)
-        if (language != null) {
-          val root = viewProvider.getPsi(language) ?: return
-          val setting = FileHighlightingSetting.fromInspectionsLevel(level.level)
-          HighlightLevelUtil.forceRootHighlighting(root, setting)
-          InjectedLanguageManager.getInstance(project).dropFileCaches(psiFile)
-          daemonCodeAnalyzer.restart()
-          // after that, TrafficLightRenderer will be recreated anew, no need to patch myFileHighlightingSettings
-        }
+      if (psiFile == null || project.isDisposed() || highlightLevels.contains(level)) {
+        return
       }
+
+      val language = Language.findLanguageByID(level.langID) ?: return
+      val root = psiFile.getViewProvider().getPsi(language) ?: return
+      val setting = FileHighlightingSetting.fromInspectionsLevel(level.level)
+      HighlightLevelUtil.forceRootHighlighting(root, setting)
+      InjectedLanguageManager.getInstance(project).dropFileCaches(psiFile)
+      daemonCodeAnalyzer.restart()
+      // after that, TrafficLightRenderer will be recreated anew, no need to patch myFileHighlightingSettings
     }
 
     override fun fillHectorPanels(container: Container, gc: GridBag) {
@@ -519,22 +522,19 @@ open class TrafficLightRenderer private constructor(
       additionalPanels = list
 
       for (panel in additionalPanels) {
-        val c: JComponent?
-        try {
+        val c = try {
           panel.reset()
-          c = panel.createComponent()
+          panel.createComponent()
         }
-        catch (e: ProcessCanceledException) {
+        catch (e: CancellationException) {
           throw e
         }
         catch (e: Throwable) {
-          Logger.getInstance(TrafficLightRenderer::class.java).error(e)
+          logger<TrafficLightRenderer>().error(e)
           continue
-        }
+        } ?: continue
 
-        if (c != null) {
-          container.add(c, gc.nextLine().next().fillCellHorizontally().coverLine().weightx(1.0))
-        }
+        container.add(c, gc.nextLine().next().fillCellHorizontally().coverLine().weightx(1.0))
       }
     }
 
@@ -542,22 +542,23 @@ open class TrafficLightRenderer private constructor(
       if (additionalPanels.isEmpty()) {
         return true
       }
-      if (additionalPanels.all { it.canClose() }) {
-        val psiFile = psiFile
-        var hasModified = false
-        for (panel in additionalPanels.asSequence().filter { it.isModified() }) {
-          hasModified = true
-          applyPanel(panel)
-        }
-        if (hasModified) {
-          if (psiFile != null) {
-            InjectedLanguageManager.getInstance(project).dropFileCaches(psiFile)
-          }
-          daemonCodeAnalyzer.restart()
-        }
-        return true
+      if (!additionalPanels.all { it.canClose() }) {
+        return false
       }
-      return false
+
+      val psiFile = psiFile
+      var hasModified = false
+      for (panel in additionalPanels.asSequence().filter { it.isModified() }) {
+        hasModified = true
+        applyPanel(panel)
+      }
+      if (hasModified) {
+        if (psiFile != null) {
+          InjectedLanguageManager.getInstance(project).dropFileCaches(psiFile)
+        }
+        daemonCodeAnalyzer.restart()
+      }
+      return true
     }
 
     override fun onClosePopup() {
@@ -575,7 +576,7 @@ open class TrafficLightRenderer private constructor(
 
   protected open inner class DefaultUIController : AbstractUIController() {
     // only create actions when daemon widget used
-    @Suppress("RemoveRedundantQualifierName")
+    @Suppress("RemoveRedundantQualifierName", "RedundantSuppression")
     private val menuActions by lazy {
       java.util.List.of(
         ActionManager.getInstance().getAction("ConfigureInspectionsAction"),

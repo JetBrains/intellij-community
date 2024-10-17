@@ -141,9 +141,8 @@ class ErrorStripeUpdateManager(private val project: Project, private val corouti
 
     val renderer = editorMarkupModel.getErrorStripeRenderer()
     if (renderer is TrafficLightRenderer) {
-      val markupModelImpl = editorMarkupModel as EditorMarkupModelImpl
-      renderer.refresh(markupModelImpl)
-      markupModelImpl.repaintTrafficLightIcon()
+      renderer.refresh(editorMarkupModel)
+      (editorMarkupModel as EditorMarkupModelImpl).repaintTrafficLightIcon()
       if (renderer.isValid) {
         return
       }

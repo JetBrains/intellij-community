@@ -4,21 +4,20 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This filters can be used to prevent error highlighting (invalid code, unresolved references etc.) in files outside of project scope.
- * Filter implementations should be permissive - i.e. should prevent highlighting only for files it absolutely knows about,
+ * This filters can be used to prevent error highlighting (invalid code, unresolved references, etc.) in files outside a project scope.
+ * Filter implementations should be permissive - i.e., should prevent highlighting only for files it absolutely knows about,
  * and return true otherwise.
  */
 public abstract class ProblemHighlightFilter {
-  public static final ExtensionPointName<ProblemHighlightFilter> EP_NAME = ExtensionPointName.create("com.intellij.problemHighlightFilter");
+  public static final ExtensionPointName<ProblemHighlightFilter> EP_NAME = new ExtensionPointName<>("com.intellij.problemHighlightFilter");
   private static final Logger LOG = Logger.getInstance(ProblemHighlightFilter.class);
 
   /**
    * @param psiFile file to decide about
-   * @return false if this filter disables highlighting for given file, true if filter enables highlighting or can't decide
+   * @return false if this filter disables highlighting for a given file, true if filter enables highlighting or can't decide
    */
   public abstract boolean shouldHighlight(@NotNull PsiFile psiFile);
 
@@ -35,10 +34,16 @@ public abstract class ProblemHighlightFilter {
   }
 
   private static boolean shouldProcess(@NotNull PsiFile psiFile, boolean onTheFly) {
-    return ContainerUtil.all(EP_NAME.getExtensionList(), filter -> {
-      var shouldHighlight = onTheFly ? filter.shouldHighlight(psiFile) : filter.shouldProcessInBatch(psiFile);
-      LOG.debug("shouldProcess highlight: ", shouldHighlight, " filter type: ", filter.getClass().getSimpleName());
-      return shouldHighlight;
-    });
+    boolean isDebugEnabled = LOG.isDebugEnabled();
+    for (ProblemHighlightFilter filter : EP_NAME.getExtensionList()) {
+      boolean shouldHighlight = onTheFly ? filter.shouldHighlight(psiFile) : filter.shouldProcessInBatch(psiFile);
+      if (isDebugEnabled) {
+        LOG.debug("shouldProcess highlight: " + shouldHighlight + " filter type: " + filter.getClass().getSimpleName());
+      }
+      if (!shouldHighlight) {
+        return false;
+      }
+    }
+    return true;
   }
 }
