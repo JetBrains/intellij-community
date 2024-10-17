@@ -241,12 +241,12 @@ private fun addBeforeOrAfter(value: JsonValueAdapter,
                              fakeProperty: PsiElement?): PsiElement {
   val properties = value.asObject?.propertyList.orEmpty()
   val firstProperty = properties.firstOrNull()
-  val lastProperty = properties.lastOrNull()
-  return if (lastProperty != null && element.startOffset >= lastProperty.delegate.endOffset) {
-    val newElement = value.delegate.addAfter(elementToAdd, lastProperty.delegate)
-    if (lastProperty.delegate != fakeProperty) {
+  val lastPropertyBefore = properties.lastOrNull { element.startOffset >= it.delegate.endOffset }
+  return if (lastPropertyBefore != null) {
+    val newElement = value.delegate.addAfter(elementToAdd, lastPropertyBefore.delegate)
+    if (lastPropertyBefore.delegate != fakeProperty) {
       JsonLikePsiWalker.getWalker(newElement)?.getSyntaxAdapter(newElement.project)?.ensureComma(
-        lastProperty.delegate, newElement
+        lastPropertyBefore.delegate, newElement
       )
     }
     newElement
