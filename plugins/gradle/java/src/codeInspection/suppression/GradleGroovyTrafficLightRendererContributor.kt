@@ -13,24 +13,28 @@ import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.config.isGradleFile
 import org.jetbrains.plugins.gradle.service.resolve.getLinkedGradleProjectPath
 
-class GradleGroovyTrafficLightRendererContributor : TrafficLightRendererContributor {
+private class GradleGroovyTrafficLightRendererContributor : TrafficLightRendererContributor {
   override fun createRenderer(editor: Editor, file: PsiFile?): TrafficLightRenderer? {
     if (file == null || !file.isGradleFile()) {
       return null
     }
     return GradleGroovyTrafficLightRenderer(file, editor)
   }
-
 }
 
-private class GradleGroovyTrafficLightRenderer(val file: PsiFile, editor: Editor) : TrafficLightRenderer(file.project, editor) {
-  val linkedProjectPath: String? get() = file.getLinkedGradleProjectPath()
+private class GradleGroovyTrafficLightRenderer(private val file: PsiFile, editor: Editor) : TrafficLightRenderer(file.project, editor) {
   override fun getStatus(): AnalyzerStatus {
-    val thisLinkedProjectPath = linkedProjectPath
-    if (thisLinkedProjectPath == null) return super.getStatus()
+    val thisLinkedProjectPath = file.getLinkedGradleProjectPath() ?: return super.getStatus()
     val service = project.service<GradleSuspendTypecheckingService>()
-    if (!service.isSuspended(thisLinkedProjectPath)) return super.getStatus()
-    return AnalyzerStatus(AllIcons.RunConfigurations.TestIgnored, GradleInspectionBundle.message("traffic.light.inspections.disabled"), GradleInspectionBundle.message("traffic.light.inspections.disabled.description"), uiController)
-    .withAnalyzingType(AnalyzingType.PARTIAL)
+    if (!service.isSuspended(thisLinkedProjectPath)) {
+      return super.getStatus()
+    }
+    return AnalyzerStatus(
+      icon = AllIcons.RunConfigurations.TestIgnored,
+      title = GradleInspectionBundle.message("traffic.light.inspections.disabled"),
+      details = GradleInspectionBundle.message("traffic.light.inspections.disabled.description"),
+      controller = uiController,
+    )
+      .withAnalyzingType(AnalyzingType.PARTIAL)
   }
 }
