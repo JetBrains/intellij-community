@@ -161,9 +161,10 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
                                   holder: HighlightInfoHolder) {
         if (!K2UnusedSymbolUtil.isApplicableByPsi(declaration)) return
         if (refHolder.isUsedLocally(declaration)) return // even for non-private declarations our refHolder might have usage info
-        val mustBeLocallyReferenced = declaration is KtParameter && !(declaration.hasValOrVar()) ||
-                                      declaration.hasModifier(KtTokens.PRIVATE_KEYWORD) ||
-                                      ((declaration.parent as? KtClassBody)?.parent as? KtClassOrObject)?.isLocal == true
+        val mustBeLocallyReferenced = declaration is KtParameter && !declaration.hasValOrVar()
+                                               && (declaration.parent?.parent as? KtModifierListOwner)?.hasModifier(KtTokens.EXTERNAL_KEYWORD) != true // parameters of external functions might be referenced elsewhere
+                || declaration.hasModifier(KtTokens.PRIVATE_KEYWORD)
+                || ((declaration.parent as? KtClassBody)?.parent as? KtClassOrObject)?.isLocal == true
         if (SuppressionUtil.inspectionResultSuppressed(declaration, deadCodeInspection)) {
             return
         }

@@ -18173,6 +18173,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/unusedSymbol/expectFunctionParameter.kt");
             }
 
+            @TestMetadata("externalFunWithUnusedParameter.kt")
+            public void testExternalFunWithUnusedParameter() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/externalFunWithUnusedParameter.kt");
+            }
+
             @TestMetadata("functionCall.kt")
             public void testFunctionCall() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/functionCall.kt");

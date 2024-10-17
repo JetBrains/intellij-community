@@ -130,6 +130,9 @@ object K2UnusedSymbolUtil {
   context(KaSession)
   @OptIn(KaExperimentalApi::class)
   fun getPsiToReportProblem(declaration: KtNamedDeclaration, isJavaEntryPointInspection: UnusedDeclarationInspectionBase): PsiElement? {
+      if (((declaration as? KtParameter)?.parent?.parent as? KtModifierListOwner)?.hasModifier(KtTokens.EXTERNAL_KEYWORD) == true) {
+          return null
+      }
       val symbol = declaration.symbol
       if (declaration.languageVersionSettings.getFlag(
           AnalysisFlags.explicitApiMode) != ExplicitApiMode.DISABLED && symbol.compilerVisibility.isPublicAPI) {
@@ -647,7 +650,7 @@ object K2UnusedSymbolUtil {
       return when {
           symbol is KaConstructorSymbol -> {
               val classSymbol = symbol.containingDeclaration as? KaNamedClassSymbol ?: return false
-              !classSymbol.isInline && !(classSymbol.visibility == KaSymbolVisibility.PRIVATE)
+              !classSymbol.isInline && classSymbol.visibility != KaSymbolVisibility.PRIVATE
           }
           hasModifier(KtTokens.INTERNAL_KEYWORD) -> false
           symbol !is KaNamedFunctionSymbol -> true
