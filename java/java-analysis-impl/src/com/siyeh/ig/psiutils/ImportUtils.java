@@ -626,9 +626,6 @@ public final class ImportUtils {
     return dotIndex < 0 ? "" : className.substring(0, dotIndex);
   }
 
-  @ApiStatus.Internal
-  public record Import(@NotNull String name, boolean isStatic) {}
-
   private static boolean memberReferenced(PsiMember member, PsiElement context) {
     final MemberReferenceVisitor visitor = new MemberReferenceVisitor(member);
     context.accept(visitor);
