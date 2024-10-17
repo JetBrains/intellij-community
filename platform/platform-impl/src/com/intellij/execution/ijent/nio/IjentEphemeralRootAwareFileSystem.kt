@@ -92,16 +92,21 @@ internal class IjentEphemeralRootAwarePath(val rootPath: Path, val originalPath:
     return originalPath.compareTo(if (other is IjentEphemeralRootAwarePath) other.originalPath else other)
   }
 
-  override fun equals(other: Any?): Boolean {
-    return originalPath == if (other is IjentEphemeralRootAwarePath) other.originalPath else other
-  }
-
   override fun toFile(): File {
     return originalPath.toFile()
   }
 
+  override fun equals(other: Any?): Boolean {
+    return if (other is IjentEphemeralRootAwarePath) {
+      other.rootPath == rootPath && other.originalPath == originalPath
+    }
+    else originalPath == other
+  }
+
   override fun hashCode(): Int {
-    return originalPath.hashCode()
+    var result = rootPath.hashCode()
+    result = 31 * result + originalPath.hashCode()
+    return result
   }
 
   override fun toString(): String {
