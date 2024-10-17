@@ -29,7 +29,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.util.function.Supplier
 
 private val LOG = logger<ErrorStripeUpdateManager>()
 private val EP_NAME = ExtensionPointName<TrafficLightRendererContributor>("com.intellij.trafficLightRendererContributor")
@@ -144,19 +143,26 @@ class ErrorStripeUpdateManager(private val project: Project, private val corouti
       val markupModelImpl = editorMarkupModel as EditorMarkupModelImpl
       renderer.refresh(markupModelImpl)
       markupModelImpl.repaintTrafficLightIcon()
-      if (renderer.isValid()) {
+      if (renderer.isValid) {
         return
       }
     }
 
     val modality = ModalityState.defaultModalityState()
-    TrafficLightRenderer.setTrafficLightOnEditor(project, editorMarkupModel, modality, Supplier {
-      val editor = editorMarkupModel.getEditor()
-      if (isEditorEligible(editor, file)) {
-        return@Supplier null
-      }
-      createRenderer(editor, file)
-    })
+    setTrafficLightOnEditor(
+      project = project,
+      editorMarkupModel = editorMarkupModel,
+      modalityState = modality,
+      createTrafficRenderer = {
+        val editor = editorMarkupModel.getEditor()
+        if (isEditorEligible(editor, file)) {
+          null
+        }
+        else {
+          createRenderer(editor, file)
+        }
+      },
+    )
   }
 
   @RequiresBackgroundThread
@@ -166,7 +172,7 @@ class ErrorStripeUpdateManager(private val project: Project, private val corouti
         return it
       }
     }
-    return TrafficLightRenderer(project, editor)
+    return TrafficLightRenderer(project = project, editor = editor)
   }
 
   private fun isEditorEligible(editor: Editor, psiFile: PsiFile): Boolean {
