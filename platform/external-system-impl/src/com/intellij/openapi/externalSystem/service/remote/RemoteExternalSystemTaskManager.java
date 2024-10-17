@@ -37,51 +37,50 @@ import java.util.Set;
 public interface RemoteExternalSystemTaskManager<S extends ExternalSystemExecutionSettings> extends RemoteExternalSystemService<S> {
 
   @ApiStatus.Internal
-  RemoteExternalSystemTaskManager<ExternalSystemExecutionSettings> NULL_OBJECT =
-    new RemoteExternalSystemTaskManager<>() {
+  RemoteExternalSystemTaskManager<ExternalSystemExecutionSettings> NULL_OBJECT = new RemoteExternalSystemTaskManager<>() {
 
-      @Override
-      public void executeTasksImpl(@NotNull ExternalSystemTaskId id,
-                               @NotNull List<String> taskNames,
-                               @NotNull String projectPath,
-                               @Nullable ExternalSystemExecutionSettings settings,
-                               @Nullable String jvmParametersSetup) throws ExternalSystemException {
-      }
+    @Override
+    public void executeTasksImpl(
+      @NotNull ExternalSystemTaskId id,
+      @NotNull List<String> taskNames,
+      @NotNull String projectPath,
+      @Nullable ExternalSystemExecutionSettings settings,
+      @Nullable String jvmParametersSetup
+    ) throws ExternalSystemException { }
 
-      @Override
-      public boolean cancelTask(@NotNull ExternalSystemTaskId id) throws ExternalSystemException {
-        return false;
-      }
+    @Override
+    public boolean cancelTask(@NotNull ExternalSystemTaskId id) throws ExternalSystemException {
+      return false;
+    }
 
-      @Override
-      public void setSettings(@NotNull ExternalSystemExecutionSettings settings) {
-      }
+    @Override
+    public void setSettings(@NotNull ExternalSystemExecutionSettings settings) { }
 
-      @Override
-      public void setNotificationListener(@NotNull ExternalSystemTaskNotificationListener notificationListener) {
-      }
+    @Override
+    public void setNotificationListener(@NotNull ExternalSystemTaskNotificationListener notificationListener) { }
 
-      @Override
-      public boolean isTaskInProgress(@NotNull ExternalSystemTaskId id) {
-        return false;
-      }
+    @Override
+    public boolean isTaskInProgress(@NotNull ExternalSystemTaskId id) {
+      return false;
+    }
 
-      @NotNull
-      @Override
-      public Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() {
-        return Collections.emptyMap();
-      }
-    };
+    @Override
+    public @NotNull Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() {
+      return Collections.emptyMap();
+    }
+  };
 
   /**
    * @deprecated Use {@link ExternalSystemUtil#runTask(TaskExecutionSpec) instead}.
    */
   @Deprecated(forRemoval = true)
-  default void executeTasks(@NotNull ExternalSystemTaskId id,
-                            @NotNull List<String> taskNames,
-                            @NotNull String projectPath,
-                            @Nullable S settings,
-                            @Nullable String jvmParametersSetup) throws RemoteException, ExternalSystemException {
+  default void executeTasks(
+    @NotNull ExternalSystemTaskId id,
+    @NotNull List<String> taskNames,
+    @NotNull String projectPath,
+    @Nullable S settings,
+    @Nullable String jvmParametersSetup
+  ) throws RemoteException, ExternalSystemException {
     executeTasksImpl(id, taskNames, projectPath, settings, jvmParametersSetup);
   }
 

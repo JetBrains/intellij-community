@@ -36,26 +36,24 @@ import java.util.Set;
 @ApiStatus.Internal
 public interface RemoteExternalSystemProjectResolver<S extends ExternalSystemExecutionSettings> extends RemoteExternalSystemService<S> {
 
-  RemoteExternalSystemProjectResolver<ExternalSystemExecutionSettings> NULL_OBJECT
-    = new RemoteExternalSystemProjectResolver<>() {
-    @Nullable
+  RemoteExternalSystemProjectResolver<ExternalSystemExecutionSettings> NULL_OBJECT = new RemoteExternalSystemProjectResolver<>() {
+
     @Override
-    public DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
-                                                    @NotNull String projectPath,
-                                                    boolean isPreviewMode,
-                                                    @Nullable ExternalSystemExecutionSettings settings,
-                                                    @Nullable ProjectResolverPolicy resolverPolicy)
-      throws ExternalSystemException, IllegalArgumentException, IllegalStateException {
+    public @Nullable DataNode<ProjectData> resolveProjectInfo(
+      @NotNull ExternalSystemTaskId id,
+      @NotNull String projectPath,
+      boolean isPreviewMode,
+      @Nullable ExternalSystemExecutionSettings settings,
+      @Nullable ProjectResolverPolicy resolverPolicy
+    ) throws ExternalSystemException, IllegalArgumentException, IllegalStateException {
       return null;
     }
 
     @Override
-    public void setSettings(@NotNull ExternalSystemExecutionSettings settings) {
-    }
+    public void setSettings(@NotNull ExternalSystemExecutionSettings settings) { }
 
     @Override
-    public void setNotificationListener(@NotNull ExternalSystemTaskNotificationListener notificationListener) {
-    }
+    public void setNotificationListener(@NotNull ExternalSystemTaskNotificationListener notificationListener) { }
 
     @Override
     public boolean isTaskInProgress(@NotNull ExternalSystemTaskId id) {
@@ -67,19 +65,17 @@ public interface RemoteExternalSystemProjectResolver<S extends ExternalSystemExe
       return false;
     }
 
-    @NotNull
     @Override
-    public Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() {
+    public @NotNull Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() {
       return Collections.emptyMap();
     }
   };
 
-
-  @Nullable
-  DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
-                                           @NotNull String projectPath,
-                                           boolean isPreviewMode,
-                                           @Nullable S settings,
-                                           @Nullable ProjectResolverPolicy resolverPolicy)
-    throws RemoteException, ExternalSystemException, IllegalArgumentException, IllegalStateException;
+  @Nullable DataNode<ProjectData> resolveProjectInfo(
+    @NotNull ExternalSystemTaskId id,
+    @NotNull String projectPath,
+    boolean isPreviewMode,
+    @Nullable S settings,
+    @Nullable ProjectResolverPolicy resolverPolicy
+  ) throws RemoteException, ExternalSystemException, IllegalArgumentException, IllegalStateException;
 }
