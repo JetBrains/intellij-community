@@ -23,6 +23,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
 import org.jetbrains.plugins.gradle.properties.models.Property
+import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
 import org.jetbrains.plugins.gradle.service.project.GradleNotification
 import org.jetbrains.plugins.gradle.service.project.GradleNotificationIdsHolder
 import java.io.File
@@ -30,6 +31,10 @@ import java.nio.file.Path
 import javax.swing.event.HyperlinkEvent
 
 fun validateJavaHome(project: Project, externalProjectPath: Path, gradleVersion: GradleVersion) {
+  // Projects using Daemon JVM criteria with a compatible Gradle version
+  // will ignore Java Home from environment variables or Gradle Properties
+  if (GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(externalProjectPath, gradleVersion)) return
+
   val gradleProperties = GradlePropertiesFile.getProperties(project, externalProjectPath)
   val javaHomeProperty = gradleProperties.javaHomeProperty
   if (javaHomeProperty != null) {
