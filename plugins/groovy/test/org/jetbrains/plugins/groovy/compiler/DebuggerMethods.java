@@ -1,207 +1,218 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.groovy.compiler
+package org.jetbrains.plugins.groovy.compiler;
 
-import com.intellij.debugger.DebuggerManagerEx
-import com.intellij.debugger.SourcePosition
-import com.intellij.debugger.engine.ContextUtil
-import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.engine.DebuggerUtils
-import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.debugger.engine.evaluation.CodeFragmentKind
-import com.intellij.debugger.engine.evaluation.EvaluateException
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
-import com.intellij.debugger.engine.events.DebuggerContextCommandImpl
-import com.intellij.debugger.impl.DebuggerContextImpl
-import com.intellij.debugger.impl.DebuggerContextUtil
-import com.intellij.debugger.impl.DebuggerManagerImpl
-import com.intellij.debugger.impl.DebuggerSession
-import com.intellij.debugger.impl.PrioritizedTask
-import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor
-import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
-import com.intellij.execution.configurations.RunProfile
-import com.intellij.execution.executors.DefaultDebugExecutor
-import com.intellij.execution.process.*
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.util.Computable
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.impl.DebugUtil
-import com.intellij.util.ExceptionUtil
-import com.intellij.util.concurrency.Semaphore
-import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerContextUtil;
+import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.PrioritizedTask;
+import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.process.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.impl.DebugUtil;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
-@CompileStatic
-trait DebuggerMethods implements CompilerMethods {
+import static junit.framework.TestCase.*;
 
-  private static final int ourTimeout = 60000
-
-  abstract Logger getLogger()
+public interface DebuggerMethods extends CompilerMethods {
+  Logger getLogger();
 
   @Nullable
-  DebugProcessImpl getDebugProcess() {
-    debugSession?.process
+  default DebugProcessImpl getDebugProcess() {
+    final DebuggerSession session = getDebugSession();
+    return (session == null ? null : session.getProcess());
   }
 
   @Nullable
-  DebuggerSession getDebugSession() {
-    DebuggerManagerEx.getInstanceEx(project).context.debuggerSession
+  default DebuggerSession getDebugSession() {
+    return DebuggerManagerEx.getInstanceEx(getProject()).getContext().getDebuggerSession();
   }
 
-  void runDebugger(RunProfile configuration, Closure cl) {
-    runInEdtAndWait {
-      def listener = [onTextAvailable: { ProcessEvent evt, type ->
-        if (type == ProcessOutputTypes.STDERR) {
-          println evt.text
+  default void runDebugger(final RunProfile configuration, Runnable cl) throws ExecutionException {
+    EdtTestUtil.runInEdtAndWait(
+      () -> runConfiguration(DefaultDebugExecutor.class, new ProcessListener() {
+        @Override
+        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+          if (outputType.equals(ProcessOutputTypes.STDERR)) {
+            System.out.println(event.getText());
+          }
         }
-      }] as ProcessListener
-      runConfiguration(DefaultDebugExecutor, listener, configuration, null)
-    }
-    logger.debug("after start")
+      }, configuration, null)
+    );
+    getLogger().debug("after start");
     try {
-      cl.call()
+      cl.run();
     }
     catch (Throwable t) {
-      t.printStackTrace()
-      throw t
+      //noinspection CallToPrintStackTrace
+      t.printStackTrace();
+      throw t;
     }
     finally {
-      def handler = debugProcess?.processHandler
-      resume()
+      final DebugProcessImpl process = getDebugProcess();
+      ProcessHandler handler = (process == null ? null : process.getProcessHandler());
+      resume();
       if (handler != null && !handler.waitFor(ourTimeout)) {
-        if (handler instanceof OSProcessHandler) {
-          OSProcessUtil.killProcessTree((handler as OSProcessHandler).process)
+        if (handler instanceof OSProcessHandler osProcessHandler) {
+          OSProcessUtil.killProcessTree(osProcessHandler.getProcess());
         }
         else {
-          println "can't terminate $handler"
+          System.out.println("can't terminate " + handler);
         }
-        throw new AssertionError((Object)'too long waiting for process termination')
+
+        //noinspection ThrowFromFinallyBlock
+        throw new AssertionError("too long waiting for process termination");
       }
     }
   }
 
-  void addBreakpoint(VirtualFile file, int line) {
-    runInEdtAndWait {
-      DebuggerManagerImpl.getInstanceEx(project).breakpointManager.addLineBreakpoint(FileDocumentManager.instance.getDocument(file), line)
-    }
+  default void addBreakpoint(final VirtualFile file, final int line) {
+    EdtTestUtil.runInEdtAndWait(() -> DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager()
+      .addLineBreakpoint(FileDocumentManager.getInstance().getDocument(file), line));
   }
 
-  SuspendContextImpl waitForBreakpoint() {
-    logger.debug("waitForBreakpoint")
-    Semaphore semaphore = new Semaphore()
-    semaphore.down()
-    def process = debugProcess
+  default SuspendContextImpl waitForBreakpoint() throws InterruptedException {
+    getLogger().debug("waitForBreakpoint");
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    final DebugProcessImpl process = getDebugProcess();
     // wait for all events processed
-    process.managerThread.invoke(PrioritizedTask.Priority.NORMAL, { semaphore.up() })
-    def finished = semaphore.waitFor(ourTimeout)
-    assert finished: 'Too long debugger actions'
+    process.getManagerThread().invoke(PrioritizedTask.Priority.NORMAL, () -> semaphore.up());
 
-    int i = 0
-    def suspendManager = process.suspendManager
-    while (i++ < ourTimeout / 10 && !suspendManager.pausedContext && !process.processHandler.processTerminated) {
-      Thread.sleep(10)
+    assertTrue("Too long debugger actions", semaphore.waitFor(ourTimeout));
+
+    int i = 0;
+    SuspendManager suspendManager = process.getSuspendManager();
+    while (i++ < ourTimeout / 10 &&
+           suspendManager.getPausedContext() == null &&
+           !process.getProcessHandler().isProcessTerminated()) {
+      Thread.sleep(10);
     }
-
-    def context = suspendManager.pausedContext
-    assert context: "too long process, terminated=${process.processHandler.processTerminated}"
-    return context
+    SuspendContextImpl context = suspendManager.getPausedContext();
+    assertNotNull("too long process, terminated=" + process.getProcessHandler().isProcessTerminated(), context);
+    return context;
   }
 
-  void resume() {
-    if (debugSession == null) return
-    debugProcess.managerThread.invoke(debugProcess.createResumeCommand(debugProcess.suspendManager.pausedContext))
+  default void resume() {
+    if (getDebugSession() == null) return;
+
+    getDebugProcess().getManagerThread()
+      .invoke(getDebugProcess().createResumeCommand(getDebugProcess().getSuspendManager().getPausedContext()));
   }
 
-  SourcePosition getSourcePosition() {
-    managed {
-      EvaluationContextImpl context = evaluationContext()
-      def a = { ContextUtil.getSourcePosition(context) } as Computable<SourcePosition>
-      ApplicationManager.getApplication().runReadAction(a)
-    }
+  default SourcePosition getSourcePosition() {
+    final EvaluationContextImpl context = evaluationContext();
+    Computable<SourcePosition> a = () -> ContextUtil.getSourcePosition(context);
+    return ApplicationManager.getApplication().runReadAction(a);
   }
 
-  EvaluationContextImpl evaluationContext() {
-    final SuspendContextImpl suspendContext = debugProcess.suspendManager.pausedContext
-    new EvaluationContextImpl(suspendContext, suspendContext.frameProxy)
+  default EvaluationContextImpl evaluationContext() {
+    final SuspendContextImpl suspendContext = getDebugProcess().getSuspendManager().getPausedContext();
+    return new EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy());
   }
 
-  void eval(final String codeText, String expected) throws EvaluateException {
-    eval(codeText, expected, null)
+  default void eval(final String codeText, String expected) {
+    eval(codeText, expected, null);
   }
 
-  void eval(final String codeText, String expected, FileType fileType) throws EvaluateException {
-    Semaphore semaphore = new Semaphore()
-    semaphore.down()
+  default void eval(final String codeText, String expected, FileType fileType) {
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
 
-    EvaluationContextImpl ctx
-    def item = new WatchItemDescriptor(project, new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, codeText, "", fileType))
-    managed {
-      ctx = evaluationContext()
-      item.setContext(ctx)
-      item.updateRepresentation(ctx, {} as DescriptorLabelListener)
-      semaphore.up()
-    }
-    assert semaphore.waitFor(ourTimeout): "too long evaluation: $item.label $item.evaluateException"
+    final AtomicReference<EvaluationContextImpl> ctx = new AtomicReference<>();
+    final WatchItemDescriptor item = new WatchItemDescriptor(getProject(),
+                                                             new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, codeText, "", fileType));
+    managed(() -> {
+      ctx.set(evaluationContext());
+      item.setContext(ctx.get());
+      item.updateRepresentation(ctx.get(), () -> {
+      });
+      semaphore.up();
+      return null;
+    });
+    assert semaphore.waitFor(ourTimeout) : "too long evaluation: " + item.getLabel() + " " + item.getEvaluateException();
 
-    String result = managed {
-      def e = item.evaluateException
-      if (e) {
-        return ExceptionUtil.getThrowableText(e)
+    String result = managed(() -> {
+      try {
+        EvaluateException e = item.getEvaluateException();
+        if (e != null) return ExceptionUtil.getThrowableText(e);
+        return DebuggerUtils.getValueAsString(ctx.get(), item.getValue());
       }
-      return DebuggerUtils.getValueAsString(ctx, item.value)
-    }
-    assert result == expected
+      catch (EvaluateException ex) {
+        return ExceptionUtil.getThrowableText(ex);
+      }
+    });
+    assertEquals(expected, result);
   }
 
-  def <T> T managed(Closure<T> cl) {
-    def ctx = DebuggerContextUtil.createDebuggerContext(debugSession, debugProcess.suspendManager.pausedContext)
-    ManagedCommand command = new ManagedCommand<T>(ctx, cl)
-    debugProcess.managerThread.invoke(command)
-    def finished = command.semaphore.waitFor(ourTimeout)
-    assert finished: 'Too long debugger action'
-    return command.result
+  default <T> T managed(Supplier<T> cl) {
+    DebuggerContextImpl ctx = DebuggerContextUtil.createDebuggerContext(getDebugSession(),
+                                                                        getDebugProcess().getSuspendManager().getPausedContext());
+    ManagedCommand<T> command = new ManagedCommand<>(ctx, cl);
+    getDebugProcess().getManagerThread().invoke(command);
+    boolean finished = command.getSemaphore().waitFor(ourTimeout);
+    assertTrue("Too long debugger action", finished);
+    return command.getResult();
   }
 
-  private static class ManagedCommand<T> extends DebuggerContextCommandImpl {
+  int ourTimeout = 60000;
 
-    private final Semaphore mySemaphore
-    private final Closure<T> myAction
-    private T myResult
-
-    ManagedCommand(@NotNull DebuggerContextImpl debuggerContext, Closure<T> action) {
-      super(debuggerContext)
-      mySemaphore = new Semaphore()
-      mySemaphore.down()
-      myAction = action
+  class ManagedCommand<T> extends DebuggerContextCommandImpl {
+    public ManagedCommand(@NotNull DebuggerContextImpl debuggerContext, Supplier<? extends T> action) {
+      super(debuggerContext);
+      mySemaphore = new Semaphore();
+      mySemaphore.down();
+      myAction = action;
     }
 
-    Semaphore getSemaphore() {
-      mySemaphore
+    public Semaphore getSemaphore() {
+      return mySemaphore;
     }
 
-    T getResult() {
-      myResult
+    public T getResult() {
+      return myResult;
     }
 
     @Override
-    void threadAction(@NotNull SuspendContextImpl suspendContext) {
+    public void threadAction(@NotNull SuspendContextImpl suspendContext) {
       try {
-        myResult = myAction()
+        myResult = myAction.get();
       }
       finally {
-        mySemaphore.up()
+        mySemaphore.up();
       }
     }
 
     @Override
     protected void commandCancelled() {
-      println DebugUtil.currentStackTrace()
+      System.out.println(DebugUtil.currentStackTrace());
     }
+
+    private final Semaphore mySemaphore;
+    private final Supplier<? extends T> myAction;
+    private T myResult;
   }
 }
