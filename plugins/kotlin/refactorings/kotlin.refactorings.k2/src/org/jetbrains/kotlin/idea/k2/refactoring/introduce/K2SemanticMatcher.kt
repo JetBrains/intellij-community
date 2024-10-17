@@ -229,11 +229,19 @@ object K2SemanticMatcher {
                 }
             }
             if (targetSymbol is KaSyntheticJavaPropertySymbol && patternSymbol is KaSyntheticJavaPropertySymbol &&
-                targetSymbol.callableId == patternSymbol.callableId
+                areSyntheticPropertiesEqual(targetSymbol, patternSymbol)
             ) {
                 return true
             }
             return targetSymbol == patternSymbol || symbols[targetSymbol] == patternSymbol
+        }
+
+        private fun areSyntheticPropertiesEqual(
+            targetSyntheticProperty: KaSyntheticJavaPropertySymbol,
+            patternSyntheticProperty: KaSyntheticJavaPropertySymbol,
+        ): Boolean {
+            return targetSyntheticProperty.javaGetterSymbol == patternSyntheticProperty.javaGetterSymbol &&
+                    targetSyntheticProperty.javaSetterSymbol == patternSyntheticProperty.javaSetterSymbol
         }
 
         context(KaSession)
