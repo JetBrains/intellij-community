@@ -1,0 +1,21 @@
+LineBreakpoint created at smartStepIntoInlineLambdaWithParameterDestructuring.kt:17
+Run Java
+Connected to the target VM
+smartStepIntoInlineLambdaWithParameterDestructuring.kt:17
+smartStepIntoInlineLambdaWithParameterDestructuring.kt:20
+smartStepIntoInlineLambdaWithParameterDestructuring.kt:20
+Compile bytecode for a + b + c + d + e + f + g
+InlineStackFrame lambda 'inlineFoo' in 'main' (smartStepIntoInlineLambdaWithParameterDestructuring.kt:20)
+    JavaValue[local] x: int = 1 (smartStepIntoInlineLambdaWithParameterDestructuring.kt:17)
+    JavaValue[local] g: int = 1 (smartStepIntoInlineLambdaWithParameterDestructuring.kt:20)
+InlineStackFrame inlineFoo (smartStepIntoInlineLambdaWithParameterDestructuring.kt:11)
+    JavaValue[local] a: destructurableClasses.A = A(x=1, y=1) (smartStepIntoInlineLambdaWithParameterDestructuring.kt:20)
+        JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
+        JavaValue[field] y: int = 1 (destructurableClasses.kt:4)
+    JavaValue[local] b: destructurableClasses.B = destructurableClasses.B@hashCode (smartStepIntoInlineLambdaWithParameterDestructuring.kt:20)
+        DummyMessageValueNode = Class has no properties
+KotlinStackFrame (smartStepIntoInlineLambdaWithParameterDestructuring.kt:20)
+    JavaValue[local] x: int = 1 (smartStepIntoInlineLambdaWithParameterDestructuring.kt:17)
+Disconnected from the target VM
+
+Process finished with exit code 0

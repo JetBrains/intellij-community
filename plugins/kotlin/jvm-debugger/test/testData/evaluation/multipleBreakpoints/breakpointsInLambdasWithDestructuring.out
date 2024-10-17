@@ -1,0 +1,118 @@
+LineBreakpoint created at breakpointsInLambdasWithDestructuring.kt:29 lambdaOrdinal = 1
+LineBreakpoint created at breakpointsInLambdasWithDestructuring.kt:31 lambdaOrdinal = 1
+LineBreakpoint created at breakpointsInLambdasWithDestructuring.kt:33 lambdaOrdinal = 1
+LineBreakpoint created at breakpointsInLambdasWithDestructuring.kt:35 lambdaOrdinal = 1
+LineBreakpoint created at breakpointsInLambdasWithDestructuring.kt:38 lambdaOrdinal = 1
+LineBreakpoint created at breakpointsInLambdasWithDestructuring.kt:40 lambdaOrdinal = 1
+LineBreakpoint created at breakpointsInLambdasWithDestructuring.kt:44 lambdaOrdinal = 1
+LineBreakpoint created at breakpointsInLambdasWithDestructuring.kt:46 lambdaOrdinal = 1
+LineBreakpoint created at breakpointsInLambdasWithDestructuring.kt:50 lambdaOrdinal = 1
+Run Java
+Connected to the target VM
+breakpointsInLambdasWithDestructuring.kt:29
+Compile bytecode for x + y
+KotlinStackFrame (breakpointsInLambdasWithDestructuring.kt:29)
+breakpointsInLambdasWithDestructuring.kt:31
+Compile bytecode for x
+KotlinStackFrame (breakpointsInLambdasWithDestructuring.kt:31)
+breakpointsInLambdasWithDestructuring.kt:33
+Compile bytecode for x + y
+InlineStackFrame lambda 'inlineFoo' in 'main' (breakpointsInLambdasWithDestructuring.kt:33)
+InlineStackFrame inlineFoo (breakpointsInLambdasWithDestructuring.kt:20)
+KotlinStackFrame (breakpointsInLambdasWithDestructuring.kt:33)
+breakpointsInLambdasWithDestructuring.kt:35
+Compile bytecode for y
+InlineStackFrame lambda 'inlineFoo' in 'main' (breakpointsInLambdasWithDestructuring.kt:35)
+InlineStackFrame inlineFoo (breakpointsInLambdasWithDestructuring.kt:20)
+KotlinStackFrame (breakpointsInLambdasWithDestructuring.kt:35)
+breakpointsInLambdasWithDestructuring.kt:38
+Compile bytecode for x + y
+KotlinStackFrame (breakpointsInLambdasWithDestructuring.kt:38)
+breakpointsInLambdasWithDestructuring.kt:40
+Compile bytecode for x + y
+KotlinStackFrame (breakpointsInLambdasWithDestructuring.kt:40)
+breakpointsInLambdasWithDestructuring.kt:44
+Compile bytecode for x + y
+InlineStackFrame lambda 'filter' in 'main' (breakpointsInLambdasWithDestructuring.kt:44)
+    JavaValue[local] list: java.util.List =  size = 1 (breakpointsInLambdasWithDestructuring.kt:42)
+        JavaValue[element] 0: A@uniqueID = A(x=1, y=2)
+            JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
+            JavaValue[field] y: int = 2 (destructurableClasses.kt:4)
+InlineStackFrame filterTo (_Collections.!EXT!)
+    JavaValue[local] this: java.lang.Iterable =  size = 1
+        JavaValue[element] 0: A@uniqueID = A(x=1, y=2)
+            JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
+            JavaValue[field] y: int = 2 (destructurableClasses.kt:4)
+    JavaValue[local] destination: java.util.Collection =  size = 0
+    JavaValue[local] element: java.lang.Object = A(x=1, y=2)
+        JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
+        JavaValue[field] y: int = 2 (destructurableClasses.kt:4)
+InlineStackFrame filter (_Collections.!EXT!)
+    JavaValue[local] this: java.lang.Iterable =  size = 1
+        JavaValue[element] 0: A@uniqueID = A(x=1, y=2)
+            JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
+            JavaValue[field] y: int = 2 (destructurableClasses.kt:4)
+KotlinStackFrame (breakpointsInLambdasWithDestructuring.kt:44)
+    JavaValue[local] list: java.util.List =  size = 1 (breakpointsInLambdasWithDestructuring.kt:42)
+        JavaValue[element] 0: A@uniqueID = A(x=1, y=2)
+            JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
+            JavaValue[field] y: int = 2 (destructurableClasses.kt:4)
+breakpointsInLambdasWithDestructuring.kt:46
+Compile bytecode for x + y
+InlineStackFrame lambda 'forEach' in 'main' (breakpointsInLambdasWithDestructuring.kt:46)
+    JavaValue[local] list: java.util.List =  size = 1 (breakpointsInLambdasWithDestructuring.kt:42)
+        JavaValue[element] 0: A@uniqueID = A(x=1, y=2)
+            JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
+            JavaValue[field] y: int = 2 (destructurableClasses.kt:4)
+InlineStackFrame forEach (_Collections.!EXT!)
+    JavaValue[local] this: java.lang.Iterable =  size = 1
+        JavaValue[element] 0: A@uniqueID = A(x=1, y=2)
+            JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
+            JavaValue[field] y: int = 2 (destructurableClasses.kt:4)
+    JavaValue[local] element: java.lang.Object = A(x=1, y=2)
+        JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
+        JavaValue[field] y: int = 2 (destructurableClasses.kt:4)
+KotlinStackFrame (breakpointsInLambdasWithDestructuring.kt:46)
+    JavaValue[local] list: java.util.List =  size = 1 (breakpointsInLambdasWithDestructuring.kt:42)
+        JavaValue[element] 0: A@uniqueID = A(x=1, y=2)
+            JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
+            JavaValue[field] y: int = 2 (destructurableClasses.kt:4)
+breakpointsInLambdasWithDestructuring.kt:50
+Compile bytecode for key + value
+InlineStackFrame lambda 'forEach' in 'main' (breakpointsInLambdasWithDestructuring.kt:50)
+    JavaValue[local] list: java.util.List =  size = 1 (breakpointsInLambdasWithDestructuring.kt:42)
+        JavaValue[element] 0: A@uniqueID = A(x=1, y=2)
+            JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
+            JavaValue[field] y: int = 2 (destructurableClasses.kt:4)
+    JavaValue[local] map: java.util.Map =  size = 1 (breakpointsInLambdasWithDestructuring.kt:48)
+        JavaValue[element] 0 = ... -> ...
+            JavaValue key: java.lang.Integer = 1
+                JavaValue[field] value: int = 1 (Integer.!EXT!)
+            JavaValue value: java.lang.Integer = 2
+                JavaValue[field] value: int = 2 (Integer.!EXT!)
+InlineStackFrame forEach (_Maps.!EXT!)
+    JavaValue[local] this: java.util.Map =  size = 1
+        JavaValue[element] 0 = ... -> ...
+            JavaValue key: java.lang.Integer = 1
+                JavaValue[field] value: int = 1 (Integer.!EXT!)
+            JavaValue value: java.lang.Integer = 2
+                JavaValue[field] value: int = 2 (Integer.!EXT!)
+    JavaValue[local] element: java.util.Map$Entry = ... -> ...
+        JavaValue key: java.lang.Integer = 1
+            JavaValue[field] value: int = 1 (Integer.!EXT!)
+        JavaValue value: java.lang.Integer = 2
+            JavaValue[field] value: int = 2 (Integer.!EXT!)
+KotlinStackFrame (breakpointsInLambdasWithDestructuring.kt:50)
+    JavaValue[local] list: java.util.List =  size = 1 (breakpointsInLambdasWithDestructuring.kt:42)
+        JavaValue[element] 0: A@uniqueID = A(x=1, y=2)
+            JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
+            JavaValue[field] y: int = 2 (destructurableClasses.kt:4)
+    JavaValue[local] map: java.util.Map =  size = 1 (breakpointsInLambdasWithDestructuring.kt:48)
+        JavaValue[element] 0 = ... -> ...
+            JavaValue key: java.lang.Integer = 1
+                JavaValue[field] value: int = 1 (Integer.!EXT!)
+            JavaValue value: java.lang.Integer = 2
+                JavaValue[field] value: int = 2 (Integer.!EXT!)
+Disconnected from the target VM
+
+Process finished with exit code 0
