@@ -1,0 +1,168 @@
+LineBreakpoint created at stateFlowComplex.kt:26
+Run Java
+Connected to the target VM
+stateFlowComplex.kt:26
+vvv stack trace vvv
+  emit
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  ~~~!!! recognizableFrameWithEmitInAsyncStackTraceEmit 1 !!!~~~
+  invokeSuspend
+  <hidden frames>
+  main
+  main
+^^^ stack trace ^^^
+stateFlowComplex.kt:26
+vvv stack trace vvv
+  emit
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  ~~~!!! recognizableFrameWithEmitInAsyncStackTraceCas 1 !!!~~~
+  invokeSuspend
+  <hidden frames>
+  main
+  main
+^^^ stack trace ^^^
+stateFlowComplex.kt:26
+vvv stack trace vvv
+  emit
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  ~~~!!! recognizableFrameWithEmitInAsyncStackTraceAssign 2 !!!~~~
+  invokeSuspend
+  <hidden frames>
+  main
+  main
+^^^ stack trace ^^^
+stateFlowComplex.kt:26
+vvv stack trace vvv
+  emit
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  ~~~!!! recognizableFrameWithEmitInAsyncStackTraceEmit 2 !!!~~~
+  invokeSuspend
+  <hidden frames>
+  main
+  main
+^^^ stack trace ^^^
+stateFlowComplex.kt:26
+vvv stack trace vvv
+  emit
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  ~~~!!! recognizableFrameWithEmitInAsyncStackTraceAssign 3 !!!~~~
+  invokeSuspend
+  <hidden frames>
+  main
+  main
+^^^ stack trace ^^^
+stateFlowComplex.kt:26
+vvv stack trace vvv
+  emit
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  ~~~!!! recognizableFrameWithEmitInAsyncStackTraceEmit 3 !!!~~~
+  invokeSuspend
+  <hidden frames>
+  main
+  main
+^^^ stack trace ^^^
+stateFlowComplex.kt:26
+vvv stack trace vvv
+  emit
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  ~~~!!! recognizableFrameWithEmitInAsyncStackTraceCas 3 !!!~~~
+  invokeSuspend
+  <hidden frames>
+  main
+  main
+^^^ stack trace ^^^
+stateFlowComplex.kt:26
+vvv stack trace vvv
+  emit
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  ~~~!!! recognizableFrameWithEmitInAsyncStackTraceAssign 4 !!!~~~
+  invokeSuspend
+  <hidden frames>
+  main
+  main
+^^^ stack trace ^^^
+stateFlowComplex.kt:26
+vvv stack trace vvv
+  emit
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  ~~~!!! recognizableFrameWithEmitInAsyncStackTraceEmit 4 !!!~~~
+  invokeSuspend
+  <hidden frames>
+  main
+  main
+^^^ stack trace ^^^
+Disconnected from the target VM
+
+Process finished with exit code 0

@@ -120,7 +120,6 @@ import org.jetbrains.kotlin.idea.refactoring.safeDelete.AbstractSafeDeleteTest
 import org.jetbrains.kotlin.idea.repl.AbstractIdeReplCompletionTest
 import org.jetbrains.kotlin.idea.resolve.*
 import org.jetbrains.kotlin.idea.scratch.AbstractScratchLineMarkersTest
-import org.jetbrains.kotlin.idea.scratch.AbstractScratchRunActionTest
 import org.jetbrains.kotlin.idea.script.*
 import org.jetbrains.kotlin.idea.search.refIndex.AbstractFindUsagesWithCompilerReferenceIndexTest
 import org.jetbrains.kotlin.idea.search.refIndex.AbstractKotlinCompilerReferenceByReferenceTest
@@ -158,7 +157,6 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
-import org.jetbrains.kotlin.testGenerator.model.Patterns.WS_KTS
 import org.jetbrains.uast.test.kotlin.comparison.*
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
@@ -278,10 +276,14 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             }
         }
 
-        listOf(AbstractAsyncStackTraceTest::class, AbstractK1IdeK2CodeAsyncStackTraceTest::class).forEach {
+        listOf(AbstractSuspendStackTraceTest::class, AbstractK1IdeK2CodeSuspendStackTraceTest::class).forEach {
             testClass(it) {
-                model("asyncStackTrace")
+                model("suspendStackTrace")
             }
+        }
+
+        testClass<AbstractFlowAsyncStackTraceTest> {
+            model("asyncStackTrace/flows")
         }
 
         listOf(AbstractCoroutineDumpTest::class, AbstractK1IdeK2CodeCoroutineDumpTest::class).forEach {

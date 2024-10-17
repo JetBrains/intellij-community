@@ -41,6 +41,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
@@ -53,10 +54,14 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.impl.frame.XDebuggerFramesList;
+import com.intellij.xdebugger.impl.frame.XFramesView;
 import com.sun.jdi.Location;
 import com.sun.jdi.Value;
 import com.sun.jdi.VirtualMachine;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -485,6 +490,32 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     createLocalProcess("HelloWorld");
 
     createBreakpointInHelloWorld();
+  }
+
+  protected void printAsyncStackTrace() {
+    printContext(getDebugProcess().getDebuggerContext());
+    List<XStackFrame> frames = collectFrames(getDebuggerSession().getXDebugSession());
+    systemPrintln("vvv stack trace vvv");
+    frames.forEach(f -> {
+      if (f instanceof XDebuggerFramesList.ItemWithSeparatorAbove withSeparator && withSeparator.hasSeparatorAbove()) {
+        systemPrintln("-- " + withSeparator.getCaptionAboveOf() + " --");
+      }
+      if (f instanceof XFramesView.HiddenStackFramesItem) {
+        systemPrintln("  <hidden frames>");
+      }
+      else {
+        systemPrintln("  " + StringUtil.substringBeforeLast(getFramePresentation(f), ":"));
+      }
+    });
+    systemPrintln("^^^ stack trace ^^^");
+  }
+
+  protected @NotNull List<XStackFrame> collectFrames(@Nullable XDebugSession session) {
+    return List.of();
+  }
+
+  protected @NotNull String getFramePresentation(XStackFrame f) {
+    return f.toString();
   }
 
   @Override

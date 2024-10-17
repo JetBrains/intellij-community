@@ -4,13 +4,13 @@ package org.jetbrains.kotlin.idea.k2.debugger.test.cases
 
 import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.idea.debugger.test.AbstractAsyncStackTraceTest
+import org.jetbrains.kotlin.idea.debugger.test.AbstractSuspendStackTraceTest
 import org.jetbrains.kotlin.idea.debugger.test.DebuggerTestCompilerFacility
 import org.jetbrains.kotlin.idea.debugger.test.TestCompileConfiguration
 import org.jetbrains.kotlin.idea.debugger.test.TestFiles
 import org.jetbrains.kotlin.idea.k2.debugger.test.K2DebuggerTestCompilerFacility
 
-abstract class AbstractK2IdeK1CodeAsyncStackTraceTest : AbstractAsyncStackTraceTest() {
+abstract class AbstractK2IdeK1CodeSuspendStackTraceTest : AbstractSuspendStackTraceTest() {
 
     override fun createDebuggerTestCompilerFacility(
         testFiles: TestFiles,
@@ -21,7 +21,7 @@ abstract class AbstractK2IdeK1CodeAsyncStackTraceTest : AbstractAsyncStackTraceT
     }
 }
 
-abstract class AbstractK2IdeK2CodeAsyncStackTraceTest : AbstractK2IdeK1CodeAsyncStackTraceTest() {
+abstract class AbstractK2IdeK2CodeSuspendStackTraceTest : AbstractK2IdeK1CodeSuspendStackTraceTest() {
     override val compileWithK2 = true
 
     override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY

@@ -18,8 +18,8 @@ import org.junit.runner.RunWith;
 @TestRoot("jvm-debugger/test")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/asyncStackTrace")
-public class AsyncStackTraceTestGenerated extends AbstractAsyncStackTraceTest {
+@TestMetadata("testData/suspendStackTrace")
+public class K1IdeK2CodeSuspendStackTraceTestGenerated extends AbstractK1IdeK2CodeSuspendStackTraceTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {
@@ -32,16 +32,16 @@ public class AsyncStackTraceTestGenerated extends AbstractAsyncStackTraceTest {
 
     @TestMetadata("asyncFunctions.kt")
     public void testAsyncFunctions() throws Exception {
-        runTest("testData/asyncStackTrace/asyncFunctions.kt");
+        runTest("testData/suspendStackTrace/asyncFunctions.kt");
     }
 
     @TestMetadata("asyncLambdas.kt")
     public void testAsyncLambdas() throws Exception {
-        runTest("testData/asyncStackTrace/asyncLambdas.kt");
+        runTest("testData/suspendStackTrace/asyncLambdas.kt");
     }
 
     @TestMetadata("asyncSimple.kt")
     public void testAsyncSimple() throws Exception {
-        runTest("testData/asyncStackTrace/asyncSimple.kt");
+        runTest("testData/suspendStackTrace/asyncSimple.kt");
     }
 }
