@@ -70,93 +70,93 @@ import java.util.*;
  * The action-handler that does the code generation.
  */
 public final class GenerateToStringActionHandlerImpl implements GenerateToStringActionHandler, CodeInsightActionHandler {
-    private static final Logger LOG = Logger.getInstance(GenerateToStringActionHandlerImpl.class);
+  private static final Logger LOG = Logger.getInstance(GenerateToStringActionHandlerImpl.class);
 
-    @Override
-    public boolean startInWriteAction() {
-        return false;
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiClass clazz = getSubjectClass(editor, file);
+    if (clazz == null) return;
+
+    doExecuteAction(project, clazz, editor);
+  }
+
+
+  @Override
+  public void executeActionQuickFix(final Project project, final PsiClass clazz) {
+    doExecuteAction(project, clazz, null);
+  }
+
+  private static void doExecuteAction(final @NotNull Project project, final @NotNull PsiClass clazz, final Editor editor) {
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(clazz)) {
+      return;
+    }
+    LOG.debug("+++ doExecuteAction - START +++");
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Current project " + project.getName());
     }
 
-    @Override
-    public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-        PsiClass clazz = getSubjectClass(editor, file);
-        if (clazz == null) return;
+    final PsiElementClassMember<?>[] dialogMembers = buildMembersToShow(clazz);
 
-        doExecuteAction(project, clazz, editor);
+    final MemberChooserHeaderPanel header = new MemberChooserHeaderPanel(clazz);
+    LOG.debug("Displaying member chooser dialog");
+
+    final MemberChooser<PsiElementClassMember<?>> chooser =
+      new MemberChooser<>(dialogMembers, true, true, project, PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, clazz), header) {
+        @Override
+        protected @NotNull String getHelpId() {
+          return "editing.altInsert.tostring";
+        }
+
+        @Override
+        protected boolean isInsertOverrideAnnotationSelected() {
+          return JavaCodeStyleSettings.getInstance(clazz.getContainingFile()).INSERT_OVERRIDE_ANNOTATION;
+        }
+      };
+    //noinspection DialogTitleCapitalization
+    chooser.setTitle(JavaBundle.message("generate.tostring.title"));
+
+    chooser.setCopyJavadocVisible(false);
+    chooser.selectElements(getPreselection(clazz, dialogMembers));
+    header.setChooser(chooser);
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      chooser.close(DialogWrapper.OK_EXIT_CODE);
+    }
+    else {
+      chooser.show();
+    }
+    if (DialogWrapper.OK_EXIT_CODE == chooser.getExitCode()) {
+      Collection<PsiMember> selectedMembers = GenerationUtil.convertClassMembersToPsiMembers(sortedSelection(dialogMembers, chooser));
+
+      final TemplateResource template = header.getSelectedTemplate();
+      ToStringTemplatesManager.getInstance().setDefaultTemplate(template);
+
+      if (template.isValidTemplate()) {
+        final GenerateToStringWorker worker = new GenerateToStringWorker(clazz, editor, chooser.isInsertOverrideAnnotation());
+        // decide what to do if the method already exists
+        ConflictResolutionPolicy resolutionPolicy = worker.exitsMethodDialog(template);
+        try {
+          WriteCommandAction.runWriteCommandAction(project, JavaBundle.message("command.name.generate.tostring"), null,
+                                                   () -> worker.execute(selectedMembers, template, resolutionPolicy));
+        }
+        catch (Exception e) {
+          GenerationUtil.handleException(project, e);
+        }
+      }
+      else {
+        HintManager.getInstance().showErrorHint(editor,
+                                                JavaBundle.message("hint.text.tostring.template.invalid", template.getFileName()));
+      }
     }
 
-
-    @Override
-    public void executeActionQuickFix(final Project project, final PsiClass clazz) {
-        doExecuteAction(project, clazz, null);
-    }
-
-    private static void doExecuteAction(final @NotNull Project project, final @NotNull PsiClass clazz, final Editor editor) {
-        if (!FileModificationService.getInstance().preparePsiElementsForWrite(clazz)) {
-            return;
-        }
-        LOG.debug("+++ doExecuteAction - START +++");
-
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Current project " + project.getName());
-        }
-
-        final PsiElementClassMember<?>[] dialogMembers = buildMembersToShow(clazz);
-
-        final MemberChooserHeaderPanel header = new MemberChooserHeaderPanel(clazz);
-        LOG.debug("Displaying member chooser dialog");
-
-        final MemberChooser<PsiElementClassMember<?>> chooser =
-          new MemberChooser<>(dialogMembers, true, true, project, PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, clazz), header) {
-            @Override
-            protected @NotNull String getHelpId() {
-              return "editing.altInsert.tostring";
-            }
-
-            @Override
-            protected boolean isInsertOverrideAnnotationSelected() {
-              return JavaCodeStyleSettings.getInstance(clazz.getContainingFile()).INSERT_OVERRIDE_ANNOTATION;
-            }
-          };
-        //noinspection DialogTitleCapitalization
-        chooser.setTitle(JavaBundle.message("generate.tostring.title"));
-
-        chooser.setCopyJavadocVisible(false);
-        chooser.selectElements(getPreselection(clazz, dialogMembers));
-        header.setChooser(chooser);
-
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          chooser.close(DialogWrapper.OK_EXIT_CODE);
-        }
-        else {
-          chooser.show();
-        }
-        if (DialogWrapper.OK_EXIT_CODE == chooser.getExitCode()) {
-            Collection<PsiMember> selectedMembers = GenerationUtil.convertClassMembersToPsiMembers(sortedSelection(dialogMembers, chooser));
-
-            final TemplateResource template = header.getSelectedTemplate();
-            ToStringTemplatesManager.getInstance().setDefaultTemplate(template);
-
-            if (template.isValidTemplate()) {
-                final GenerateToStringWorker worker = new GenerateToStringWorker(clazz, editor, chooser.isInsertOverrideAnnotation());
-                // decide what to do if the method already exists
-                ConflictResolutionPolicy resolutionPolicy = worker.exitsMethodDialog(template);
-                try {
-                    WriteCommandAction.runWriteCommandAction(project, JavaBundle.message("command.name.generate.tostring"), null,
-                                                             () -> worker.execute(selectedMembers, template, resolutionPolicy));
-                }
-                catch (Exception e) {
-                    GenerationUtil.handleException(project, e);
-                }
-            }
-            else {
-                HintManager.getInstance().showErrorHint(editor,
-                                                        JavaBundle.message("hint.text.tostring.template.invalid", template.getFileName()));
-            }
-        }
-
-        LOG.debug("+++ doExecuteAction - END +++");
-    }
+    LOG.debug("+++ doExecuteAction - END +++");
+  }
 
   private static @Nullable List<PsiElementClassMember<?>> sortedSelection(PsiElementClassMember<?>[] dialogMembers,
                                                                           MemberChooser<PsiElementClassMember<?>> chooser) {
@@ -170,183 +170,185 @@ public final class GenerateToStringActionHandlerImpl implements GenerateToString
   }
 
   private static PsiElementClassMember<?>[] getPreselection(@NotNull PsiClass clazz, PsiElementClassMember<?>[] dialogMembers) {
-        return Arrays.stream(dialogMembers)
-          .filter(member -> member.getElement().getContainingClass() == clazz)
-          .toArray(PsiElementClassMember[]::new);
+    return Arrays.stream(dialogMembers)
+      .filter(member -> member.getElement().getContainingClass() == clazz)
+      .toArray(PsiElementClassMember[]::new);
+  }
+
+  private static void updateDialog(PsiClass clazz, MemberChooser<? super PsiElementClassMember<?>> dialog) {
+    final PsiElementClassMember<?>[] members = buildMembersToShow(clazz);
+    dialog.resetElements(members);
+    dialog.selectElements(getPreselection(clazz, members));
+  }
+
+  public static PsiElementClassMember<?>[] buildMembersToShow(PsiClass clazz) {
+    Config config = GenerateToStringContext.getConfig();
+    PsiField[] filteredFields = GenerateToStringUtils.filterAvailableFields(clazz, true, config.getFilterPattern());
+    if (LOG.isDebugEnabled()) LOG.debug("Number of fields after filtering: " + filteredFields.length);
+    PsiMethod[] filteredMethods;
+    if (config.enableMethods) {
+      // filter methods as it is enabled from config
+      filteredMethods = GenerateToStringUtils.filterAvailableMethods(clazz, config.getFilterPattern());
+      if (LOG.isDebugEnabled()) LOG.debug("Number of methods after filtering: " + filteredMethods.length);
+    }
+    else {
+      filteredMethods = PsiMethod.EMPTY_ARRAY;
     }
 
-    public static void updateDialog(PsiClass clazz, MemberChooser<? super PsiElementClassMember<?>> dialog) {
-        final PsiElementClassMember<?>[] members = buildMembersToShow(clazz);
-        dialog.resetElements(members);
-        dialog.selectElements(getPreselection(clazz, members));
-    }
+    return GenerationUtil.combineToClassMemberList(filteredFields, filteredMethods);
+  }
 
-    public static PsiElementClassMember<?>[] buildMembersToShow(PsiClass clazz) {
-        Config config = GenerateToStringContext.getConfig();
-        PsiField[] filteredFields = GenerateToStringUtils.filterAvailableFields(clazz, true, config.getFilterPattern());
-        if (LOG.isDebugEnabled()) LOG.debug("Number of fields after filtering: " + filteredFields.length);
-        PsiMethod[] filteredMethods;
-        if (config.enableMethods) {
-            // filter methods as it is enabled from config
-            filteredMethods = GenerateToStringUtils.filterAvailableMethods(clazz, config.getFilterPattern());
-            if (LOG.isDebugEnabled()) LOG.debug("Number of methods after filtering: " + filteredMethods.length);
-        } else {
-          filteredMethods = PsiMethod.EMPTY_ARRAY;
-        }
+  private static @Nullable PsiClass getSubjectClass(Editor editor, final PsiFile file) {
+    if (file == null) return null;
 
-        return GenerationUtil.combineToClassMemberList(filteredFields, filteredMethods);
-    }
+    int offset = editor.getCaretModel().getOffset();
+    PsiElement context = file.findElementAt(offset);
 
-    private static @Nullable PsiClass getSubjectClass(Editor editor, final PsiFile file) {
-        if (file == null) return null;
-
-        int offset = editor.getCaretModel().getOffset();
-        PsiElement context = file.findElementAt(offset);
-
-        PsiClass clazz = PsiTreeUtil.getParentOfType(context, PsiClass.class, false);
-        if (clazz == null) {
-          if (file instanceof PsiJavaFile javaFile && javaFile.getClasses().length == 1 &&
-              javaFile.getClasses()[0] instanceof PsiImplicitClass implicitClass &&
-              implicitClass.getFirstChild() != null && PsiMethodUtil.hasMainMethod(implicitClass)) {
-            clazz = implicitClass;
-          }
-          else {
-            return null;
-          }
-        }
-
-        //exclude interfaces, non-java classes etc
-        for (GenerateToStringClassFilter filter : GenerateToStringClassFilter.EP_NAME.getExtensionList()) {
-            if (!filter.canGenerateToString(clazz)) return null;
-        }
-        return clazz;
-    }
-
-    public static class MemberChooserHeaderPanel extends JPanel {
-        private MemberChooser<PsiElementClassMember<?>> chooser;
-        private final JComboBox<TemplateResource> comboBox;
-        private Set<TemplateResource> inaccessibleTemplates = null;
-
-        public void setChooser(MemberChooser<PsiElementClassMember<?>> chooser) {
-            this.chooser = chooser;
-        }
-
-        public MemberChooserHeaderPanel(final PsiClass clazz) {
-          super(new GridBagLayout());
-
-          TemplatesManager templatesManager = ToStringTemplatesManager.getInstance();
-          final Collection<TemplateResource> templates = templatesManager.getAllTemplates();
-
-          final JButton settingsButton = new JButton(JavaBundle.message("button.text.settings"));
-          settingsButton.setMnemonic(KeyEvent.VK_S);
-
-          comboBox = new ComboBox<>(templates.toArray(new TemplateResource[0]));
-          comboBox.addActionListener(e -> updateErrorMessage());
-          Project project = clazz.getProject();
-          final JavaPsiFacade instance = JavaPsiFacade.getInstance(project);
-          final GlobalSearchScope resolveScope = clazz.getResolveScope();
-          DumbService dumbService = DumbService.getInstance(project);
-          ReadAction.nonBlocking(() -> {
-              final Set<TemplateResource> invalid = new HashSet<>();
-              for (TemplateResource template : templates) {
-                String className = template.getClassName();
-                if (className != null &&
-                    dumbService.computeWithAlternativeResolveEnabled(() -> instance.findClass(className, resolveScope)) == null) {
-                  invalid.add(template);
-                }
-              }
-              return invalid;
-            })
-            .finishOnUiThread(ModalityState.any(), invalid -> {
-              inaccessibleTemplates = invalid;
-              updateErrorMessage();
-              comboBox.repaint();
-            })
-            .submit(AppExecutorUtil.getAppExecutorService());
-            comboBox.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
-              label.setText(value.getName());
-              if (inaccessibleTemplates != null && inaccessibleTemplates.contains(value)) {
-                label.setForeground(JBColor.RED);
-              }
-            }));
-            settingsButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                  final TemplatesPanel ui = new TemplatesPanel(project);
-                  Configurable composite = new TabbedConfigurable() {
-                        @Override
-                        protected @NotNull List<Configurable> createConfigurables() {
-                            List<Configurable> res = new ArrayList<>();
-                            res.add(new GenerateToStringConfigurable(project));
-                            res.add(ui);
-                            return res;
-                        }
-
-                        @Override
-                        public String getDisplayName() {
-                            return JavaBundle.message("generate.tostring.tab.title");
-                        }
-
-                        @Override
-                        public String getHelpTopic() {
-                            return "editing.altInsert.tostring.settings";
-                        }
-
-                        @Override
-                        public void apply() throws ConfigurationException {
-                            super.apply();
-                            updateDialog(clazz, chooser);
-
-                            comboBox.removeAllItems();
-                            for (TemplateResource resource : templatesManager.getAllTemplates()) {
-                              comboBox.addItem(resource);
-                            }
-                            comboBox.setSelectedItem(templatesManager.getDefaultTemplate());
-                        }
-                    };
-
-                    ShowSettingsUtil.getInstance().editConfigurable(MemberChooserHeaderPanel.this, composite, () -> ui.selectItem(templatesManager.getDefaultTemplate()));
-                  composite.disposeUIResources();
-                }
-            });
-
-            comboBox.setSelectedItem(templatesManager.getDefaultTemplate());
-
-            final JLabel templatesLabel = new JLabel(JavaBundle.message("generate.tostring.template.label"));
-            templatesLabel.setLabelFor(comboBox);
-
-            final GridBagConstraints constraints = new GridBagConstraints();
-            constraints.anchor = GridBagConstraints.BASELINE;
-            constraints.gridx = 0;
-            add(templatesLabel, constraints);
-            constraints.gridx = 1;
-            constraints.weightx = 1.0;
-            constraints.fill = GridBagConstraints.HORIZONTAL;
-            add(comboBox, constraints);
-            constraints.gridx = 2;
-            constraints.weightx = 0.0;
-            add(settingsButton, constraints);
-        }
-
-        public TemplateResource getSelectedTemplate() {
-            return (TemplateResource) comboBox.getSelectedItem();
-        }
-
-      private void updateErrorMessage() {
-        if (chooser == null || chooser.isDisposed()) return;
-        TemplateResource template = (TemplateResource)comboBox.getSelectedItem();
-        if (template != null && inaccessibleTemplates != null && inaccessibleTemplates.contains(template)) {
-          ComponentValidator validator = ComponentValidator.getInstance(comboBox)
-            .orElseGet(() -> new ComponentValidator(chooser.getDisposable()).installOn(comboBox));
-          String className = template.getClassName();
-          String message = className != null
-                           ? JavaBundle.message("dialog.message.class.not.found", className)
-                           : JavaBundle.message("dialog.message.template.not.applicable");
-          validator.updateInfo(new ValidationInfo(message, comboBox));
-        }
-        else {
-          ComponentValidator.getInstance(comboBox).ifPresent(v -> v.updateInfo(null));
-        }
+    PsiClass clazz = PsiTreeUtil.getParentOfType(context, PsiClass.class, false);
+    if (clazz == null) {
+      if (file instanceof PsiJavaFile javaFile && javaFile.getClasses().length == 1 &&
+          javaFile.getClasses()[0] instanceof PsiImplicitClass implicitClass &&
+          implicitClass.getFirstChild() != null && PsiMethodUtil.hasMainMethod(implicitClass)) {
+        clazz = implicitClass;
+      }
+      else {
+        return null;
       }
     }
+
+    //exclude interfaces, non-java classes etc
+    for (GenerateToStringClassFilter filter : GenerateToStringClassFilter.EP_NAME.getExtensionList()) {
+      if (!filter.canGenerateToString(clazz)) return null;
+    }
+    return clazz;
+  }
+
+  public static class MemberChooserHeaderPanel extends JPanel {
+    private MemberChooser<PsiElementClassMember<?>> chooser;
+    private final JComboBox<TemplateResource> comboBox;
+    private Set<TemplateResource> inaccessibleTemplates = null;
+
+    public void setChooser(MemberChooser<PsiElementClassMember<?>> chooser) {
+      this.chooser = chooser;
+    }
+
+    public MemberChooserHeaderPanel(final PsiClass clazz) {
+      super(new GridBagLayout());
+
+      TemplatesManager templatesManager = ToStringTemplatesManager.getInstance();
+      final Collection<TemplateResource> templates = templatesManager.getAllTemplates();
+
+      final JButton settingsButton = new JButton(JavaBundle.message("button.text.settings"));
+      settingsButton.setMnemonic(KeyEvent.VK_S);
+
+      comboBox = new ComboBox<>(templates.toArray(new TemplateResource[0]));
+      comboBox.addActionListener(e -> updateErrorMessage());
+      Project project = clazz.getProject();
+      final JavaPsiFacade instance = JavaPsiFacade.getInstance(project);
+      final GlobalSearchScope resolveScope = clazz.getResolveScope();
+      DumbService dumbService = DumbService.getInstance(project);
+      ReadAction.nonBlocking(() -> {
+          final Set<TemplateResource> invalid = new HashSet<>();
+          for (TemplateResource template : templates) {
+            String className = template.getClassName();
+            if (className != null &&
+                dumbService.computeWithAlternativeResolveEnabled(() -> instance.findClass(className, resolveScope)) == null) {
+              invalid.add(template);
+            }
+          }
+          return invalid;
+        })
+        .finishOnUiThread(ModalityState.any(), invalid -> {
+          inaccessibleTemplates = invalid;
+          updateErrorMessage();
+          comboBox.repaint();
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
+      comboBox.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
+        label.setText(value.getName());
+        if (inaccessibleTemplates != null && inaccessibleTemplates.contains(value)) {
+          label.setForeground(JBColor.RED);
+        }
+      }));
+      settingsButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          final TemplatesPanel ui = new TemplatesPanel(project);
+          Configurable composite = new TabbedConfigurable() {
+            @Override
+            protected @NotNull List<Configurable> createConfigurables() {
+              List<Configurable> res = new ArrayList<>();
+              res.add(new GenerateToStringConfigurable(project));
+              res.add(ui);
+              return res;
+            }
+
+            @Override
+            public String getDisplayName() {
+              return JavaBundle.message("generate.tostring.tab.title");
+            }
+
+            @Override
+            public String getHelpTopic() {
+              return "editing.altInsert.tostring.settings";
+            }
+
+            @Override
+            public void apply() throws ConfigurationException {
+              super.apply();
+              updateDialog(clazz, chooser);
+
+              comboBox.removeAllItems();
+              for (TemplateResource resource : templatesManager.getAllTemplates()) {
+                comboBox.addItem(resource);
+              }
+              comboBox.setSelectedItem(templatesManager.getDefaultTemplate());
+            }
+          };
+
+          ShowSettingsUtil.getInstance()
+            .editConfigurable(MemberChooserHeaderPanel.this, composite, () -> ui.selectItem(templatesManager.getDefaultTemplate()));
+          composite.disposeUIResources();
+        }
+      });
+
+      comboBox.setSelectedItem(templatesManager.getDefaultTemplate());
+
+      final JLabel templatesLabel = new JLabel(JavaBundle.message("generate.tostring.template.label"));
+      templatesLabel.setLabelFor(comboBox);
+
+      final GridBagConstraints constraints = new GridBagConstraints();
+      constraints.anchor = GridBagConstraints.BASELINE;
+      constraints.gridx = 0;
+      add(templatesLabel, constraints);
+      constraints.gridx = 1;
+      constraints.weightx = 1.0;
+      constraints.fill = GridBagConstraints.HORIZONTAL;
+      add(comboBox, constraints);
+      constraints.gridx = 2;
+      constraints.weightx = 0.0;
+      add(settingsButton, constraints);
+    }
+
+    public TemplateResource getSelectedTemplate() {
+      return (TemplateResource)comboBox.getSelectedItem();
+    }
+
+    private void updateErrorMessage() {
+      if (chooser == null || chooser.isDisposed()) return;
+      TemplateResource template = (TemplateResource)comboBox.getSelectedItem();
+      if (template != null && inaccessibleTemplates != null && inaccessibleTemplates.contains(template)) {
+        ComponentValidator validator = ComponentValidator.getInstance(comboBox)
+          .orElseGet(() -> new ComponentValidator(chooser.getDisposable()).installOn(comboBox));
+        String className = template.getClassName();
+        String message = className != null
+                         ? JavaBundle.message("dialog.message.class.not.found", className)
+                         : JavaBundle.message("dialog.message.template.not.applicable");
+        validator.updateInfo(new ValidationInfo(message, comboBox));
+      }
+      else {
+        ComponentValidator.getInstance(comboBox).ifPresent(v -> v.updateInfo(null));
+      }
+    }
+  }
 }
