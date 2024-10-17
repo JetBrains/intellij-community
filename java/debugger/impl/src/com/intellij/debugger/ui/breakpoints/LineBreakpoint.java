@@ -15,7 +15,6 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -118,23 +117,22 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
       SourcePosition position = getSourcePosition();
       List<Location> locations = debugProcess.getPositionManager().locationsOfLine(classType, position);
       if (!locations.isEmpty()) {
-        VirtualMachineProxyImpl vm = debugProcess.getVirtualMachineProxy();
         locations = StreamEx.of(locations).peek(loc -> {
           if (LOG.isDebugEnabled()) {
             LOG.debug("Found location [codeIndex=" + loc.codeIndex() +
                       "] for reference type " + classType.name() +
                       " at line " + getLineIndex() +
-                      "; isObsolete: " + (vm.versionHigher("1.4") && loc.method().isObsolete()));
+                      "; isObsolete: " + loc.method().isObsolete());
           }
         }).filter(l -> acceptLocation(debugProcess, classType, l)).toList();
 
         if (getProperties() instanceof JavaLineBreakpointProperties props && props.isConditionalReturn()) {
-          if (DebuggerUtils.isAndroidVM(vm.getVirtualMachine())) {
+          if (DebuggerUtils.isAndroidVM(classType.virtualMachine())) {
             XDebuggerManagerImpl.getNotificationGroup()
               .createNotification(JavaDebuggerBundle.message("message.conditional.return.breakpoint.on.android"), MessageType.INFO)
               .notify(debugProcess.getProject());
           }
-          else if (vm.canGetBytecodes() && vm.canGetConstantPool()) {
+          else if (classType.virtualMachine().canGetBytecodes() && classType.virtualMachine().canGetConstantPool()) {
             locations = locations.stream()
               .map(l -> l.method())
               .distinct()

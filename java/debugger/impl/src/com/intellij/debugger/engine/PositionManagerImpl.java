@@ -195,7 +195,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
   @Nullable
   public static SourcePosition adjustPositionForConditionalReturn(DebugProcess debugProcess, Location location, PsiFile file, int lineNumber) {
-    if (debugProcess.getVirtualMachineProxy().canGetBytecodes()) {
+    if (location.virtualMachine().canGetBytecodes()) {
       PsiElement ret = JavaLineBreakpointType.findSingleConditionalReturn(file, lineNumber);
       if (ret != null) {
         byte[] bytecodes = DebuggerUtilsEx.getMethod(location).bytecodes();

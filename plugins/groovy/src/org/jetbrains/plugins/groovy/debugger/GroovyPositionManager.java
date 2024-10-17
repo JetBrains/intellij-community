@@ -77,9 +77,7 @@ public class GroovyPositionManager extends PositionManagerEx {
         LOG.debug("locationsOfLine: " + type + "; " + position);
       }
       int line = position.getLine() + 1;
-      List<Location> locations = getDebugProcess().getVirtualMachineProxy().versionHigher("1.4")
-                                 ? DebuggerUtilsAsync.locationsOfLineSync(type, DebugProcess.JAVA_STRATUM, null, line)
-                                 : DebuggerUtilsAsync.locationsOfLineSync(type, line);
+      List<Location> locations = DebuggerUtilsAsync.locationsOfLineSync(type, DebugProcess.JAVA_STRATUM, null, line);
       if (locations == null || locations.isEmpty()) throw NoDataException.INSTANCE;
       return locations;
     }

@@ -140,7 +140,7 @@ public class SuspendManagerImpl implements SuspendManager {
 
     popContext(context);
     context.resume(true);
-    myDebugProcess.clearCashes(context.getSuspendPolicy());
+    myDebugProcess.clearCashes(context);
   }
 
 
@@ -166,7 +166,7 @@ public class SuspendManagerImpl implements SuspendManager {
       }
     }
     context.resume(true);
-    myDebugProcess.clearCashes(context.getSuspendPolicy());
+    myDebugProcess.clearCashes(context);
   }
 
   @Override
@@ -320,7 +320,8 @@ public class SuspendManagerImpl implements SuspendManager {
         myDebugProcess.cancelRunToCursorBreakpoint();
         if (!Registry.is("debugger.keep.step.requests")) {
           ThreadReferenceProxyImpl thread = suspendContext.getEventThread();
-          myDebugProcess.deleteStepRequests(thread != null ? thread.getThreadReference() : null);
+          myDebugProcess.deleteStepRequests(suspendContext.getVirtualMachineProxy().eventRequestManager(),
+                                            thread != null ? thread.getThreadReference() : null);
         }
 
         boolean needSwitchToSuspendAll = false;

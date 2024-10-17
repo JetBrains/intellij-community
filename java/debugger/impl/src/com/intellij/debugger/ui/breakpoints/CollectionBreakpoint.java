@@ -398,11 +398,9 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
     request.enable();
   }
 
-  private void createRequestForSubclasses(DebugProcessImpl debugProcess, ReferenceType baseType) {
-    final VirtualMachineProxyImpl virtualMachineProxy = debugProcess.getVirtualMachineProxy();
-
+  private void createRequestForSubclasses(DebugProcessImpl debugProcess, @NotNull ReferenceType baseType) {
     // create a request for classes that are already loaded
-    virtualMachineProxy.allClasses()
+    baseType.virtualMachine().allClasses()
       .stream()
       .filter(type -> DebuggerUtilsImpl.instanceOf(type, baseType) && !type.name().equals(baseType.name()))
       .forEach(derivedType -> createRequestForClass(debugProcess, derivedType));

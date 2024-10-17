@@ -243,7 +243,7 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         val debugMetadata = DebugMetadata.instance(executionContext) ?: return null
         val callerFrame = callMethodFromHelper(CoroutinesDebugHelper::class.java, executionContext, "getCallerFrame", listOf(continuationObject))?: return null
         val stackTraceElement = debugMetadata.getStackTraceElement(callerFrame as ObjectReference, executionContext)?.stackTraceElement() ?: return null
-        return stackTraceElement.let { DebuggerUtilsEx.findOrCreateLocation(suspendContext.debugProcess, it) }
+        return stackTraceElement.let { DebuggerUtilsEx.findOrCreateLocation(suspendContext.virtualMachineProxy.virtualMachine, it) }
     }
 
     private fun SuspendContextImpl.getStackFrameProxyImpl(): StackFrameProxyImpl? =

@@ -118,7 +118,8 @@ public final class AsyncStacksUtils {
             String className = dis.readUTF();
             String methodName = dis.readUTF();
             int line = dis.readInt();
-            Location location = DebuggerUtilsEx.findOrCreateLocation(process, classesByName, className, methodName, line);
+            Location location =
+              DebuggerUtilsEx.findOrCreateLocation(virtualMachineProxy.getVirtualMachine(), classesByName, className, methodName, line);
             item = new StackFrameItem(location, null);
           }
           res.add(item);

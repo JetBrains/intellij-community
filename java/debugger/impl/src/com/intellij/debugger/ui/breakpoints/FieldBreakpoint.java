@@ -13,7 +13,6 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
@@ -149,8 +148,7 @@ public final class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBr
 
   @Override
   public void createRequestForPreparedClass(DebugProcessImpl debugProcess,
-                                            ReferenceType refType) {
-    VirtualMachineProxy vm = debugProcess.getVirtualMachineProxy();
+                                            @NotNull ReferenceType refType) {
     try {
       RequestManagerImpl manager = debugProcess.getRequestsManager();
       Field field = DebuggerUtils.findField(refType, getFieldName());
@@ -159,11 +157,11 @@ public final class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBr
                                                             getFieldName(), refType.name()));
         return;
       }
-      if (isWatchModification() && vm.canWatchFieldModification()) {
+      if (isWatchModification() && refType.virtualMachine().canWatchFieldModification()) {
         manager.enableRequest(manager.createModificationWatchpointRequest(this, field));
         LOG.debug("Modification request added");
       }
-      if (isWatchAccess() && vm.canWatchFieldAccess()) {
+      if (isWatchAccess() && refType.virtualMachine().canWatchFieldAccess()) {
         manager.enableRequest(manager.createAccessWatchpointRequest(this, field));
         if (LOG.isDebugEnabled()) {
           LOG.debug("Access request added field = " + field.name() + "; refType = " + refType.name());

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
@@ -35,7 +35,7 @@ public class LambdaAsyncMethodFilter extends BasicStepMethodFilter {
       Value lambdaReference = getLambdaReference(frameProxy);
       if (lambdaReference instanceof ObjectReference) {
         Method lambdaMethod = MethodBytecodeUtil.getLambdaMethod(
-          ((ObjectReference)lambdaReference).referenceType(), process.getVirtualMachineProxy().getClassesByNameProvider());
+          ((ObjectReference)lambdaReference).referenceType(), lambdaReference.virtualMachine()::classesByName);
         Location newLocation = lambdaMethod != null ? ContainerUtil.getFirstItem(DebuggerUtilsEx.allLineLocations(lambdaMethod)) : null;
         return newLocation != null && myMethodFilter.locationMatches(process, newLocation);
       }

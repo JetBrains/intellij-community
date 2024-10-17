@@ -770,7 +770,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         if (type instanceof ClassType clsType) {
 
           Method lambdaMethod =
-            MethodBytecodeUtil.getLambdaMethod(clsType, debugProcess.getVirtualMachineProxy().getClassesByNameProvider());
+            MethodBytecodeUtil.getLambdaMethod(clsType, type.virtualMachine()::classesByName);
           Location location = lambdaMethod != null ? ContainerUtil.getFirstItem(DebuggerUtilsEx.allLineLocations(lambdaMethod)) : null;
 
           if (location == null) {

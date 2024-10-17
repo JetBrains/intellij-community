@@ -370,7 +370,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return mask;
   }
 
-  protected void commitVM(VirtualMachine vm) {
+  @NotNull
+  protected VirtualMachineProxyImpl commitVM(VirtualMachine vm) {
     if (!isInInitialState()) {
       logError("State is invalid " + myState.get());
     }
@@ -402,13 +403,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     vm.setDebugTraceMode(mask);
 
     checkVirtualMachineVersion(vm);
-    myVirtualMachineProxy = new VirtualMachineProxyImpl(this, vm);
+    VirtualMachineProxyImpl proxy = new VirtualMachineProxyImpl(this, vm);
+    myVirtualMachineProxy = proxy;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       Alarm alarm = new Alarm(disposable);
       alarm.addRequest(() -> myDebuggerManagerThread.schedule(PrioritizedTask.Priority.HIGH, () -> {
         logError("Long debugger test execution");
       }), 3*60*1000);
     }
+    return proxy;
   }
 
   private void stopConnecting() {
@@ -457,7 +460,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
    * @param size the step size. One of {@link StepRequest#STEP_LINE} or {@link StepRequest#STEP_MIN}
    * @param hint may be null
    */
-  protected void doStep(final SuspendContextImpl suspendContext, final ThreadReferenceProxyImpl stepThread, int size, int depth,
+  protected void doStep(@NotNull SuspendContextImpl suspendContext, final ThreadReferenceProxyImpl stepThread, int size, int depth,
                         RequestHint hint, Object commandToken) {
     if (stepThread == null) {
       return;
@@ -467,7 +470,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (LOG.isDebugEnabled()) {
         LOG.debug("DO_STEP: creating step request for " + stepThreadReference);
       }
-      deleteStepRequests(stepThreadReference);
+      deleteStepRequests(suspendContext.getVirtualMachineProxy().eventRequestManager(), stepThreadReference);
       EventRequestManager requestManager = suspendContext.getVirtualMachineProxy().eventRequestManager();
       StepRequest stepRequest = requestManager.createStepRequest(stepThreadReference, size, depth);
       String policyFromRequestors = suspendContext.getSuspendPolicyFromRequestors();
@@ -538,8 +541,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return DebuggerSettings.getInstance().HIDE_STACK_FRAMES_USING_STEPPING_FILTER;
   }
 
-  void deleteStepRequests(@Nullable final ThreadReference stepThread) {
-    EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
+  void deleteStepRequests(@NotNull EventRequestManager requestManager, @Nullable ThreadReference stepThread) {
     for (StepRequest request : new ArrayList<>(requestManager.stepRequests())) { // need a copy here to avoid CME
       if (stepThread == null || stepThread.equals(request.thread())) {
         try {
@@ -1697,15 +1699,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  public void clearCashes(@MagicConstant(flagsFromClass = EventRequest.class) int suspendPolicy) {
+  public void clearCashes(@NotNull SuspendContextImpl context) {
     if (!isAttached()) return;
-    switch (suspendPolicy) {
-      case EventRequest.SUSPEND_ALL, EventRequest.SUSPEND_EVENT_THREAD -> getVirtualMachineProxy().clearCaches();
+    switch (context.getSuspendPolicy()) {
+      case EventRequest.SUSPEND_ALL, EventRequest.SUSPEND_EVENT_THREAD -> context.getVirtualMachineProxy().clearCaches();
     }
   }
 
   protected void beforeSuspend(SuspendContextImpl suspendContext) {
-    clearCashes(suspendContext.getSuspendPolicy());
+    clearCashes(suspendContext);
   }
 
   private void beforeMethodInvocation(SuspendContextImpl suspendContext, Method method, boolean internalEvaluate) {
