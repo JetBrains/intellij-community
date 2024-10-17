@@ -81,7 +81,8 @@ public class JBCefBrowser extends JBCefBrowserBase {
             }
           }
           else {
-            browser.getUIComponent().requestFocusInWindow();
+            if (!SystemInfo.isMac || !isOffScreenRendering())
+              browser.getUIComponent().requestFocusInWindow();
           }
         }
         return false;
