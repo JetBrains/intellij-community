@@ -2,7 +2,9 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.OptionallyIncluded
 import com.intellij.openapi.fileTypes.ex.FakeFileType
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
@@ -13,19 +15,22 @@ internal class ToolWindowTabFileImpl(
   fileName: String,
   icon: Icon?,
   val component: JComponent
-) : LightVirtualFile(fileName, ToolWindowTabFileType(icon), "") {
+) : LightVirtualFile(fileName, ToolWindowTabFileType(icon), ""), OptionallyIncluded {
 
   init {
     putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
     isWritable = true
   }
 
+  override fun isIncludedInEditorHistory(project: Project): Boolean = true
+  override fun isPersistedInEditorHistory(): Boolean = false
+
   override fun setWritable(writable: Boolean) {
   }
 
   private class ToolWindowTabFileType(val myIcon: Icon?) : FakeFileType() {
 
-    override fun getName() = "ToolwindowTab"
+    override fun getName() = "ToolWindowTab"
 
     @NlsSafe
     override fun getDescription() = "$name Fake File Type"
