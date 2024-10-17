@@ -86,7 +86,8 @@ class OrdinaryClassLoadingAdapter : ClassLoadingAdapter {
     }
 
     override fun isApplicable(context: ExecutionContext, info: ClassLoadingAdapter.Companion.ClassInfoForEvaluator): Boolean {
-        return info.isCompilingEvaluatorPreferred && context.classLoader != null && !DexDebugFacility.isDex(context.debugProcess)
+        return info.isCompilingEvaluatorPreferred && context.classLoader != null
+                && !DexDebugFacility.isDex(context.evaluationContext.virtualMachineProxy.virtualMachine)
     }
 
     override fun loadClasses(context: ExecutionContext, classes: Collection<ClassToLoad>): ClassLoaderReference {

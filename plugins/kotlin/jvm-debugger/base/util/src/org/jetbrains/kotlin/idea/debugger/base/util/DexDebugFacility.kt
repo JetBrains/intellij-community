@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.base.util
 
@@ -11,6 +11,7 @@ object DexDebugFacility {
         return virtualMachine.name() == "Dalvik"
     }
 
+    @Deprecated("Use isDex(virtualMachine)")
     fun isDex(debugProcess: DebugProcess): Boolean {
         val virtualMachineProxy = debugProcess.virtualMachineProxy as? VirtualMachineProxyImpl ?: return false
         return isDex(virtualMachineProxy.virtualMachine)

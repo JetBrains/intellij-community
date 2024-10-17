@@ -28,11 +28,7 @@ import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.INVO
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.KOTLIN_STRATA_NAME
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.org.objectweb.asm.Label
 import org.jetbrains.org.objectweb.asm.MethodVisitor
 import org.jetbrains.org.objectweb.asm.Opcodes
@@ -73,8 +69,8 @@ fun ReferenceType.containsKotlinStrata() = availableStrata().contains(KOTLIN_STR
 fun ReferenceType.containsKotlinStrataAsync(): CompletableFuture<Boolean> =
     DebuggerUtilsAsync.availableStrata(this).thenApply { it.contains(KOTLIN_STRATA_NAME) }
 
-internal suspend fun isInsideInlineArgument(inlineArgument: KtExpression, location: Location, debugProcess: DebugProcessImpl): Boolean =
-    isInlinedArgument(location.visibleVariables(debugProcess), inlineArgument)
+internal suspend fun isInsideInlineArgument(inlineArgument: KtExpression, location: Location): Boolean =
+    isInlinedArgument(location.visibleVariables(location.virtualMachine()), inlineArgument)
 
 /**
  * Check whether [inlineArgument] is a lambda that is inlined in bytecode
@@ -144,8 +140,8 @@ private fun functionNameByArgument(argument: KtExpression): String? =
         function.name.asString()
     }
 
-private fun Location.visibleVariables(debugProcess: DebugProcessImpl): List<LocalVariable> {
-    val stackFrame = MockStackFrame(this, debugProcess.virtualMachineProxy.virtualMachine)
+private fun Location.visibleVariables(virtualMachine: VirtualMachine): List<LocalVariable> {
+    val stackFrame = MockStackFrame(this, virtualMachine)
     return stackFrame.visibleVariables()
 }
 

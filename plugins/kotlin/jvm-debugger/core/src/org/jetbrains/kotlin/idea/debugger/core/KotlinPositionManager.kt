@@ -377,7 +377,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
                 getInlineArgumentSymbol(expression)?.isCrossinline
             }
             if (isCrossinline != null && (!isCrossinline || isInlinedArgument(expression, location))) {
-                if (isInsideInlineArgument(expression, location, debugProcess as DebugProcessImpl)) {
+                if (isInsideInlineArgument(expression, location)) {
                     innermostInlinedElement = expression
                 }
             } else {
@@ -637,8 +637,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             throw NoDataException.INSTANCE
         }
         try {
-            if (DexDebugFacility.isDex(debugProcess) &&
-                (debugProcess.virtualMachineProxy as? VirtualMachineProxyImpl)?.canGetSourceDebugExtension() != true) {
+            val virtualMachine = type.virtualMachine()
+            if (DexDebugFacility.isDex(virtualMachine) && !virtualMachine.canGetSourceDebugExtension()) {
                 // If we cannot get source debug extension information, we approximate information for inline functions.
                 // This allows us to stop on some breakpoints in inline functions, but does not work very well.
                 // Source debug extensions are not available on Android devices before Android O.

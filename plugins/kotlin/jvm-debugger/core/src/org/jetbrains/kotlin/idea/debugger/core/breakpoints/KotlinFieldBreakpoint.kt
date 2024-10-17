@@ -83,7 +83,6 @@ class KotlinFieldBreakpoint(
 
         breakpointType = evaluationElement?.let(::computeBreakpointType) ?: return
 
-        val vm = debugProcess.virtualMachineProxy
         try {
             if (properties.watchInitialization) {
                 val sourcePosition = sourcePosition
@@ -106,14 +105,14 @@ class KotlinFieldBreakpoint(
                     val field = DebuggerUtils.findField(refType, getFieldName())
                     if (field != null) {
                         val manager = debugProcess.requestsManager
-                        if (properties.watchModification && vm.canWatchFieldModification()) {
+                        if (properties.watchModification && refType.virtualMachine().canWatchFieldModification()) {
                             val request = manager.createModificationWatchpointRequest(this, field)
                             debugProcess.requestsManager.enableRequest(request)
                             if (LOG.isDebugEnabled) {
                                 LOG.debug("Modification request added")
                             }
                         }
-                        if (properties.watchAccess && vm.canWatchFieldAccess()) {
+                        if (properties.watchAccess && refType.virtualMachine().canWatchFieldAccess()) {
                             val request = manager.createAccessWatchpointRequest(this, field)
                             debugProcess.requestsManager.enableRequest(request)
                             if (LOG.isDebugEnabled) {

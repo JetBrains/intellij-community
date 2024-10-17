@@ -77,7 +77,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
     override fun evaluate(context: EvaluationContextImpl): Any? {
         if (codeFragment.text.isEmpty()) {
-            return context.debugProcess.virtualMachineProxy.mirrorOfVoid()
+            return context.suspendContext.virtualMachineProxy.mirrorOfVoid()
         }
 
         if (!context.debugProcess.isAttached) {
