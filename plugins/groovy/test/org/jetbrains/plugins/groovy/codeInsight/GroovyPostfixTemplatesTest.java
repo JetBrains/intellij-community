@@ -1,60 +1,62 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.groovy.codeInsight
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.codeInsight;
 
-import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.codeInsight.completion.JavaCompletionAutoPopupTestCase
-import com.intellij.codeInsight.lookup.Lookup
-import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
-import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLookupElement
-import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings
-import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
-import com.intellij.openapi.application.ApplicationManager
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
-import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.*
+import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.completion.JavaCompletionAutoPopupTestCase;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupEx;
+import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
+import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLookupElement;
+import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.testFramework.UsefulTestCase;
+import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.*;
 
-class GroovyPostfixTemplatesTest extends JavaCompletionAutoPopupTestCase {
+import java.util.HashMap;
 
+public class GroovyPostfixTemplatesTest extends JavaCompletionAutoPopupTestCase {
   @Override
-  void setUp() throws Exception {
-    super.setUp()
-    CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = true
-    LiveTemplateCompletionContributor.setShowTemplatesInTests(false, myFixture.getTestRootDisposable())
+  public void setUp() throws Exception {
+    super.setUp();
+    CodeInsightSettings.getInstance().setSelectAutopopupSuggestionsByChars(true);
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(false, myFixture.getTestRootDisposable());
   }
 
   @Override
-  void tearDown() throws Exception {
-    CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = false
-    PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance()
-    assertNotNull(settings)
-    settings.setProviderToDisabledTemplates(new HashMap<>())
-    settings.setPostfixTemplatesEnabled(true)
-    settings.setTemplatesCompletionEnabled(true)
-    super.tearDown()
+  public void tearDown() throws Exception {
+    CodeInsightSettings.getInstance().setSelectAutopopupSuggestionsByChars(false);
+    PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
+    TestCase.assertNotNull(settings);
+    settings.setProviderToDisabledTemplates(new HashMap<>());
+    settings.setPostfixTemplatesEnabled(true);
+    settings.setTemplatesCompletionEnabled(true);
+    super.tearDown();
   }
 
   private void doGeneralAutoPopupTest(@NotNull String baseText,
-                                      @NotNull String textToType,
+                                      @NotNull final String textToType,
                                       @Nullable String result,
                                       @NotNull Class<? extends PostfixTemplate> expectedClass,
                                       boolean invokeRefactoring) {
-    myFixture.configureByText "_.groovy", baseText
-    type textToType
-    Lookup lookup = myFixture.getLookup()
-    assertNotNull(lookup)
-    LookupElement item = lookup.items.find { it.lookupString.startsWith('.'+textToType) }
-    assertNotNull item
-    assertInstanceOf item, PostfixTemplateLookupElement.class
-    assertInstanceOf((item as PostfixTemplateLookupElement).getPostfixTemplate(), expectedClass)
-    ApplicationManager.getApplication().invokeAndWait {
-      ApplicationManager.getApplication().runWriteAction {
-        lookup.setCurrentItem(item)
-      }
-    }
+    myFixture.configureByText("_.groovy", baseText);
+    type(textToType);
+    final LookupEx lookup = myFixture.getLookup();
+    TestCase.assertNotNull(lookup);
+    final LookupElement item = lookup.getItems().stream().filter(e -> e.getLookupString().startsWith("." + textToType)).findFirst().orElse(null);
+    TestCase.assertNotNull(item);
+    UsefulTestCase.assertInstanceOf(item, PostfixTemplateLookupElement.class);
+    UsefulTestCase.assertInstanceOf(((PostfixTemplateLookupElement)item).getPostfixTemplate(), (Class<? extends PostfixTemplate>)expectedClass);
+    ApplicationManager.getApplication().invokeAndWait(
+      () -> ApplicationManager.getApplication().runWriteAction(
+        () ->lookup.setCurrentItem(item)));
     if (invokeRefactoring) {
-      type ' '
-      myFixture.checkResult result
+      type(" ");
+      myFixture.checkResult(result);
     }
   }
 
@@ -62,178 +64,178 @@ class GroovyPostfixTemplatesTest extends JavaCompletionAutoPopupTestCase {
                                @NotNull String textToType,
                                @NotNull String result,
                                @NotNull Class<? extends PostfixTemplate> expectedClass) {
-    doGeneralAutoPopupTest(baseText, textToType, result, expectedClass, true)
+    doGeneralAutoPopupTest(baseText, textToType, result, expectedClass, true);
   }
 
   private void doAutoPopupTestWithoutInvocation(@NotNull String baseText,
                                                 @NotNull String textToType,
                                                 @NotNull Class<? extends PostfixTemplate> expectedClass) {
-    doGeneralAutoPopupTest(baseText, textToType, null, expectedClass, false)
+    doGeneralAutoPopupTest(baseText, textToType, null, expectedClass, false);
   }
 
   private void doNoPopupTest(@NotNull String baseText, @NotNull String textToType, @NotNull Class<? extends PostfixTemplate> clazz) {
-    myFixture.configureByText "_.groovy", baseText
-    type textToType
-    Lookup lookup = myFixture.getLookup()
+    myFixture.configureByText("_.groovy", baseText);
+    type(textToType);
+    Lookup lookup = myFixture.getLookup();
     if (lookup != null) {
-      LookupElement item = lookup.getCurrentItem()
-      assertNotNull item
-      assertTrue(!(item instanceof PostfixTemplateLookupElement) || !clazz.isInstance(item.postfixTemplate))
+      LookupElement item = lookup.getCurrentItem();
+      TestCase.assertNotNull(item);
+      TestCase.assertTrue(!(item instanceof PostfixTemplateLookupElement) ||
+                          !clazz.isInstance(((PostfixTemplateLookupElement)item).getPostfixTemplate()));
     }
   }
 
-  void testArg() {
-    doAutoPopupTest "foo().<caret>", "arg", "(foo())", GrArgPostfixTemplate
+  public void testArg() {
+    doAutoPopupTest("foo().<caret>", "arg", "(foo())", GrArgPostfixTemplate.class);
   }
 
-  void testPar() {
-    doAutoPopupTest "1.<caret>", "par", "(1)", GrParenthesizedExpressionPostfixTemplate
+  public void testPar() {
+    doAutoPopupTest("1.<caret>", "par", "(1)", GrParenthesizedExpressionPostfixTemplate.class);
   }
 
-  void testCast() {
-    doAutoPopupTest "1.<caret>", "cast", "1 as <caret>", GrCastExpressionPostfixTemplate
+  public void testCast() {
+    doAutoPopupTest("1.<caret>", "cast", "1 as <caret>", GrCastExpressionPostfixTemplate.class);
   }
 
-  void testFor() {
-    doAutoPopupTest "[1, 2, 3].<caret>", "for", "for (final def  in [1, 2, 3]) {\n    \n}", GrForeachPostfixTemplate
+  public void testFor() {
+    doAutoPopupTest("[1, 2, 3].<caret>", "for", "for (final def  in [1, 2, 3]) {\n    \n}", GrForeachPostfixTemplate.class);
   }
 
-  void testIter() {
-    doAutoPopupTest "[1, 2, 3].<caret>", "iter", "for (final def  in [1, 2, 3]) {\n    \n}", GrForeachPostfixTemplate
+  public void testIter() {
+    doAutoPopupTest("[1, 2, 3].<caret>", "iter", "for (final def  in [1, 2, 3]) {\n    \n}", GrForeachPostfixTemplate.class);
   }
 
-  void testNoForWithNonIterable() {
-    doNoPopupTest "1.<caret>", "for", GrForeachPostfixTemplate
+  public void testNoForWithNonIterable() {
+    doNoPopupTest("1.<caret>", "for", GrForeachPostfixTemplate.class);
   }
 
-  void testNewWithClass() {
-    doAutoPopupTest "String.<caret>", "new", "new String()", GrNewExpressionPostfixTemplate
+  public void testNewWithClass() {
+    doAutoPopupTest("String.<caret>", "new", "new String()", GrNewExpressionPostfixTemplate.class);
   }
 
-  void testNewWithCall() {
-    doAutoPopupTest "foo().<caret>", "new", "new foo()", GrNewExpressionPostfixTemplate
+  public void testNewWithCall() {
+    doAutoPopupTest("foo().<caret>", "new", "new foo()", GrNewExpressionPostfixTemplate.class);
   }
 
-  void testNoNew() {
-    doNoPopupTest "1.<caret>", "new", GrNewExpressionPostfixTemplate
+  public void testNoNew() {
+    doNoPopupTest("1.<caret>", "new", GrNewExpressionPostfixTemplate.class);
   }
 
-  void testNn() {
-    doAutoPopupTest "foo().<caret>", "nn", "if (foo() != null) {\n    \n}", GrIfNotNullExpressionPostfixTemplate
+  public void testNn() {
+    doAutoPopupTest("foo().<caret>", "nn", "if (foo() != null) {\n    \n}", GrIfNotNullExpressionPostfixTemplate.class);
   }
 
-  void testNotnull() {
-    doAutoPopupTest "foo().<caret>", "notnull", "if (foo() != null) {\n    \n}", GrIfNotNullExpressionPostfixTemplate
+  public void testNotnull() {
+    doAutoPopupTest("foo().<caret>", "notnull", "if (foo() != null) {\n    \n}", GrIfNotNullExpressionPostfixTemplate.class);
   }
 
-  void testNoNNForPrimitive() {
-    doNoPopupTest "int x = 1; x.<caret>", "nn", GrIfNotNullExpressionPostfixTemplate
+  public void testNoNNForPrimitive() {
+    doNoPopupTest("int x = 1; x.<caret>", "nn", GrIfNotNullExpressionPostfixTemplate.class);
   }
 
-  void testNull() {
-    doAutoPopupTest "foo().<caret>", "null", "if (foo() == null) {\n    \n}", GrIfNullExpressionPostfixTemplate
+  public void testNull() {
+    doAutoPopupTest("foo().<caret>", "null", "if (foo() == null) {\n    \n}", GrIfNullExpressionPostfixTemplate.class);
   }
 
-  void testReqnonnull() {
-    doAutoPopupTest "foo.<caret>", "reqnonnull", "Objects.requireNonNull(foo)<caret>", GrReqnonnullExpressionPostfixTemplate
+  public void testReqnonnull() {
+    doAutoPopupTest("foo.<caret>", "reqnonnull", "Objects.requireNonNull(foo)<caret>", GrReqnonnullExpressionPostfixTemplate.class);
   }
 
-  void testReturn() {
-    doAutoPopupTest "def foo() { bar.<caret> }", "return", "def foo() { return bar }", GrReturnExpressionPostfixTemplate
+  public void testReturn() {
+    doAutoPopupTest("def foo() { bar.<caret> }", "return", "def foo() { return bar }", GrReturnExpressionPostfixTemplate.class);
   }
 
-  void testNoReturn() {
-    doNoPopupTest "bar.<caret>", "return", GrReturnExpressionPostfixTemplate
+  public void testNoReturn() {
+    doNoPopupTest("bar.<caret>", "return", GrReturnExpressionPostfixTemplate.class);
   }
 
-  void testSout() {
-    doAutoPopupTest "foo.<caret>", "sout", "println foo", GrSoutExpressionPostfixTemplate
+  public void testSout() {
+    doAutoPopupTest("foo.<caret>", "sout", "println foo", GrSoutExpressionPostfixTemplate.class);
   }
 
-  void testSerr() {
-    doAutoPopupTest "foo.<caret>", "serr", "System.err.println(foo)", GrSerrExpressionPostfixTemplate
+  public void testSerr() {
+    doAutoPopupTest("foo.<caret>", "serr", "System.err.println(foo)", GrSerrExpressionPostfixTemplate.class);
   }
 
-  void testThrow() {
-    doAutoPopupTest "new IOException().<caret>", "throw", "throw new IOException()", GrThrowExpressionPostfixTemplate
+  public void testThrow() {
+    doAutoPopupTest("new IOException().<caret>", "throw", "throw new IOException()", GrThrowExpressionPostfixTemplate.class);
   }
 
-  void testThrowNotThrowable() {
-    doAutoPopupTest "1.<caret>", "throw", "throw new RuntimeException(1)", GrThrowExpressionPostfixTemplate
+  public void testThrowNotThrowable() {
+    doAutoPopupTest("1.<caret>", "throw", "throw new RuntimeException(1)", GrThrowExpressionPostfixTemplate.class);
   }
 
-  void testTry() {
-    doAutoPopupTest "foo().<caret>", "try", "try {\n    foo()\n} catch (Exception e) {\n    \n}", GrTryPostfixTemplate
+  public void testTry() {
+    doAutoPopupTest("foo().<caret>", "try", "try {\n    foo()\n} catch (Exception e) {\n    \n}", GrTryPostfixTemplate.class);
   }
 
-  void testTryWithExceptions() {
-    doAutoPopupTest """\
-def foo() throws IOException, IndexOutOfBoundsException {}
-
-foo().<caret>\
-""", "try", """\
-def foo() throws IOException, IndexOutOfBoundsException {}
-
-try {
-    foo()
-} catch (IOException | IndexOutOfBoundsException e) {
-    
-}""", GrTryPostfixTemplate
+  public void testTryWithExceptions() {
+    doAutoPopupTest("""
+                      def foo() throws IOException, IndexOutOfBoundsException {}
+                      
+                      foo().<caret>""", "try", """
+                      def foo() throws IOException, IndexOutOfBoundsException {}
+                      
+                      try {
+                          foo()
+                      } catch (IOException | IndexOutOfBoundsException e) {
+                         \s
+                      }""", GrTryPostfixTemplate.class);
   }
 
-  void testVar() {
-    doAutoPopupTestWithoutInvocation "foo().<caret>", "var", GrIntroduceVariablePostfixTemplate
+  public void testVar() {
+    doAutoPopupTestWithoutInvocation("foo().<caret>", "var", GrIntroduceVariablePostfixTemplate.class);
   }
 
-  void testDef() {
-    doAutoPopupTestWithoutInvocation "foo().<caret>", "def", GrIntroduceVariablePostfixTemplate
+  public void testDef() {
+    doAutoPopupTestWithoutInvocation("foo().<caret>", "def", GrIntroduceVariablePostfixTemplate.class);
   }
 
-  void testWhile() {
-    doAutoPopupTest "true.<caret>", "while", "while (true) {\n    \n}", GrWhilePostfixTemplate
+  public void testWhile() {
+    doAutoPopupTest("true.<caret>", "while", "while (true) {\n    \n}", GrWhilePostfixTemplate.class);
   }
 
-  void testNot() {
-    doAutoPopupTest "true.<caret>", "not", "!true", GrNegateBooleanPostfixTemplate
+  public void testNot() {
+    doAutoPopupTest("true.<caret>", "not", "!true", GrNegateBooleanPostfixTemplate.class);
   }
 
-  void testMap() {
-    doAutoPopupTest "[1, 2, 3].<caret>", "map", "[1, 2, 3].collect {}", GrMapPostfixTemplate
+  public void testMap() {
+    doAutoPopupTest("[1, 2, 3].<caret>", "map", "[1, 2, 3].collect {}", GrMapPostfixTemplate.class);
   }
 
-  void testAll() {
-    doAutoPopupTest "[1, 2, 3].<caret>", "all", "[1, 2, 3].every {}", GrAllPostfixTemplate
+  public void testAll() {
+    doAutoPopupTest("[1, 2, 3].<caret>", "all", "[1, 2, 3].every {}", GrAllPostfixTemplate.class);
   }
 
-  void testFilter() {
-    doAutoPopupTest "[1, 2, 3].<caret>", "filter", "[1, 2, 3].findAll {}", GrFilterPostfixTemplate
+  public void testFilter() {
+    doAutoPopupTest("[1, 2, 3].<caret>", "filter", "[1, 2, 3].findAll {}", GrFilterPostfixTemplate.class);
   }
 
-  void testFlatMap() {
-    doAutoPopupTest "[1, 2, 3].<caret>", "flatMap", "[1, 2, 3].collectMany {}", GrFlatMapPostfixTemplate
+  public void testFlatMap() {
+    doAutoPopupTest("[1, 2, 3].<caret>", "flatMap", "[1, 2, 3].collectMany {}", GrFlatMapPostfixTemplate.class);
   }
 
-  void testFoldLeft() {
-    doAutoPopupTest "[1, 2, 3].<caret>", "foldLeft", "[1, 2, 3].inject() {}", GrFoldLeftPostfixTemplate
+  public void testFoldLeft() {
+    doAutoPopupTest("[1, 2, 3].<caret>", "foldLeft", "[1, 2, 3].inject() {}", GrFoldLeftPostfixTemplate.class);
   }
 
-  void testReduce() {
-    doAutoPopupTest "[1, 2, 3].<caret>", "reduce", "[1, 2, 3].inject {}", GrReducePostfixTemplate
+  public void testReduce() {
+    doAutoPopupTest("[1, 2, 3].<caret>", "reduce", "[1, 2, 3].inject {}", GrReducePostfixTemplate.class);
   }
 
-  void testInClosure() {
-    doAutoPopupTest "1.with { [1, 2, 3].<caret> }", "par", "1.with { ([1, 2, 3]) }", GrParenthesizedExpressionPostfixTemplate
+  public void testInClosure() {
+    doAutoPopupTest("1.with { [1, 2, 3].<caret> }", "par", "1.with { ([1, 2, 3]) }", GrParenthesizedExpressionPostfixTemplate.class);
   }
 
-  void testInClosure2() {
-    doAutoPopupTest "1.with { [1, 2, 3].<caret> }", "map", "1.with { [1, 2, 3].collect {} }", GrMapPostfixTemplate
+  public void testInClosure2() {
+    doAutoPopupTest("1.with { [1, 2, 3].<caret> }", "map", "1.with { [1, 2, 3].collect {} }", GrMapPostfixTemplate.class);
   }
 
-  void testIf() {
-    doAutoPopupTest "true.<caret>", "if", "if (true) {\n    \n}", GrIfPostfixTemplate
+  public void testIf() {
+    doAutoPopupTest("true.<caret>", "if", "if (true) {\n    \n}", GrIfPostfixTemplate.class);
   }
 
-  void testElse() {
-    doAutoPopupTest "true.<caret>", "else", "if (!true) {\n    \n}", GrElsePostfixTemplate
+  public void testElse() {
+    doAutoPopupTest("true.<caret>", "else", "if (!true) {\n    \n}", GrElsePostfixTemplate.class);
   }
 }
