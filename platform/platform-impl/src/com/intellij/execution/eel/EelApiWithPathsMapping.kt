@@ -7,9 +7,8 @@ import com.intellij.platform.core.nio.fs.MultiRoutingFsPath
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessError
 import com.intellij.platform.eel.fs.EelFileSystemApi
-import com.intellij.platform.eel.fs.getPath
+import com.intellij.platform.eel.fs.getPathE
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.path.getOrThrow
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -55,7 +54,7 @@ private class EelEphemeralRootAwareMapper(
   private val eelApi: EelApiBase,
 ) : EelPathMapper {
   override fun getOriginalPath(path: Path): EelPath.Absolute? {
-    return path.toEphemeralRootAwarePath()?.originalPath?.let { eelApi.fs.getPath(it.toString()).getOrThrow() }
+    return path.toEphemeralRootAwarePath()?.originalPath?.let { eelApi.fs.getPathE(it.toString()) }
   }
 
   override suspend fun maybeUploadPath(path: Path, scope: CoroutineScope, options: EelFileSystemApi.CreateTemporaryDirectoryOptions): EelPath.Absolute {
@@ -66,7 +65,7 @@ private class EelEphemeralRootAwareMapper(
     }
 
     val tmpDir = eelApi.fs.createTemporaryDirectory(options).getOrThrow()
-    val referencedPath = tmpDir.resolve(EelPath.Relative.parse(path.name).getOrThrow()).getOrThrow()
+    val referencedPath = tmpDir.resolveE(EelPath.Relative.parseE(path.name))
 
     EelPathUtils.walkingTransfer(path, toNioPath(referencedPath), false)
 

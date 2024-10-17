@@ -3,9 +3,8 @@ package com.intellij.platform.eel.provider.utils
 
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.platform.eel.*
-import com.intellij.platform.eel.fs.getPath
+import com.intellij.platform.eel.fs.getPathE
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.path.getOrThrow
 import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.channels.consumeEach
@@ -85,6 +84,6 @@ suspend fun EelApi.where(exe: String): EelPath.Absolute? {
     return null
   }
   else {
-    return fs.getPath(result.stdout).getOrThrow()
+    return fs.getPathE(result.stdout)
   }
 }

@@ -3,7 +3,6 @@ package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.path.getOrThrow
 import java.net.URI
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
@@ -40,8 +39,7 @@ class IjentNioPath internal constructor(
 
   override fun getFileName(): IjentNioPath? =
     EelPath.Relative
-      .parse(eelPath.fileName)
-      .getOrThrow()
+      .parseE(eelPath.fileName)
       .toNioPath()
       .takeIf { it.nameCount > 0 }
 
@@ -85,20 +83,20 @@ class IjentNioPath internal constructor(
 
   override fun normalize(): IjentNioPath =
     when (eelPath) {
-      is EelPath.Absolute -> eelPath.normalize().getOrThrow().toNioPath()
+      is EelPath.Absolute -> eelPath.normalizeE().toNioPath()
       is EelPath.Relative -> eelPath.normalize().toNioPath()
     }
 
   override fun resolve(other: Path): IjentNioPath =
     when (val otherIjentPath = other.toEelPath()) {
       is EelPath.Absolute -> otherIjentPath.toNioPath()  // TODO is it the desired behaviour?
-      is EelPath.Relative -> eelPath.resolve(otherIjentPath).getOrThrow().toNioPath()
+      is EelPath.Relative -> eelPath.resolveE(otherIjentPath).toNioPath()
     }
 
   override fun relativize(other: Path): IjentNioPath =
     when (val otherIjentPath = other.toEelPath()) {
       is EelPath.Absolute -> when (eelPath) {
-        is EelPath.Absolute -> eelPath.relativize(otherIjentPath).getOrThrow().toNioPath()
+        is EelPath.Absolute -> eelPath.relativizeE(otherIjentPath).toNioPath()
         is EelPath.Relative -> throw InvalidPathException("$this.relativize($other)",
                                                           "Can't relativize these paths")
       }
@@ -127,7 +125,7 @@ class IjentNioPath internal constructor(
   override fun toRealPath(vararg options: LinkOption): IjentNioPath =
     when (eelPath) {
       is EelPath.Absolute ->
-        eelPath.normalize().getOrThrow()
+        eelPath.normalizeE()
           .let { normalizedPath ->
             if (LinkOption.NOFOLLOW_LINKS in options)
               normalizedPath

@@ -30,8 +30,8 @@ class EelRelativePathTest {
       abc/./def/../ghi, abc/ghi
       ./abc/def/../ghi, abc/ghi """)
   fun normalize(source: String?, expected: String?) {
-    val sourcePath = EelPath.Relative.parse(source ?: "").getOrThrow()
-    val expectedPath = EelPath.Relative.parse(expected ?: "").getOrThrow()
+    val sourcePath = EelPath.Relative.parseE(source ?: "")
+    val expectedPath = EelPath.Relative.parseE(expected ?: "")
     sourcePath.normalize() should be(expectedPath)
   }
 
@@ -39,9 +39,9 @@ class EelRelativePathTest {
   inner class getChild {
     @Test
     fun positive() {
-      val empty = EelPath.Relative.build().getOrThrow()
-      empty.getChild("a") should be(EelPath.Relative.build("a"))
-      empty.getChild("a").getOrThrow().getChild("bc") should be(EelPath.Relative.build("a", "bc"))
+      val empty = EelPath.Relative.buildE()
+      empty.getChildE("a") should be(EelPath.Relative.buildE("a"))
+      empty.getChildE("a").getChildE("bc") should be(EelPath.Relative.buildE("a", "bc"))
     }
   }
 
@@ -49,11 +49,11 @@ class EelRelativePathTest {
   inner class resolve {
     @Test
     fun `parent directory should persist`() {
-      val path = EelPath.Relative.parse("abc/..").getOrThrow()
-      val targetPath = EelPath.Relative.parse("def").getOrThrow()
+      val path = EelPath.Relative.parseE("abc/..")
+      val targetPath = EelPath.Relative.parseE("def")
 
       withClue("IjentPath.Relative.resolve must not normalize paths") {
-        EelPath.Relative.parse("abc/../def") should be(path.resolve(targetPath))
+        EelPath.Relative.parseE("abc/../def") should be(path.resolveE(targetPath))
       }
     }
   }
@@ -63,15 +63,15 @@ class EelRelativePathTest {
     @Test
     fun positive() {
       val raw = "a/b/c"
-      val path = EelPath.Relative.parse(raw).getOrThrow()
-      val expected = EelPath.Relative.parse("b").getOrThrow()
+      val path = EelPath.Relative.parseE(raw)
+      val expected = EelPath.Relative.parseE("b")
       expected should be(path.getName(1))
     }
 
     @Test
     fun `out of bound`() {
       val raw = "a/b/c"
-      val path = EelPath.Relative.parse(raw).getOrThrow()
+      val path = EelPath.Relative.parseE(raw)
 
       shouldThrowAny {
         path.getName(10)
@@ -84,14 +84,14 @@ class EelRelativePathTest {
     @ParameterizedTest
     @ValueSource(strings = ["a/b", "a/b/c"])
     fun `is not null`(raw: String) {
-      val path = EelPath.Relative.parse(raw).getOrThrow()
+      val path = EelPath.Relative.parseE(raw)
       path.parent shouldNot be(null)
     }
 
     @ParameterizedTest
     @ValueSource(strings = ["", "a"])
     fun `is null`(raw: String) {
-      val path = EelPath.Relative.parse(raw).getOrThrow()
+      val path = EelPath.Relative.parseE(raw)
       path.parent should be(null)
     }
   }
