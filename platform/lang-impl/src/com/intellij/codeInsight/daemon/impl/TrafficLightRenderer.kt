@@ -14,19 +14,15 @@ import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.icons.AllIcons
 import com.intellij.ide.PowerSaveMode
-import com.intellij.ide.impl.executeOnPooledThread
 import com.intellij.lang.Language
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.*
-import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
@@ -39,7 +35,6 @@ import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Condition
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiCompiledElement
@@ -62,8 +57,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Container
 import javax.swing.JComponent
-
-private val LOG = logger<TrafficLightRenderer>()
 
 open class TrafficLightRenderer private constructor(
   project: Project,
@@ -636,29 +629,4 @@ private fun applyPanel(panel: HectorComponentPanel) {
   }
   catch (_: ConfigurationException) {
   }
-}
-
-
-/**
- * Prefer using [TrafficLightRendererContributor] instead
- */
-internal fun setTrafficLightOnEditor(
-  project: Project,
-  editorMarkupModel: EditorMarkupModel,
-  modalityState: ModalityState,
-  createTrafficRenderer: () -> TrafficLightRenderer?,
-) {
-  project.executeOnPooledThread(Runnable {
-    val renderer = createTrafficRenderer() ?: return@Runnable
-    ApplicationManager.getApplication().invokeLater(Runnable {
-      val editor = editorMarkupModel.getEditor()
-      if (project.isDisposed() || editor.isDisposed()) {
-        LOG.debug("Traffic light won't be set to editor: project dispose=${project.isDisposed()}, editor dispose=${editor.isDisposed()}")
-        // would be registered in setErrorStripeRenderer() below
-        Disposer.dispose(renderer)
-        return@Runnable
-      }
-      editorMarkupModel.setErrorStripeRenderer(renderer)
-    }, modalityState)
-  })
 }
