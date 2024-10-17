@@ -220,8 +220,10 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
   }
 
   private static boolean isAccessedForWriting (PsiExpression expr) {
-    while (expr.getParent() instanceof PsiArrayAccessExpression) {
-      expr = (PsiExpression)expr.getParent();
+    PsiElement parent = expr.getParent();
+    while (parent instanceof PsiArrayAccessExpression || parent instanceof PsiParenthesizedExpression) {
+      expr = (PsiExpression)parent;
+      parent = parent.getParent();
     }
     return PsiUtil.isAccessedForWriting(expr);
   }
