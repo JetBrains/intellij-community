@@ -8,7 +8,6 @@ import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFsError
 import com.intellij.platform.eel.fs.EelOpenedFile
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.path.getOrThrow
 import com.intellij.util.text.nullize
 import kotlinx.coroutines.Dispatchers
 import java.io.IOException
@@ -55,7 +54,7 @@ internal fun Path.toEelPath(): EelPath =
 
     isAbsolute -> throw InvalidPathException(toString(), "This path can't be converted to IjentPath")
 
-    else -> EelPath.Relative.parse(toString()).getOrThrow()
+    else -> EelPath.Relative.parseE(toString())
   }
 
 internal fun <T> fsBlocking(body: suspend () -> T): T = invokeSuspending(body)

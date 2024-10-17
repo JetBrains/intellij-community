@@ -10,7 +10,6 @@ import com.intellij.platform.eel.fs.EelFileSystemPosixApi.CreateDirectoryExcepti
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi.CreateSymbolicLinkException
 import com.intellij.platform.eel.fs.EelPosixFileInfo.Type.Symlink
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.path.getOrThrow
 import com.intellij.platform.eel.provider.EelFsResultImpl
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.Companion.newFileSystemMap
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.UnixFilePermissionBranch.*
@@ -206,7 +205,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
             .getOrThrowFileSystemException()
             .asSequence()
             .map { (childName, childStat) ->
-              val childIjentPath = dir.eelPath.getChild(childName).getOrThrow()
+              val childIjentPath = dir.eelPath.getChildE(childName)
               val childAttrs = when (childStat) {
                 is EelPosixFileInfo -> IjentNioPosixFileAttributes(childStat)
                 is EelWindowsFileInfo -> TODO()
@@ -220,7 +219,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
             .getOrThrowFileSystemException()
             .asSequence()
             .map { childName ->
-              val childIjentPath = dir.eelPath.getChild(childName).getOrThrow()
+              val childIjentPath = dir.eelPath.getChildE(childName)
               IjentNioPath(childIjentPath, nioFs, null)
             }
         }

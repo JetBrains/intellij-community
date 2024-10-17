@@ -2,7 +2,6 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.path.getOrThrow
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
@@ -71,10 +70,8 @@ class IjentNioFileSystem internal constructor(
       is IjentFileSystemPosixApi -> EelPath.Absolute.OS.UNIX
       is IjentFileSystemWindowsApi -> EelPath.Absolute.OS.WINDOWS
     }
-    return EelPath.parse(first, os)
-      .getOrThrow()
-      .resolve(EelPath.Relative.build(*more).getOrThrow())
-      .getOrThrow()
+    return EelPath.parseE(first, os)
+      .resolveE(EelPath.Relative.buildE(*more))
       .toNioPath()
   }
 
