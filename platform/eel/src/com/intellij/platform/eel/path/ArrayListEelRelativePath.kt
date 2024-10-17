@@ -1,9 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.path
 
-import com.intellij.platform.eel.EelResult
-import kotlin.Throws
-
 internal class ArrayListEelRelativePath private constructor(
   private val parts: List<String>,
 ) : EelPath.Relative {
@@ -39,18 +36,12 @@ internal class ArrayListEelRelativePath private constructor(
     return ArrayListEelRelativePath(result)
   }
 
-  @Deprecated("Use the method with EelPathException")
-  override fun resolve(other: EelPath.Relative): EelResult<out EelPath.Relative, EelPathError> = exceptionAdapter { resolveE(other) }
-
   override fun getChildE(name: String): ArrayListEelRelativePath =
     when {
       name.isEmpty() -> throw EelPathException(name, "Empty child name is not allowed")
       "/" in name -> throw EelPathException(name, "Invalid symbol in child name: /")
       else -> ArrayListEelRelativePath(parts + name)
     }
-
-  @Deprecated("Use the method with EelPathException")
-  override fun getChild(name: String): EelResult<out EelPath.Relative, EelPathError> = exceptionAdapter { getChildE(name) }
 
   override fun compareTo(other: EelPath.Relative): Int {
     for (i in 0..<nameCount.coerceAtMost(other.nameCount)) {

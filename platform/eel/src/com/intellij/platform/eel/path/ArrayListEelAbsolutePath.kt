@@ -56,9 +56,6 @@ internal class ArrayListEelAbsolutePath private constructor(
     return ArrayListEelAbsolutePath(_root, result)
   }
 
-  @Deprecated("Use the method with EelPathException")
-  override fun normalize(): EelResult<out EelPath.Absolute, EelPathError> = exceptionAdapter { normalizeE() }
-
   override fun resolveE(other: EelPath.Relative): EelPath.Absolute {
     val result = parts.toMutableList()
     for (index in 0..<other.nameCount) {
@@ -72,9 +69,6 @@ internal class ArrayListEelAbsolutePath private constructor(
     return ArrayListEelAbsolutePath(_root, result)
   }
 
-  @Deprecated("Use the method with EelPathException")
-  override fun resolve(other: EelPath.Relative): EelResult<out EelPath.Absolute, EelPathError> = exceptionAdapter { resolveE(other) }
-
   override fun getChildE(name: String): EelPath.Absolute {
     val error = checkFileName(name)
     return if (error == null)
@@ -82,9 +76,6 @@ internal class ArrayListEelAbsolutePath private constructor(
     else
       throw EelPathException(name, error)
   }
-
-  @Deprecated("Use the method with EelPathException")
-  override fun getChild(name: String): EelResult<out EelPath.Absolute, EelPathError> = exceptionAdapter { getChildE(name) }
 
   override fun scan(): Sequence<EelPath.Absolute> =
     parts.asSequence().scan(ArrayListEelAbsolutePath(_root, listOf())) { parent, name ->
@@ -166,9 +157,6 @@ internal class ArrayListEelAbsolutePath private constructor(
 
     return EelPath.Relative.buildE(result)
   }
-
-  @Deprecated("Use the method with EelPathException")
-  override fun relativize(other: EelPath.Absolute): EelResult<out EelPath.Relative, EelPathError> = exceptionAdapter { relativizeE(other) }
 
   override fun equals(other: Any?): Boolean =
     other is EelPath.Absolute &&

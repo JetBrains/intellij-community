@@ -19,15 +19,6 @@ fun EelFileSystemApi.getPathE(string: String, vararg other: String): EelPath.Abs
   })
 }
 
-@Deprecated("Use `getPathE`")
-fun EelFileSystemApi.getPath(string: String, vararg other: String): EelResult<out EelPath.Absolute, EelPathError> {
-  return EelPath.Absolute.build(listOf(string, *other), when (this) {
-    is EelFileSystemPosixApi -> EelPath.Absolute.OS.UNIX
-    is EelFileSystemWindowsApi -> EelPath.Absolute.OS.WINDOWS
-    else -> throw UnsupportedOperationException("Unsupported OS: ${this::class.java}")
-  })
-}
-
 // TODO Integrate case-(in)sensitiveness into the interface.
 
 interface EelFileSystemApi {
