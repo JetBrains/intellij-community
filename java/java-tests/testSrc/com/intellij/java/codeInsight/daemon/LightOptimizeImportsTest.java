@@ -6,11 +6,71 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
+import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.intellij.lang.annotations.Language;
 
 @SuppressWarnings("ALL")
 public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCase {
+
+  public void testImportLayoutStaticAndNonStaticImportsTogether() {
+    myFixture.addClass("package aaa; public class AAA {}");
+    myFixture.addClass("package aaa; public class BBB {" +
+                       "  public static void x() {}" +
+                       "}");
+    myFixture.addClass("package aaa; public class CCC {}");
+
+    @Language("JAVA") String text = """
+      package main;
+      
+      import aaa.AAA;
+      import aaa.CCC;
+      import aaa.BBB;
+      import java.util.ArrayList;
+      import static aaa.BBB.x;
+      
+      public class Main {
+          void usage() {
+              new ArrayList<>();
+              new AAA();
+              new BBB();
+              new CCC();
+              x();
+          }
+      }
+      """;
+    myFixture.configureByText(JavaFileType.INSTANCE, text);
+
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    javaSettings.LAYOUT_STATIC_IMPORTS_SEPARATELY = false;
+    javaSettings.IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+    javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
+    javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+    javaSettings.IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "aaa", true));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
+
+    @Language("JAVA") String result = """
+      package main;
+      
+      import java.util.ArrayList;
+      
+      import aaa.AAA;
+      import aaa.BBB;
+      import static aaa.BBB.x;
+      import aaa.CCC;
+            
+      public class Main {
+          void usage() {
+              new ArrayList<>();
+              new AAA();
+              new BBB();
+              new CCC();
+              x();
+          }
+      }
+      """;
+    myFixture.checkResult(result);
+  }
   
   public void testImportLayoutWithoutSubpackages() {
     myFixture.addClass("package aaa; public class AAA {}");
@@ -81,6 +141,7 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
     myFixture.configureByText(JavaFileType.INSTANCE, text);
     
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    // default import layout table is at com.intellij.psi.codeStyle.JavaCodeStyleSettings.initImportsByDefault()
     javaSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 2;
     WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
 

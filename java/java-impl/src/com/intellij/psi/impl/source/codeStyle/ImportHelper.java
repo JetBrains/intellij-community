@@ -175,7 +175,8 @@ public final class ImportHelper{
     PackageEntry[] entries = settings.IMPORT_LAYOUT_TABLE.getEntries();
     for (int i = 0; i < imports.size(); i++) {
       Import anImport = imports.get(i);
-      entryForName[i] = findEntryIndex(ImportUtils.getPackageOrClassName(anImport.name()), anImport.isStatic(), entries);
+      entryForName[i] = findEntryIndex(ImportUtils.getPackageOrClassName(anImport.name()),
+                                       settings.LAYOUT_STATIC_IMPORTS_SEPARATELY && anImport.isStatic(), entries);
     }
 
     List<Import> resultList = new ArrayList<>(imports.size());
@@ -841,7 +842,9 @@ public final class ImportHelper{
       String className = ref.getCanonicalText();
       packageName = ImportUtils.getPackageOrClassName(className);
     }
-    return findEntryIndex(packageName, statement instanceof PsiImportStaticStatement, mySettings.IMPORT_LAYOUT_TABLE.getEntries());
+    return findEntryIndex(packageName,
+                          mySettings.LAYOUT_STATIC_IMPORTS_SEPARATELY && statement instanceof PsiImportStaticStatement,
+                          mySettings.IMPORT_LAYOUT_TABLE.getEntries());
   }
 
   public static boolean hasConflictingOnDemandImport(@NotNull PsiJavaFile file, @NotNull PsiClass psiClass, @NotNull String referenceName) {
