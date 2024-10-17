@@ -19,6 +19,7 @@ import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +40,7 @@ public final class InsertAtCaretStrategy implements InsertNewMethodStrategy {
 
   @Override
   public PsiMethod insertNewMethod(PsiClass clazz, @NotNull PsiMethod newMethod, Editor editor) {
+    PsiDocumentManager.getInstance(clazz.getProject()).commitDocument(clazz.getContainingFile().getFileDocument());
     int offset = (editor != null) ? editor.getCaretModel().getOffset() : (clazz.getTextRange().getEndOffset() - 1);
     final PsiGenerationInfo<PsiMethod> generationInfo = new PsiGenerationInfo<>(newMethod, false);
     GenerateMembersUtil.insertMembersAtOffset(clazz, offset, Collections.singletonList(generationInfo));

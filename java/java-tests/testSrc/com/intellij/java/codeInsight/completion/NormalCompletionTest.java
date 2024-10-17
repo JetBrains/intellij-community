@@ -348,11 +348,11 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     selectItem(myItems[0]);
     checkResultByFile("Annotation7_after.java");
   }
-  
+
   public void testAnnotationAttrBeforeExisting() {
     doTest("\n");
   }
-  
+
   public void testAnnotationAttrBeforeExistingBool() {
     doTest("\n");
   }
@@ -526,14 +526,14 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   @NeedsIndex.ForStandardLibrary
   public void testLocalClassTwice() {
     configure();
-    assertOrderedEquals(myFixture.getLookupElementStrings(), 
+    assertOrderedEquals(myFixture.getLookupElementStrings(),
                         "Zoooz", "Zooooo", "ZoneRulesException", "ZoneRulesProvider", "ZipOutputStream");
   }
 
   @NeedsIndex.ForStandardLibrary
   public void testLocalTopLevelConflict() {
     configure();
-    assertOrderedEquals(myFixture.getLookupElementStrings(), 
+    assertOrderedEquals(myFixture.getLookupElementStrings(),
                         "Zoooz", "Zooooo", "ZoneRulesException", "ZoneRulesProvider", "ZipOutputStream");
   }
 
@@ -992,8 +992,8 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     checkResult();
   }
 
-  public void testCaseTailType() { 
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_11, this::doTest); 
+  public void testCaseTailType() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_11, this::doTest);
   }
 
   private void doPrimitiveTypeTest() {
@@ -1132,9 +1132,9 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   public void testEnumConstantFromEnumMember() { doTest(); }
 
   public void testPrimitiveMethodParameter() { doTest(); }
-  
+
   public void testPrimitiveVarargMethodParameter() { doTest("."); }
-  
+
   public void testPrimitiveVarargMethodParameter2() { doTest("."); }
 
   public void testNewExpectedClassParens() { doTest("\n"); }
@@ -1738,6 +1738,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     assertEquals(2, myFixture.getLookupElementStrings().size());
     getLookup().setSelectedIndex(1);
     type('\n');
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResult();
   }
 
@@ -1752,6 +1753,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   public void testDontGenerateToStringOnOverrideCompletion() {
     configure();
     type('\n');
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResult();
   }
 
@@ -1965,7 +1967,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   public void testShowNonImportedVarInitializers() {
     configure();
     // Format.Field, DateFormat.Field, NumberFormat.Field, etc. classes are suggested first
-    myFixture.assertPreferredCompletionItems(5, 
+    myFixture.assertPreferredCompletionItems(5,
                                              "Field", "Field", "Field", "Field", "Field", "FIELD1", "FIELD2", "FIELD3", "FIELD4");
     var fieldItems = myFixture.getLookup().getItems().subList(5, 9);
     assertEquals(Arrays.asList("( \"x\") in E", "(\"y\") {...} in E", null, " ( = 42) in E"),
@@ -2287,7 +2289,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     checkResult();
   }
 
-  public void testCaseColonAfterStringConstant() { 
+  public void testCaseColonAfterStringConstant() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_11, this::doTest);
   }
 
@@ -3157,7 +3159,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
         
         }
       """);  }
-  
+
   public void testOuterVariableNotShadowedByPrivateField() {
     // IDEA-340271
     myFixture.configureByText("Test.java", """

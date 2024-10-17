@@ -101,8 +101,16 @@ public final class GenerateToStringActionHandlerImpl implements GenerateToString
       LOG.debug("Current project " + project.getName());
     }
 
-    final PsiElementClassMember<?>[] dialogMembers = buildMembersToShow(clazz);
+    ReadAction.nonBlocking(() -> buildMembersToShow(clazz))
+      .expireWhen(() -> !clazz.isValid() || project.isDisposed() || editor.isDisposed())
+      .finishOnUiThread(ModalityState.defaultModalityState(), dialogMembers -> showChooser(project, clazz, editor, dialogMembers))
+      .submit(AppExecutorUtil.getAppExecutorService());
+  }
 
+  private static void showChooser(@NotNull Project project,
+                                @NotNull PsiClass clazz,
+                                Editor editor,
+                                PsiElementClassMember<?>[] dialogMembers) {
     final MemberChooserHeaderPanel header = new MemberChooserHeaderPanel(clazz);
     LOG.debug("Displaying member chooser dialog");
 
@@ -142,6 +150,7 @@ public final class GenerateToStringActionHandlerImpl implements GenerateToString
         // decide what to do if the method already exists
         ConflictResolutionPolicy resolutionPolicy = worker.exitsMethodDialog(template);
         try {
+          //noinspection DialogTitleCapitalization
           WriteCommandAction.runWriteCommandAction(project, JavaBundle.message("command.name.generate.tostring"), null,
                                                    () -> worker.execute(selectedMembers, template, resolutionPolicy));
         }
@@ -150,6 +159,7 @@ public final class GenerateToStringActionHandlerImpl implements GenerateToString
         }
       }
       else {
+        //noinspection DialogTitleCapitalization
         HintManager.getInstance().showErrorHint(editor,
                                                 JavaBundle.message("hint.text.tostring.template.invalid", template.getFileName()));
       }
