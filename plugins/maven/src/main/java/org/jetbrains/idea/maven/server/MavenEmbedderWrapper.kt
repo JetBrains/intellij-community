@@ -147,17 +147,34 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     return getOrCreateWrappee().resolveArtifactsTransitively(ArrayList(artifacts), ArrayList(remoteRepositories), ourToken)
   }
 
+  private fun MavenArtifact.transformPaths(transformer: RemotePathTransformerFactory.Transformer) = this.replaceFile(
+    File(transformer.toIdePath(file.path)!!),
+    null
+  )
+
+  private fun PluginResolutionResponse.transformPaths(transformer: RemotePathTransformerFactory.Transformer): PluginResolutionResponse {
+    return PluginResolutionResponse(
+      this.mavenPluginId,
+      this.pluginArtifact?.transformPaths(transformer),
+      this.pluginDependencyArtifacts.map { it.transformPaths(transformer) }
+    )
+  }
+
   suspend fun resolvePlugins(
     resolutionRequests: List<PluginResolutionRequest>,
     progressReporter: RawProgressReporter?,
     eventHandler: MavenEventHandler,
     forceUpdateSnapshots: Boolean,
   ): List<PluginResolutionResponse> {
-    return runLongRunningTask(
+    val responseList = runLongRunningTask(
       LongRunningEmbedderTask { embedder, taskInput ->
         embedder.resolvePlugins(taskInput, ArrayList(resolutionRequests), forceUpdateSnapshots, ourToken)
       },
       progressReporter, eventHandler)
+
+    val transformer = RemotePathTransformerFactory.createForProject(project)
+    if (transformer == RemotePathTransformerFactory.Transformer.ID) return responseList
+    return responseList.map { it.transformPaths(transformer) }
   }
 
   fun resolvePlugin(plugin: MavenPlugin,
