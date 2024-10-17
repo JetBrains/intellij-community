@@ -12,22 +12,40 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="library" exported="" name="jetbrains.intellij.deps.eclipse.jgit" level="project" />
     <orderEntry type="module-library" exported="">
-      <library name="eclipse.jgit.ssh.jsch" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.eclipse.jgit:org.eclipse.jgit.ssh.jsch:6.5.0.202303070854-r">
+      <library name="eclipse.jgit.ssh.apache" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.eclipse.jgit:org.eclipse.jgit.ssh.apache:6.6.1.202309021850-r">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.jsch/6.5.0.202303070854-r/org.eclipse.jgit.ssh.jsch-6.5.0.202303070854-r.jar">
-              <sha256sum>8ab7b5fefc2a42c5156c678148f415ce35ae8d93a8e3127b5426241e965606f6</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.apache/6.6.1.202309021850-r/org.eclipse.jgit.ssh.apache-6.6.1.202309021850-r.jar">
+              <sha256sum>cc379265edb2b74850156c16fefd7990281bf47e33fe7665e838f8b5fdb94755</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.jsch/6.5.0.202303070854-r/org.eclipse.jgit.ssh.jsch-6.5.0.202303070854-r.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.apache/6.6.1.202309021850-r/org.eclipse.jgit.ssh.apache-6.6.1.202309021850-r.jar!/" />
         </CLASSES>
         <JAVADOC>
-          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.jsch/6.5.0.202303070854-r/org.eclipse.jgit.ssh.jsch-6.5.0.202303070854-r-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.apache/6.6.1.202309021850-r/org.eclipse.jgit.ssh.apache-6.6.1.202309021850-r-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.jsch/6.5.0.202303070854-r/org.eclipse.jgit.ssh.jsch-6.5.0.202303070854-r-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.apache/6.6.1.202309021850-r/org.eclipse.jgit.ssh.apache-6.6.1.202309021850-r-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="apache.sshd.osgi" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.apache.sshd:sshd-osgi:2.12.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/sshd/sshd-osgi/2.12.1/sshd-osgi-2.12.1.jar">
+              <sha256sum>be42a8af60937fbe45d9cac2ceee0e45bff6afaa8cf291f69ba54d77b01f8554</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/sshd/sshd-osgi/2.12.1/sshd-osgi-2.12.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/sshd/sshd-osgi/2.12.1/sshd-osgi-2.12.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
