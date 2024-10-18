@@ -39,7 +39,7 @@ internal class ProjectSdkDataService : AbstractProjectDataService<ProjectSdkData
     val sdk = projectJdkTable.findJdk(sdkName)
     val projectRootManager = ProjectRootManager.getInstance(project)
     val projectSdk = projectRootManager.projectSdk
-    if (projectSdk == null) {
+    if (projectSdk != sdk) {
       projectRootManager.projectSdk = sdk
     }
   }
