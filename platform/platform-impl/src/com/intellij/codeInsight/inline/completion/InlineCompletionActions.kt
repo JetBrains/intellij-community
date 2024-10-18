@@ -6,7 +6,6 @@ import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTrac
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorAction
@@ -129,9 +128,7 @@ class BackSpaceInlineCompletionHandler(private val originalHandler: EditorAction
 }
 
 @ApiStatus.Internal
-class CallInlineCompletionAction : EditorAction(CallInlineCompletionHandler()),
-                                   HintManagerImpl.ActionToIgnore,
-                                   ActionRemoteBehaviorSpecification.Frontend {
+class CallInlineCompletionAction : EditorAction(CallInlineCompletionHandler()), HintManagerImpl.ActionToIgnore {
 
   class CallInlineCompletionHandler : EditorWriteActionHandler() {
     override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
