@@ -1,0 +1,113 @@
+baseUrl: https://example.com/docs/my-page.html
+elements:
+  - element:
+      name: root
+      requirement:
+        required: yes
+      #language=Markdown
+      description: The <path>test.xml</path> file root element. A link to an [`attribute`](#attribute:root__firstLevelChild2__child-attribute-2).
+      attributes:
+        - attribute:
+            name: first-attribute
+            requirement:
+              required: no
+              #language=Markdown
+              details:
+                - &ignoredInAdditionalPluginXml |
+                  additional details with an alias
+            #language=Markdown
+            description: |
+              The `first-attribute` description.
+        - attribute:
+            name: secondAttribute
+            requirement:
+              required: no
+            #language=Markdown
+            defaultValue: |
+              `false`
+            #language=Markdown
+            description: |
+              The `secondAttribute` description. And a [link](https://example.com).
+      children:
+        - element:
+            name: first-level-child-1
+            #language=Markdown
+            description: |
+              The `first-level-child-1` description.
+              
+              > Some warning about `first-level-child-1`.
+              >
+              {style="warning"}
+            requirement:
+              required: no
+              #language=Markdown
+              details:
+                - *ignoredInAdditionalPluginXml
+                - |
+                  **Additional detail about `first-level-child-1`.**
+            #language=Markdown
+            defaultValue: Value of the [`<name>`](#element:idea-plugin__name) element. See <ui-path>UI Path</ui-path>.
+            #language=Markdown
+            examples:
+              - |
+                An example description 2:
+                    ```xml
+                    <first-level-child>any1</first-level-child>
+                    ```
+              - |
+                An example description 1:
+                ```xml
+                <first-level-child>any2</first-level-child>
+                ```
+            children:
+              - element: &root_firstLevelChild_secondLevelChild
+                  name: second-level-child
+                  #language=Markdown
+                  description: |
+                    A description with an [external link](https://example.com/a-page).
+                    A link to an [internal doc page](#section-a).
+                  requirement:
+                    required: yes
+        - element:
+            name: firstLevelChild2
+            #language=Markdown
+            description: |
+              The `secondLevelChild2` description.
+              A link to [`first-attribute`](#attribute:root__first-attribute).
+            requirement:
+              required: no
+            #language=Markdown
+            defaultValue: Value of the [`<first-level-child1>`](#element:root__first-level-child) element.
+            attributes:
+              - attribute:
+                  name: child-attribute-1
+                  requirement:
+                    required: yes
+                  #language=Markdown
+                  description: &testAttributeAnchor | 
+                    A `child-attribute` description. A link to [`<root>`](#element:root).
+                    
+                    > Callout here.
+                    > 
+                    {style="warning"}
+              - attribute:
+                  name: child-attribute-2
+                  requirement:
+                    required: yes
+                  #language=Markdown
+                  description: *testAttributeAnchor
+            #language=Markdown
+            examples:
+              - |
+                ```xml
+                <first-level-child>any</first-level-child>
+                ```
+            containsItself: true
+            children:
+              - element:
+                  name: second-level-child-1
+                  #language=Markdown
+                  description: any
+                  requirement:
+                    required: yes
+              - element: *root_firstLevelChild_secondLevelChild

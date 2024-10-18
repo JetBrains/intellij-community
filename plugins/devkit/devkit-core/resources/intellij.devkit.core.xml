@@ -84,6 +84,9 @@
     <lang.documentationProvider language="XML"
                                 implementationClass="org.jetbrains.idea.devkit.references.extensions.ExtensionPointDocumentationProvider"/>
 
+    <platform.backend.documentation.psiTargetProvider implementation="org.jetbrains.idea.devkit.documentation.PluginDescriptorDocumentationTargetProvider"/>
+    <platform.backend.documentation.linkHandler implementation="org.jetbrains.idea.devkit.documentation.XmlDescriptorDocumentationLinkHandler"/>
+
     <completion.contributor implementationClass="org.jetbrains.idea.devkit.completion.ExtensionOrderKeywordCompletionContributor"
                             language="XML"/>
 
