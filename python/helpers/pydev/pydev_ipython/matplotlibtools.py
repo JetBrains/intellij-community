@@ -1,5 +1,6 @@
 
 import sys
+from pkg_resources import packaging
 
 backends = {'tk': 'TkAgg',
             'gtk': 'GTKAgg',
@@ -56,8 +57,8 @@ def find_gui_and_backend():
 def is_interactive_backend(backend):
     """ Check if backend is interactive """
     matplotlib = sys.modules['matplotlib']
-    required_version = (3, 9)
-    installed_version = tuple(map(int, matplotlib.__version__.split(".")))
+    required_version = Version("3.9")
+    installed_version = Version(matplotlib.__version__)
 
     if installed_version >= required_version:
         interactive_bk = matplotlib.backends.backend_registry.list_builtin(matplotlib.backends.BackendFilter.INTERACTIVE)
