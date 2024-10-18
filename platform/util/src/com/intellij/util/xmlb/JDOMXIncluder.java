@@ -3,7 +3,9 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.io.URLUtil;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -11,6 +13,7 @@ import org.jdom.Namespace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -24,7 +27,17 @@ public final class JDOMXIncluder {
   public static final PathResolver DEFAULT_PATH_RESOLVER = new PathResolver() {
     @Override
     public @NotNull URL resolvePath(@NotNull String relativePath, @Nullable URL base) throws MalformedURLException {
-      return base == null ? new URL(relativePath) : new URL(base, relativePath);
+      if (base == null) {
+        return new URL(relativePath);
+      }
+      if (base.getProtocol().equals(URLUtil.JAR_PROTOCOL)) {
+        Pair<String, String> paths = URLUtil.splitJarUrl(base.getFile());
+        if (paths == null) {
+          throw new MalformedURLException(base.getFile());
+        }
+        return URLUtil.getJarEntryURL(new File(paths.first), relativePath);
+      }
+      return new URL(base, relativePath);
     }
   };
 
