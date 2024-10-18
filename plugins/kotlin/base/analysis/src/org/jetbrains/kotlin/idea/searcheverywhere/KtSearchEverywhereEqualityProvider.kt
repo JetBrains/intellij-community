@@ -107,12 +107,12 @@ private fun getGroupLeader(element: PsiElement): KtFile? {
 private fun SearchEverywhereFoundElementInfo.toPsi() = PSIPresentationBgRendererWrapper.toPsi(element)
 
 private enum class Kind {
-    KtClass, KtFile, KtFacade
+    KtClassKind, KtFileKind, KtFacadeKind
 }
 
 private fun PsiElement.withKind(): Pair<PsiElement, Kind>? = when (this) {
-    is KtFile -> this to Kind.KtFile
-    is KtClass -> this to Kind.KtClass
-    is KtLightClassForFacade -> this to Kind.KtFacade
+    is KtFile -> this to Kind.KtFileKind
+    is KtClass -> this to Kind.KtClassKind
+    is KtLightClassForFacade -> this to Kind.KtFacadeKind
     else -> null
 }
