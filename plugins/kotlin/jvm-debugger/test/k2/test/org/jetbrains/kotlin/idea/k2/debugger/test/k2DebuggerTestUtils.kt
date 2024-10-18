@@ -13,15 +13,18 @@ import com.intellij.testFramework.unregisterService
 import org.jetbrains.kotlin.caches.resolve.*
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.ide.konan.NativePlatformKindResolution
+import org.jetbrains.kotlin.idea.base.projectStructure.KotlinModificationTrackerProvider
 import org.jetbrains.kotlin.idea.caches.resolve.IdePackageOracleFactory
 import org.jetbrains.kotlin.idea.caches.resolve.KotlinCacheServiceImpl
 import org.jetbrains.kotlin.idea.caches.resolve.ResolveOptimizingOptionsProvider
+import org.jetbrains.kotlin.idea.caches.trackers.KotlinModificationTrackerProviderImpl
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.stubindex.resolve.PluginDeclarationProviderFactoryService
 import org.jetbrains.kotlin.resolve.CodeAnalyzerInitializer
 import org.jetbrains.kotlin.resolve.DummyCodeAnalyzerInitializer
 import org.jetbrains.kotlin.resolve.ResolutionAnchorProvider
 import org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactoryService
+import kotlin.jvm.java
 
 /**
  * Needed for DebuggerTestCompilerFacility to be able to compile testdata, probably need to be rewritten to compile with K2 compiler
@@ -34,7 +37,8 @@ internal inline fun <R> withTestServicesNeededForCodeCompilation(project: Projec
         ServiceWithImplementation(ResolutionAnchorProvider::class.java) { DummyResolutionAnchorProvider() },
         ServiceWithImplementation(CodeAnalyzerInitializer::class.java) { DummyCodeAnalyzerInitializer(project) },
         ServiceWithImplementation(DeclarationProviderFactoryService::class.java) { PluginDeclarationProviderFactoryService() },
-        ServiceWithImplementation(IdePackageOracleFactory::class.java, ::IdePackageOracleFactory)
+        ServiceWithImplementation(IdePackageOracleFactory::class.java, ::IdePackageOracleFactory),
+        ServiceWithImplementation(KotlinModificationTrackerProvider::class.java, ::KotlinModificationTrackerProviderImpl),
     )
 
     if (IdePlatformKindResolution.getInstances().isEmpty()) {

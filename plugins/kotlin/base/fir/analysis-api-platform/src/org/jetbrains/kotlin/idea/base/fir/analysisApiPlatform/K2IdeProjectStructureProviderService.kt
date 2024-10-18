@@ -9,7 +9,9 @@ import org.jetbrains.kotlin.idea.util.publishGlobalSourceOutOfBlockModification
 
 internal class K2IdeProjectStructureProviderService(private val project: Project) : ProjectStructureProviderService {
     override fun createLibraryModificationTracker(libraryInfo: LibraryInfo): ModificationTracker {
-        error("Should not be called for K2")
+        // used only in K2 debugger tests
+        // see `org.jetbrains.kotlin.idea.k2.debugger.test.K2DebuggetTestUtilsKt.withTestServicesNeededForCodeCompilation`
+        return ModificationTracker.NEVER_CHANGED
     }
 
     override fun incOutOfBlockModificationCount() {
