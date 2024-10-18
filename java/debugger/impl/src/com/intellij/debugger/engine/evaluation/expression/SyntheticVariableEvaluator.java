@@ -2,11 +2,11 @@
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.JavaDebuggerBundle;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMName;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -51,9 +51,15 @@ public class SyntheticVariableEvaluator implements Evaluator {
 
       @Override
       public void setValue(Value value) throws EvaluateException {
-        if (value != null) {
+        if (value == null) {
+          if (myTypeNameString != null && DebuggerUtils.isPrimitiveType(myTypeNameString)) {
+            throw EvaluateExceptionUtil.createEvaluateException(
+              JavaDebuggerBundle.message("evaluation.error.cannot.set.primitive.to.null"));
+          }
+        }
+        else {
           Type type = value.type();
-          if (myTypeNameString != null && !DebuggerUtilsEx.isAssignableFrom(myTypeNameString, type)) {
+          if (myTypeNameString != null && !DebuggerUtils.instanceOf(type, myTypeNameString)) {
             throw EvaluateExceptionUtil.createEvaluateException(
               JavaDebuggerBundle.message("evaluation.error.cannot.cast.object", type.name(), myTypeNameString));
           }
