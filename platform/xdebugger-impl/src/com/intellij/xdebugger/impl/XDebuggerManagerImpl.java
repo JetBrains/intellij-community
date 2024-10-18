@@ -14,8 +14,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentWithExecutorListener;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.plugins.CannotUnloadPluginException;
-import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.DynamicPluginVetoer;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.NotificationGroup;
@@ -40,6 +39,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
@@ -76,8 +76,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 import static com.intellij.xdebugger.impl.CoroutineUtilsKt.createMutableStateFlow;
@@ -170,19 +170,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       public void contentRemoved(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
         if (descriptor != null && ToolWindowId.DEBUG.equals(executor.getToolWindowId())) {
           mySessions.remove(descriptor.getProcessHandler());
-        }
-      }
-    });
-
-    messageBusConnection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-      @Override
-      public void checkUnloadPlugin(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-        XDebugSession[] sessions = getDebugSessions();
-        for (XDebugSession session : sessions) {
-          XDebugProcess process = session.getDebugProcess();
-          if (process.dependsOnPlugin(pluginDescriptor)) {
-            throw new CannotUnloadPluginException("Plugin is not unload-safe because of the started debug session");
-          }
         }
       }
     });
@@ -609,6 +596,25 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, event.getOffset());
     int documentLine = editor.getDocument().getLineNumber(lineStartOffset);
     return documentLine < editor.getDocument().getLineCount() ? documentLine : -1;
+  }
+
+  static class XDebuggerPluginVetoer implements DynamicPluginVetoer {
+    @Override
+    public @Nls @Nullable String vetoPluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        XDebuggerManager manager = project.getServiceIfCreated(XDebuggerManager.class);
+        if (manager == null) continue;
+
+        XDebugSession[] sessions = manager.getDebugSessions();
+        for (XDebugSession session : sessions) {
+          XDebugProcess process = session.getDebugProcess();
+          if (process.dependsOnPlugin(pluginDescriptor)) {
+            return "Plugin is not unload-safe because of the started debug session";
+          }
+        }
+      }
+      return null;
+    }
   }
 
   @ApiStatus.Internal
