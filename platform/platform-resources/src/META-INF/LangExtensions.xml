@@ -1447,6 +1447,9 @@
     <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.execution.lineMarker.RunLineMarkerProvider"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.refactoring.changeSignature.inplace.EscapeHandler"
                          id="changeSignatureEscape" order="before hide-search"/>
+    <registryKey defaultValue="10000"
+                 description="The maximum selection length that can be automatically substituted into the search field of the Find/Replace action"
+                 key="editor.max.search.selection.length" />
 
     <daemon.tooltipActionProvider order="last" id="defaultProvider"
                                   implementation="com.intellij.codeInsight.daemon.impl.DaemonTooltipActionProvider"/>

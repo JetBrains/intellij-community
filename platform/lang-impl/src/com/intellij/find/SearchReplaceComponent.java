@@ -441,6 +441,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
 
 
   private void updateSearchComponent(@NotNull String textToSet) {
+    if (!checkTextLength(textToSet)) return;
     if (!updateTextComponent(true)) {
       replaceTextInTextComponentEnsuringSelection(textToSet, mySearchTextComponent);
       return;
@@ -487,6 +488,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   }
 
   private void updateReplaceComponent(@NotNull String textToSet) {
+    if (!checkTextLength(textToSet)) return;
     if (!updateTextComponent(false)) {
       replaceTextInTextComponentEnsuringSelection(textToSet, myReplaceTextComponent);
       return;
@@ -507,6 +509,10 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     new VariantsCompletionAction(myReplaceTextComponent);
     myReplaceFieldWrapper.revalidate();
     myReplaceFieldWrapper.repaint();
+  }
+
+  private static boolean checkTextLength(@NotNull String text) {
+    return text.length() <= Registry.intValue("editor.max.search.selection.length", 10_000);
   }
 
   public void update(@NotNull String findText, @NotNull String replaceText, boolean replaceMode, boolean multiline) {
