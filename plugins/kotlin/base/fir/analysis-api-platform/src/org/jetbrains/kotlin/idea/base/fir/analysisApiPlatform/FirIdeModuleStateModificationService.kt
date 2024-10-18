@@ -52,8 +52,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProviderBaseImpl
 import org.jetbrains.kotlin.analysis.low.level.api.fir.projectStructure.LLFirBuiltinsSessionFactory
-import org.jetbrains.kotlin.idea.base.projectStructure.getBinaryAndSourceModuleInfos
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
 import org.jetbrains.kotlin.idea.base.util.caching.SdkEntityChangeListener
 import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.base.util.caching.newEntity
@@ -382,8 +381,9 @@ private fun Library.publishModuleStateModification(
     project: Project,
     modificationKind: KotlinModuleStateModificationKind = KotlinModuleStateModificationKind.UPDATE,
 ) {
-    getBinaryAndSourceModuleInfos(project).forEach { moduleInfo ->
-        moduleInfo.toKaModule().publishModuleStateModification(modificationKind)
+    toKaLibraryModules(project).forEach { module ->
+        module.publishModuleStateModification(modificationKind)
+        module.librarySources?.publishModuleStateModification(modificationKind)
     }
 }
 

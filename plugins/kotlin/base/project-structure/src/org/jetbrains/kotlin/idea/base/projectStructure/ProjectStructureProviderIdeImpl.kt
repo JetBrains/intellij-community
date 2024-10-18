@@ -255,6 +255,11 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : I
             ?: error("Cannot find library entity for ${libraryModule.libraryInfo.library.name}")
     }
 
+    override fun getOpenapiLibrary(module: KaLibraryModule): Library {
+        require(module is KtLibraryModuleByModuleInfo)
+        return module.libraryInfo.library
+    }
+
     companion object {
         // TODO maybe introduce some cache?
         fun getKtModuleByModuleInfo(moduleInfo: ModuleInfo): KaModule {

@@ -131,6 +131,10 @@ val KaSourceModule.sourceModuleKind: KaSourceModuleKind?
 val KaSourceModule.openapiModule: Module
     get() = project.ideProjectStructureProvider.getOpenapiModule(this)
 
+val KaLibraryModule.openapiLibrary: Library
+    get() = project.ideProjectStructureProvider.getOpenapiLibrary(this)
+
+
 /**
  * Converts the [Library] to a list of [KaLibraryModule] in the specified [project].
  *

@@ -13,10 +13,12 @@ import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
+import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.getScriptReports
@@ -73,8 +75,9 @@ private fun KtFile.shouldDefinitelyHighlight(): Boolean =
             OutsidersPsiFileSupport.isOutsiderFile(virtualFile) ||
             (this !is KtCodeFragment && virtualFile?.fileSystem is NonPhysicalFileSystem)
 
+@OptIn(KaPlatformInterface::class)
 private fun KtFile.calculateShouldHighlightFile(): Boolean =
-    shouldDefinitelyHighlight() || RootKindFilter.everything.matches(this) && moduleInfo !is NotUnderContentRootModuleInfo
+    shouldDefinitelyHighlight() || RootKindFilter.everything.matches(this) && getKaModule(project, useSiteModule = null) !is KaNotUnderContentRootModule
 
 private fun KtFile.calculateShouldHighlightScript(): Boolean {
     if (shouldDefinitelyHighlight()) return true

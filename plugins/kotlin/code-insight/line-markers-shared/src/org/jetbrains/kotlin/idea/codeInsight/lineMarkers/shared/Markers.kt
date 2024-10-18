@@ -14,15 +14,15 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
-import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.facet.isHMPPEnabled
-import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoVariantsService
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.searching.kmp.findAllActualForExpect
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
@@ -127,30 +127,31 @@ fun KtNamedDeclaration.areMarkersForbidden(
 private class ActualExpectedPsiElementCellRenderer(private val onlyModuleNames: Boolean) : PsiTargetPresentationRenderer<PsiElement>() {
     override fun getContainerText(element: PsiElement): String? = if (onlyModuleNames) null else element.moduleName()
 
-    override fun getIcon(element: PsiElement): Icon = when (element.moduleInfo) {
-        is LibrarySourceInfo, is LibraryInfo -> AllIcons.Nodes.PpLibFolder
+    override fun getIcon(element: PsiElement): Icon = when (element.getKaModule(element.project, useSiteModule = null)) {
+        is KaLibraryModule, is KaLibrarySourceModule -> AllIcons.Nodes.PpLibFolder
         else -> AllIcons.Nodes.Module
     }
 
     override fun getElementText(element: PsiElement): String = if (onlyModuleNames) element.moduleName() else super.getElementText(element)
 
     @Nls
-    private fun PsiElement.moduleName() = moduleInfo.nameForTooltip()
+    private fun PsiElement.moduleName() = getKaModule(project, useSiteModule = null).nameForTooltip()
 }
 
 @Nls
+@OptIn(KaExperimentalApi::class)
 @Suppress("HardCodedStringLiteral")
-fun ModuleInfo.nameForTooltip(): String {
+fun KaModule.nameForTooltip(): String {
     when (this) {
         /* For hmpp modules, prefer the module name, if present */
-        is ModuleSourceInfo -> takeIf { module.isHMPPEnabled }?.module?.name?.let { return it }
+        is KaSourceModule -> takeIf { openapiModule.isHMPPEnabled }?.openapiModule?.name?.let { return it }
 
         /* For libraries, we're trying to show artifact variant name */
-        is LibrarySourceInfo -> library.extractVariantName(binariesModuleInfo as? LibraryInfo)?.let { return it }
-        is LibraryInfo -> library.extractVariantName(this)?.let { return it }
+        is KaLibrarySourceModule -> binaryLibrary.openapiLibrary.extractVariantName(binaryLibrary)?.let { return it }
+        is KaLibraryModule -> openapiLibrary.extractVariantName(this)?.let { return it }
     }
 
-    stableName?.asStringStripSpecialMarkers()?.let { return it }
+    (this as? KaSourceModule)?.stableModuleName?.let { Name.guessByFirstCharacter(it) }?.asStringStripSpecialMarkers()?.let { return it }
 
     // We want to represent actual descriptors, so let's represent them by platform
     return platform.componentPlatforms.joinToString(", ", "{", "}") { it.platformName }
@@ -162,13 +163,16 @@ fun ModuleInfo.nameForTooltip(): String {
     [prefix:] <groupId>:<artifactId>:<variant>:<version>
     [prefix:] <groupId>:<artifactId>-<variant>:<version>
  */
-private fun Library.extractVariantName(binariesModuleInfo: LibraryInfo?): String? {
-    binariesModuleInfo?.let(LibraryInfoVariantsService::bundledLibraryVariant)?.displayName?.let { return it }
+private fun Library.extractVariantName(binariesModuleInfo: KaLibraryModule?): String? {
+    (binariesModuleInfo as KtLibraryModuleByModuleInfo?)
+        ?.libraryInfo
+        ?.let(LibraryInfoVariantsService::bundledLibraryVariant)?.displayName?.let { return it }
 
     return LibraryInfoVariantsService.extractVariantName(name)
 }
 
-private fun Collection<KtDeclaration>.hasUniqueModuleNames() = distinctBy { it.moduleInfo.nameForTooltip() }.size == size
+private fun Collection<KtDeclaration>.hasUniqueModuleNames() =
+    distinctBy { it.getKaModule(it.project, useSiteModule = null).nameForTooltip() }.size == size
 
 @ApiStatus.Internal
 fun buildNavigateToActualDeclarationsPopup(element: PsiElement?, allNavigatableActualDeclarations: KtDeclaration.() -> Collection<KtDeclaration>): NavigationPopupDescriptor? {
