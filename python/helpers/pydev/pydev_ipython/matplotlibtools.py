@@ -1,6 +1,6 @@
 
 import sys
-from pkg_resources import packaging
+from packaging.version import Version
 
 backends = {'tk': 'TkAgg',
             'gtk': 'GTKAgg',
