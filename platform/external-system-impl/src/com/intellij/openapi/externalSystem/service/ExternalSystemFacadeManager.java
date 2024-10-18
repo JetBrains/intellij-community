@@ -15,6 +15,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -40,6 +41,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * Thread-safe.
  */
 @Service
+@ApiStatus.Internal
 public final class ExternalSystemFacadeManager {
   private static final int REMOTE_FAIL_RECOVERY_ATTEMPTS_NUMBER = 3;
 

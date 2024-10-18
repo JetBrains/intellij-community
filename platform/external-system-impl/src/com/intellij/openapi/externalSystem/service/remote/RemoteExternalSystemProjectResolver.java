@@ -37,38 +37,14 @@ import java.util.Set;
 public interface RemoteExternalSystemProjectResolver<S extends ExternalSystemExecutionSettings> extends RemoteExternalSystemService<S> {
 
   RemoteExternalSystemProjectResolver<ExternalSystemExecutionSettings> NULL_OBJECT = new RemoteExternalSystemProjectResolver<>() {
-
-    @Override
-    public @Nullable DataNode<ProjectData> resolveProjectInfo(
-      @NotNull ExternalSystemTaskId id,
-      @NotNull String projectPath,
-      boolean isPreviewMode,
-      @Nullable ExternalSystemExecutionSettings settings,
-      @Nullable ProjectResolverPolicy resolverPolicy
-    ) throws ExternalSystemException, IllegalArgumentException, IllegalStateException {
-      return null;
-    }
-
-    @Override
-    public void setSettings(@NotNull ExternalSystemExecutionSettings settings) { }
-
-    @Override
-    public void setNotificationListener(@NotNull ExternalSystemTaskNotificationListener notificationListener) { }
-
-    @Override
-    public boolean isTaskInProgress(@NotNull ExternalSystemTaskId id) {
-      return false;
-    }
-
-    @Override
-    public boolean cancelTask(@NotNull ExternalSystemTaskId id) {
-      return false;
-    }
-
-    @Override
-    public @NotNull Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() {
-      return Collections.emptyMap();
-    }
+    //@formatter:off
+    @Override public @Nullable DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id, @NotNull String projectPath, boolean isPreviewMode, @Nullable ExternalSystemExecutionSettings settings, @Nullable ProjectResolverPolicy resolverPolicy) { return null; }
+    @Override public void setSettings(@NotNull ExternalSystemExecutionSettings settings) { }
+    @Override public void setNotificationListener(@NotNull ExternalSystemTaskNotificationListener notificationListener) { }
+    @Override public boolean isTaskInProgress(@NotNull ExternalSystemTaskId id) { return false; }
+    @Override public boolean cancelTask(@NotNull ExternalSystemTaskId id) { return false; }
+    @Override public @NotNull Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() { return Collections.emptyMap(); }
+    //@formatter:on
   };
 
   @Nullable DataNode<ProjectData> resolveProjectInfo(

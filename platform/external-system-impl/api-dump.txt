@@ -138,13 +138,6 @@ f:com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo
 - getProjectSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
 - setLastImportTimestamp(J):V
 - setLastSuccessfulImportTimestamp(J):V
-f:com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager
-- <init>():V
-- doInvoke(com.intellij.openapi.externalSystem.util.IntegrationKey,com.intellij.openapi.project.Project,java.lang.reflect.Method,java.lang.Object[],I):java.lang.Object
-- getFacade(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade
-- s:getInstance():com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager
-- isTaskActive(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):Z
-- onProjectRename(java.lang.String,java.lang.String):V
 a:com.intellij.openapi.externalSystem.service.ExternalSystemTaskProgressIndicatorUpdater
 - sf:Companion:com.intellij.openapi.externalSystem.service.ExternalSystemTaskProgressIndicatorUpdater$Companion
 - <init>():V
@@ -158,9 +151,6 @@ f:com.intellij.openapi.externalSystem.service.ExternalSystemTaskProgressIndicato
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 - f:getInstance(com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.externalSystem.service.ExternalSystemTaskProgressIndicatorUpdater
 - f:getInstanceOrDefault(com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.externalSystem.service.ExternalSystemTaskProgressIndicatorUpdater
-com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade
-- java.rmi.Remote
-- getTaskManager():com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager
 a:com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemRunConfigurationProducer
 - com.intellij.execution.actions.RunConfigurationProducer
 - p:<init>():V
@@ -794,10 +784,6 @@ a:com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewProject
 - p:validateArtifactId(com.intellij.ui.layout.ValidationInfoBuilder):com.intellij.openapi.ui.ValidationInfo
 - p:validateGroupId(com.intellij.ui.layout.ValidationInfoBuilder):com.intellij.openapi.ui.ValidationInfo
 f:com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewProjectWizardStep$Companion
-com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager
-- java.rmi.Remote
-- a:cancelTask(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):Z
-- executeTasks(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.util.List,java.lang.String,com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings,java.lang.String):V
 a:com.intellij.openapi.externalSystem.service.settings.AbstractExternalProjectSettingsControl
 - com.intellij.openapi.externalSystem.service.settings.AbstractSettingsControl
 - com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl

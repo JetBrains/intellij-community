@@ -53,7 +53,7 @@ class ExternalSystemFacadeManagerTest : UsefulTestCase() {
   fun `test remote resolve project info`() {
     ExtensionTestUtil.maskExtensions(ExternalSystemManager.EP_NAME, listOf(SimpleTestExternalSystemManager(project)), testRootDisposable)
 
-    val facadeManager: ExternalSystemFacadeManager = ApplicationManager.getApplication().getService(ExternalSystemFacadeManager::class.java)
+    val facadeManager = ExternalSystemFacadeManager.getInstance()
     TestCase.assertNotNull(facadeManager)
     val facade = facadeManager.getFacade(project, "fake/path", TEST_EXTERNAL_SYSTEM_ID)
     try {
@@ -87,7 +87,7 @@ class ExternalSystemFacadeManagerTest : UsefulTestCase() {
                                     listOf(testExternalSystemManager, fakeExternalSystemManager),
                                     testRootDisposable)
 
-    val facadeManager: ExternalSystemFacadeManager = ApplicationManager.getApplication().getService(ExternalSystemFacadeManager::class.java)
+    val facadeManager = ExternalSystemFacadeManager.getInstance()
     TestCase.assertNotNull(facadeManager)
     val facade = facadeManager.getFacade(project, "fake/path", TEST_EXTERNAL_SYSTEM_ID)
     try {

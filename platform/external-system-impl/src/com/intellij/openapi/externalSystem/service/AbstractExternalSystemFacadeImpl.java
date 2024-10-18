@@ -66,25 +66,24 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
       return getService(RemoteExternalSystemProjectResolver.class, myProjectResolver);
     }
     catch (Exception e) {
-      throw new IllegalStateException(String.format("Can't create '%s' service", RemoteExternalSystemProjectResolverImpl.class.getName()),
-                                      e);
+      throw new IllegalStateException(String.format("Can't create '%s' service", RemoteExternalSystemProjectResolverImpl.class.getName()), e);
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public @NotNull RawExternalSystemProjectResolver<S> getRawProjectResolver() throws IllegalStateException {
     try {
       return getService(RawExternalSystemProjectResolver.class, new RawExternalSystemProjectResolverImpl<>(myProjectResolver));
     }
     catch (Exception e) {
-      throw new IllegalStateException(String.format("Can't create '%s' service", RawExternalSystemProjectResolverImpl.class.getName()),
-                                      e);
+      throw new IllegalStateException(String.format("Can't create '%s' service", RawExternalSystemProjectResolverImpl.class.getName()), e);
     }
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public @NotNull RemoteExternalSystemTaskManager<S> getTaskManagerImpl() {
+  public @NotNull RemoteExternalSystemTaskManager<S> getTaskManager() {
     try {
       return getService(RemoteExternalSystemTaskManager.class, myTaskManager);
     }
