@@ -261,7 +261,7 @@ class JarPackager private constructor(
     val patchedContent = moduleOutputPatcher.getPatchedContent(moduleName)
 
     val module = context.findRequiredModule(moduleName)
-    val useTestModuleOutput = helper.isTestPluginModule(module)
+    val useTestModuleOutput = helper.isTestPluginModule(moduleName, module)
     val moduleOutDir = context.getModuleOutputDir(module = module, forTests = useTestModuleOutput)
     val extraExcludes = layout?.moduleExcludes?.get(moduleName) ?: emptyList()
 

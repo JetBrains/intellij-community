@@ -38,12 +38,11 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
            getLibraryDependencies(module = module, withTests = false).any { it.libraryReference.parentReference is JpsModuleReference }
   }
 
-  fun isTestPluginModule(module: JpsModule): Boolean {
+  fun isTestPluginModule(moduleName: String, module: JpsModule?): Boolean {
     if (!useTestSourceEnabled) {
       return false
     }
 
-    val moduleName = module.name
     // todo use some marker
     if (moduleName == "intellij.rdct.testFramework" ||
         moduleName == "intellij.platform.split.testFramework" ||
@@ -52,7 +51,7 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
     }
 
     if (moduleName.contains(".test.")) {
-      if (module.sourceRoots.none { it.rootType.isForTests }) {
+      if (module?.sourceRoots?.none { it.rootType.isForTests } == true) {
         return false
       }
 
