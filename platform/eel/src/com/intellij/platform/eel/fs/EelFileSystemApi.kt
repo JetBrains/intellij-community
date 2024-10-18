@@ -9,12 +9,22 @@ import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
 import com.intellij.platform.eel.path.EelPath
 import java.nio.ByteBuffer
 
-fun EelFileSystemApi.getPath(string: String, vararg other: String): EelPath.Absolute {
-  return EelPath.Absolute.build(listOf(string, *other), when (this) {
+val EelFileSystemApi.pathOs: EelPath.Absolute.OS
+  get() = when (this) {
     is EelFileSystemPosixApi -> EelPath.Absolute.OS.UNIX
     is EelFileSystemWindowsApi -> EelPath.Absolute.OS.WINDOWS
     else -> throw UnsupportedOperationException("Unsupported OS: ${this::class.java}")
-  })
+  }
+
+val EelFileSystemApi.pathSeparator: String
+  get() = when (this) {
+    is EelFileSystemPosixApi -> ":"
+    is EelFileSystemWindowsApi -> ";"
+    else -> throw UnsupportedOperationException("Unsupported OS: ${this::class.java}")
+  }
+
+fun EelFileSystemApi.getPath(string: String, vararg other: String): EelPath.Absolute {
+  return if (other.isEmpty()) return EelPath.Absolute.parse(string, pathOs) else EelPath.Absolute.build(listOf(string, *other), pathOs)
 }
 
 // TODO Integrate case-(in)sensitiveness into the interface.
