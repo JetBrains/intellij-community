@@ -650,7 +650,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
   @Override
   public int getCaretPosition() {
-    return editor.getCaretModel().getOffset();
+    return ReadAction.compute(() -> editor.getCaretModel().getOffset());
   }
 
   @DirtyUI
@@ -1394,12 +1394,12 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public int getSelectionStart() {
-      return editor.getSelectionModel().getSelectionStart();
+      return ReadAction.compute(() -> editor.getSelectionModel().getSelectionStart());
     }
 
     @Override
     public int getSelectionEnd() {
-      return editor.getSelectionModel().getSelectionEnd();
+      return ReadAction.compute(() -> editor.getSelectionModel().getSelectionEnd());
     }
 
     @Override
