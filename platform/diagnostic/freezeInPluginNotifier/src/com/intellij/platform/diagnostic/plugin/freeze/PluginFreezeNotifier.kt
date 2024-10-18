@@ -28,7 +28,7 @@ internal class PluginFreezeNotifier : EditorNotificationProvider {
     val pluginDescriptor = PluginManagerCore.getPlugin(frozenPlugin) ?: return null
     val application = ApplicationManager.getApplication()
     if (pluginDescriptor.isImplementationDetail || ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(frozenPlugin)) return null
-    if (pluginDescriptor.isBundled && !application.isEAP && !application.isInternal) return null
+    if (pluginDescriptor.isBundled && !application.isInternal) return null
 
     return Function {
       EditorNotificationPanel(EditorNotificationPanel.Status.Warning).apply {
