@@ -16,6 +16,13 @@ val composeCompilerJars: List<Path> by lazy {
 }
 
 /**
+ * We're looking up the 'parcelize compiler plugin' from the IntelliJ dependencies provided by kotlinc
+ */
+val parcelizeCompilerJars: List<Path> by lazy {
+    findCompilerPluginJars("kotlinc.parcelize-compiler-plugin")
+}
+
+/**
  * The 'google()' maven repository as seen in
  * ```
  * repositories {

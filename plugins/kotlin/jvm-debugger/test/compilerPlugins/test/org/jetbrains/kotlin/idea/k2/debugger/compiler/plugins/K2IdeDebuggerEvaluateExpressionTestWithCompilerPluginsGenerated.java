@@ -34,4 +34,9 @@ public class K2IdeDebuggerEvaluateExpressionTestWithCompilerPluginsGenerated ext
     public void testComposableLambda() throws Exception {
         runTest("../testData/evaluation/compilerPlugins/composableLambda.kt");
     }
+
+    @TestMetadata("parcelize.kt")
+    public void testParcelize() throws Exception {
+        runTest("../testData/evaluation/compilerPlugins/parcelize.kt");
+    }
 }

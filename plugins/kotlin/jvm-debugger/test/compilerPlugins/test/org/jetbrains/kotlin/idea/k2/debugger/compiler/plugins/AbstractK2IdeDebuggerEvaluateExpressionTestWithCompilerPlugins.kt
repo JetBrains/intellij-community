@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.compose.k2.test.K2ComposeTestProperties.COMPOSE_RUNTIME_MAVEN_COORDINATES
 import org.jetbrains.kotlin.idea.compose.k2.test.composeCompilerJars
 import org.jetbrains.kotlin.idea.compose.k2.test.googleMavenRepository
+import org.jetbrains.kotlin.idea.compose.k2.test.parcelizeCompilerJars
 import org.jetbrains.kotlin.idea.debugger.test.DebuggerTestCompilerFacility
 import org.jetbrains.kotlin.idea.debugger.test.TestCompileConfiguration
 import org.jetbrains.kotlin.idea.debugger.test.TestFiles
@@ -26,7 +27,9 @@ abstract class AbstractK2IdeDebuggerEvaluateExpressionTestWithCompilerPlugins : 
         val facility = super.createDebuggerTestCompilerFacility(testFiles, jvmTarget, compileConfig)
 
         facility.addCompilerPlugin(composeCompilerJars)
+        facility.addCompilerPlugin(parcelizeCompilerJars)
         addMavenDependency(facility, "maven(${COMPOSE_RUNTIME_MAVEN_COORDINATES})")
+        addMavenDependency(facility, "maven(${PARCELIZE_RUNTIME_MAVEN_COORDINATES})")
 
         return facility
     }
@@ -35,4 +38,6 @@ abstract class AbstractK2IdeDebuggerEvaluateExpressionTestWithCompilerPlugins : 
     override fun jarRepositories(): List<RemoteRepositoryDescription> = listOf(
         RemoteRepositoryDescription.MAVEN_CENTRAL, googleMavenRepository
     )
+
+    private val PARCELIZE_RUNTIME_MAVEN_COORDINATES = "org.jetbrains.kotlin:kotlin-parcelize-runtime:1.8.20"
 }
