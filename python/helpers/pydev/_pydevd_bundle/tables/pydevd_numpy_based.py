@@ -99,11 +99,11 @@ class _NpTable:
         # [[1, 2], [3, 4]] -> [int, int]
         return [str(col_type) for _ in range(len(self.array[0]))]
 
-    def head(self):
+    def head(self, num_rows):
         if self.array.shape[0] < 6:
             return self
 
-        return _NpTable(self.array[:5]).sort()
+        return _NpTable(self.array[:num_rows]).sort()
 
     def to_html(self, notebook):
         html = ['<table class="dataframe">\n']
