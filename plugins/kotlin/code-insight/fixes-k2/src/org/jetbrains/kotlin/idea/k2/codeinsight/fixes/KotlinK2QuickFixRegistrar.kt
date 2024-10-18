@@ -356,6 +356,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(SimplifyComparisonFixFactory.simplifyComparisonFixFactory)
 
         registerFactory(SpecifyRemainingArgumentsByNameFixFactory.noValueForParameter)
+        registerFactory(SpecifyRemainingArgumentsByNameFixFactory.noneApplicable)
 
         registerFactory(AddConstructorParameterFromSuperTypeCallFixFactory.noValueForParameter)
 

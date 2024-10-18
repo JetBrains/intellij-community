@@ -2139,6 +2139,11 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
             runTest("../testData/intentions/specifyAllRemainingArgumentsByName/class.kt");
         }
 
+        @TestMetadata("conflictingSignatures.kt")
+        public void testConflictingSignatures() throws Exception {
+            runTest("../testData/intentions/specifyAllRemainingArgumentsByName/conflictingSignatures.kt");
+        }
+
         @TestMetadata("existingNamedArguments.kt")
         public void testExistingNamedArguments() throws Exception {
             runTest("../testData/intentions/specifyAllRemainingArgumentsByName/existingNamedArguments.kt");
@@ -2157,6 +2162,11 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
         @TestMetadata("existingNewlineAndArgument.kt")
         public void testExistingNewlineAndArgument() throws Exception {
             runTest("../testData/intentions/specifyAllRemainingArgumentsByName/existingNewlineAndArgument.kt");
+        }
+
+        @TestMetadata("incorrectSignature.kt")
+        public void testIncorrectSignature() throws Exception {
+            runTest("../testData/intentions/specifyAllRemainingArgumentsByName/incorrectSignature.kt");
         }
 
         @TestMetadata("insideFunctionLambda.kt")
@@ -2234,6 +2244,11 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
             runTest("../testData/intentions/specifyAllRemainingArgumentsByName/sameLineAsArgument.kt");
         }
 
+        @TestMetadata("simpleFunctionOverload.kt")
+        public void testSimpleFunctionOverload() throws Exception {
+            runTest("../testData/intentions/specifyAllRemainingArgumentsByName/simpleFunctionOverload.kt");
+        }
+
         @TestMetadata("singleArgument.kt")
         public void testSingleArgument() throws Exception {
             runTest("../testData/intentions/specifyAllRemainingArgumentsByName/singleArgument.kt");
@@ -2247,50 +2262,6 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
         @TestMetadata("vararg.kt")
         public void testVararg() throws Exception {
             runTest("../testData/intentions/specifyAllRemainingArgumentsByName/vararg.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../testData/intentions/specifyRemainingRequiredArgumentsByName")
-    public static class SpecifyRemainingRequiredArgumentsByName extends AbstractSharedK2IntentionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("allArgumentsOptional.kt")
-        public void testAllArgumentsOptional() throws Exception {
-            runTest("../testData/intentions/specifyRemainingRequiredArgumentsByName/allArgumentsOptional.kt");
-        }
-
-        @TestMetadata("allArgumentsRequired.kt")
-        public void testAllArgumentsRequired() throws Exception {
-            runTest("../testData/intentions/specifyRemainingRequiredArgumentsByName/allArgumentsRequired.kt");
-        }
-
-        @TestMetadata("multipleOptionalArguments.kt")
-        public void testMultipleOptionalArguments() throws Exception {
-            runTest("../testData/intentions/specifyRemainingRequiredArgumentsByName/multipleOptionalArguments.kt");
-        }
-
-        @TestMetadata("singleArgument.kt")
-        public void testSingleArgument() throws Exception {
-            runTest("../testData/intentions/specifyRemainingRequiredArgumentsByName/singleArgument.kt");
-        }
-
-        @TestMetadata("singleArgumentAndVararg.kt")
-        public void testSingleArgumentAndVararg() throws Exception {
-            runTest("../testData/intentions/specifyRemainingRequiredArgumentsByName/singleArgumentAndVararg.kt");
-        }
-
-        @TestMetadata("singleRequiredArgument.kt")
-        public void testSingleRequiredArgument() throws Exception {
-            runTest("../testData/intentions/specifyRemainingRequiredArgumentsByName/singleRequiredArgument.kt");
         }
     }
 

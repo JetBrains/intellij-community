@@ -5,5 +5,9 @@ fun foo(a: Int, b: Int) {}
 fun foo(a: String, b: String, c: String) {}
 
 fun test() {
-    foo(<caret>)
+    foo(
+        a = TODO(),
+        b = TODO(),
+        c = TODO()
+    )
 }
