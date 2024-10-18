@@ -6,7 +6,13 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Implement to add additional tab after invoking "Analyze Stacktrace and Thread Dumps" action
+ */
 @ApiStatus.Experimental
 public interface StacktraceTabContentProvider {
+  /**
+   * @param text text of thread dump or stacktrace
+   */
   @Nullable RunContentDescriptor createRunTabDescriptor(Project project, String text);
 }
