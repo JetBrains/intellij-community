@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.adapters.JsonArrayValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
@@ -27,7 +28,11 @@ public final class YamlObjectAdapter implements JsonObjectValueAdapter {
   @Override
   public boolean isObject() {
     PsiElement tag = myObject.getTag();
-    return tag == null || "!!map".equals(tag.getText());
+
+    if (tag == null) return true;
+    String tagText = tag.getText();
+    return "!!map".equals(tagText)
+           || ContainerUtil.exists(YamlTagRecogniser.EP_NAME.getExtensionList(), extension -> extension.isRecognizedTag(tagText));
   }
 
   @Override
