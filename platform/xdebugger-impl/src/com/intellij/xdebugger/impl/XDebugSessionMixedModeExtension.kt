@@ -38,16 +38,15 @@ abstract class XDebugSessionMixedModeExtension(
 
   // On stop, low level debugger calls positionReached first and then the high level debugger does it
   fun positionReached(debugProcess: XSuspendContext): /*Continue with new context if not null*/XSuspendContext? {
-    if (isLowSuspendContext(debugProcess)) {
-      lowDebugPositionReachedDeferred?.complete(debugProcess)
+    if (!isLowSuspendContext(debugProcess)) {
+      highDebugPositionReachedDeferred?.complete(debugProcess)
       return null
     }
 
-    val highLevelDebugProcess = debugProcess
-    highDebugPositionReachedDeferred?.complete(highLevelDebugProcess)
-
-    val notNullLowLevelSuspendContext = (lowDebugPositionReachedDeferred ?: return null).getCompleted()
-    return XMixedModeSuspendContext(notNullLowLevelSuspendContext, highLevelDebugProcess, high, coroutineScope)
+    val lowLevelDebugProcess = debugProcess
+    lowDebugPositionReachedDeferred?.complete(lowLevelDebugProcess)
+    val notNullHighLevelSuspendContext = (highDebugPositionReachedDeferred ?: return null).getCompleted()
+    return XMixedModeSuspendContext(lowLevelDebugProcess, notNullHighLevelSuspendContext, high, coroutineScope)
   }
 
   private var lowDebugPositionReachedDeferred: CompletableDeferred<XSuspendContext>? = null
@@ -57,15 +56,14 @@ abstract class XDebugSessionMixedModeExtension(
     lowDebugPositionReachedDeferred = CompletableDeferred()
     highDebugPositionReachedDeferred = CompletableDeferred()
 
+    highMixedModeProcess.pauseMixedModeSession().await()
+    highDebugPositionReachedDeferred!!.await()
+
     // pausing low level session
     // but some threads can be resumed to let high level debugger work
     lowMixedModeProcess.pauseMixedModeSession().await()
 
     lowDebugPositionReachedDeferred!!.await()
-
-    highMixedModeProcess.pauseMixedModeSession().await()
-
-    highDebugPositionReachedDeferred!!.await()
 
     lowDebugPositionReachedDeferred = null
     highDebugPositionReachedDeferred = null
@@ -73,8 +71,9 @@ abstract class XDebugSessionMixedModeExtension(
 
   fun resume() {
     coroutineScope.launch(Dispatchers.EDT) {
-      highMixedModeProcess.resumeAndWait()
       lowMixedModeProcess.resumeAndWait()
+
+      highMixedModeProcess.resumeAndWait()
     }
   }
 }
