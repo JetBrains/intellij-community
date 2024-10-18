@@ -36,7 +36,7 @@ private class HighlightingReaderModeProvider : ReaderModeProvider {
 private class ReaderModeHighlightingSettingsProvider : DefaultHighlightingSettingProvider(), DumbAware {
   override fun getDefaultSetting(project: Project, file: VirtualFile): FileHighlightingSetting? {
     val readerModeSettings = ReaderModeSettings.getInstance(project)
-    if (readerModeSettings.enabled && !readerModeSettings.showWarnings && ReaderModeSettings.matchMode(project, file)) {
+    if (readerModeSettings.enabled && !readerModeSettings.showWarnings && file.isValid && ReaderModeSettings.matchMode(project, file)) {
       return FileHighlightingSetting.SKIP_INSPECTION
     }
     else {
