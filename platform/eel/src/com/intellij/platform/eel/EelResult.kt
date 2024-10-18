@@ -11,6 +11,7 @@ sealed interface EelResult<out P, out E> {
   }
 }
 
+@JvmOverloads
 inline fun <T, E> EelResult<T, E>.getOrThrow(action: (E) -> Nothing = { throw RuntimeException(it.toString()) }): T = when (this) {
   is EelResult.Ok -> this.value
   is EelResult.Error -> action(this.error)
