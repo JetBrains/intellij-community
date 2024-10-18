@@ -117,6 +117,7 @@ class StackTraceFileEditor(private val project: Project, private val file: Virtu
       displayName = descriptor.displayName
       descriptor.setAttachedContent(this)
     })
+    Disposer.register(contentManager, descriptor)
   }
 
   private suspend fun addFreezeAnalysisContent(contentManager: ContentManager) {
@@ -138,6 +139,7 @@ class StackTraceFileEditor(private val project: Project, private val file: Virtu
         putUserData(RunContentDescriptor.DESCRIPTOR_KEY, freezeDescriptor)
         displayName = freezeDescriptor.displayName
       })
+      Disposer.register(contentManager, freezeDescriptor)
     }
   }
 
