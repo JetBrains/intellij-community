@@ -1,27 +1,12 @@
-/*
- * Copyright (C) 2024 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.jetbrains.jewel.ui.component
 
 import androidx.compose.foundation.TooltipPlacement
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -29,49 +14,53 @@ import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.painter.PainterHint
+import org.jetbrains.jewel.ui.painter.hints.Stroke
 import org.jetbrains.jewel.ui.theme.iconButtonStyle
 import org.jetbrains.jewel.ui.theme.tooltipStyle
 
 @Composable
-public fun IconActionButton(
+public fun ToggleableIconActionButton(
     key: IconKey,
     contentDescription: String?,
-    onClick: () -> Unit,
+    value: Boolean,
+    onValueChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     focusable: Boolean = true,
     style: IconButtonStyle = JewelTheme.iconButtonStyle,
     colorFilter: ColorFilter? = null,
-    hint: PainterHint? = null,
+    extraHint: PainterHint? = null,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     iconClass: Class<*> = key::class.java,
 ) {
-    BaseIconActionButton(
+    BaseToggleableIconActionButton(
         key = key,
         contentDescription = contentDescription,
         iconClass = iconClass,
+        value = value,
         enabled = enabled,
         focusable = focusable,
         style = style,
         interactionSource = interactionSource,
         modifier = modifier,
         colorFilter = colorFilter,
-        hint = hint,
-        onClick = onClick,
+        extraHint = extraHint,
+        onValueChange = onValueChange,
     )
 }
 
 @Composable
-public fun IconActionButton(
+public fun ToggleableIconActionButton(
     key: IconKey,
     contentDescription: String?,
-    onClick: () -> Unit,
+    value: Boolean,
+    onValueChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     focusable: Boolean = true,
     style: IconButtonStyle = JewelTheme.iconButtonStyle,
     colorFilter: ColorFilter? = null,
-    hint: PainterHint? = null,
+    extraHint: PainterHint? = null,
     tooltipStyle: TooltipStyle = JewelTheme.tooltipStyle,
     tooltipModifier: Modifier = Modifier,
     tooltipPlacement: TooltipPlacement = FixedCursorPoint(offset = DpOffset(0.dp, 16.dp)),
@@ -80,28 +69,30 @@ public fun IconActionButton(
     tooltip: @Composable () -> Unit,
 ) {
     Tooltip(tooltip, style = tooltipStyle, modifier = tooltipModifier, tooltipPlacement = tooltipPlacement) {
-        BaseIconActionButton(
+        BaseToggleableIconActionButton(
             key = key,
+            modifier = modifier,
             contentDescription = contentDescription,
             iconClass = iconClass,
+            value = value,
             enabled = enabled,
             focusable = focusable,
             style = style,
             interactionSource = interactionSource,
-            modifier = modifier,
             colorFilter = colorFilter,
-            hint = hint,
-            onClick = onClick,
+            extraHint = extraHint,
+            onValueChange = onValueChange,
         )
     }
 }
 
 @Composable
-public fun IconActionButton(
+public fun ToggleableIconActionButton(
     key: IconKey,
     contentDescription: String?,
-    hints: Array<PainterHint>,
-    onClick: () -> Unit,
+    value: Boolean,
+    extraHints: Array<PainterHint>,
+    onValueChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     focusable: Boolean = true,
@@ -110,27 +101,29 @@ public fun IconActionButton(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     iconClass: Class<*> = key::class.java,
 ) {
-    CoreIconActionButton(
+    CoreToggleableIconActionButton(
         key = key,
         contentDescription = contentDescription,
         iconClass = iconClass,
+        value = value,
         enabled = enabled,
         focusable = focusable,
         style = style,
         interactionSource = interactionSource,
         modifier = modifier,
         colorFilter = colorFilter,
-        hints = hints,
-        onClick = onClick,
+        extraHints = extraHints,
+        onValueChange = onValueChange,
     )
 }
 
 @Composable
-public fun IconActionButton(
+public fun ToggleableIconActionButton(
     key: IconKey,
     contentDescription: String?,
-    hints: Array<PainterHint>,
-    onClick: () -> Unit,
+    value: Boolean,
+    extraHints: Array<PainterHint>,
+    onValueChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     focusable: Boolean = true,
@@ -144,158 +137,121 @@ public fun IconActionButton(
     tooltip: @Composable () -> Unit,
 ) {
     Tooltip(tooltip, style = tooltipStyle, modifier = tooltipModifier, tooltipPlacement = tooltipPlacement) {
-        CoreIconActionButton(
+        CoreToggleableIconActionButton(
             key = key,
             modifier = modifier,
             contentDescription = contentDescription,
             iconClass = iconClass,
+            value = value,
             enabled = enabled,
             focusable = focusable,
             style = style,
             interactionSource = interactionSource,
             colorFilter = colorFilter,
-            hints = hints,
-            onClick = onClick,
+            extraHints = extraHints,
+            onValueChange = onValueChange,
         )
     }
 }
 
 @Composable
-private fun BaseIconActionButton(
+private fun BaseToggleableIconActionButton(
     key: IconKey,
     contentDescription: String?,
     iconClass: Class<*>,
+    value: Boolean,
     enabled: Boolean,
     focusable: Boolean,
     style: IconButtonStyle,
     interactionSource: MutableInteractionSource,
     modifier: Modifier,
     colorFilter: ColorFilter?,
-    hint: PainterHint?,
-    onClick: () -> Unit,
+    extraHint: PainterHint?,
+    onValueChange: (Boolean) -> Unit,
 ) {
-    if (hint != null) {
-        CoreIconActionButton(
+    if (extraHint != null) {
+        CoreToggleableIconActionButton(
             key = key,
             contentDescription = contentDescription,
             iconClass = iconClass,
+            value = value,
             enabled = enabled,
             focusable = focusable,
             style = style,
             interactionSource = interactionSource,
             modifier = modifier,
             colorFilter = colorFilter,
-            hint = hint,
-            onClick = onClick,
+            extraHint = extraHint,
+            onValueChange = onValueChange,
         )
     } else {
-        CoreIconActionButton(
+        CoreToggleableIconActionButton(
             key = key,
             contentDescription = contentDescription,
             iconClass = iconClass,
+            value = value,
             enabled = enabled,
             focusable = focusable,
             style = style,
             interactionSource = interactionSource,
             modifier = modifier,
             colorFilter = colorFilter,
-            hints = emptyArray(),
-            onClick = onClick,
+            extraHints = emptyArray(),
+            onValueChange = onValueChange,
         )
     }
 }
 
 @Composable
-private fun CoreIconActionButton(
+private fun CoreToggleableIconActionButton(
     key: IconKey,
     contentDescription: String?,
     iconClass: Class<*>,
+    value: Boolean,
     enabled: Boolean,
     focusable: Boolean,
     style: IconButtonStyle,
     interactionSource: MutableInteractionSource,
     modifier: Modifier,
-    colorFilter: ColorFilter?,
-    hints: Array<PainterHint>,
-    onClick: () -> Unit,
+    colorFilter: ColorFilter? = null,
+    extraHints: Array<PainterHint>,
+    onValueChange: (Boolean) -> Unit,
 ) {
-    IconButton(onClick, modifier, enabled, focusable, style, interactionSource) {
-        Icon(key, contentDescription, iconClass = iconClass, colorFilter = colorFilter, hints = hints)
-    }
-}
-
-@Composable
-private fun CoreIconActionButton(
-    key: IconKey,
-    contentDescription: String?,
-    iconClass: Class<*>,
-    enabled: Boolean,
-    focusable: Boolean,
-    style: IconButtonStyle,
-    interactionSource: MutableInteractionSource,
-    modifier: Modifier,
-    colorFilter: ColorFilter?,
-    hint: PainterHint,
-    onClick: () -> Unit,
-) {
-    IconButton(onClick, modifier, enabled, focusable, style, interactionSource) {
-        Icon(key, contentDescription, iconClass = iconClass, hint = hint, colorFilter = colorFilter)
-    }
-}
-
-@Composable
-public fun IconActionButton(
-    painter: Painter,
-    contentDescription: String?,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    focusable: Boolean = true,
-    style: IconButtonStyle = JewelTheme.iconButtonStyle,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-) {
-    CoreIconActionButton(painter, contentDescription, enabled, focusable, style, interactionSource, modifier, onClick)
-}
-
-@Composable
-public fun IconActionButton(
-    painter: Painter,
-    contentDescription: String?,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    focusable: Boolean = true,
-    style: IconButtonStyle = JewelTheme.iconButtonStyle,
-    tooltipStyle: TooltipStyle = JewelTheme.tooltipStyle,
-    tooltipModifier: Modifier = Modifier,
-    tooltipPlacement: TooltipPlacement = FixedCursorPoint(offset = DpOffset(0.dp, 16.dp)),
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    tooltip: @Composable () -> Unit,
-) {
-    Tooltip(tooltip, style = tooltipStyle, modifier = tooltipModifier, tooltipPlacement = tooltipPlacement) {
-        CoreIconActionButton(
-            painter = painter,
-            modifier = modifier,
+    ToggleableIconButton(value, onValueChange, modifier, enabled, focusable, style, interactionSource) {
+        val strokeColor by style.colors.toggleableForegroundFor(it)
+        Icon(
+            key = key,
             contentDescription = contentDescription,
-            enabled = enabled,
-            focusable = focusable,
-            style = style,
-            interactionSource = interactionSource,
-            onClick = onClick,
+            iconClass = iconClass,
+            hints = arrayOf(Stroke(strokeColor), *extraHints),
+            colorFilter = colorFilter,
         )
     }
 }
 
 @Composable
-private fun CoreIconActionButton(
-    painter: Painter,
+private fun CoreToggleableIconActionButton(
+    key: IconKey,
     contentDescription: String?,
+    iconClass: Class<*>,
+    value: Boolean,
     enabled: Boolean,
     focusable: Boolean,
     style: IconButtonStyle,
     interactionSource: MutableInteractionSource,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
+    modifier: Modifier,
+    colorFilter: ColorFilter? = null,
+    extraHint: PainterHint,
+    onValueChange: (Boolean) -> Unit,
 ) {
-    IconButton(onClick, modifier, enabled, focusable, style, interactionSource) { Icon(painter, contentDescription) }
+    ToggleableIconButton(value, onValueChange, modifier, enabled, focusable, style, interactionSource) {
+        val strokeColor by style.colors.toggleableForegroundFor(it)
+        Icon(
+            key = key,
+            contentDescription = contentDescription,
+            iconClass = iconClass,
+            hints = arrayOf(Stroke(strokeColor), extraHint),
+            colorFilter = colorFilter,
+        )
+    }
 }
