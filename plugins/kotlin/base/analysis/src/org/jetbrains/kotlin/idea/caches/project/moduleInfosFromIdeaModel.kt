@@ -24,6 +24,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
@@ -34,11 +35,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
-import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
-import org.jetbrains.kotlin.idea.base.util.caching.findSdkBridge
-import org.jetbrains.kotlin.idea.base.util.caching.getChanges
-import org.jetbrains.kotlin.idea.base.util.caching.newEntity
-import org.jetbrains.kotlin.idea.base.util.caching.oldEntity
+import org.jetbrains.kotlin.idea.base.util.caching.*
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
@@ -156,12 +153,19 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
             action()
         }
 
+        override fun beforeChanged(event: VersionedStorageChange) {
+            applyIfPossible {
+                beforeModelChanged(event)
+            }
+        }
+
         final override fun changed(event: VersionedStorageChange) {
             applyIfPossible {
                 modelChanged(event)
             }
         }
 
+        open fun beforeModelChanged(event: VersionedStorageChange) {}
         abstract fun modelChanged(event: VersionedStorageChange)
     }
 
@@ -174,6 +178,25 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
 
         override fun checkKeyValidity(key: Module) {
             key.checkValidity()
+        }
+
+        override fun beforeModelChanged(event: VersionedStorageChange) {
+            val storageBefore = event.storageBefore
+
+            val moduleChanges = event.getChanges<ModuleEntity>().takeIf { it.isNotEmpty() } ?: return
+
+            val modulesToRemove = LinkedHashSet<Module>()
+            for (moduleChange in moduleChanges) {
+                if (moduleChange is EntityChange.Removed) {
+                    moduleChange.oldEntity.findModule(storageBefore)?.let { modulesToRemove.add(it) }
+                }
+            }
+
+            if (modulesToRemove.isEmpty()) return
+
+            invalidateKeys(modulesToRemove)
+
+            incModificationCount()
         }
 
         override fun modelChanged(event: VersionedStorageChange) {
