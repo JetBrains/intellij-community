@@ -3,7 +3,6 @@ package com.intellij.ide.ui
 
 import com.intellij.BundleBase
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.util.ElementsChooser.StatisticsCollector
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.Disposable
@@ -39,7 +38,6 @@ import org.jetbrains.annotations.NonNls
 import java.awt.Graphics
 import java.awt.Point
 import java.awt.event.MouseEvent
-import java.awt.geom.AffineTransform
 import java.util.*
 import javax.accessibility.AccessibleContext
 import javax.swing.*
@@ -107,7 +105,6 @@ private class NonCommercialWidget : CustomStatusBarWidget {
     val uiSettings = UISettings.Companion.getInstance()
     val icon = TextIcon(title, foreground, null, borderColor, 0, true)
     icon.setFont(JBFont.medium())
-    icon.setFontTransform(AffineTransform())
     icon.setRound(18)
     icon.setInsets(JBUI.insets(if (!ExperimentalUI.Companion.isNewUI() || uiSettings.compactMode) 3 else 4, 8))
 
@@ -126,7 +123,7 @@ private class NonCommercialWidget : CustomStatusBarWidget {
             oldFont = font
             icon.setInsets(JBUI.insets(if (newValue) 3 else 4, 8))
             icon.font = JBFont.medium()
-            icon.setFontTransform(AffineTransform())
+            icon.setFontTransform(getFontMetrics(icon.font).fontRenderContext.transform)
             parent.revalidate()
           }
           super.paint(g)
@@ -136,6 +133,7 @@ private class NonCommercialWidget : CustomStatusBarWidget {
     else {
       JLabel(icon)
     }
+    icon.setFontTransform(label.getFontMetrics(icon.font).fontRenderContext.transform)
     label.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, title)
 
     NonCommercialPopup(this).installOn(label)

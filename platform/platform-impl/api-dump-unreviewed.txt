@@ -14803,6 +14803,7 @@ f:com.intellij.ui.TextIcon
 - getBackground():java.awt.Color
 - getBorderColor():java.awt.Color
 - getFont():java.awt.Font
+- getFontTransform():java.awt.geom.AffineTransform
 - getForeground():java.awt.Color
 - getIconHeight():I
 - getIconWidth():I
