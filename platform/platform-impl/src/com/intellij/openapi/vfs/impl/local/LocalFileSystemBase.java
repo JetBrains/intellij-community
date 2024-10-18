@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -490,6 +491,23 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   protected @NotNull String extractRootPath(@NotNull String normalizedPath) {
+    if (Registry.is("vfs.extract.roots.using.nio")) {
+      final var normalizedPathRootString = Path.of(normalizedPath).getRoot().toString();
+
+      for (Path root : FileSystems.getDefault().getRootDirectories()) {
+        var stringRoot = root.toString();
+
+        if (normalizedPathRootString.equals(stringRoot)) {
+          // root path should be short. See com.intellij.openapi.vfs.newvfs.persistent.namecache.SLRUFileNameCache.assertShortFileName
+          if (stringRoot.length() > 1 && (stringRoot.endsWith("\\") || stringRoot.endsWith("/"))) {
+            stringRoot = stringRoot.substring(0, stringRoot.length() - 1);
+          }
+
+          return stringRoot;
+        }
+      }
+    }
+
     var rootPath = FileUtil.extractRootPath(normalizedPath);
     return rootPath != null ? rootPath : "";
   }
