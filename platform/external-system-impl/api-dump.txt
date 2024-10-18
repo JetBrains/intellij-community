@@ -406,27 +406,14 @@ c:com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTask
 - getArguments():java.lang.String
 - getTasksToExecute():java.util.List
 - getVmOptions():java.lang.String
-f:com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager
-- com.intellij.openapi.Disposable
-- com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
-- <init>():V
-- add(com.intellij.openapi.externalSystem.model.task.ExternalSystemTask):V
-- beforeCancel(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
-- dispose():V
-- findTask(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
-- findTask(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType,com.intellij.openapi.externalSystem.model.ProjectSystemId,java.lang.String):com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
-- findTasksOfState(com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState[]):java.util.List
+com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager
+- a:add(com.intellij.openapi.externalSystem.model.task.ExternalSystemTask):V
+- a:findTask(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
+- a:findTask(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType,com.intellij.openapi.externalSystem.model.ProjectSystemId,java.lang.String):com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
+- a:findTasksOfState(com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState[]):java.util.List
 - s:getInstance():com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager
-- hasTaskOfTypeInProgress(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType,com.intellij.openapi.project.Project):Z
-- onCancel(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
-- onEnd(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
-- onFailure(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.Exception):V
-- onStart(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.String):V
-- onStatusChange(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent):V
-- onSuccess(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
-- onTaskOutput(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.String,Z):V
-- release(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
-- update():V
+- a:hasTaskOfTypeInProgress(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType,com.intellij.openapi.project.Project):Z
+- a:release(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
 c:com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask
 - com.intellij.openapi.externalSystem.service.internal.AbstractExternalSystemTask
 - <init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.externalSystem.importing.ImportSpec):V

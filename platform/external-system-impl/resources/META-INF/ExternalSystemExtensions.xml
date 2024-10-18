@@ -8,6 +8,9 @@
     <applicationService
         serviceInterface="com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager"
         serviceImplementation="com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl"/>
+    <applicationService
+      serviceInterface="com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager"
+      serviceImplementation="com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManagerImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper"
                         serviceImplementation="com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapperImpl"/>
     <externalSystemNotificationExtension
