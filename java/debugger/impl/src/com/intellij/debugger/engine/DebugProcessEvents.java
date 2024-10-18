@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.debugger.*;
 import com.intellij.debugger.engine.evaluation.DebuggerImplicitEvaluationContextUtil;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
@@ -361,9 +362,15 @@ public class DebugProcessEvents extends DebugProcessImpl {
     enableRequestWithHandler(request, handler);
   }
 
+  @ReviseWhenPortedToJDK(value = "21", description = "Call addPlatformThreadsOnlyFilter directly from ThreadDeathRequest and ThreadStartRequest")
   private static EventRequest platformThreadsOnly(EventRequest eventRequest) {
-    if (eventRequest instanceof EventRequestManagerImpl.ThreadLifecycleEventRequestImpl lifecycleEventRequest) {
-      lifecycleEventRequest.addPlatformThreadsOnlyFilter();
+    try {
+      eventRequest.getClass().getMethod("addPlatformThreadsOnlyFilter").invoke(eventRequest);
+    }
+    catch (Exception e) {
+      if (eventRequest instanceof EventRequestManagerImpl.ThreadLifecycleEventRequestImpl lifecycleEventRequest) {
+        lifecycleEventRequest.addPlatformThreadsOnlyFilter();
+      }
     }
     return eventRequest;
   }
