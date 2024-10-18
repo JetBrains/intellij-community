@@ -9,7 +9,7 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 /**
- * Defines interface for the entity that manages notifications about progress of long-running operations performed at external system API side.
+ * Defines interface for the entity that manages notifications about the progress of long-running operations performed at external system API side.
  * <p/>
  * Implementations of this interface are expected to be thread-safe.
  */
@@ -17,44 +17,20 @@ import java.rmi.RemoteException;
 public interface RemoteExternalSystemProgressNotificationManager extends Remote {
 
   RemoteExternalSystemProgressNotificationManager NULL_OBJECT = new RemoteExternalSystemProgressNotificationManager() {
-    @Override
-    public void onStart(@NotNull ExternalSystemTaskId id, @NotNull String projectPath) {
-    }
-
-    @Override
-    public void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) {
-    }
-
-    @Override
-    public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
-    }
-
-    @Override
-    public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
-    }
-
-    @Override
-    public void onEnd(@NotNull ExternalSystemTaskId id) {
-    }
-
-    @Override
-    public void onSuccess(@NotNull ExternalSystemTaskId id) {
-    }
-
-    @Override
-    public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
-    }
-
-    @Override
-    public void beforeCancel(@NotNull ExternalSystemTaskId id) {
-    }
-
-    @Override
-    public void onCancel(ExternalSystemTaskId id) {
-    }
+    //@formatter:off
+    @Override public void onStart(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {}
+    @Override public void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) {}
+    @Override public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {}
+    @Override public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {}
+    @Override public void onEnd(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {}
+    @Override public void onSuccess(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {}
+    @Override public void onFailure(@NotNull String projectPath, @NotNull ExternalSystemTaskId id, @NotNull Exception exception) {}
+    @Override public void beforeCancel(@NotNull ExternalSystemTaskId id) {}
+    @Override public void onCancel(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {}
+    //@formatter:on
   };
 
-  void onStart(@NotNull ExternalSystemTaskId id, @NotNull String projectPath) throws RemoteException;
+  void onStart(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) throws RemoteException;
 
   void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) throws RemoteException;
 
@@ -62,13 +38,13 @@ public interface RemoteExternalSystemProgressNotificationManager extends Remote 
 
   void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) throws RemoteException;
 
-  void onEnd(@NotNull ExternalSystemTaskId id) throws RemoteException;
+  void onEnd(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) throws RemoteException;
 
-  void onSuccess(@NotNull ExternalSystemTaskId id) throws RemoteException;
+  void onSuccess(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) throws RemoteException;
 
-  void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) throws RemoteException;
+  void onFailure(@NotNull String projectPath, @NotNull ExternalSystemTaskId id, @NotNull Exception exception) throws RemoteException;
 
   void beforeCancel(@NotNull ExternalSystemTaskId id) throws RemoteException;
 
-  void onCancel(ExternalSystemTaskId id) throws RemoteException;
+  void onCancel(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) throws RemoteException;
 }

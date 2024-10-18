@@ -798,13 +798,18 @@ com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationLis
 - sf:NULL_OBJECT:com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 - beforeCancel(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
 - onCancel(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
+- onCancel(java.lang.String,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
 - onEnd(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
+- onEnd(java.lang.String,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
 - onEnvironmentPrepared(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
 - onFailure(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.Exception):V
+- onFailure(java.lang.String,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.Exception):V
 - onStart(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
 - onStart(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.String):V
+- onStart(java.lang.String,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
 - onStatusChange(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent):V
 - onSuccess(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
+- onSuccess(java.lang.String,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
 - onTaskOutput(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.String,Z):V
 a:com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
 - com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
@@ -813,12 +818,18 @@ a:com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationL
 - <init>(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):V
 - beforeCancel(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
 - onCancel(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
+- onCancel(java.lang.String,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
 - onEnd(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
+- onEnd(java.lang.String,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
 - onEnvironmentPrepared(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
 - onFailure(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.Exception):V
+- onFailure(java.lang.String,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.Exception):V
+- onStart(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
 - onStart(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.String):V
+- onStart(java.lang.String,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
 - onStatusChange(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent):V
 - onSuccess(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
+- onSuccess(java.lang.String,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
 - onTaskOutput(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.String,Z):V
 e:com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState
 - java.lang.Enum

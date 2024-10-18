@@ -18,18 +18,67 @@ public interface ExternalSystemTaskNotificationListener extends EventListener {
 
   /**
    * Notifies that task with the given id is about to be started.
-   *
-   * @param id         target task's id
-   * @param workingDir working directory
    */
+  default void onStart(
+    @NotNull String projectPath,
+    @NotNull ExternalSystemTaskId id
+  ) {
+    onStart(id, projectPath);
+  }
+
+  /**
+   * Notifies that task with the given id is finished successfully.
+   */
+  default void onSuccess(
+    @NotNull String projectPath,
+    @NotNull ExternalSystemTaskId id
+  ) {
+    onSuccess(id);
+  }
+
+  /**
+   * Notifies that task with the given id is failed.
+   */
+  default void onFailure(
+    @NotNull String projectPath,
+    @NotNull ExternalSystemTaskId id,
+    @NotNull Exception exception
+  ) {
+    onFailure(id, exception);
+  }
+
+  /**
+   * Notifies that task with the given id is canceled.
+   */
+  default void onCancel(
+    @NotNull String projectPath,
+    @NotNull ExternalSystemTaskId id
+  ) {
+    onCancel(id);
+  }
+
+  /**
+   * Notifies that task with the given id is finished.
+   */
+  default void onEnd(
+    @NotNull String projectPath,
+    @NotNull ExternalSystemTaskId id
+  ) {
+    onEnd(id);
+  }
+
+  /**
+   * @deprecated use {@link #onStart(String, ExternalSystemTaskId)} instead
+   */
+  @Deprecated
   default void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
     onStart(id);
   }
 
   /**
-   * @deprecated use {@link #onStart(ExternalSystemTaskId, String)}
+   * @deprecated use {@link #onStart(String, ExternalSystemTaskId)} instead
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   default void onStart(@NotNull ExternalSystemTaskId id) { }
 
   default void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) { }
@@ -52,25 +101,21 @@ public interface ExternalSystemTaskNotificationListener extends EventListener {
   default void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) { }
 
   /**
-   * Notifies that task with the given id is finished.
-   *
-   * @param id target task's id
+   * @deprecated use {@link #onEnd(String, ExternalSystemTaskId)} instead
    */
+  @Deprecated
   default void onEnd(@NotNull ExternalSystemTaskId id) { }
 
   /**
-   * Notifies that task with the given id is finished successfully.
-   *
-   * @param id target task's id
+   * @deprecated use {@link #onSuccess(String, ExternalSystemTaskId)} instead
    */
+  @Deprecated
   default void onSuccess(@NotNull ExternalSystemTaskId id) { }
 
   /**
-   * Notifies that task with the given id is failed.
-   *
-   * @param id target task's id
-   * @param e  failure exception
+   * @deprecated use {@link #onFailure(String, ExternalSystemTaskId, Exception)} instead
    */
+  @Deprecated
   default void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) { }
 
   /**
@@ -84,9 +129,8 @@ public interface ExternalSystemTaskNotificationListener extends EventListener {
   default void beforeCancel(@NotNull ExternalSystemTaskId id) { }
 
   /**
-   * Notifies that task with the given id is cancelled.
-   *
-   * @param id target task's id
+   * @deprecated use {@link #onCancel(String, ExternalSystemTaskId)} instead
    */
+  @Deprecated
   default void onCancel(@NotNull ExternalSystemTaskId id) { }
 }

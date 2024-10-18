@@ -36,8 +36,8 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
     return toRemove.isNotEmpty()
   }
 
-  override fun onStart(id: ExternalSystemTaskId, workingDir: String) {
-    forEachListener { it.onStart(id, workingDir) }
+  override fun onStart(projectPath: String, id: ExternalSystemTaskId) {
+    forEachListener { it.onStart(projectPath, id) }
   }
 
   override fun onEnvironmentPrepared(id: ExternalSystemTaskId) {
@@ -52,9 +52,9 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
     forEachListener { it.onTaskOutput(id, text, stdOut) }
   }
 
-  override fun onEnd(id: ExternalSystemTaskId) {
+  override fun onEnd(projectPath: String, id: ExternalSystemTaskId) {
     try {
-      forEachListener { it.onEnd(id) }
+      forEachListener { it.onEnd(projectPath, id) }
     }
     finally {
       val toRemove = dispatcher.listeners.filter { (it as TaskListenerWrapper).taskId === id }
@@ -62,20 +62,20 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
     }
   }
 
-  override fun onSuccess(id: ExternalSystemTaskId) {
-    forEachListener { it.onSuccess(id) }
+  override fun onSuccess(projectPath: String, id: ExternalSystemTaskId) {
+    forEachListener { it.onSuccess(projectPath, id) }
   }
 
-  override fun onFailure(id: ExternalSystemTaskId, e: Exception) {
-    forEachListener { it.onFailure(id, e) }
+  override fun onFailure(projectPath: String, id: ExternalSystemTaskId, exception: Exception) {
+    forEachListener { it.onFailure(projectPath, id, exception) }
   }
 
   override fun beforeCancel(id: ExternalSystemTaskId) {
     forEachListener { it.beforeCancel(id) }
   }
 
-  override fun onCancel(id: ExternalSystemTaskId) {
-    forEachListener { it.onCancel(id) }
+  override fun onCancel(projectPath: String, id: ExternalSystemTaskId) {
+    forEachListener { it.onCancel(projectPath, id) }
   }
 
   private fun addListener(tasksKey: Any, listener: ExternalSystemTaskNotificationListener, parentDisposable: Disposable? = null): Boolean {
@@ -104,14 +104,14 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
     val taskId: Any,
     val delegate: ExternalSystemTaskNotificationListener
   ) : ExternalSystemTaskNotificationListener {
-    override fun onSuccess(id: ExternalSystemTaskId) {
+    override fun onSuccess(projectPath: String, id: ExternalSystemTaskId) {
       if (taskId !== ALL_TASKS_KEY && taskId != id) return
-      delegate.onSuccess(id)
+      delegate.onSuccess(projectPath, id)
     }
 
-    override fun onFailure(id: ExternalSystemTaskId, e: java.lang.Exception) {
+    override fun onFailure(projectPath: String, id: ExternalSystemTaskId, exception: Exception) {
       if (taskId !== ALL_TASKS_KEY && taskId != id) return
-      delegate.onFailure(id, e)
+      delegate.onFailure(projectPath, id, exception)
     }
 
     override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
@@ -124,14 +124,14 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
       delegate.onStatusChange(event)
     }
 
-    override fun onCancel(id: ExternalSystemTaskId) {
+    override fun onCancel(projectPath: String, id: ExternalSystemTaskId) {
       if (taskId !== ALL_TASKS_KEY && taskId != id) return
-      delegate.onCancel(id)
+      delegate.onCancel(projectPath, id)
     }
 
-    override fun onEnd(id: ExternalSystemTaskId) {
+    override fun onEnd(projectPath: String, id: ExternalSystemTaskId) {
       if (taskId !== ALL_TASKS_KEY && taskId != id) return
-      delegate.onEnd(id)
+      delegate.onEnd(projectPath, id)
     }
 
     override fun beforeCancel(id: ExternalSystemTaskId) {
@@ -139,9 +139,9 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
       delegate.beforeCancel(id)
     }
 
-    override fun onStart(id: ExternalSystemTaskId, workingDir: String?) {
+    override fun onStart(projectPath: String, id: ExternalSystemTaskId) {
       if (taskId !== ALL_TASKS_KEY && taskId != id) return
-      delegate.onStart(id, workingDir)
+      delegate.onStart(projectPath, id)
     }
 
     override fun onEnvironmentPrepared(id: ExternalSystemTaskId) {
