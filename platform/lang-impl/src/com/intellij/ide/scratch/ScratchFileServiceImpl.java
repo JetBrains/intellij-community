@@ -308,7 +308,7 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
 
   static final class FilePresentation implements FileIconProvider, FileIconPatcher, EditorTabTitleProvider, ProjectViewNodeDecorator, DumbAware {
     @Override
-    public void decorate(ProjectViewNode<?> node, PresentationData data) {
+    public void decorate(@NotNull ProjectViewNode<?> node, @NotNull PresentationData data) {
       Object value = node.getValue();
       RootType rootType;
       VirtualFile virtualFile = null;

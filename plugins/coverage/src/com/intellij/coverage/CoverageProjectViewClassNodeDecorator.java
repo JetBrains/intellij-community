@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 final class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjectViewNodeDecorator {
   @Override
-  public void decorate(ProjectViewNode node, PresentationData data) {
+  public void decorate(@NotNull ProjectViewNode node, @NotNull PresentationData data) {
     final Project project = node.getProject();
     if (project == null) {
       return;
