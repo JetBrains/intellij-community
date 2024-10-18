@@ -2,8 +2,10 @@ package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
+import com.intellij.driver.sdk.ui.remote.Window
 import com.intellij.driver.sdk.waitFor
 import org.intellij.lang.annotations.Language
+import java.awt.Rectangle
 import kotlin.time.Duration.Companion.seconds
 
 fun Finder.dialog(@Language("xpath") xpath: String? = null, title: String? = null, action: DialogUiComponent.() -> Unit = {}): DialogUiComponent {
@@ -38,7 +40,12 @@ class AboutDialogUi(data: ComponentData) : UiComponent(data) {
     get() = x { byAccessibleName("Close") }
 }
 
-class DialogUiComponent(data: ComponentData) : UiComponent(data) {
+open class DialogUiComponent(data: ComponentData) : UiComponent(data) {
+  private val windowComponent by lazy {
+    driver.cast(component, Window::class)
+  }
+
+  fun setBounds(bounds: Rectangle) = windowComponent.setBounds(bounds.x, bounds.y, bounds.width, bounds.height)
 
   fun pressButton(text: String) = x("//div[@class='JButton' and @visible_text='$text']").click()
 }
