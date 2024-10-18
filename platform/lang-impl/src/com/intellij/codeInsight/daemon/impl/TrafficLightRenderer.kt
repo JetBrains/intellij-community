@@ -20,7 +20,6 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.ex.EditorMarkupModel
@@ -52,6 +51,12 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Container
 import java.util.concurrent.CancellationException
+
+internal data class TrafficLightRendererStuff(
+  @JvmField val fileHighlightingSettings: MutableMap<Language, FileHighlightingSetting>,
+  @JvmField val inLibrary: Boolean,
+  @JvmField val shouldHighlight: Boolean,
+)
 
 open class TrafficLightRenderer private constructor(
   project: Project,
@@ -92,34 +97,8 @@ open class TrafficLightRenderer private constructor(
 
     init(project, document)
     uiController = if (editor == null) createUIController() else createUIController(editor)
-    data class Stuff(
-      @JvmField val fileHighlightingSettings: MutableMap<Language, FileHighlightingSetting>,
-      @JvmField val inLibrary: Boolean,
-      @JvmField val shouldHighlight: Boolean,
-    )
 
-    val info = ReadAction.compute(ThrowableComputable {
-      val psiFile = psiFile ?: return@ThrowableComputable Stuff(
-        fileHighlightingSettings = mutableMapOf<Language, FileHighlightingSetting>(),
-        inLibrary = false,
-        shouldHighlight = false,
-      )
-
-      val viewProvider = psiFile.getViewProvider()
-      val languages = viewProvider.getLanguages()
-      val settingMap = HashMap<Language, FileHighlightingSetting>(languages.size)
-      val settings = HighlightingSettingsPerFile.getInstance(project)
-      for (psiRoot in viewProvider.getAllFiles()) {
-        val setting = settings.getHighlightingSettingForRoot(psiRoot)
-        settingMap.put(psiRoot.getLanguage(), setting)
-      }
-
-      val fileIndex = ProjectRootManager.getInstance(project).getFileIndex()
-      val virtualFile = psiFile.getVirtualFile()!!
-      val inLib = fileIndex.isInLibrary(virtualFile) && !fileIndex.isInContent(virtualFile)
-      val shouldHighlight = ProblemHighlightFilter.shouldHighlightFile(psiFile)
-      Stuff(fileHighlightingSettings = settingMap, inLibrary = inLib, shouldHighlight = shouldHighlight)
-    })
+    val info = computeRendererInfo(psiFile, project)
     fileHighlightingSettings = info.fileHighlightingSettings
     inLibrary = info.inLibrary
     shouldHighlight = info.shouldHighlight
@@ -617,6 +596,31 @@ open class TrafficLightRenderer private constructor(
   fun invalidate() {
     highlightingSettingsModificationCount = -1
   }
+}
+
+private fun computeRendererInfo(psiFile: PsiFile?, project: Project): TrafficLightRendererStuff {
+  return ApplicationManager.getApplication().runReadAction(ThrowableComputable {
+    val psiFile = psiFile ?: return@ThrowableComputable TrafficLightRendererStuff(
+      fileHighlightingSettings = mutableMapOf<Language, FileHighlightingSetting>(),
+      inLibrary = false,
+      shouldHighlight = false,
+    )
+
+    val viewProvider = psiFile.getViewProvider()
+    val languages = viewProvider.getLanguages()
+    val settingMap = HashMap<Language, FileHighlightingSetting>(languages.size)
+    val settings = HighlightingSettingsPerFile.getInstance(project)
+    for (psiRoot in viewProvider.getAllFiles()) {
+      val setting = settings.getHighlightingSettingForRoot(psiRoot)
+      settingMap.put(psiRoot.getLanguage(), setting)
+    }
+
+    val fileIndex = ProjectRootManager.getInstance(project).getFileIndex()
+    val virtualFile = psiFile.getVirtualFile()!!
+    val inLib = fileIndex.isInLibrary(virtualFile) && !fileIndex.isInContent(virtualFile)
+    val shouldHighlight = ProblemHighlightFilter.shouldHighlightFile(psiFile)
+    TrafficLightRendererStuff(fileHighlightingSettings = settingMap, inLibrary = inLib, shouldHighlight = shouldHighlight)
+  })
 }
 
 private fun toPercent(progress: Double, finished: Boolean): Int {
