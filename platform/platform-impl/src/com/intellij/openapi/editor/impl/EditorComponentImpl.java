@@ -1197,7 +1197,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   }
 
   private final class AccessibleEditorComponentImpl extends AccessibleJComponent
-      implements AccessibleText, AccessibleEditableText, AccessibleExtendedText,
+      implements AccessibleText, AccessibleEditableText, AccessibleExtendedText, AccessibleAction,
                  CaretListener, DocumentListener {
 
     AccessibleEditorComponentImpl() {
@@ -1527,6 +1527,23 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
       rectangle.add(endPoint);
 
       return rectangle;
+    }
+
+    // ---- Implements AccessibleAction ----
+
+    @Override
+    public int getAccessibleActionCount(){
+      return 0;
+    }
+
+    @Override
+    public String getAccessibleActionDescription(int i){
+      return null;
+    }
+
+    @Override
+    public boolean doAccessibleAction(int i) {
+      return false;
     }
 
     private @Nullable String getTextAtOffset(
