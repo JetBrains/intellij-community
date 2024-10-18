@@ -99,8 +99,11 @@ public abstract class FacetModelBase implements FacetModel {
       myType2Facets = typeToFacets.freezeValues();
     }
 
+    Map<FacetTypeId<?>, Collection<Facet<?>>> facetsByType = myType2Facets;
+    if (facetsByType == null) return Collections.emptyList();
+
     @SuppressWarnings("unchecked")
-    Collection<F> facets = (Collection<F>)myType2Facets.get(typeId);
+    Collection<F> facets = (Collection<F>)facetsByType.get(typeId);
     return facets != null ? facets : Collections.emptyList();
   }
 
