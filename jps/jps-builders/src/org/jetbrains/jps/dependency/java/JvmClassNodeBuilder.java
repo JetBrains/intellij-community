@@ -572,7 +572,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
           super.visitEnd();
         }
         finally {
-          if ((access & Opcodes.ACC_SYNTHETIC) == 0) {
+          if ((access & Opcodes.ACC_SYNTHETIC) == 0 || (access & Opcodes.ACC_PRIVATE) == 0) {
             myFields.add(new JvmField(new JVMFlags(access), signature, name, desc, annotations, value));
           }
         }
@@ -621,7 +621,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
       @Override
       public void visitEnd() {
-        if ((access & Opcodes.ACC_SYNTHETIC) == 0 || (access & Opcodes.ACC_BRIDGE) > 0) {
+        if ((access & Opcodes.ACC_SYNTHETIC) == 0 || (access & Opcodes.ACC_BRIDGE) > 0 || (access & Opcodes.ACC_PRIVATE) == 0) {
           if (isInlined) {
             // use 'defaultValue' attribute to store the hash of the function body to track changes in inline method implementation
             ContentHashBuilder hashBuilder = ContentHashBuilder.create();
