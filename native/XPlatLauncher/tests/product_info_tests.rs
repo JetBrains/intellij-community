@@ -4,7 +4,6 @@
 mod tests {
     use std::env;
     use xplat_launcher::default::{compute_launch_info, read_product_info, ProductLaunchInfo};
-    use xplat_launcher::ProductInfoLaunchField;
 
     #[test]
     fn product_info_test() {

@@ -38,10 +38,10 @@ fn main() {
     #[cfg(target_os = "windows")]
     {
         cargo!("rerun-if-changed=build.rs");
-        
+
         #[cfg(feature = "cef")]
         link_cef().expect("Failed to link with CEF");
-        
+
         embed_metadata().expect("Failed to embed metadata");
     }
 }
