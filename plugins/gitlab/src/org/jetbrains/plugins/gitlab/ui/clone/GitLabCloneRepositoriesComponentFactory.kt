@@ -95,9 +95,7 @@ internal object GitLabCloneRepositoriesComponentFactory {
             CloneDvcsValidationUtils.checkDirectory(it.text, it.textField as JComponent)
           }
       }
-      if (Registry.`is`("git.clone.shallow")) {
-        GitShallowCloneComponentFactory.appendShallowCloneRow(this, repositoriesVm.shallowCloneVm)
-      }
+      GitShallowCloneComponentFactory.appendShallowCloneRow(this, repositoriesVm.shallowCloneVm)
     }.apply {
       border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
     }
