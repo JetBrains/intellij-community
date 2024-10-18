@@ -37,7 +37,8 @@ def get_data(table, use_csv_serialization, start_index=None, end_index=None, for
     # type: (pl.DataFrame, int, int) -> str
     with __create_config(format):
         if use_csv_serialization:
-            return __get_df_slice(table, start_index, end_index).write_csv(null_value = "null")
+            float_precision = _get_float_precision(format)
+            return __get_df_slice(table, start_index, end_index).write_csv(null_value = "null", float_precision=float_precision)
         return table[start_index:end_index]._repr_html_()
 
 
@@ -66,10 +67,9 @@ def __create_config(format=None):
     cfg.set_tbl_cols(-1)  # Unlimited
     cfg.set_tbl_rows(-1)  # Unlimited
     cfg.set_fmt_str_lengths(MAX_COLWIDTH)  # No option to set unlimited, so it's 100_000
-    if format is not None:
-        float_precision = _get_float_precision(format)
-        if float_precision is not None:
-            cfg.set_float_precision(float_precision)
+    float_precision = _get_float_precision(format)
+    if float_precision is not None:
+        cfg.set_float_precision(float_precision)
     return cfg
 
 
@@ -219,7 +219,7 @@ def __get_describe(table):
 
 
 def _get_float_precision(format):
-    # type: (str) -> Union[int, None]
+    # type: (Union[str, None]) -> Union[int, None]
     if isinstance(format, str):
         if format.startswith("%") and format.endswith("f"):
             start = format.find('%.') + 2

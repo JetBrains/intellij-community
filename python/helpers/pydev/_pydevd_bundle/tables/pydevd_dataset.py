@@ -37,7 +37,7 @@ def get_data(table, use_csv_serialization, start_index=None, end_index=None, for
      # type: (datasets.arrow_dataset.Dataset, int, int) -> str
 
     def convert_data_to_csv(data):
-        return repr(data.to_csv(na_rep = "NaN"))
+        return repr(data.to_csv(na_rep = "NaN", float_format=format))
 
     def convert_data_to_html(data):
         return repr(data.to_html(notebook=True))
