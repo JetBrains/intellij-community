@@ -95,7 +95,7 @@ class FileDropManager(
     for (window in windows) {
       val composite = window.getComposite(file) ?: continue
       for (ed in composite.allEditors) {
-        if (ed is TextEditor && ed.editor === ed) {
+        if (ed is TextEditor && ed.editor === editor) {
           return window
         }
       }
