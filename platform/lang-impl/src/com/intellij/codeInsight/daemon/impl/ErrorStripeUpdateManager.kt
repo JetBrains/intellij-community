@@ -23,14 +23,12 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import kotlin.coroutines.EmptyCoroutineContext
 
 private val LOG = logger<ErrorStripeUpdateManager>()
 private val EP_NAME = ExtensionPointName<TrafficLightRendererContributor>("com.intellij.trafficLightRendererContributor")
@@ -136,7 +134,7 @@ class ErrorStripeUpdateManager(private val project: Project, private val corouti
     }
 
     if (setNeeded) {
-      setTrafficLightOnEditorIfNeeded(model = markup, file = psiFile!!, modality = null, project = project)
+      setTrafficLightOnEditorIfNeeded(model = markup, file = psiFile!!, project = project)
     }
   }
 
@@ -144,9 +142,8 @@ class ErrorStripeUpdateManager(private val project: Project, private val corouti
   @JvmName("setOrRefreshErrorStripeRenderer")
   internal fun setOrRefreshErrorStripeRenderer(model: EditorMarkupModel, file: PsiFile) {
     if (refreshErrorStripeRenderer(model)) {
-      val modality = ModalityState.defaultModalityState()
-      coroutineScope.launch {
-        setTrafficLightOnEditorIfNeeded(model = model, file = file, modality = modality, project = project)
+      coroutineScope.launch(ModalityState.defaultModalityState().asContextElement()) {
+        setTrafficLightOnEditorIfNeeded(model = model, file = file, project = project)
       }
     }
   }
@@ -164,47 +161,49 @@ private fun refreshErrorStripeRenderer(editorMarkupModel: EditorMarkupModel): Bo
   if (renderer is TrafficLightRenderer) {
     renderer.refresh(editorMarkupModel)
     (editorMarkupModel as EditorMarkupModelImpl).repaintTrafficLightIcon()
-    return !renderer.isValid
+    return !renderer.isValid()
   }
   else {
     return true
   }
 }
 
-private suspend fun setTrafficLightOnEditorIfNeeded(model: EditorMarkupModel, file: PsiFile, modality: ModalityState?, project: Project) {
+private suspend fun setTrafficLightOnEditorIfNeeded(model: EditorMarkupModel, file: PsiFile, project: Project) {
   val editor = model.getEditor()
   if (isEditorEligible(editor, file, project)) {
     return
   }
 
-  val renderer = createRenderer(editor, file, project)
-  withContext(Dispatchers.EDT + (modality?.asContextElement() ?: EmptyCoroutineContext)) {
-    setTrafficLightOnEditor(project = project, editorMarkupModel = model, renderer = renderer)
-  }
-}
-
-private fun setTrafficLightOnEditor(project: Project, editorMarkupModel: EditorMarkupModel, renderer: TrafficLightRenderer) {
-  val editor = editorMarkupModel.getEditor()
-  if (project.isDisposed() || editor.isDisposed()) {
-    LOG.debug {
-      "Traffic light won't be set to editor: project dispose=${project.isDisposed()}, editor dispose=${editor.isDisposed()}"
+  var rendererWasSet = false
+  val renderer = createRenderer(editor = editor, file = file, project = project)
+  try {
+    withContext(Dispatchers.EDT) {
+      val editor = model.getEditor()
+      if (project.isDisposed() || editor.isDisposed()) {
+        LOG.debug { "Traffic light won't be set to editor: project dispose=${project.isDisposed()}, editor dispose=${editor.isDisposed()}" }
+        // would be registered in setErrorStripeRenderer() below
+        Disposer.dispose(renderer)
+      }
+      else {
+        model.setErrorStripeRenderer(renderer)
+        rendererWasSet = true
+      }
     }
-    // would be registered in setErrorStripeRenderer() below
-    Disposer.dispose(renderer)
   }
-  else {
-    editorMarkupModel.setErrorStripeRenderer(renderer)
+  finally {
+    if (!rendererWasSet) {
+      Disposer.dispose(renderer)
+    }
   }
 }
 
-@RequiresBackgroundThread
-private fun createRenderer(editor: Editor, file: PsiFile?, project: Project): TrafficLightRenderer {
+private suspend fun createRenderer(editor: Editor, file: PsiFile, project: Project): TrafficLightRenderer {
   for (contributor in EP_NAME.extensionList) {
     contributor.createRenderer(editor, file)?.let {
       return it
     }
   }
-  return TrafficLightRenderer(project = project, editor = editor)
+  return createTrafficLightRenderer(editor = editor, file = file, project = project)
 }
 
 private suspend fun isEditorEligible(editor: Editor, psiFile: PsiFile, project: Project): Boolean {
