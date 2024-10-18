@@ -77,14 +77,16 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
   }
 
   protected void initMapAndCache() throws IOException {
-    ValueContainerMap<Key, Value> map = createValueContainerMap();
-    myCache = MapIndexStorageCacheProvider.Companion.getActualProvider().createCache(
-      key -> map.getModifiableValueContainer(key),
-      (key, container) -> onDropFromCache(key, container),
-      myKeyDescriptor,
-      myCacheSize
-    );
-    myMap = map;
+    withWriteLock(() -> {
+      ValueContainerMap<Key, Value> map = createValueContainerMap();
+      myCache = MapIndexStorageCacheProvider.Companion.getActualProvider().createCache(
+        map::getModifiableValueContainer,
+        this::onDropFromCache,
+        myKeyDescriptor,
+        myCacheSize
+      );
+      myMap = map;
+    });
   }
 
   @Override
@@ -173,19 +175,21 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
     if (myReadOnly) {
       throw new IncorrectOperationException("Index storage is read-only");
     }
-    try {
-      myMap.markDirty();
-      if (myKeyIsUniqueForIndexedFile) {
-        assertKeyInputIdConsistency(key, inputId);
-        updateSingleValueDirectly(key, inputId, newValue);
+    withWriteLock(() -> {
+      try {
+        myMap.markDirty();
+        if (myKeyIsUniqueForIndexedFile) {
+          assertKeyInputIdConsistency(key, inputId);
+          updateSingleValueDirectly(key, inputId, newValue);
+        }
+        else {
+          IndexStorage.super.updateValue(key, inputId, newValue);
+        }
       }
-      else {
-        IndexStorage.super.updateValue(key, inputId, newValue);
+      catch (IOException e) {
+        throw new StorageException(e);
       }
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
+    });
   }
 
   @Override
@@ -193,19 +197,21 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
     if (myReadOnly) {
       throw new IncorrectOperationException("Index storage is read-only");
     }
-    try {
-      myMap.markDirty();
-      if (myKeyIsUniqueForIndexedFile) {
-        assertKeyInputIdConsistency(key, inputId);
-        putSingleValueDirectly(key, inputId, value);
+    withWriteLock(() -> {
+      try {
+        myMap.markDirty();
+        if (myKeyIsUniqueForIndexedFile) {
+          assertKeyInputIdConsistency(key, inputId);
+          putSingleValueDirectly(key, inputId, value);
+        }
+        else {
+          read(key).addValue(inputId, value);
+        }
       }
-      else {
-        read(key).addValue(inputId, value);
+      catch (IOException e) {
+        throw new StorageException(e);
       }
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
+    });
   }
 
   @Override
@@ -213,20 +219,22 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
     if (myReadOnly) {
       throw new IncorrectOperationException("Index storage is read-only");
     }
-    try {
-      myMap.markDirty();
-      if (myKeyIsUniqueForIndexedFile) {
-        assertKeyInputIdConsistency(key, inputId);
-        removeSingleValueDirectly(key, inputId);
+    withWriteLock(() -> {
+      try {
+        myMap.markDirty();
+        if (myKeyIsUniqueForIndexedFile) {
+          assertKeyInputIdConsistency(key, inputId);
+          removeSingleValueDirectly(key, inputId);
+        }
+        else {
+          // important: assuming the key exists in the index
+          read(key).removeAssociatedValue(inputId);
+        }
       }
-      else {
-        // important: assuming the key exists in the index
-        read(key).removeAssociatedValue(inputId);
+      catch (IOException e) {
+        throw new StorageException(e);
       }
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
+    });
   }
 
   private @NotNull Path getStorageFile() {
@@ -235,12 +243,14 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
   @Override
   public void flush() throws IOException {
-    if (!myMap.isClosed()) {
-      //TODO RC: inefficiency: we do need to _store_ all cached data -- but we don't want to clear the cache!
-      //         With current implementation we get empty cache every time the flush() is called.
-      invalidateCachedMappings();
-      if (myMap.isDirty()) myMap.force();
-    }
+    withWriteLock(() -> {
+      if (!myMap.isClosed()) {
+        //TODO RC: inefficiency: we do need to _store_ all cached data -- but we don't want to clear the cache!
+        //         With current implementation we get empty cache every time the flush() is called.
+        invalidateCachedMappings();
+        if (myMap.isDirty()) myMap.force();
+      }
+    });
   }
 
   @Override
@@ -372,6 +382,8 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
   @Override
   public void clearCaches() {
+    //RC: strictly speaking we don't need a lock here, since .dropMergedData() uses volatile -- but I don't like to
+    //    rely on such a fine implementation detail
     withWriteLock(() -> {
       for (ChangeTrackingValueContainer<Value> container : myCache.getCachedValues()) {
         container.dropMergedData();

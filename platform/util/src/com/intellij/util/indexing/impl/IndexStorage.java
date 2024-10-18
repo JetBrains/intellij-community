@@ -34,9 +34,11 @@ public interface IndexStorage<Key, Value> extends IndexStorageLock, Flushable, C
   void clear() throws StorageException;
 
 
+  //TODO RC: this method better replaced with read(key, lambda), because otherwise it is hard to ensure thread-safety
+  //         (i.e. use-site must be wrapped in read lock)
+  @Deprecated
   @NotNull ValueContainer<Value> read(Key key) throws StorageException;
 
-  //MAYBE RC: a better design for multithreaded use -- drop read(key) or make it return a (defensive) copy of ValueContainer?
   default <R, E extends Exception> R read(Key key,
                                           @NotNull ThrowableNotNullFunction<? super ValueContainer<Value>, R, E> processor)
     throws StorageException, E {

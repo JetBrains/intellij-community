@@ -59,21 +59,25 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
 
   @Override
   protected void initMapAndCache() throws IOException {
-    super.initMapAndCache();
-    if (myBuildKeyHashToVirtualFileMapping && myBaseStorageFile != null) {
-      FileSystem projectFileFS = myBaseStorageFile.getFileSystem();
-      assert !projectFileFS.isReadOnly() : "File system " + projectFileFS + " is read only";
-      myKeyHashToVirtualFileMapping = new KeyHashLog<>(myKeyDescriptor, myBaseStorageFile);
-    }
-    else {
-      myKeyHashToVirtualFileMapping = null;
-    }
+    withWriteLock(() -> {
+      super.initMapAndCache();
+      if (myBuildKeyHashToVirtualFileMapping && myBaseStorageFile != null) {
+        FileSystem projectFileFS = myBaseStorageFile.getFileSystem();
+        assert !projectFileFS.isReadOnly() : "File system " + projectFileFS + " is read only";
+        myKeyHashToVirtualFileMapping = new KeyHashLog<>(myKeyDescriptor, myBaseStorageFile);
+      }
+      else {
+        myKeyHashToVirtualFileMapping = null;
+      }
+    });
   }
 
   @Override
   public void flush() throws IOException {
-    super.flush();
-    if (myKeyHashToVirtualFileMapping != null) myKeyHashToVirtualFileMapping.force();
+    withWriteLock(() -> {
+      super.flush();
+      if (myKeyHashToVirtualFileMapping != null) myKeyHashToVirtualFileMapping.force();
+    });
   }
 
   @Override
@@ -95,7 +99,9 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
   }
 
   @Override
-  public boolean processKeys(@NotNull Processor<? super Key> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter)
+  public boolean processKeys(@NotNull Processor<? super Key> processor,
+                             GlobalSearchScope scope,
+                             @Nullable IdFilter idFilter)
     throws StorageException {
     return withReadLock(() -> {
       try {
@@ -122,17 +128,27 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
 
   @Override
   public void removeAllValues(@NotNull Key key, int inputId) throws StorageException {
-    if (myKeyHashToVirtualFileMapping != null) {
-      myKeyHashToVirtualFileMapping.removeKeyHashToVirtualFileMapping(key, inputId);
-    }
-    super.removeAllValues(key, inputId);
+    withWriteLock(() -> {
+      if (myKeyHashToVirtualFileMapping != null) {
+        myKeyHashToVirtualFileMapping.removeKeyHashToVirtualFileMapping(key, inputId);
+      }
+      super.removeAllValues(key, inputId);
+    });
   }
 
   @Override
-  public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
-    if (myKeyHashToVirtualFileMapping != null) {
-      myKeyHashToVirtualFileMapping.addKeyHashToVirtualFileMapping(key, inputId);
+  public void addValue(Key key, int inputId, Value value) throws StorageException {
+    if (myKeyHashToVirtualFileMapping == null) {
+      //skip additional lock acquisition
+      super.addValue(key, inputId, value);
     }
-    super.addValue(key, inputId, value);
+    else {
+      withWriteLock(() -> {
+        if (myKeyHashToVirtualFileMapping != null) {
+          myKeyHashToVirtualFileMapping.addKeyHashToVirtualFileMapping(key, inputId);
+        }
+        super.addValue(key, inputId, value);
+      });
+    }
   }
 }

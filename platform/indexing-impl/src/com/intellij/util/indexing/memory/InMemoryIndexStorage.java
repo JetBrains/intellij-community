@@ -51,29 +51,26 @@ public final class InMemoryIndexStorage<K, V> implements VfsAwareIndexStorage<K,
   public boolean processKeys(@NotNull Processor<? super K> processor,
                              GlobalSearchScope scope,
                              @Nullable IdFilter idFilter) {
-    ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
-    readLock.lock();
-    try {
-      return ContainerUtil.and(inMemoryStorage.keySet(), processor::process);
-    }
-    finally {
-      readLock.unlock();
-    }
+    return withReadLock(() -> ContainerUtil.and(inMemoryStorage.keySet(), processor::process));
   }
 
   @Override
   public void addValue(K k, int inputId, V v) {
-    inMemoryStorage.computeIfAbsent(k, __ -> ValueContainerImpl.createNewValueContainer()).addValue(inputId, v);
+    withWriteLock(
+      () -> inMemoryStorage.computeIfAbsent(k, __ -> ValueContainerImpl.createNewValueContainer()).addValue(inputId, v)
+    );
   }
 
   @Override
   public void removeAllValues(@NotNull K k, int inputId) {
-    ValueContainerImpl<V> container = inMemoryStorage.get(k);
-    if (container == null) return;
-    container.removeAssociatedValue(inputId);
-    if (container.size() == 0) {
-      inMemoryStorage.remove(k);
-    }
+    withWriteLock(() -> {
+      ValueContainerImpl<V> container = inMemoryStorage.get(k);
+      if (container == null) return;
+      container.removeAssociatedValue(inputId);
+      if (container.size() == 0) {
+        inMemoryStorage.remove(k);
+      }
+    });
   }
 
   @Override
