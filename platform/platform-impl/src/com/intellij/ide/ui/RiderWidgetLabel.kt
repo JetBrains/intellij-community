@@ -110,14 +110,15 @@ open class RiderWidgetLabel(text: @Nls String, private val clientSide: Boolean) 
 
     val g2d = g.create() as Graphics2D
     try {
-      val fillWidth = width
-      val rect = Rectangle2D.Float(0f, 0f, fillWidth.toFloat(), height.toFloat())
+      val fillWidth = width + 1
       val realWidth = floor(JBUIScale.sysScale(g2d) * fillWidth).toInt()
       if (realWidth != texture1?.image?.width || isBright != JBColor.isBright()) {
-        texture1 = AppUIUtil.createHorizontalGradientTexture(g2d, startColor1, endColor1, fillWidth)
-        texture2 = AppUIUtil.createHorizontalGradientTexture(g2d, startColor2, endColor2, fillWidth)
+        texture1 = AppUIUtil.createHorizontalGradientTexture(g2d, startColor1, endColor1, fillWidth, -1, 0)
+        texture2 = AppUIUtil.createHorizontalGradientTexture(g2d, startColor2, endColor2, fillWidth, -1, 0)
         isBright = JBColor.isBright()
       }
+
+      val rect = Rectangle2D.Float(0f, 0f, width.toFloat(), height.toFloat())
       g2d.paint = texture1
       g2d.fill(rect)
       g2d.paint = texture2
