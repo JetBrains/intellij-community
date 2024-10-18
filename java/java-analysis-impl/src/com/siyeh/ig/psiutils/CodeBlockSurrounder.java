@@ -835,6 +835,7 @@ public abstract class CodeBlockSurrounder {
   private static class AndOrToIfSurrounder extends CodeBlockSurrounder {
     private final @NotNull PsiPolyadicExpression myPolyadicExpression;
     private final @NotNull CodeBlockSurrounder myUpstream;
+    private PsiIfStatement myCreatedIf;
 
     AndOrToIfSurrounder(@NotNull PsiExpression expression,
                         @NotNull PsiPolyadicExpression polyadicExpression,
@@ -894,7 +895,7 @@ public abstract class CodeBlockSurrounder {
     }
 
     @NotNull
-    private static PsiStatement splitReturn(@NotNull PsiStatement returnOrYieldStatement,
+    private PsiStatement splitReturn(@NotNull PsiStatement returnOrYieldStatement,
                                             @NotNull PsiPolyadicExpression condition,
                                             @NotNull PsiExpression lOperands,
                                             @NotNull PsiExpression rOperands,
@@ -906,7 +907,8 @@ public abstract class CodeBlockSurrounder {
       String extractedCondition = orChain ? ct.text(lOperands) : BoolUtils.getNegatedExpressionText(lOperands, ct);
       String ifText = "if(" + extractedCondition + ") " + keyword + " " + orChain + ";";
       PsiStatement ifStatement = factory.createStatementFromText(ifText, returnOrYieldStatement);
-      CodeStyleManager.getInstance(project).reformat(returnOrYieldStatement.getParent().addBefore(ifStatement, returnOrYieldStatement));
+      myCreatedIf = (PsiIfStatement)CodeStyleManager.getInstance(project)
+        .reformat(returnOrYieldStatement.getParent().addBefore(ifStatement, returnOrYieldStatement));
       ct.replaceAndRestoreComments(Objects.requireNonNull(condition), rOperands);
       return returnOrYieldStatement;
     }
@@ -936,7 +938,7 @@ public abstract class CodeBlockSurrounder {
         }
       }
       PsiIfStatement ifStatement = tryCast(PsiTreeUtil.skipWhitespacesAndCommentsBackward(anchor), PsiIfStatement.class);
-      if (ifStatement == null) return;
+      if (ifStatement == null || ifStatement != myCreatedIf) return;
       PsiStatement result = collapseIf(ifStatement, "&&", "||");
       if (result == null) return;
       myUpstream.collapse(myUpstream.anchor(result));
