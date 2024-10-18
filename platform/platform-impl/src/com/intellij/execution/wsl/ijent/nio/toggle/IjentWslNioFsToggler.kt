@@ -40,34 +40,38 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
     fun instance(): IjentWslNioFsToggler = service()
   }
 
-  init {
-    if (!SystemInfo.isWindows) {
-      thisLogger().error("${javaClass.name} should be requested only on Windows")
-    }
-  }
-
   val isAvailable: Boolean get() = strategy != null
 
   suspend fun enableForAllWslDistributions() {
+    logErrorIfNotWindows()
     strategy?.enableForAllWslDistributions()
   }
 
   @TestOnly
   suspend fun switchToIjentFs(distro: WSLDistribution) {
+    logErrorIfNotWindows()
     strategy ?: error("Not available")
     strategy.switchToIjentFs(distro)
   }
 
   @TestOnly
   fun switchToTracingWsl9pFs(distro: WSLDistribution) {
+    logErrorIfNotWindows()
     strategy ?: error("Not available")
     strategy.switchToTracingWsl9pFs(distro)
   }
 
   @TestOnly
   fun unregisterAll() {
+    logErrorIfNotWindows()
     strategy ?: error("Not available")
     strategy.unregisterAll()
+  }
+
+  private fun logErrorIfNotWindows() {
+    if (!SystemInfo.isWindows) {
+      thisLogger().error("${javaClass.name} should be requested only on Windows")
+    }
   }
 
   // TODO Move to ijent.impl?
