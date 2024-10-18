@@ -40,7 +40,7 @@ class MavenDistributionsInfo(private val project: Project) : DistributionsInfo {
   companion object {
     fun asDistributionInfo(mavenHomeType: MavenHomeType): DistributionInfo {
       val version = (mavenHomeType as? StaticResolvedMavenHomeType)
-        ?.let { MavenUtil.getMavenVersion(MavenUtil.getMavenHomeFile(it)) }
+        ?.let { MavenUtil.getMavenVersion(MavenUtil.getMavenHomePath(it)) }
 
       return when (mavenHomeType) {
         is BundledMaven3 -> Bundled3DistributionInfo(version)

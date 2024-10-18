@@ -620,14 +620,14 @@ public class MavenUtil {
 
   /**
    * @deprecated do not use this method, it mixes path to maven home and labels like "Use bundled maven"
-   * use {@link MavenUtil#getMavenHomeFile(StaticResolvedMavenHomeType) getMavenHomeFile(StaticResolvedMavenHomeType} instead
+   * use {@link MavenUtil#getMavenHomePath(StaticResolvedMavenHomeType) getMavenHomePath(StaticResolvedMavenHomeType} instead
    */
   @Nullable
   @Deprecated(forRemoval = true)
   public static File resolveMavenHomeDirectory(@Nullable String overrideMavenHome) {
     if (!isEmptyOrSpaces(overrideMavenHome)) {
       //noinspection HardCodedStringLiteral
-      return getMavenHomeFile(staticOrBundled(resolveMavenHomeType(overrideMavenHome))).toFile();
+      return getMavenHomePath(staticOrBundled(resolveMavenHomeType(overrideMavenHome))).toFile();
     }
 
     String m2home = System.getenv(ENV_M2_HOME);
@@ -877,7 +877,12 @@ public class MavenUtil {
     return mavenHome.resolve(BIN_DIR).resolve(M2_CONF_FILE);
   }
 
-  public static @Nullable Path getMavenHomeFile(@NotNull StaticResolvedMavenHomeType mavenHome) {
+  @Deprecated
+  public static @Nullable File getMavenHomeFile(@NotNull StaticResolvedMavenHomeType mavenHome) {
+    return Optional.ofNullable(getMavenHomePath(mavenHome)).map(Path::toFile).orElse(null);
+  }
+
+  public static @Nullable Path getMavenHomePath(@NotNull StaticResolvedMavenHomeType mavenHome) {
     if (mavenHome instanceof MavenInSpecificPath mp) {
       Path file = Path.of(mp.getMavenHome());
       return isValidMavenHome(file) ? file : null;
@@ -951,7 +956,7 @@ public class MavenUtil {
 
   @Nullable
   public static String getMavenVersion(StaticResolvedMavenHomeType mavenHomeType) {
-    return getMavenVersion(getMavenHomeFile(mavenHomeType));
+    return getMavenVersion(getMavenHomePath(mavenHomeType));
   }
 
   public static boolean isMaven3(String mavenHome) {
@@ -961,7 +966,7 @@ public class MavenUtil {
 
   @Nullable
   public static Path resolveGlobalSettingsFile(@NotNull StaticResolvedMavenHomeType mavenHomeType) {
-    Path directory = getMavenHomeFile(mavenHomeType);
+    Path directory = getMavenHomePath(mavenHomeType);
     if (directory == null) return null;
     return directory.resolve(CONF_DIR).resolve(SETTINGS_XML);
   }

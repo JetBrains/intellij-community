@@ -432,7 +432,7 @@ public final class MavenExternalParameters {
     MavenHomeType type = coreSettings.getMavenHomeType();
     Path file = null;
     if (type instanceof StaticResolvedMavenHomeType st) {
-      file = MavenUtil.getMavenHomeFile(st);
+      file = MavenUtil.getMavenHomePath(st);
     }
     if (type instanceof MavenWrapper) {
       MavenDistribution distribution = MavenDistributionsCache.getInstance(project).getWrapper(workingDir);

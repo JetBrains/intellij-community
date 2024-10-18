@@ -75,10 +75,10 @@ object MavenEelUtil : MavenUtil() {
   @JvmStatic
   fun EelApi.resolveGlobalSettingsFile(mavenHomeType: StaticResolvedMavenHomeType): Path? {
     val directory = if (this is LocalEelApi) {
-      getMavenHomeFile(mavenHomeType)
+      getMavenHomePath(mavenHomeType)
     }
     else {
-      collectMavenDirectories().firstNotNullOfOrNull(::getMavenHomeFile)
+      collectMavenDirectories().firstNotNullOfOrNull(::getMavenHomePath)
     }
 
     return directory?.resolve(CONF_DIR)?.resolve(SETTINGS_XML)
