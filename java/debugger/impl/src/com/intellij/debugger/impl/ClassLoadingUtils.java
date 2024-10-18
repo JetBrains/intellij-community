@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -14,6 +17,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
+
+import static com.intellij.debugger.impl.DebuggerUtilsEx.enableCollection;
 
 public final class ClassLoadingUtils {
   private ClassLoadingUtils() { }
@@ -43,13 +48,21 @@ public final class ClassLoadingUtils {
       VirtualMachineProxyImpl proxy = context.getVirtualMachineProxy();
       Method defineMethod =
         DebuggerUtils.findMethod(classLoader.referenceType(), "defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;");
-      ((DebugProcessImpl)process).invokeInstanceMethod(context, classLoader, defineMethod,
-                                                       Arrays.asList(DebuggerUtilsEx.mirrorOfString(name, context),
-                                                                     DebuggerUtilsEx.mirrorOfByteArray(bytes, context),
-                                                                     proxy.mirrorOf(0),
-                                                                     proxy.mirrorOf(bytes.length)),
-                                                       MethodImpl.SKIP_ASSIGNABLE_CHECK,
-                                                       true);
+      StringReference nameString = DebuggerUtilsEx.mirrorOfString(name, context);
+      ArrayReference byteArray = DebuggerUtilsEx.mirrorOfByteArray(bytes, context);
+      try {
+        ((DebugProcessImpl)process).invokeInstanceMethod(context, classLoader, defineMethod,
+                                                         Arrays.asList(nameString,
+                                                                       byteArray,
+                                                                       proxy.mirrorOf(0),
+                                                                       proxy.mirrorOf(bytes.length)),
+                                                         MethodImpl.SKIP_ASSIGNABLE_CHECK,
+                                                         true);
+      }
+      finally {
+        enableCollection(nameString);
+        enableCollection(byteArray);
+      }
     }
     catch (VMDisconnectedException e) {
       throw e;

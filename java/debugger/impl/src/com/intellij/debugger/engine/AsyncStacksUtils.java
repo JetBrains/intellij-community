@@ -215,7 +215,12 @@ public final class AsyncStacksUtils {
             properties.store(writer, null);
             var stringArgs = DebuggerUtilsEx.mirrorOfString(writer.toString(), evalContext);
             List<StringReference> args = Collections.singletonList(stringArgs);
-            process.invokeMethod(evaluationContext, captureClass, method, args, ObjectReference.INVOKE_SINGLE_THREADED, true);
+            try {
+              process.invokeMethod(evaluationContext, captureClass, method, args, ObjectReference.INVOKE_SINGLE_THREADED, true);
+            }
+            finally {
+              DebuggerUtilsEx.enableCollection(stringArgs);
+            }
           }
           catch (Exception e) {
             DebuggerUtilsImpl.logError(e);

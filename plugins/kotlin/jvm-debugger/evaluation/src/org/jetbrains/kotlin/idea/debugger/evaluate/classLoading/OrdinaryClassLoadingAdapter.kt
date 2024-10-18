@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.classLoading
 
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.impl.ClassLoadingUtils
+import com.intellij.debugger.impl.DebuggerUtilsEx.enableCollection
 import com.intellij.debugger.impl.DebuggerUtilsEx.mirrorOfByteArray
 import com.intellij.debugger.impl.DebuggerUtilsEx.mirrorOfString
 import com.intellij.openapi.projectRoots.JavaSdkVersion
@@ -140,14 +141,15 @@ class OrdinaryClassLoadingAdapter : ClassLoadingAdapter {
             val classLoaderType = classLoader.referenceType() as ClassType
             val defineMethod = classLoaderType.concreteMethodByName("defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;")
             val nameObj = mirrorOfString(name, context.evaluationContext)
-
-            val args = listOf(
-                nameObj,
-                mirrorOfByteArray(bytes, context.evaluationContext),
-                vm.mirrorOf(0),
-                vm.mirrorOf(bytes.size)
-            )
-            context.invokeMethod(classLoader, defineMethod, args)
+            val byteArray = mirrorOfByteArray(bytes, context.evaluationContext)
+            val args = listOf(nameObj, byteArray, vm.mirrorOf(0), vm.mirrorOf(bytes.size))
+            try {
+                context.invokeMethod(classLoader, defineMethod, args)
+            }
+            finally {
+                enableCollection(nameObj)
+                enableCollection(byteArray)
+            }
         } catch (e: Exception) {
             throw EvaluateException("Error during class $name definition: $e", e)
         }

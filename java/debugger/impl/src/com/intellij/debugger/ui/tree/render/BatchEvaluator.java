@@ -139,6 +139,7 @@ public final class BatchEvaluator {
 
       if (result instanceof StringReference stringReference) {
         byte[] bytes = stringReference.value().getBytes(StandardCharsets.ISO_8859_1);
+        DebuggerUtilsEx.enableCollection(argArray);
         try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(bytes))) {
           int count = 0;
           while (dis.available() > 0) {

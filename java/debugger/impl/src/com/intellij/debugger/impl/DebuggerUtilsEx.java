@@ -414,11 +414,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return context.computeAndKeep(() -> virtualMachineProxy.mirrorOf(s));
   }
 
+  @NotNull
   public static ArrayReference mirrorOfArray(@NotNull ArrayType arrayType, int dimension, EvaluationContext context)
     throws EvaluateException {
     return context.computeAndKeep(() -> context.getDebugProcess().newInstance(arrayType, dimension));
   }
 
+  @NotNull
   public static ArrayReference mirrorOfArray(@NotNull ArrayType arrayType,
                                              @NotNull List<? extends Value> values,
                                              @NotNull EvaluationContext context)
@@ -433,6 +435,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return res;
   }
 
+  @NotNull
   public static ArrayReference mirrorOfByteArray(byte[] bytes, EvaluationContext context)
     throws EvaluateException, InvalidTypeException, ClassNotLoadedException {
     context = ((EvaluationContextImpl)context).withAutoLoadClasses(true);
