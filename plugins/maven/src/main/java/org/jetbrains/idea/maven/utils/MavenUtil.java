@@ -50,7 +50,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.platform.eel.EelApi;
 import com.intellij.platform.eel.EelPlatform;
 import com.intellij.platform.eel.LocalEelApi;
-import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.platform.eel.provider.EelProviderKt;
 import com.intellij.platform.eel.provider.utils.EelPathUtilsKt;
 import com.intellij.platform.eel.provider.utils.EelUtilsKt;
 import com.intellij.psi.PsiFile;
@@ -99,7 +99,6 @@ import java.util.stream.Stream;
 import java.util.zip.CRC32;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
-import static com.intellij.platform.eel.EelResultKt.getOrThrow;
 import static com.intellij.platform.eel.fs.EelFileSystemApiKt.getPath;
 import static com.intellij.util.xml.NanoXmlBuilder.stop;
 import static icons.ExternalSystemIcons.Task;
@@ -683,12 +682,12 @@ public class MavenUtil {
   public static List<MavenHomeType> getSystemMavenHomeVariants(Project project) {
     List<MavenHomeType> result = new ArrayList<>();
 
-    var eel = EelProviderUtil.getEelApiBlocking(project);
+    var eel = EelProviderKt.getEelApiBlocking(project);
     var envs = EelUtilsKt.fetchLoginShellEnvVariablesBlocking(eel.getExec());
 
     String m2home = envs.get(ENV_M2_HOME);
     if (!isEmptyOrSpaces(m2home)) {
-      final Path homeFromEnv = eel.getMapper().toNioPath(getOrThrow(getPath(eel.getFs(), m2home)));
+      final Path homeFromEnv = eel.getMapper().toNioPath(getPath(eel.getFs(), m2home));
       if (isValidMavenHome(homeFromEnv)) {
         result.add(new MavenInSpecificPath(m2home));
       }
@@ -696,7 +695,7 @@ public class MavenUtil {
 
     String mavenHome = envs.get("MAVEN_HOME");
     if (!isEmptyOrSpaces(mavenHome)) {
-      final Path mavenHomeFile = eel.getMapper().toNioPath(getOrThrow(getPath(eel.getFs(), mavenHome)));
+      final Path mavenHomeFile = eel.getMapper().toNioPath(getPath(eel.getFs(), mavenHome));
       if (isValidMavenHome(mavenHomeFile)) {
         result.add(new MavenInSpecificPath(mavenHome));
       }
@@ -723,12 +722,12 @@ public class MavenUtil {
       }
     }
     else if (eel.getPlatform() instanceof EelPlatform.Linux) {
-      Path home = eel.getMapper().toNioPath(getOrThrow(getPath(eel.getFs(), "/usr/share/maven")));
+      Path home = eel.getMapper().toNioPath(getPath(eel.getFs(), "/usr/share/maven"));
       if (isValidMavenHome(home)) {
         result.add(new MavenInSpecificPath(home.toAbsolutePath().toString()));
       }
 
-      home = eel.getMapper().toNioPath(getOrThrow(getPath(eel.getFs(), "/usr/share/maven2")));
+      home = eel.getMapper().toNioPath(getPath(eel.getFs(), "/usr/share/maven2"));
       if (isValidMavenHome(home)) {
         result.add(new MavenInSpecificPath(home.toAbsolutePath().toString()));
       }
@@ -765,7 +764,7 @@ public class MavenUtil {
       symlinkDir = Path.of("/usr/share/maven");
     }
     else {
-      symlinkDir = eelApi.getMapper().toNioPath(getOrThrow(getPath(eelApi.getFs(), "/usr/share/maven")));
+      symlinkDir = eelApi.getMapper().toNioPath(getPath(eelApi.getFs(), "/usr/share/maven"));
     }
 
     if (isValidMavenHome(symlinkDir)) {
@@ -779,7 +778,7 @@ public class MavenUtil {
       dir = Path.of("/usr/share/java");
     }
     else {
-      dir = eelApi.getMapper().toNioPath(getOrThrow(getPath(eelApi.getFs(), "/usr/share/java")));
+      dir = eelApi.getMapper().toNioPath(getPath(eelApi.getFs(), "/usr/share/java"));
     }
 
     List<Path> list = new ArrayList<>();
@@ -819,7 +818,7 @@ public class MavenUtil {
 
   @Nullable
   private static Path fromBrew(EelApi eelApi) {
-    final Path brewDir = eelApi.getMapper().toNioPath(getOrThrow(getPath(eelApi.getFs(), "/usr/local/Cellar/maven")));
+    final Path brewDir = eelApi.getMapper().toNioPath(getPath(eelApi.getFs(), "/usr/local/Cellar/maven"));
 
     List<Path> list = new ArrayList<>();
 
@@ -986,7 +985,7 @@ public class MavenUtil {
 
   @NotNull
   public static Path resolveM2Dir(@Nullable Project project) {
-    var eel = project != null ? EelProviderUtil.getEelApiBlocking(project) : null;
+    var eel = project != null ? EelProviderKt.getEelApiBlocking(project) : null;
     return MavenEelUtil.resolveM2Dir(eel);
   }
 

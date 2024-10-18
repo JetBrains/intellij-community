@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.getPath
-import com.intellij.platform.eel.path.getOrThrow
 import com.intellij.platform.eel.provider.getEelApiBlocking
 import org.jetbrains.idea.maven.server.MavenDistribution
 import org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory
@@ -51,7 +50,7 @@ class EelRemotePathTransformFactory : RemotePathTransformerFactory {
 
       override fun toIdePath(remotePath: String): String {
         if (remotePath.isEmpty()) return remotePath
-        return eel.mapper.toNioPath(eel.fs.getPath(remotePath).getOrThrow()).toString()
+        return eel.mapper.toNioPath(eel.fs.getPath(remotePath)).toString()
       }
 
       override fun canBeRemotePath(s: String?): Boolean {

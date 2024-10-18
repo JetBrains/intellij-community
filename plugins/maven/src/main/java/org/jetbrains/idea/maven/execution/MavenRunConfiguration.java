@@ -38,7 +38,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.eel.LocalEelApi;
 import com.intellij.platform.eel.path.EelPath;
-import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.platform.eel.provider.EelProviderKt;
 import com.intellij.terminal.TerminalExecutionConsole;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -338,7 +338,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     @Override
     public TargetEnvironmentRequest createCustomTargetEnvironmentRequest() {
       var project = myConfiguration.getProject();
-      var eel = EelProviderUtil.getEelApiBlocking(project);
+      var eel = EelProviderKt.getEelApiBlocking(project);
 
       if (eel instanceof LocalEelApi) {
         return null;

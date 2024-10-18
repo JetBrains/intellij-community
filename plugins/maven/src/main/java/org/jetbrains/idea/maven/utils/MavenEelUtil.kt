@@ -27,7 +27,6 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.getPath
-import com.intellij.platform.eel.path.getOrThrow
 import com.intellij.platform.eel.provider.getEelApi
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import com.intellij.platform.eel.provider.utils.userHomeBlocking
@@ -91,7 +90,7 @@ object MavenEelUtil : MavenUtil() {
 
     val m2home = exec.fetchLoginShellEnvVariablesBlocking()[ENV_M2_HOME]
     if (m2home != null && !isEmptyOrSpaces(m2home)) {
-      val homeFromEnv = fs.getPath(m2home).getOrThrow().toNioPath(this)
+      val homeFromEnv = fs.getPath(m2home).toNioPath(this)
       if (isValidMavenHome(homeFromEnv)) {
         MavenLog.LOG.debug("resolved maven home using \$M2_HOME as ${homeFromEnv}")
         result.add(MavenInSpecificPath(m2home))
@@ -102,13 +101,13 @@ object MavenEelUtil : MavenUtil() {
     }
 
 
-    var home = fs.getPath("/usr/share/maven").getOrThrow().toNioPath(this)
+    var home = fs.getPath("/usr/share/maven").toNioPath(this)
     if (isValidMavenHome(home)) {
       MavenLog.LOG.debug("Maven home found at /usr/share/maven")
       result.add(MavenInSpecificPath(home))
     }
 
-    home = fs.getPath("/usr/share/maven2").getOrThrow().toNioPath(this)
+    home = fs.getPath("/usr/share/maven2").toNioPath(this)
     if (isValidMavenHome(home)) {
       MavenLog.LOG.debug("Maven home found at /usr/share/maven2")
       result.add(MavenInSpecificPath(home))
