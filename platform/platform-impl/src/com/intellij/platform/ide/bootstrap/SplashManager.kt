@@ -54,7 +54,7 @@ private var SPLASH_WINDOW: Splash? = null
 // if hideSplash requested before we show splash, we should not try to show splash
 private val splashJob = AtomicReference<Job>(CompletableDeferred<Unit>())
 
-private val SHOW_SPLASH_LONGER = System.getProperty("idea.show.splash.longer", "true").toBoolean()
+private val SHOW_SPLASH_LONGER = System.getProperty("idea.show.splash.longer", "false").toBoolean()
 
 private fun isTooLateToShowSplash(): Boolean = !SHOW_SPLASH_LONGER && LoadingState.COMPONENTS_LOADED.isOccurred
 
