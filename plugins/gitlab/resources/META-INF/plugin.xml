@@ -43,6 +43,10 @@
     <module name="intellij.platform.collaborationTools"/>
   </dependencies>
 
+  <content>
+    <module name="intellij.vcs.gitlab.yaml"/>
+  </content>
+
   <extensionPoints>
     <extensionPoint qualifiedName="intellij.vcs.gitlab.titleGenerator"
                     interface="org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabTitleGeneratorExtension"
