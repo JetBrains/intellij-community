@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.LineTokenizer
 import com.intellij.openapi.vcs.VcsException
@@ -135,6 +136,12 @@ internal class GitRepositoryReader(private val project: Project, private val git
     if (isRevertInProgress()) {
       return Repository.State.REVERTING
     }
+
+    val sequencerTodoBasedState = GitSequencerTodoReader.getTodoBasedState(gitFiles)
+    if (sequencerTodoBasedState != null) {
+      return sequencerTodoBasedState
+    }
+
     return Repository.State.NORMAL
   }
 
@@ -401,6 +408,43 @@ internal class GitRepositoryReader(private val project: Project, private val git
       else {
         return null
       }
+    }
+  }
+}
+
+internal object GitSequencerTodoReader {
+  private const val REVERT_COMMAND = "revert"
+  private const val CHERRY_PICK_COMMAND = "pick"
+
+  private val charsToRead = maxOf(REVERT_COMMAND.length, CHERRY_PICK_COMMAND.length)
+
+  /**
+   * The repository can still have cherry-pick/revert in progress with the corresponding HEAD file missing
+   * (see [GitRepositoryFiles.cherryPickHead] and [GitRepositoryFiles.revertHead]).
+   *
+   * It can happen when a conflict occurred while cherry-picking multiple commits and calling "git commit" after the conflict resolution.
+   */
+  fun getTodoBasedState(gitFiles: GitRepositoryFiles): Repository.State? {
+    val sequencerTodoFile = gitFiles.sequencerTodoFile
+    if (!sequencerTodoFile.exists()) return null
+
+    return try {
+      DvcsUtil.tryOrThrow(
+        {
+          sequencerTodoFile.reader(Charsets.UTF_8).use { reader ->
+            val firstChars = String(FileUtil.loadText(reader, charsToRead))
+            when {
+              firstChars.startsWith(CHERRY_PICK_COMMAND) -> Repository.State.GRAFTING
+              firstChars.startsWith(REVERT_COMMAND) -> Repository.State.REVERTING
+              else -> null
+            }
+          }
+        },
+        sequencerTodoFile
+      )
+    }
+    catch (_: RepoStateException) {
+      null
     }
   }
 }

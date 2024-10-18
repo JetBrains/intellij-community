@@ -58,6 +58,8 @@ public final class GitRepositoryFiles {
   private static final @NonNls String STASH = "stash";
   private static final @NonNls String WORKTREES_DIR = "worktrees";
 
+  private static final @NonNls String SEQUENCER_TODO = "sequencer/todo";
+
   private final VirtualFile myRootDir;
   private final VirtualFile myMainDir;
   private final VirtualFile myWorktreeDir;
@@ -85,6 +87,7 @@ public final class GitRepositoryFiles {
   private final @NonNls String myShallow;
   private final @NonNls String myStashReflogPath;
   private final @NonNls String myWorktreesDirPath;
+  private final @NonNls String mySequencerTodoPath;
 
   private @Nullable @NonNls String myCustomHooksDirPath;
 
@@ -119,6 +122,7 @@ public final class GitRepositoryFiles {
     myMergeHeadPath = worktreePath + slash(MERGE_HEAD);
     myCherryPickHeadPath = worktreePath + slash(CHERRY_PICK_HEAD);
     myRevertHeadPath = worktreePath + slash(REVERT_HEAD);
+    mySequencerTodoPath = worktreePath + slash(SEQUENCER_TODO);
     myOrigHeadPath = worktreePath + slash(ORIG_HEAD);
     myCommitMessagePath = worktreePath + slash(COMMIT_EDITMSG);
     myMergeMessagePath = worktreePath + slash(MERGE_MSG);
@@ -227,6 +231,10 @@ public final class GitRepositoryFiles {
 
   public @NotNull File getRevertHead() {
     return file(myRevertHeadPath);
+  }
+
+  public @NotNull File getSequencerTodoFile() {
+    return file(mySequencerTodoPath);
   }
 
   public @NotNull File getMergeMessageFile() {
