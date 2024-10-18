@@ -5,10 +5,12 @@ import com.intellij.driver.model.StringTable
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
+import com.intellij.driver.sdk.ui.xQuery
 import org.intellij.lang.annotations.Language
+import javax.swing.JTable
 
-fun Finder.table(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[@class='JTable']",
-                                                               JTableUiComponent::class.java)
+fun Finder.table(@Language("xpath") xpath: String? = null) =
+  x(xpath ?: xQuery { byType(JTable::class.java) }, JTableUiComponent::class.java)
 
 fun Finder.table(init: QueryBuilder.() -> String) = x(JTableUiComponent::class.java, init)
 
