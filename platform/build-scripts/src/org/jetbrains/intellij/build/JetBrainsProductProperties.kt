@@ -71,6 +71,7 @@ abstract class JetBrainsProductProperties : ProductProperties() {
    * see KTIJ-30761
    * @see org.jetbrains.intellij.build.sharedIndexes.PreSharedIndexesGenerator
    */
+  @Suppress("unused")
   protected fun enableKotlinPluginK2ByDefault() {
     additionalVmOptions += "-Didea.kotlin.plugin.use.k2=true"
   }
