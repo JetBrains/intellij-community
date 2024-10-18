@@ -43,7 +43,7 @@ class ShowHoverInfoAction: AnAction(), ActionToIgnore, PopupAction, DumbAware, P
       }
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         if (highlightInfo != null) {
-          EditorMouseHoverPopupManager.getInstance().showInfoTooltip(editor, highlightInfo, editor.caretModel.offset, false, true, true)
+          EditorMouseHoverPopupManager.getInstance().showInfoTooltip(editor, highlightInfo, editor.caretModel.offset, false, true, true, true)
         }
         else {
           // No errors, just show doc
