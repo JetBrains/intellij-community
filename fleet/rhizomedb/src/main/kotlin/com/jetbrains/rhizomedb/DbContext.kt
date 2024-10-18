@@ -56,7 +56,7 @@ class DbContext<out QQ : Q>(
     @TestOnly
     fun isBound(): Boolean =
       threadLocal.get().let {
-        it != null && it.impl !is Throwable
+        it != null && it.privateValue !is Throwable
       }
 
     fun clearThreadBoundDbContext() {
