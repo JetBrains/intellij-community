@@ -93,17 +93,17 @@ class FileRecordLock {
             hierarchyUpdatesInProcess.add(id);
             return;
           }
-
-          //use active spinning, since stamped lock doesn't support Condition to await()/signal() on:
-          if (turn < 64) {
-            Thread.onSpinWait();
-          }
-          else {
-            LockSupport.parkNanos(1000);
-          }
         }
         finally {
           unlockWrite(lockStamp);
+        }
+
+        //use active spinning, since stamped lock doesn't support Condition to await()/signal() on:
+        if (turn < 64) {
+          Thread.onSpinWait();
+        }
+        else {
+          LockSupport.parkNanos(1000);
         }
       }
     }
