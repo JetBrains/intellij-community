@@ -129,15 +129,16 @@ public final class BatchEvaluator {
         return false;
       }
 
-      ArrayReference argArray = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, values, evaluationContext);
-      String value = DebuggerUtils.getInstance().processCollectibleValue(
-        () -> ((DebugProcessImpl)debugProcess).invokeMethod(
-          evaluationContext, myBatchEvaluatorClass, myBatchEvaluatorMethod, Collections.singletonList(argArray),
-          MethodImpl.SKIP_ASSIGNABLE_CHECK, true),
-        result -> result instanceof StringReference ? ((StringReference)result).value() : null,
-        evaluationContext);
-      if (value != null) {
-        byte[] bytes = value.getBytes(StandardCharsets.ISO_8859_1);
+      // reserve one extra element for the return value to avoid gc collection of the result
+      ArrayReference argArray = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, values.size() + 1, evaluationContext);
+      DebuggerUtilsEx.setArrayValues(argArray, values, false);
+
+      Value result = ((DebugProcessImpl)debugProcess).invokeMethod(
+        evaluationContext, myBatchEvaluatorClass, myBatchEvaluatorMethod, Collections.singletonList(argArray),
+        MethodImpl.SKIP_ASSIGNABLE_CHECK, true);
+
+      if (result instanceof StringReference stringReference) {
+        byte[] bytes = stringReference.value().getBytes(StandardCharsets.ISO_8859_1);
         try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(bytes))) {
           int count = 0;
           while (dis.available() > 0) {
@@ -163,8 +164,8 @@ public final class BatchEvaluator {
         return true;
       }
     }
-    catch (ObjectCollectedException | EvaluateException e) {
-      LOG.debug(e);
+    catch (EvaluateException | ClassNotLoadedException | InvalidTypeException e) {
+      LOG.error(e);
     }
     return false;
   }
