@@ -85,7 +85,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   final override var gradleDsl by gradleDslProperty
 
   private val distributionTypeProperty = propertyGraph.lazyProperty { suggestDistributionType() }
-  private val gradleVersionProperty = propertyGraph.lazyProperty { suggestGradleVersion() }
+  protected val gradleVersionProperty = propertyGraph.lazyProperty { suggestGradleVersion() }
   private val gradleVersionsProperty = propertyGraph.lazyProperty { suggestGradleVersions() }
   private val autoSelectGradleVersionProperty = propertyGraph.lazyProperty { suggestAutoSelectGradleVersion() }
   private val gradleHomeProperty = propertyGraph.lazyProperty { suggestGradleHome() }
