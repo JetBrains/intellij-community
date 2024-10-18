@@ -68,7 +68,6 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -660,8 +659,13 @@ public final class XDebugSessionImpl implements XDebugSession {
   @Override
   public void resume() {
     if (!myDebugProcess.checkCanPerformCommands()) return;
+    var doResume = doResume();
+    if (myMixedModeExtension != null) {
+      myMixedModeExtension.resume();
+      return;
+    }
 
-    myDebugProcess.resume(doResume());
+    myDebugProcess.resume(doResume);
   }
 
   private @Nullable XSuspendContext doResume() {

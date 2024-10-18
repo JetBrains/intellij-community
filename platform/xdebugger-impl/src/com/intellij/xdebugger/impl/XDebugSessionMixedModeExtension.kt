@@ -14,6 +14,7 @@ import java.util.concurrent.Future
 
 interface XMixedModeDebugProcess {
   fun pauseMixedModeSession(): Future<Void>
+  suspend fun resumeAndWait() : Boolean
 }
 
 abstract class XDebugSessionMixedModeExtension(
@@ -26,6 +27,8 @@ abstract class XDebugSessionMixedModeExtension(
     get() = low as XMixedModeDebugProcess
   val highMixedModeProcess: XMixedModeDebugProcess
     get() = high as XMixedModeDebugProcess
+
+  abstract fun isLowSuspendContext(suspendContext: XSuspendContext): Boolean
 
   fun pause() {
     coroutineScope.launch(Dispatchers.EDT) {
@@ -68,7 +71,12 @@ abstract class XDebugSessionMixedModeExtension(
     highDebugPositionReachedDeferred = null
   }
 
-  abstract fun isLowSuspendContext(suspendContext: XSuspendContext): Boolean
+  fun resume() {
+    coroutineScope.launch(Dispatchers.EDT) {
+      highMixedModeProcess.resumeAndWait()
+      lowMixedModeProcess.resumeAndWait()
+    }
+  }
 }
 
 

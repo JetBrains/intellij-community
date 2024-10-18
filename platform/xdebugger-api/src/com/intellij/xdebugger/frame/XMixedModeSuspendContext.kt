@@ -7,7 +7,6 @@ import com.intellij.xdebugger.XDebugProcess
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -63,13 +62,13 @@ class XMixedModeSuspendContext(
   }
 
   private class MyAccumulatingContainer : XExecutionStackContainer {
-    private val mutableFrames = mutableListOf<XExecutionStack>()
+    private val mutableStacks = mutableListOf<XExecutionStack>()
     val frames: CompletableDeferred<List<XExecutionStack>> = CompletableDeferred<List<XExecutionStack>>()
     override fun addExecutionStack(executionStacks: List<XExecutionStack?>, last: Boolean) {
-      executionStacks.filterNotNull().forEach { mutableFrames.add(it) }
+      executionStacks.filterNotNull().forEach { mutableStacks.add(it) }
 
       if (last)
-        frames.complete(mutableFrames)
+        frames.complete(mutableStacks)
     }
 
     override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
