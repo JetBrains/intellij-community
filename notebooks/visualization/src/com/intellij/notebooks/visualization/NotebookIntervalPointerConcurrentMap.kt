@@ -69,7 +69,7 @@ class NotebookIntervalPointerConcurrentMap<Value>(messageBus: MessageBus, parent
    * see [java.util.concurrent.ConcurrentHashMap.CollectionView.removeAll]
    */
   fun removeAll(cellPointers: Collection<NotebookIntervalPointer>): Boolean {
-    return mapReference.get()?.keys?.removeAll(cellPointers) ?: false
+    return mapReference.get()?.keys?.removeAll(cellPointers) == true
   }
 
   override fun dispose() {
