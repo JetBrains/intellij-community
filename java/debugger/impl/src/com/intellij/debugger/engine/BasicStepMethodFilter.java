@@ -106,11 +106,11 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
       return false;
     }
     String declaringClassNameName = myDeclaringClassName.getName(process);
-    boolean res = DebuggerUtilsEx.isAssignableFrom(declaringClassNameName, location.declaringType());
+    boolean res = DebuggerUtils.instanceOf(location.declaringType(), declaringClassNameName);
     if (!res && !method.isStatic() && stackFrame != null) {
       ObjectReference thisObject = stackFrame.thisObject();
       if (thisObject != null) {
-        res = DebuggerUtilsEx.isAssignableFrom(declaringClassNameName, thisObject.referenceType());
+        res = DebuggerUtils.instanceOf(thisObject.referenceType(), (declaringClassNameName));
       }
     }
     return res;
@@ -191,7 +191,7 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
             if (proxyValue != null) {
               Type proxyType = proxyValue.type();
               if (proxyType instanceof ReferenceType &&
-                  DebuggerUtilsEx.isAssignableFrom(myDeclaringClassName.getName(process), proxyType)) {
+                  DebuggerUtils.instanceOf(proxyType, myDeclaringClassName.getName(process))) {
                 Value methodValue = argumentValues.get(size - 2);
                 if (methodValue instanceof ObjectReference) {
                   // TODO: no signature check for now

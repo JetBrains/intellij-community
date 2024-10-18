@@ -123,7 +123,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return null;
   }
 
-
+  @Deprecated
   public static boolean isAssignableFrom(@NotNull String baseQualifiedName, @NotNull Type checkedType) {
     if (checkedType instanceof ReferenceType) {
       if (CommonClassNames.JAVA_LANG_OBJECT.equals(baseQualifiedName)) {
@@ -134,6 +134,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return baseQualifiedName.equals(checkedType.name());
   }
 
+  @Deprecated
   public static ReferenceType getSuperClass(@NotNull final String baseQualifiedName, @NotNull ReferenceType checkedType) {
     if (baseQualifiedName.equals(checkedType.name())) {
       return checkedType;
