@@ -82,7 +82,6 @@ import org.xml.sax.helpers.DefaultHandler;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.File;
 import java.io.*;
 import java.net.URI;
 import java.net.URL;
@@ -99,8 +98,6 @@ import java.util.regex.PatternSyntaxException;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
 
-import static com.intellij.openapi.util.io.JarUtil.getJarAttribute;
-import static com.intellij.openapi.util.io.JarUtil.loadProperties;
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.platform.eel.EelResultKt.getOrThrow;
 import static com.intellij.platform.eel.fs.EelFileSystemApiKt.getPath;
@@ -931,11 +928,10 @@ public class MavenUtil {
   }
 
   private static String getMavenLibVersion(final Path file) {
-    // FIXME: JarUtils should use nio.Path instead of io.File
-    Properties props = loadProperties(file.toFile(), "META-INF/maven/org.apache.maven/maven-core/pom.properties");
+    Properties props = JarUtils.loadProperties(file, "META-INF/maven/org.apache.maven/maven-core/pom.properties");
     return props != null
            ? nullize(props.getProperty("version"))
-           : nullize(getJarAttribute(file.toFile(), java.util.jar.Attributes.Name.IMPLEMENTATION_VERSION));
+           : nullize(JarUtils.getJarAttribute(file, null, java.util.jar.Attributes.Name.IMPLEMENTATION_VERSION));
   }
 
   @Nullable
