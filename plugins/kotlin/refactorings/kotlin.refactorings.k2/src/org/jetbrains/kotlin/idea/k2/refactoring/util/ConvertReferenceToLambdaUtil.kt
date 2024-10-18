@@ -99,7 +99,7 @@ object ConvertReferenceToLambdaUtil {
 
             psiFactory.createLambdaExpression(parameters = "", body = body)
         } else {
-            val isExtension = matchingParameterIsExtension && resolvedCall?.symbol?.isExtension == true
+            val isExtension = matchingParameterIsExtension && resolvedCall.symbol.isExtension == true
             val (params, args) = if (isExtension) {
                 val thisArgument = if (parameterNamesAndTypes.isNotEmpty()) listOf("this") else emptyList()
                 lambdaParameterNamesAndTypes.drop(1) to (thisArgument + parameterNamesAndTypes.drop(1).map { it.first })
