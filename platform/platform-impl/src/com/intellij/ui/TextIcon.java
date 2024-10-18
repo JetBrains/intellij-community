@@ -73,6 +73,10 @@ public final class TextIcon implements Icon {
     setText(text);
   }
 
+  public AffineTransform getFontTransform() {
+    return myFontTransform;
+  }
+
   public void setFontTransform(AffineTransform fontTransform) {
     myFontTransform = fontTransform;
   }
