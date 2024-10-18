@@ -49,6 +49,7 @@ import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 import java.util.function.Predicate
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 
@@ -607,9 +608,9 @@ internal class MavenServerManagerImpl : MavenServerManager {
       result.localRepositoryPath = transformer.toRemotePath(localRepository)
       var file = getGlobalConfigFromMavenConfig(project, settings, transformer)
       if (file == null) {
-        file = MavenUtil.resolveGlobalSettingsFile(mavenDistribution.mavenHome.toFile())
+        file = MavenUtil.resolveGlobalSettingsFile(mavenDistribution.mavenHome)
       }
-      result.globalSettingsPath = transformer.toRemotePath(file.absolutePath)
+      result.globalSettingsPath = transformer.toRemotePath(file.absolutePathString())
       return result
     }
 
@@ -617,12 +618,12 @@ internal class MavenServerManagerImpl : MavenServerManager {
       project: Project,
       settings: MavenGeneralSettings,
       transformer: RemotePathTransformerFactory.Transformer,
-    ): File? {
+    ): Path? {
       val mavenConfig = settings.mavenConfig
       if (mavenConfig == null) return null
       val filePath = mavenConfig.getFilePath(MavenConfigSettings.ALTERNATE_GLOBAL_SETTINGS)
       if (filePath == null) return null
-      return File(filePath)
+      return Path.of(filePath)
     }
   }
 }

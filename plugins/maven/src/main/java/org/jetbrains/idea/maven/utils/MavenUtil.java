@@ -972,8 +972,8 @@ public class MavenUtil {
   }
 
   @NotNull
-  public static File resolveGlobalSettingsFile(@NotNull File mavenHome) {
-    return new File(new File(mavenHome, CONF_DIR), SETTINGS_XML);
+  public static Path resolveGlobalSettingsFile(@NotNull Path mavenHome) {
+    return mavenHome.resolve(CONF_DIR).resolve(SETTINGS_XML);
   }
 
   @NotNull
