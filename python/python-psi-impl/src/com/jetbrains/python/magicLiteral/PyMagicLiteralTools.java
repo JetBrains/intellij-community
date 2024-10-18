@@ -33,10 +33,6 @@ public final class PyMagicLiteralTools {
            Arrays.stream(PyMagicLiteralExtensionPoint.EP_NAME.getExtensions()).anyMatch(o-> o.isEnabled(element));
   }
 
-  public static boolean isMagicLiteral(@NotNull final PsiElement element) {
-    return (element instanceof StringLiteralExpression stringLiteralExpression) && getPoint(stringLiteralExpression) != null;
-  }
-
   /**
    * Gets extension point by literal.
    *
