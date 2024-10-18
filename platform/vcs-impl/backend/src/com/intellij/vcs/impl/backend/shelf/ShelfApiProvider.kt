@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.impl.backend.shelf
 
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.platform.kernel.withKernel
@@ -17,6 +19,8 @@ import com.jetbrains.rhizomedb.EID
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class ShelfApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
@@ -28,7 +32,7 @@ class ShelfApiProvider : RemoteApiProvider {
 
 class BackendShelfApi : RemoteShelfApi {
   override suspend fun loadChangesAsync(projectRef: SharedRef<ProjectEntity>) {
-    val project = getProject(projectRef) ?: return
+    val project = getProject(projectRef)
     ShelveChangesManager.getInstance(project).allLists.forEach {
       it.loadChangesIfNeeded(project)
     }
@@ -39,23 +43,30 @@ class BackendShelfApi : RemoteShelfApi {
   }
 
   override suspend fun showDiffForChanges(projectRef: SharedRef<ProjectEntity>, changeListDto: ChangeListDto) {
-    val project = getProject(projectRef) ?: return
+    val project = getProject(projectRef)
     ShelfTreeHolder.getInstance(project).showDiff(changeListDto)
   }
 
+  override suspend fun unshelveSilently(projectRef: SharedRef<ProjectEntity>, changeListDto: List<ChangeListDto>) {
+    val project = getProject(projectRef)
+
+    val shelfTreeHolder = ShelfTreeHolder.getInstance(project)
+    shelfTreeHolder.unshelveSilently(changeListDto)
+  }
+
   override suspend fun notifyNodeSelected(projectRef: SharedRef<ProjectEntity>, changeListDto: ChangeListDto) {
-    val project = getProject(projectRef) ?: return
+    val project = getProject(projectRef)
     ShelfTreeHolder.getInstance(project).updateSelection(changeListDto)
   }
 
   override suspend fun applyTreeGrouping(projectRef: SharedRef<ProjectEntity>, groupingKeys: Set<String>): Deferred<UpdateStatus> {
-    val project = getProject(projectRef) ?: return CompletableDeferred(UpdateStatus.FAILED)
+    val project = getProject(projectRef)
 
     ShelfTreeHolder.getInstance(project).changeGrouping(groupingKeys)
     return CompletableDeferred(UpdateStatus.OK)
   }
 
-  private suspend fun getProject(projectRef: SharedRef<ProjectEntity>): Project? {
+  private suspend fun getProject(projectRef: SharedRef<ProjectEntity>): Project {
     return withKernel {
       change {
         shared {

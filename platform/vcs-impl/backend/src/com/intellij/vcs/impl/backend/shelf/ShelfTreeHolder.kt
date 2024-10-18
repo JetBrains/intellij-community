@@ -5,11 +5,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
-import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManagerListener
+import com.intellij.openapi.vcs.changes.shelf.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.GroupingPolicyFactoryHolder
 import com.intellij.platform.kernel.withKernel
@@ -32,6 +31,7 @@ import fleet.kernel.sharedRef
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.swing.tree.TreePath
 
 @Service(Service.Level.PROJECT)
@@ -151,6 +151,31 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
           }
         }
       }
+    }
+  }
+
+  fun unshelveSilently(changeListDto: List<ChangeListDto>) {
+    cs.launch {
+      withContext(Dispatchers.EDT) {
+        FileDocumentManager.getInstance().saveAllDocuments()
+      }
+      val changeLists = mutableListOf<ShelvedChangeList>()
+      val changes = mutableListOf<ShelvedChange>()
+      val files = mutableListOf<ShelvedBinaryFile>()
+      changeListDto.forEach {
+        findChangesInTree(it).forEach { node ->
+          val change = node.shelvedChange
+          changeLists.add(change.changeList)
+          if (change.binaryFile != null) {
+            files.add(change.binaryFile!!)
+          }
+          else {
+            changes.add(change.shelvedChange!!)
+          }
+        }
+      }
+
+      ShelveChangesManager.getInstance(project).unshelveSilentlyAsynchronously(project, changeLists, changes, files, null)
     }
   }
 

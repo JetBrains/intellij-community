@@ -19,7 +19,8 @@ abstract class ChangesTreeModelData {
 open class ExactlySelectedData(tree: ChangesTree) : ChangesTreeModelData() {
   private val selectionPaths = tree.selectionPaths
   override fun iterateRawNodes(): JBIterable<ChangesBrowserNode<*>> {
-    return JBIterable.of(*selectionPaths).map { it.lastPathComponent as ChangesBrowserNode<*> }
+    val paths = selectionPaths ?: return JBIterable.empty()
+    return JBIterable.of(*paths).map { it.lastPathComponent as ChangesBrowserNode<*> }
   }
 }
 

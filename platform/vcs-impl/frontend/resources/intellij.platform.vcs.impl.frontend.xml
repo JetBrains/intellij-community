@@ -21,6 +21,10 @@
     </group>
 
     <group id="ShelvedChangesToolbarFrontend">
+      <action id="Frontend.ChangesView.UnshelveSilently" class="com.intellij.vcs.impl.frontend.shelf.actions.UnshelveSilentlyAction"
+              icon="AllIcons.Vcs.UnshelveSilent">
+        <keyboard-shortcut first-keystroke="control alt U" keymap="$default"/>
+      </action>
       <group id="Frontend.ShelvedChangesToolbar.ViewOptions" popup="true" icon="AllIcons.Actions.GroupBy">
         <reference ref="Frontend.ChangesView.GroupBy"/>
         <separator key="separator.show"/>
