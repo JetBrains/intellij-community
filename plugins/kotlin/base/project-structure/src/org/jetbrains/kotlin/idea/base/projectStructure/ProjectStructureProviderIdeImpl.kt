@@ -6,6 +6,7 @@ package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
@@ -68,6 +69,8 @@ inline fun <reified T : KaModule> IdeaModuleInfo.toKaModuleOfType(): @kotlin.int
 internal class ProjectStructureProviderIdeImpl(private val project: Project) : KotlinProjectStructureProviderBase() {
     @OptIn(KaExperimentalApi::class)
     override fun getModule(element: PsiElement, contextualModule: KaModule?): KaModule {
+        ProgressManager.checkCanceled()
+
         if (contextualModule is KtSourceModuleByModuleInfoForOutsider || contextualModule is KaScriptDependencyModule) {
             val virtualFile = element.containingFile?.virtualFile
             if (virtualFile != null && virtualFile in contextualModule.contentScope) {
