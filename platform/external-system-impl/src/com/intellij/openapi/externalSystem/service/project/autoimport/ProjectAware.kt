@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.service.project.autoimport
 
 import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware
 import com.intellij.openapi.externalSystem.autoimport.*
@@ -73,7 +72,8 @@ class ProjectAware(
       if (id.type != RESOLVE_PROJECT) return
       if (!FileUtil.pathsEqual(workingDir, externalProjectPath)) return
 
-      val task = ApplicationManager.getApplication().getService(ExternalSystemProcessingManager::class.java).findTask(id)
+      val processingManager = ExternalSystemProcessingManager.getInstance()
+      val task = processingManager.findTask(id)
       if (task is ExternalSystemResolveProjectTask) {
         if (!autoImportAware.isApplicable(task.resolverPolicy)) {
           return

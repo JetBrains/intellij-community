@@ -94,8 +94,7 @@ public final class ImportGradleProjectCommand extends AbstractCommand {
     AsyncPromise<?> promise = new AsyncPromise<>();
     context.message("Waiting for current import resolve tasks", getLine());
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      ExternalSystemProcessingManager processingManager =
-        ApplicationManager.getApplication().getService(ExternalSystemProcessingManager.class);
+      var processingManager = ExternalSystemProcessingManager.getInstance();
       while (processingManager.hasTaskOfTypeInProgress(ExternalSystemTaskType.RESOLVE_PROJECT, project)) {
         final Object lock = new Object();
         synchronized (lock) {

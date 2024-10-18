@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
@@ -52,8 +51,7 @@ public class RefreshAllExternalProjectsAction extends DumbAwareAction {
     e.getPresentation().setText(ExternalSystemBundle.messagePointer("action.refresh.all.projects.text", name));
     e.getPresentation().setDescription(ExternalSystemBundle.messagePointer("action.refresh.all.projects.description", name));
 
-    ExternalSystemProcessingManager processingManager =
-      ApplicationManager.getApplication().getService(ExternalSystemProcessingManager.class);
+    var processingManager = ExternalSystemProcessingManager.getInstance();
     e.getPresentation().setEnabled(!processingManager.hasTaskOfTypeInProgress(ExternalSystemTaskType.RESOLVE_PROJECT, project));
   }
 

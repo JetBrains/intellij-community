@@ -5,8 +5,10 @@
 package org.jetbrains.plugins.gradle.util
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.externalSystem.model.task.*
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
@@ -111,9 +113,8 @@ fun getGradleTaskExecutionOperation(
 
 fun isResolveTask(id: ExternalSystemTaskId): Boolean {
   if (id.type == ExternalSystemTaskType.RESOLVE_PROJECT) {
-    val task = ApplicationManager.getApplication()
-      .getService(ExternalSystemProcessingManager::class.java)
-      .findTask(id)
+    val processingManager = ExternalSystemProcessingManager.getInstance()
+    val task = processingManager.findTask(id)
     if (task is ExternalSystemResolveProjectTask) {
       return !task.isPreviewMode
     }
