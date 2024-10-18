@@ -10,6 +10,7 @@ import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.EelUserPosixInfoImpl
 import com.intellij.platform.eel.provider.EelUserWindowsInfoImpl
+import com.sun.security.auth.module.UnixSystem
 import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
 
@@ -52,10 +53,11 @@ internal class LocalPosixEelApiImpl : LocalEelApi, EelPosixApi {
   override val exec: EelExecApi = EelLocalExecApi()
   override val mapper: EelPathMapper = LocalEelPathMapper(this)
 
-  override val userInfo: EelUserPosixInfo = EelUserPosixInfoImpl(
-    uid = System.getProperty("user.id").toInt(),
-    gid = System.getProperty("group.id").toInt(),
-  )
+  override val userInfo: EelUserPosixInfo = run {
+    val unix = UnixSystem()
+    EelUserPosixInfoImpl(uid = unix.uid.toInt(), gid = unix.gid.toInt())
+  }
+
   override val fs: EelFileSystemPosixApi
     get() = TODO("Not yet implemented")
 }
