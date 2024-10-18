@@ -10,8 +10,8 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 
@@ -43,4 +43,8 @@ object KtFlexibleTypeAsUpperBoundRenderer : KaFlexibleTypeRenderer {
     ) {
         typeRenderer.renderType(analysisSession, type.upperBound, printer)
     }
+}
+
+fun KaType?.toLowerBoundIfNeeded(): KaClassType? {
+    return ((this as? KaFlexibleType)?.lowerBound ?: this) as? KaClassType
 }

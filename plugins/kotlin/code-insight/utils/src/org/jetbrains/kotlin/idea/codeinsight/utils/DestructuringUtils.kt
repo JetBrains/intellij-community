@@ -6,30 +6,19 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
-import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
-import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtParameter
 
-fun getParameterNames(declaration: KtDestructuringDeclaration): List<String>? {
+fun extractParameterNames(declaration: KtDestructuringDeclaration): List<String>? {
     return analyze(declaration) {
         val type = getClassType(declaration) ?: return null
-        getParameterNames(type)
+        extractDataClassParameterNames(type)
     }
 }
 
-fun getParameterNames(expression: KtExpression): List<String>? {
-    return analyze(expression) {
-        val type = toNonErrorClassType(expression.expressionType) ?: return null
-        getParameterNames(type)
-    }
-}
-
-context(KaSession)
-private fun getParameterNames(type: KaClassType): List<String>? {
+fun KaSession.extractDataClassParameterNames(type: KaClassType): List<String>? {
     if (type.nullability != KaTypeNullability.NON_NULLABLE) return null
     val classSymbol = type.expandedSymbol
 
@@ -52,13 +41,5 @@ private fun getClassType(declaration: KtDestructuringDeclaration): KaClassType? 
         val parentAsParameter = declaration.parent as? KtParameter
         parentAsParameter?.symbol?.returnType
     }
-    return toNonErrorClassType(type)
-}
-
-private fun toNonErrorClassType(type: KaType?): KaClassType? {
-    return when (type) {
-        is KaClassType -> type
-        is KaFlexibleType -> type.lowerBound as? KaClassType
-        else -> null
-    }
+    return type?.toLowerBoundIfNeeded()
 }

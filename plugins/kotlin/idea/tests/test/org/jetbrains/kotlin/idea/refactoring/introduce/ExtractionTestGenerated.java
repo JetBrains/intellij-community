@@ -281,6 +281,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/multiDeclarations/array.kt");
             }
 
+            @TestMetadata("complexCase.kt")
+            public void testComplexCase() throws Exception {
+                runTest("testData/refactoring/introduceVariable/multiDeclarations/complexCase.kt");
+            }
+
             @TestMetadata("intArray.kt")
             public void testIntArray() throws Exception {
                 runTest("testData/refactoring/introduceVariable/multiDeclarations/intArray.kt");
