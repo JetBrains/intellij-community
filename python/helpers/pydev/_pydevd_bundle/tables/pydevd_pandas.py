@@ -4,7 +4,7 @@ import pandas as pd
 import typing
 
 TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
-MAX_COLWIDTH_PYTHON_2 = 100000
+MAX_COLWIDTH = 100000
 
 
 def get_type(table):
@@ -38,7 +38,7 @@ def get_data(table, use_csv_serialization, start_index=None, end_index=None, for
     # type: (Union[pd.DataFrame, pd.Series], int, int) -> str
 
     def convert_data_to_csv(data):
-        return repr(__convert_to_df(data).to_csv(na_rep = "NaN"))
+        return repr(__convert_to_df(data).to_csv(na_rep = "NaN", float_format=format))
 
     def convert_data_to_html(data):
         return repr(__convert_to_df(data).to_html(notebook=True))
@@ -295,11 +295,10 @@ def __get_tables_display_options():
     # type: () -> Tuple[None, Union[int, None], None]
     import sys
     if sys.version_info < (3, 0):
-        return None, MAX_COLWIDTH_PYTHON_2, None
+        return None, MAX_COLWIDTH, None
     try:
-        import pandas as pd
         if int(pd.__version__.split('.')[0]) < 1:
-            return None, MAX_COLWIDTH_PYTHON_2, None
+            return None, MAX_COLWIDTH, None
     except ImportError:
         pass
     return None, None, None

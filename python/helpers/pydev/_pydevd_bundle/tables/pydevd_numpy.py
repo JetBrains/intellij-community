@@ -53,7 +53,7 @@ def get_data(arr, use_csv_serialization, start_index=None, end_index=None, forma
         return repr(_create_table(data, start_index, end_index, format).to_html(notebook=True))
 
     def convert_data_to_csv(data):
-        return repr(_create_table(data, start_index, end_index, format).to_csv())
+        return repr(_create_table(data, start_index, end_index, format).to_csv(na_rep = "None", float_format=format))
 
     if use_csv_serialization:
         computed_data = _compute_data(arr, convert_data_to_csv, format)
@@ -74,7 +74,7 @@ def display_data_html(arr, start_index=None, end_index=None):
 def display_data_csv(arr, start_index=None, end_index=None):
     # type: (np.ndarray, int, int) -> None
     def ipython_display(data):
-        print(_create_table(data, start_index, end_index).to_csv())
+        print(_create_table(data, start_index, end_index).to_csv(na_rep = "None"))
 
     _compute_data(arr, ipython_display)
 
@@ -151,7 +151,7 @@ class _NpTable:
             html.append('<tr>\n')
             html.append('<th>{}</th>\n'.format(int(self.indexes[row_num])))
             if self.type == ONE_DIM:
-                if self.format is not None:
+                if self.format is not None and self.array[row_num] is not None:
                     value = self.format % self.array[row_num]
                 else:
                     value = self.array[row_num]
@@ -160,7 +160,7 @@ class _NpTable:
                 cols = len(self.array[0])
                 max_cols = cols if max_cols is None else min(max_cols, cols)
                 for col_num in range(max_cols):
-                    if self.format is not None:
+                    if self.format is not None and self.array[row_num][col_num] is not None:
                         value = self.format % self.array[row_num][col_num]
                     else:
                         value = self.array[row_num][col_num]
@@ -170,11 +170,36 @@ class _NpTable:
         return html
 
 
-    def to_csv(self):
+    def to_csv(self, na_rep = "None", float_format=None):
         csv_stream = io.StringIO()
-        np.savetxt(csv_stream, self.array, delimiter=',')
+        np_array_without_nones = np.where(self.array == None, np.nan, self.array)
+        if float_format is None or float_format == 'null':
+            float_format = "%s"
+
+        np.savetxt(csv_stream, np_array_without_nones, delimiter=',', fmt=float_format)
         csv_string = csv_stream.getvalue()
-        return csv_string
+        csv_rows_with_index = self._insert_index_at_rows_begging_csv(csv_string)
+
+        col_names = self._collect_col_names_csv()
+        return col_names + "\n" + csv_rows_with_index
+
+    def _insert_index_at_rows_begging_csv(self, csv_string):
+        # type: (str) -> str
+        csv_rows = csv_string.split('\n')
+        csv_rows_with_index = []
+        for row_index in range(self.array.shape[0]):
+            csv_rows_with_index.append(str(row_index) + "," + csv_rows[row_index])
+        return "\n".join(csv_rows_with_index)
+
+    def _collect_col_names_csv(self):
+        if self.type == ONE_DIM:
+            return ",0"
+
+        if self.type == WITH_TYPES:
+            return "," + ",".join(['{}'.format(name) for name in self.array.dtype.names])
+
+        # TWO_DIM
+        return "," + ",".join(['{}'.format(i) for i in range(self.array.shape[1])])
 
 
     def slice(self, start_index=None, end_index=None):
@@ -259,10 +284,19 @@ def _create_table(command, start_index=None, end_index=None, format=None):
         np_array = command
 
     if is_pd:
-        sorting_arr = _sort_df(pd.DataFrame(np_array), sort_keys)
+        sorted_df = _sort_df(pd.DataFrame(np_array), sort_keys)
         if start_index is not None and end_index is not None:
-            return sorting_arr.iloc[start_index:end_index]
-        return sorting_arr
+            sorted_df_slice = sorted_df.iloc[start_index:end_index]
+            # to apply "format" we should not have None inside DFs
+            try:
+                import warnings
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    sorted_df_slice = sorted_df_slice.fillna("None")
+            except Exception as _:
+                pass
+            return sorted_df_slice
+        return sorted_df
 
     return _NpTable(np_array, format=format).sort(sort_keys).slice(start_index, end_index)
 
@@ -295,8 +329,8 @@ def __get_tables_display_options():
     try:
         import pandas as pd
         if int(pd.__version__.split('.')[0]) < 1:
-            return None, MAX_COLWIDTH_PYTHON_2, None
-    except ImportError:
+            return None, MAX_COLWIDTH, None
+    except Exception:
         pass
     return None, None, None
 

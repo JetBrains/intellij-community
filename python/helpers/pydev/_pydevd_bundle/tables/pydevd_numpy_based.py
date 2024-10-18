@@ -45,12 +45,12 @@ def get_column_types(arr):
 
 
 def get_data(arr, use_csv_serialization, start_index=None, end_index=None, format=None):
-    # type: (Union[np.ndarray, dict], int, int) -> str
+    # type: (Union[np.ndarray, dict], bool, Union[int, None], Union[int, None], Union[str, None]) -> str
     def convert_data_to_html(data):
         return repr(_create_table(data, start_index, end_index, format).to_html(notebook=True))
 
     def convert_data_to_csv(data):
-        return repr(_create_table(data, start_index, end_index, format).to_csv())
+        return repr(_create_table(data, start_index, end_index, format).to_csv(na_rep = "None", float_format=format))
 
     if use_csv_serialization:
         computed_data = _compute_data(arr, convert_data_to_csv, format)
@@ -71,7 +71,7 @@ def display_data_html(arr, start_index=None, end_index=None):
 def display_data_csv(arr, start_index=None, end_index=None):
     # type: (np.ndarray, int, int) -> None
     def ipython_display(data):
-        print(_create_table(data, start_index, end_index).to_csv())
+        print(_create_table(data, start_index, end_index).to_csv(na_rep = "None"))
 
     _compute_data(arr, ipython_display)
 
@@ -84,13 +84,17 @@ class _NpTable:
         self.format = format
 
     def get_array_type(self):
-        if self.array.ndim > 1:
+        if len(self.array.shape) > 1:
             return TWO_DIM
 
         return ONE_DIM
 
     def get_cols_types(self):
-        col_type = self.array.dtype
+        dtype = self.array.dtype
+        if "torch" in str(dtype):
+            col_type = dtype
+        else:
+            col_type = dtype.name
 
         if self.type == ONE_DIM:
             # [1, 2, 3] -> [int]
@@ -123,12 +127,6 @@ class _NpTable:
 
         return "".join(html)
 
-    def to_csv(self):
-        csv_stream = io.StringIO()
-        np.savetxt(csv_stream, self.array, delimiter=',')
-        csv_string = csv_stream.getvalue()
-        return csv_string
-
     def _collect_cols_names_html(self):
         if self.type == ONE_DIM:
             return ['<th>0</th>\n']
@@ -142,7 +140,8 @@ class _NpTable:
             html.append('<tr>\n')
             html.append('<th>{}</th>\n'.format(int(self.indexes[row_num])))
             if self.type == ONE_DIM:
-                if self.format is not None:
+                # None usually is not supported in tensors, but to be totally sure
+                if self.format is not None and self.array[row_num] is not None:
                     value = self.format % self.array[row_num]
                 else:
                     value = self.array[row_num]
@@ -151,7 +150,7 @@ class _NpTable:
                 cols = len(self.array[0])
                 max_cols = cols if max_cols is None else min(max_cols, cols)
                 for col_num in range(max_cols):
-                    if self.format is not None:
+                    if self.format is not None and self.array[row_num][col_num]:
                         value = self.format % self.array[row_num][col_num]
                     else:
                         value = self.array[row_num][col_num]
@@ -159,6 +158,33 @@ class _NpTable:
             html.append('</tr>\n')
         html.append('</tbody>\n')
         return html
+
+    def to_csv(self, na_rep = "None", float_format=None):
+        csv_stream = io.StringIO()
+        if float_format is None or float_format == 'null':
+            float_format = "%s"
+
+        np.savetxt(csv_stream, self.array, delimiter=',', fmt=float_format)
+        csv_string = csv_stream.getvalue()
+        csv_rows_with_index = self._insert_index_at_rows_begging_csv(csv_string)
+
+        col_names = self._collect_col_names_csv()
+        return col_names + "\n" + csv_rows_with_index
+
+    def _insert_index_at_rows_begging_csv(self, csv_string):
+        # type: (str) -> str
+        csv_rows = csv_string.split('\n')
+        csv_rows_with_index = []
+        for row_index in range(self.array.shape[0]):
+            csv_rows_with_index.append(str(row_index) + "," + csv_rows[row_index])
+        return "\n".join(csv_rows_with_index)
+
+    def _collect_col_names_csv(self):
+        if self.type == ONE_DIM:
+            return ",0"
+
+        # TWO_DIM
+        return "," + ",".join(['{}'.format(i) for i in range(self.array.shape[1])])
 
     def slice(self, start_index=None, end_index=None):
         if end_index is not None and start_index is not None:
@@ -271,6 +297,12 @@ def __get_tables_display_options():
     import sys
     if sys.version_info < (3, 0):
         return None, MAX_COLWIDTH, None
+    try:
+        import pandas as pd
+        if int(pd.__version__.split('.')[0]) < 1:
+            return None, MAX_COLWIDTH, None
+    except Exception:
+        pass
     return None, None, None
 
 
