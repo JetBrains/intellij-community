@@ -4,6 +4,8 @@ package com.intellij.openapi.diagnostic
 import com.intellij.platform.util.coroutines.internal.runSuspend
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
@@ -56,6 +58,7 @@ private val asyncLog: AsyncLog? = run {
 }
 
 @TestOnly
+@Internal
 fun awaitLogQueueProcessed() {
   asyncLog?.awaitQueueProcessed()
 }
