@@ -505,6 +505,8 @@
     <extensionPoint name="dependencyCollector" beanClass="com.intellij.ide.plugins.DependencyCollectorBean" dynamic="true">
       <with attribute="implementation" implements="com.intellij.ide.plugins.DependencyCollector"/>
     </extensionPoint>
+    <extensionPoint name="ide.dynamicPluginVetoer" interface="com.intellij.ide.plugins.DynamicPluginVetoer" dynamic="true"/>
+
     <extensionPoint name="dependencySupport" beanClass="com.intellij.ide.plugins.DependencySupportBean" dynamic="true"/>
     <extensionPoint name="actionOnSaveInfoProvider" interface="com.intellij.ide.actionsOnSave.ActionOnSaveInfoProvider" dynamic="true"/>
     <extensionPoint name="actionOnSave" interface="com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener$ActionOnSave" dynamic="true"/>

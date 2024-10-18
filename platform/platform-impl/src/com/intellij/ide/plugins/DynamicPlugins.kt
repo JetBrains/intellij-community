@@ -268,12 +268,10 @@ object DynamicPlugins {
         return null
       }
 
-      try {
-        app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).checkUnloadPlugin(module)
+      val vetoMessage = DynamicPluginVetoer.EP_NAME.computeSafeIfAny {
+        it.vetoPluginUnload(module)
       }
-      catch (e: CannotUnloadPluginException) {
-        return e.cause?.localizedMessage ?: "checkUnloadPlugin listener blocked plugin unload"
-      }
+      if (vetoMessage != null) return vetoMessage
     }
 
     if (!Registry.`is`("ide.plugins.allow.unload.from.sources")) {
