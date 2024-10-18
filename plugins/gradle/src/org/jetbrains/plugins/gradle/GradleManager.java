@@ -242,7 +242,7 @@ public final class GradleManager
   }
 
   @Override
-  public Class<? extends ExternalSystemTaskManager<GradleExecutionSettings>> getTaskManagerClass() {
+  public @NotNull Class<? extends ExternalSystemTaskManager<GradleExecutionSettings>> getTaskManagerClass() {
     return GradleTaskManager.class;
   }
 

@@ -14,7 +14,7 @@ com.intellij.openapi.externalSystem.ExternalSystemManager
 - getSearchScope(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings):com.intellij.psi.search.GlobalSearchScope
 - a:getSettingsProvider():com.intellij.util.Function
 - a:getSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
-- a:getTaskManagerClass():java.lang.Class
+- getTaskManagerClass():java.lang.Class
 a:com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 - sf:Companion:com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager$Companion
 - <init>():V

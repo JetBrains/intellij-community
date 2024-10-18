@@ -86,7 +86,10 @@ public interface ExternalSystemManager<
    * @return    class of the build manager to use for the target external system
    * @see #getProjectResolverClass()
    */
-  Class<? extends ExternalSystemTaskManager<ExecutionSettings>> getTaskManagerClass();
+  default @NotNull Class<? extends ExternalSystemTaskManager<ExecutionSettings>> getTaskManagerClass() {
+    //noinspection unchecked
+    return (Class)ExternalSystemTaskManager.NoOp.class;
+  }
 
   /**
    * @return    file chooser descriptor to use when adding new external project

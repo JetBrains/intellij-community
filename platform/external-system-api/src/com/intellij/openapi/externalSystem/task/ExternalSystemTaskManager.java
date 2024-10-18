@@ -20,6 +20,7 @@ import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutio
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,10 @@ import java.util.List;
  * Abstraction layer for executing external system tasks.
  */
 public interface ExternalSystemTaskManager<S extends ExternalSystemExecutionSettings> {
+
+  boolean cancelTask(
+    @NotNull ExternalSystemTaskId id, @NotNull ExternalSystemTaskNotificationListener listener
+  ) throws ExternalSystemException;
 
   /**
    * @deprecated use {@link ExternalSystemTaskManager#executeTasks(ExternalSystemTaskId, List, String, ExternalSystemExecutionSettings, String, ExternalSystemTaskNotificationListener)}
@@ -55,7 +60,28 @@ public interface ExternalSystemTaskManager<S extends ExternalSystemExecutionSett
     executeTasks(id, taskNames, projectPath, settings, vmOptions, arguments, jvmParametersSetup, listener);
   }
 
-  boolean cancelTask(@NotNull ExternalSystemTaskId id,
-                  @NotNull ExternalSystemTaskNotificationListener listener)
-    throws ExternalSystemException;
+  @SuppressWarnings("rawtypes")
+  @ApiStatus.Internal
+  class NoOp implements ExternalSystemTaskManager {
+    @Override
+    public boolean cancelTask(
+      @NotNull ExternalSystemTaskId id,
+      @NotNull ExternalSystemTaskNotificationListener listener
+    ) throws ExternalSystemException {
+      // noop
+      return false;
+    }
+
+    @Override
+    public void executeTasks(
+      @NotNull ExternalSystemTaskId id,
+      @NotNull List taskNames,
+      @NotNull String projectPath,
+      @Nullable ExternalSystemExecutionSettings settings,
+      @Nullable String jvmParametersSetup,
+      @NotNull ExternalSystemTaskNotificationListener listener
+    ) throws ExternalSystemException {
+      // noop
+    }
+  }
 }

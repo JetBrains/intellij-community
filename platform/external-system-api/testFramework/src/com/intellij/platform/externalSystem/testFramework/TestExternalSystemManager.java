@@ -59,7 +59,7 @@ public class TestExternalSystemManager
   }
 
   @Override
-  public Class<? extends ExternalSystemTaskManager<TestExternalSystemExecutionSettings>> getTaskManagerClass() {
+  public @NotNull Class<? extends ExternalSystemTaskManager<TestExternalSystemExecutionSettings>> getTaskManagerClass() {
     throw new UnsupportedOperationException();
   }
 
