@@ -6,7 +6,6 @@
       <sourceFolder url="file://$MODULE_DIR$/testData/inspection" type="java-test-resource" />
       <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/testGen" isTestSource="true" generated="true" />
-      <sourceFolder url="file://$MODULE_DIR$/generate-to-string" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/testSrc/com/intellij/java/codeInspection/bytecodeAnalysis/precompiledData" />
     </content>
     <orderEntry type="inheritedJdk" />
