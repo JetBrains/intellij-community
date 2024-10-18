@@ -648,10 +648,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         ) KotlinBundle.message("use.of.setter.method.instead.of.property.access.syntax")
         else KotlinBundle.message("use.of.getter.method.instead.of.property.access.syntax")
 
-    val propertiesNotToReplace =
-        (NotPropertiesService.DEFAULT.map(::FqNameUnsafe)
-                + FqNameUnsafe("java.util.AbstractCollection.isEmpty") // KTIJ-31157
-                + FqNameUnsafe("java.util.AbstractMap.isEmpty")).toMutableSet() // KTIJ-31157
+    val propertiesNotToReplace = NotPropertiesService.DEFAULT.map(::FqNameUnsafe).toMutableSet()
 
     // Serialized setting
     @Suppress("MemberVisibilityCanBePrivate")
@@ -697,16 +694,22 @@ class NotPropertiesServiceImpl(private val project: Project) : NotPropertiesServ
     override fun getNotProperties(element: PsiElement): Set<FqNameUnsafe> {
         val profile = InspectionProjectProfileManager.getInstance(project).currentProfile
         val tool = profile.getUnwrappedTool(USE_PROPERTY_ACCESS_INSPECTION, element)
-        var propertiesNotToReplace = tool?.propertiesNotToReplace
-        if (propertiesNotToReplace == null) {
-            propertiesNotToReplace = NotPropertiesService.DEFAULT.map(::FqNameUnsafe).toMutableSet()
-            propertiesNotToReplace.add(FqNameUnsafe("java.util.AbstractCollection.isEmpty")) // KTIJ-31157
-            propertiesNotToReplace.add(FqNameUnsafe("java.util.AbstractMap.isEmpty")) // KTIJ-31157
-        }
-        return propertiesNotToReplace
+        val notProperties = (tool?.propertiesNotToReplace ?: NotPropertiesService.DEFAULT.map(::FqNameUnsafe)).toSet()
+        return notProperties + K2_EXTRA_NOT_PROPERTIES
     }
 
     companion object {
         val USE_PROPERTY_ACCESS_INSPECTION: Key<UsePropertyAccessSyntaxInspection> = Key.create("UsePropertyAccessSyntax")
+
+        /**
+         * Properties excluded due to different problems in K2 Mode.
+         *
+         * Intentionally not saved into [UsePropertyAccessSyntaxInspection.propertiesNotToReplace],
+         * because they are not supposed to be possible to disable or modify.
+         */
+        val K2_EXTRA_NOT_PROPERTIES: List<FqNameUnsafe> = listOf(
+            "java.util.AbstractCollection.isEmpty", // KTIJ-31157, KT-72305
+            "java.util.AbstractMap.isEmpty",        // KTIJ-31157, KT-72305
+        ).map(::FqNameUnsafe)
     }
 }
