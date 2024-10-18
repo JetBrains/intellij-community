@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.test
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
 import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
@@ -50,11 +49,4 @@ private class GradleProcessOutputInterceptorImpl : GradleProcessOutputIntercepto
 
     override fun reset() = buffer.setLength(0)
     override fun getOutput() = buffer.toString()
-
-    override fun onSuccess(id: ExternalSystemTaskId) = Unit
-    override fun onFailure(id: ExternalSystemTaskId, e: Exception) = Unit
-    override fun onStatusChange(event: ExternalSystemTaskNotificationEvent) = Unit
-    override fun onCancel(id: ExternalSystemTaskId) = Unit
-    override fun onEnd(id: ExternalSystemTaskId) = Unit
-    override fun beforeCancel(id: ExternalSystemTaskId) = Unit
 }

@@ -34,7 +34,7 @@ class GradleTaskExecutionMeasuringExtension : GradleExecutionHelperExtension {
     operation.addProgressListener(ProgressListener { router.route(it) }, OperationType.TASK)
     ExternalSystemProgressNotificationManager.getInstance()
       .addNotificationListener(id, object : ExternalSystemTaskNotificationListener {
-        override fun onEnd(id: ExternalSystemTaskId) = router.flush()
+        override fun onEnd(proojecPath: String, id: ExternalSystemTaskId) = router.flush()
       })
   }
 }

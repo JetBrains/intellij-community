@@ -127,20 +127,15 @@ class TestProjectResolver: ExternalSystemProjectResolver<TestExternalSystemExecu
   }
 
   override fun cancelTask(taskId: ExternalSystemTaskId, listener: ExternalSystemTaskNotificationListener): Boolean {
-    listener.beforeCancel(taskId)
-    listener.onCancel(taskId)
-    return true
+    return false
   }
 }
 
 class TestTaskManager: ExternalSystemTaskManager<TestExternalSystemExecutionSettings> {
   override fun cancelTask(id: ExternalSystemTaskId, listener: ExternalSystemTaskNotificationListener): Boolean {
-    listener.beforeCancel(id)
-    listener.onCancel(id)
-    return true
+    return false
   }
 }
-
 
 class CustomClassLoadingTestExternalSystemManager(val project: Project): TestExternalSystemManager(project) {
   override fun getProjectResolverClass(): Class<out ExternalSystemProjectResolver<TestExternalSystemExecutionSettings>> {
@@ -174,9 +169,7 @@ class CustomClassLoadingTestProjectResolver: ExternalSystemProjectResolver<TestE
   }
 
   override fun cancelTask(taskId: ExternalSystemTaskId, listener: ExternalSystemTaskNotificationListener): Boolean {
-    listener.beforeCancel(taskId)
-    listener.onCancel(taskId)
-    return true
+    return false
   }
 }
 

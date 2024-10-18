@@ -15,21 +15,11 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class GradleProjectOutputsUpdater : ExternalSystemTaskNotificationListener {
 
-  private val projectPaths = HashMap<ExternalSystemTaskId, String>()
-
-  override fun onStart(id: ExternalSystemTaskId, workingDir: String?) {
+  override fun onSuccess(projectPath: String, id: ExternalSystemTaskId) {
     if (!Registry.`is`("gradle.refresh.project.outputs")) return
     if (id.type != ExternalSystemTaskType.EXECUTE_TASK) return
-    projectPaths[id] = workingDir ?: return
-  }
 
-  override fun onEnd(id: ExternalSystemTaskId) {
-    projectPaths.remove(id)
-  }
-
-  override fun onSuccess(id: ExternalSystemTaskId) {
     val project = id.findProject() ?: return
-    val projectPath = projectPaths.get(id) ?: return
 
     val projectNode = ExternalSystemApiUtil.findProjectNode(project, GradleConstants.SYSTEM_ID, projectPath) ?: return
     val moduleNodes = ExternalSystemApiUtil.findAll(projectNode, ProjectKeys.MODULE)

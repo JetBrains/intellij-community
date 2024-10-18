@@ -2,15 +2,15 @@
 package org.jetbrains.plugins.gradle.dependency.analyzer
 
 import com.google.gson.GsonBuilder
+import com.intellij.gradle.toolingExtension.impl.model.dependencyGraphModel.GradleDependencyNodeDeserializer
+import com.intellij.gradle.toolingExtension.impl.model.dependencyGraphModel.GradleDependencyReportTask
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.dependency.analyzer.*
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerProject
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.dependencies.*
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
@@ -24,16 +24,12 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
-import com.intellij.gradle.toolingExtension.impl.model.dependencyGraphModel.GradleDependencyReportTask
-import com.intellij.gradle.toolingExtension.impl.model.dependencyGraphModel.GradleDependencyNodeDeserializer
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleModuleData
 import org.jetbrains.plugins.gradle.util.GradleUtil
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.ArrayList
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 
 class GradleDependencyAnalyzerContributor(private val project: Project) : DependencyAnalyzerContributor {
   private val projects = ConcurrentHashMap<DependencyAnalyzerProject, GradleModuleData>()
@@ -43,7 +39,7 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
   override fun whenDataChanged(listener: () -> Unit, parentDisposable: Disposable) {
     val progressManager = ExternalSystemProgressNotificationManager.getInstance()
     progressManager.addNotificationListener(object : ExternalSystemTaskNotificationListener {
-      override fun onEnd(id: ExternalSystemTaskId) {
+      override fun onEnd(proojecPath: String, id: ExternalSystemTaskId) {
         if (id.type != ExternalSystemTaskType.RESOLVE_PROJECT) return
         if (id.projectSystemId != GradleConstants.SYSTEM_ID) return
         projects.clear()

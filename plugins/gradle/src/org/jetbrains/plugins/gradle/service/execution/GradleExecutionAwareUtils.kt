@@ -3,7 +3,10 @@ package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.build.events.BuildEventsNls
 import com.intellij.build.events.impl.*
-import com.intellij.openapi.externalSystem.model.task.*
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.progress.ProgressIndicator
@@ -14,7 +17,7 @@ fun whenTaskCanceled(task: ExternalSystemTask, callback: () -> Unit) {
   val wrappedCallback = ConcurrencyUtil.once(callback)
   val progressManager = ExternalSystemProgressNotificationManager.getInstance()
   val notificationListener = object : ExternalSystemTaskNotificationListener {
-    override fun onCancel(id: ExternalSystemTaskId) {
+    override fun onCancel(projectPath: String, id: ExternalSystemTaskId) {
       wrappedCallback.run()
     }
   }

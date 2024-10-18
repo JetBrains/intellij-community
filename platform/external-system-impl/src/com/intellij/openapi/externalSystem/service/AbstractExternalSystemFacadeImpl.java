@@ -216,10 +216,6 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
     }
 
     @Override
-    public synchronized void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
-    }
-
-    @Override
     public synchronized void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) {
       try {
         myManager.onEnvironmentPrepared(id);
@@ -247,26 +243,6 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
       catch (RemoteException e) {
         // Ignore
       }
-    }
-
-    @Override
-    public synchronized void onEnd(@NotNull ExternalSystemTaskId id) {
-    }
-
-    @Override
-    public synchronized void onSuccess(@NotNull ExternalSystemTaskId id) {
-    }
-
-    @Override
-    public synchronized void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception ex) {
-    }
-
-    @Override
-    public synchronized void beforeCancel(@NotNull ExternalSystemTaskId id) {
-    }
-
-    @Override
-    public synchronized void onCancel(@NotNull ExternalSystemTaskId id) {
     }
   }
 }

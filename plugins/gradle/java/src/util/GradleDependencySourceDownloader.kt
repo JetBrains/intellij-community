@@ -57,7 +57,7 @@ object GradleDependencySourceDownloader {
     val userData = prepareUserData(sourceArtifactNotation, taskName, sourcesLocationFile.toPath(), externalProjectPath)
     val resultWrapper = CompletableFuture<File>()
     val listener = object : ExternalSystemTaskNotificationListener {
-      override fun onSuccess(id: ExternalSystemTaskId) {
+      override fun onSuccess(proojecPath: String, id: ExternalSystemTaskId) {
         val sourceJar: File
         try {
           val downloadedArtifactPath = Path.of(FileUtil.loadFile(sourcesLocationFile))
@@ -78,7 +78,7 @@ object GradleDependencySourceDownloader {
         resultWrapper.complete(sourceJar)
       }
 
-      override fun onFailure(id: ExternalSystemTaskId, exception: Exception) {
+      override fun onFailure(proojecPath: String, id: ExternalSystemTaskId, exception: Exception) {
         resultWrapper.completeExceptionally(IllegalStateException("Unable to download sources."))
         GradleDependencySourceDownloaderErrorHandler.handle(project = project,
                                                             externalProjectPath = externalProjectPath,

@@ -406,7 +406,7 @@ public final class ExternalSystemUtil {
       var taskListener = new ExternalSystemTaskNotificationListener() {
 
         @Override
-        public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
+        public void onStart(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
           if (isPreviewMode) return;
           var buildDescriptor = createSyncDescriptor(
             externalProjectPath, importSpec, resolveProjectTask, processHandler, consoleView, consoleManager
@@ -422,21 +422,21 @@ public final class ExternalSystemUtil {
         }
 
         @Override
-        public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
+        public void onFailure(@NotNull String projectPath, @NotNull ExternalSystemTaskId id, @NotNull Exception exception) {
           finishSyncEventSupplier.set(() -> {
             var eventTime = System.currentTimeMillis();
             var eventMessage = BuildBundle.message("build.status.failed");
             var externalSystemName = externalSystemId.getReadableName();
             var title = ExternalSystemBundle.message("notification.project.refresh.fail.title", externalSystemName, projectName);
             var dataContext = BuildConsoleUtils.getDataContext(id, syncViewManager);
-            var eventResult = createFailureResult(title, e, externalSystemId, project, externalProjectPath, dataContext);
+            var eventResult = createFailureResult(title, exception, externalSystemId, project, externalProjectPath, dataContext);
             return new FinishBuildEventImpl(id, null, eventTime, eventMessage, eventResult);
           });
           processHandler.notifyProcessTerminated(1);
         }
 
         @Override
-        public void onCancel(@NotNull ExternalSystemTaskId id) {
+        public void onCancel(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
           finishSyncEventSupplier.set(() -> {
             var eventTime = System.currentTimeMillis();
             var eventMessage = BuildBundle.message("build.status.cancelled");
@@ -447,7 +447,7 @@ public final class ExternalSystemUtil {
         }
 
         @Override
-        public void onSuccess(@NotNull ExternalSystemTaskId id) {
+        public void onSuccess(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
           finishSyncEventSupplier.set(() -> {
             var eventTime = System.currentTimeMillis();
             var eventMessage = BuildBundle.message("build.status.finished");

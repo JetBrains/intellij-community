@@ -126,7 +126,7 @@ public final class ExternalSystemProcessingManagerImpl
   }
 
   @Override
-  public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
+  public void onStart(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
     myTasksInProgress.put(id, System.currentTimeMillis() + TOO_LONG_EXECUTION_MS);
     if (myAlarm.isEmpty()) {
       myAlarm.addRequest(() -> update(), TOO_LONG_EXECUTION_MS);
@@ -150,7 +150,7 @@ public final class ExternalSystemProcessingManagerImpl
   }
 
   @Override
-  public void onEnd(@NotNull ExternalSystemTaskId id) {
+  public void onEnd(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
     myTasksInProgress.remove(id);
     if (myTasksInProgress.isEmpty()) {
       myAlarm.cancelAllRequests();

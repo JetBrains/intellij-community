@@ -68,9 +68,9 @@ class ProjectAware(
   ) : ExternalSystemTaskNotificationListener {
     var externalSystemTaskId = AtomicReference<ExternalSystemTaskId?>(null)
 
-    override fun onStart(id: ExternalSystemTaskId, workingDir: String?) {
+    override fun onStart(projectPath: String, id: ExternalSystemTaskId) {
       if (id.type != RESOLVE_PROJECT) return
-      if (!FileUtil.pathsEqual(workingDir, externalProjectPath)) return
+      if (!FileUtil.pathsEqual(projectPath, externalProjectPath)) return
 
       val processingManager = ExternalSystemProcessingManager.getInstance()
       val task = processingManager.findTask(id)
@@ -89,15 +89,15 @@ class ProjectAware(
       delegate.onProjectReloadFinish(status)
     }
 
-    override fun onSuccess(id: ExternalSystemTaskId) {
+    override fun onSuccess(projectPath: String, id: ExternalSystemTaskId) {
       afterProjectRefresh(id, ExternalSystemRefreshStatus.SUCCESS)
     }
 
-    override fun onFailure(id: ExternalSystemTaskId, e: Exception) {
+    override fun onFailure(projectPath: String, id: ExternalSystemTaskId, exception: Exception) {
       afterProjectRefresh(id, ExternalSystemRefreshStatus.FAILURE)
     }
 
-    override fun onCancel(id: ExternalSystemTaskId) {
+    override fun onCancel(projectPath: String, id: ExternalSystemTaskId) {
       afterProjectRefresh(id, ExternalSystemRefreshStatus.CANCEL)
     }
   }

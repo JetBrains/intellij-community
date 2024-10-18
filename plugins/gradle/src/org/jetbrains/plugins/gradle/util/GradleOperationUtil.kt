@@ -52,7 +52,7 @@ fun getGradleProjectReloadOperation(
 ): ObservableOperationTrace {
   val operation = AtomicOperationTrace("Gradle Reload")
   val executionIds = HashMap<ExternalSystemTaskId, OperationExecutionId>()
-  whenExternalSystemTaskStarted(parentDisposable) { id, path ->
+  whenExternalSystemTaskStarted(parentDisposable) { path, id ->
     if (isResolveTask(id) && isRelevant(id, path)) {
       val executionId = OperationExecutionId.createId {
         putData(ID_KEY, id)
@@ -92,7 +92,7 @@ fun getGradleTaskExecutionOperation(
 ): ObservableOperationTrace {
   val operation = AtomicOperationTrace("Gradle Task Execution")
   val executionIds = HashMap<ExternalSystemTaskId, OperationExecutionId>()
-  whenExternalSystemTaskStarted(parentDisposable) { id, path ->
+  whenExternalSystemTaskStarted(parentDisposable) { path, id ->
     if (isExecuteTask(id) && isRelevant(id, path)) {
       val executionId = OperationExecutionId.createId {
         putData(ID_KEY, id)
@@ -128,12 +128,12 @@ private fun isExecuteTask(id: ExternalSystemTaskId): Boolean {
 
 fun whenExternalSystemTaskStarted(
   parentDisposable: Disposable,
-  action: (ExternalSystemTaskId, String?) -> Unit
+  action: (String, ExternalSystemTaskId) -> Unit
 ) {
   ExternalSystemProgressNotificationManager.getInstance()
     .addNotificationListener(object : ExternalSystemTaskNotificationListener {
-      override fun onStart(id: ExternalSystemTaskId, workingDir: String?) {
-        action(id, workingDir)
+      override fun onStart(projectPath: String, id: ExternalSystemTaskId) {
+        action(projectPath, id)
       }
     }, parentDisposable)
 }
@@ -144,15 +144,15 @@ fun whenExternalSystemTaskFinished(
 ) {
   ExternalSystemProgressNotificationManager.getInstance()
     .addNotificationListener(object : ExternalSystemTaskNotificationListener {
-      override fun onSuccess(id: ExternalSystemTaskId) {
+      override fun onSuccess(projectPath: String, id: ExternalSystemTaskId) {
         action(id, OperationExecutionStatus.Success)
       }
 
-      override fun onFailure(id: ExternalSystemTaskId, e: Exception) {
-        action(id, OperationExecutionStatus.Failure(e))
+      override fun onFailure(projectPath: String, id: ExternalSystemTaskId, exception: Exception) {
+        action(id, OperationExecutionStatus.Failure(exception))
       }
 
-      override fun onCancel(id: ExternalSystemTaskId) {
+      override fun onCancel(projectPath: String, id: ExternalSystemTaskId) {
         action(id, OperationExecutionStatus.Cancel)
       }
     }, parentDisposable)

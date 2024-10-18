@@ -82,7 +82,7 @@ class GradleHeadlessLoggingProjectActivity(val scope: CoroutineScope) : ProjectA
     private val project: Project, private val scope: CoroutineScope
   ) : ExternalSystemTaskNotificationListener {
 
-    override fun onSuccess(id: ExternalSystemTaskId) {
+    override fun onSuccess(projectPath: String, id: ExternalSystemTaskId) {
       if (!id.isGradleProjectResolveTask()) return
       HeadlessLogging.logMessage(gradlePrefix + "Gradle resolve stage finished with success: ${id.ideProjectId}")
 
@@ -110,19 +110,19 @@ class GradleHeadlessLoggingProjectActivity(val scope: CoroutineScope) : ProjectA
         })
     }
 
-    override fun onFailure(id: ExternalSystemTaskId, e: Exception) {
+    override fun onFailure(projectPath: String, id: ExternalSystemTaskId, exception: Exception) {
       if (!id.isGradleProjectResolveTask()) return
-      HeadlessLogging.logFatalError(e)
+      HeadlessLogging.logFatalError(exception)
     }
 
-    override fun onCancel(id: ExternalSystemTaskId) {
+    override fun onCancel(projectPath: String, id: ExternalSystemTaskId) {
       if (!id.isGradleProjectResolveTask()) return
       HeadlessLogging.logWarning(gradlePrefix + "Gradle resolve stage canceled ${id.ideProjectId}")
     }
 
-    override fun onStart(id: ExternalSystemTaskId, workingDir: String) {
+    override fun onStart(projectPath: String, id: ExternalSystemTaskId) {
       if (!id.isGradleProjectResolveTask()) return
-      HeadlessLogging.logMessage(gradlePrefix + "Gradle resolve stage started ${id.ideProjectId}, working dir: $workingDir")
+      HeadlessLogging.logMessage(gradlePrefix + "Gradle resolve stage started ${id.ideProjectId}, working dir: $projectPath")
     }
   }
 

@@ -594,12 +594,12 @@ public class GradleInstallationManager implements Disposable {
   private static final class BuildLayoutParametersCacheCleanupListener
     implements ExternalSystemTaskNotificationListener, ProjectManagerListener, DynamicPluginListener {
     @Override
-    public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
-      getInstance().myBuildLayoutParametersCache.remove(workingDir);
+    public void onStart(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
+      getInstance().myBuildLayoutParametersCache.remove(projectPath);
     }
 
     @Override
-    public void onEnd(@NotNull ExternalSystemTaskId id) {
+    public void onEnd(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
       // it is not enough to clean up cache on the start of an external event, because sometimes the changes occur `after` the event finishes.
       // An example of this behavior is the downloading of gradle distribution:
       // we must not rely on the caches that were computed without downloaded distribution.
