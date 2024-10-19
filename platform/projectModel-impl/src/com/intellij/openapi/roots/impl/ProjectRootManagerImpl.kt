@@ -38,8 +38,11 @@ private const val PROJECT_JDK_TYPE_ATTR = "project-jdk-type"
 private const val ATTRIBUTE_VERSION = "version"
 
 @State(name = "ProjectRootManager")
-open class ProjectRootManagerImpl(val project: Project,
-                                  @JvmField protected val coroutineScope: CoroutineScope) : ProjectRootManagerEx(), PersistentStateComponent<Element> {
+@ApiStatus.Internal
+open class ProjectRootManagerImpl(
+  @JvmField val project: Project,
+  @JvmField protected val coroutineScope: CoroutineScope,
+) : ProjectRootManagerEx(), PersistentStateComponent<Element> {
   private val projectJdkEventDispatcher = EventDispatcher.create(ProjectJdkListener::class.java)
   private var projectSdkName: String? = null
   private var projectSdkType: String? = null
