@@ -19428,7 +19428,8 @@ f:com.intellij.webcore.packaging.PackagingErrorDialog
 - <init>(java.lang.String,com.intellij.webcore.packaging.PackageManagementService$ErrorDescription):V
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.roots.impl.ProjectRootManagerImpl
+- com.intellij.openapi.components.PersistentStateComponent
+- com.intellij.openapi.roots.ex.ProjectRootManagerEx
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge$ModuleDependencyListenerImpl
 - java.util.EventListener
