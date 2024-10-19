@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.function.Predicate
 
-data class OpenProjectTask internal constructor(
+data class OpenProjectTask @Internal constructor(
   val forceOpenInNewFrame: Boolean,
   val forceReuseFrame: Boolean = false,
   val projectToClose: Project?,
@@ -46,11 +46,13 @@ data class OpenProjectTask internal constructor(
   val implOptions: Any?,
 ) {
   @Internal
-  constructor(forceOpenInNewFrame: Boolean = false,
-              projectToClose: Project? = null,
-              isNewProject: Boolean = false,
-              /** Ignored if [isNewProject] is set to false. */
-              useDefaultProjectAsTemplate: Boolean = isNewProject) : this(
+  constructor(
+    forceOpenInNewFrame: Boolean = false,
+    projectToClose: Project? = null,
+    isNewProject: Boolean = false,
+    /** Ignored if [isNewProject] is set to false. */
+    useDefaultProjectAsTemplate: Boolean = isNewProject,
+  ) : this(
     forceOpenInNewFrame = forceOpenInNewFrame,
     projectToClose = projectToClose,
     isNewProject = isNewProject,

@@ -341,7 +341,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       // if we are shutting down the entire test framework, proceed to full dispose
       val projectImpl = project as ProjectImpl
       if (!projectImpl.isTemporarilyDisposed) {
-        @Suppress("ForbiddenInSuspectContextMethod")
         app.runWriteAction {
           projectImpl.disposeEarlyDisposable()
           projectImpl.setTemporarilyDisposed(true)
@@ -357,7 +356,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         if (project is ComponentManagerImpl) {
           project.stopServicePreloading()
         }
-        @Suppress("ForbiddenInSuspectContextMethod")
         app.runWriteAction {
           if (project is ProjectImpl) {
             project.disposeEarlyDisposable()
@@ -403,7 +401,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
     }
 
-    @Suppress("ForbiddenInSuspectContextMethod")
     app.runWriteAction {
       removeFromOpened(project)
       if (project is ProjectImpl) {
@@ -656,11 +653,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
             val initFrameEarly = !options.isNewProject && options.beforeOpen == null && options.project == null
             val project = when {
               options.project != null -> options.project!!
-              options.isNewProject -> prepareNewProject(options = options,
-                                                        projectStoreBaseDir = projectStoreBaseDir)
-              else -> prepareProject(options = options,
-                                     projectStoreBaseDir = projectStoreBaseDir,
-                                     projectInitHelper = initHelper.takeIf { initFrameEarly })
+              options.isNewProject -> prepareNewProject(options = options, projectStoreBaseDir = projectStoreBaseDir)
+              else -> prepareProject(
+                options = options,
+                projectStoreBaseDir = projectStoreBaseDir,
+                projectInitHelper = initHelper.takeIf { initFrameEarly },
+              )
             }
             result = project
             // must be under try-catch to dispose project on beforeOpen or preparedToOpen callback failures
@@ -676,9 +674,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
                 module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
                   baseDir = projectStoreBaseDir,
                   project = project,
-                  newProject = options.isProjectCreatedWithWizard
+                  newProject = options.isProjectCreatedWithWizard,
                 )
-                options.preparedToOpen?.invoke(module!!)
+                options.preparedToOpen?.invoke(module)
               }
             }
 
@@ -1202,9 +1200,9 @@ private fun toCanonicalName(filePath: String): Path {
       return file.toRealPath(LinkOption.NOFOLLOW_LINKS)
     }
   }
-  catch (ignore: InvalidPathException) {
+  catch (_: InvalidPathException) {
   }
-  catch (e: IOException) {
+  catch (_: IOException) {
     // the file does not yet exist, so its canonical path will be equal to its original path
   }
   return file
@@ -1385,7 +1383,7 @@ private suspend fun confirmOpenNewProject(options: OpenProjectTask): Int {
     }
 
     val openInExistingFrame = withContext(Dispatchers.EDT) {
-      //readaction is not enough
+      // readAction is not enough
       writeIntentReadAction {
         if (options.isNewProject)
           MessageDialogBuilder.yesNoCancel(ideUICustomization.projectMessage("title.new.project"), message)
@@ -1426,7 +1424,7 @@ internal fun isCorePlugin(descriptor: PluginDescriptor): Boolean {
 }
 
 /**
- * Usage requires IJ Platform team approval (including plugin into white-list).
+ * Usage requires IJ Platform team approval (including plugin into allowlist).
  */
 @Internal
 interface ProjectServiceContainerInitializedListener {
