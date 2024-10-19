@@ -2,20 +2,20 @@
 package com.intellij.openapi.application
 
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.diagnostic.dumpCoroutines
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.ThrowableComputable
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.asContextElement
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Suspends until it's possible to obtain the read lock and then
@@ -258,6 +258,13 @@ fun CoroutineContext.isBackgroundWriteAction(): Boolean =
 
 private val useBackgroundWriteAction = System.getProperty("idea.background.write.action.enabled", "false").toBoolean()
 
+internal fun isBackgroundWriteActionPossible(contextModality: ModalityState?): Boolean {
+  if (!useBackgroundWriteAction) {
+    return false
+  }
+  return contextModality == null || contextModality == ModalityState.nonModal()
+}
+
 /**
  * Runs given [action] under [write lock][com.intellij.openapi.application.Application.runWriteAction].
  *
@@ -278,18 +285,27 @@ private val useBackgroundWriteAction = System.getProperty("idea.background.write
 @ApiStatus.Obsolete
 @Internal
 suspend fun <T> backgroundWriteAction(action: () -> T): T {
-  if (useBackgroundWriteAction) {
-    val contextModality = coroutineContext.contextModality()
-    if (contextModality == null || contextModality == ModalityState.nonModal()) {
-      return withContext(Dispatchers.Default + RunInBackgroundWriteActionMarker) {
-        blockingContext {
-          ApplicationManager.getApplication().runWriteAction(Computable(action))
-        }
-      }
-    }
+  val isBackgroundActionAllowed = isBackgroundWriteActionPossible(coroutineContext.contextModality())
+  val context = if (isBackgroundActionAllowed) {
+    Dispatchers.Default + RunInBackgroundWriteActionMarker
+  }
+  else {
+    Dispatchers.EDT
   }
 
-  return writeAction(action)
+  return withContext(context) {
+    val dumpJob = if (isBackgroundActionAllowed) launch {
+      delay(10.seconds)
+      logger<ApplicationManager>().warn("Cannot execute write action in 10 seconds: ${dumpCoroutines()}")
+    } else null
+    try {
+      @Suppress("ForbiddenInSuspectContextMethod")
+      ApplicationManager.getApplication().runWriteAction(ThrowableComputable(action))
+    }
+    finally {
+      dumpJob?.cancel()
+    }
+  }
 }
 
 /**
