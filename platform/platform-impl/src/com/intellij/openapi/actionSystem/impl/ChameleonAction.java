@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.project.ProjectTypeService;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,35 +16,28 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Dmitry Avdeev
- */
+@ApiStatus.Internal
 public final class ChameleonAction extends AnAction {
   private final Map<ProjectType, AnAction> myActions = new HashMap<>();
 
-  public ChameleonAction(@NotNull AnAction first, @Nullable ProjectType projectType) {
-    addAction(first, projectType);
+  public ChameleonAction(@NotNull AnAction first, @Nullable ProjectType projectType, @NotNull Function1<? super String, ? extends AnAction> actionSupplier) {
+    addAction(first, projectType, actionSupplier);
     copyFrom(myActions.values().iterator().next());
   }
 
   /**
-   * @return true on success, false on action conflict
+   * @return true on success, false on an action conflict
    */
-  boolean addAction(@NotNull AnAction action, @Nullable ProjectType projectType) {
+  boolean addAction(@NotNull AnAction action, @Nullable ProjectType projectType, @NotNull Function1<? super String, ? extends AnAction> actionSupplier) {
     if (action instanceof ActionStub actionStub) {
-      action = ActionManagerImplKt.convertStub(actionStub);
+      action = ActionManagerImplKt.convertStub(actionStub, actionSupplier);
       if (action == null) {
         return true;
       }
 
       projectType = actionStub.getProjectType();
     }
-
-    if (myActions.containsKey(projectType)) {
-      return false;
-    }
-    myActions.put(projectType, action);
-    return true;
+    return myActions.putIfAbsent(projectType, action) == null;
   }
 
   @Override
