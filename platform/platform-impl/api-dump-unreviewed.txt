@@ -6554,12 +6554,6 @@ f:com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener
 - onClosed(com.intellij.openapi.ui.popup.LightweightWindowEvent):V
 com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider
 - a:getBundledListsRelativePaths():java.lang.String[]
-f:com.intellij.openapi.actionSystem.impl.ChameleonAction
-- com.intellij.openapi.actionSystem.AnAction
-- <init>(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.project.ProjectType):V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 com.intellij.openapi.actionSystem.impl.DynamicActionConfigurationCustomizer
 - registerActions(com.intellij.openapi.actionSystem.ActionManager):V
 - a:unregisterActions(com.intellij.openapi.actionSystem.ActionManager):V

@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "RemoveRedundantQualifierName")
 
 package com.intellij.ide.ui.customization
 
@@ -449,13 +449,13 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
         continue
       }
 
-      initActionIcon(anAction = action, actionId = actionId, actionManager = actionManager)
+      initActionIcon(anAction = action, actionId = actionId, actionSupplier = { actionManager.getActionOrStub(it) })
       PresentationFactory.updatePresentation(action)
     }
   }
 
   @ApiStatus.Internal
-  fun initActionIcon(anAction: AnAction, actionId: String, actionManager: ActionManager) {
+  fun initActionIcon(anAction: AnAction, actionId: String, actionSupplier: (String) -> AnAction?) {
     LOG.assertTrue(anAction !is ActionStub)
     val presentation = anAction.templatePresentation
     val originalIcon = presentation.icon
@@ -463,7 +463,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
       presentation.putClientProperty(PROP_ORIGINAL_ICON, originalIcon)
     }
 
-    val icon = iconCustomizations.get(actionId)?.let { getIconForPath(actionManager = actionManager, iconPath = it) }
+    val icon = iconCustomizations.get(actionId)?.let { getIconForPath(actionSupplier = actionSupplier, iconPath = it) }
                ?: presentation.getClientProperty(PROP_ORIGINAL_ICON)
     presentation.icon = icon
     presentation.disabledIcon = if (icon == null) null else getDisabledIcon(icon)
@@ -597,8 +597,8 @@ private fun doLoadCustomIcon(urlString: String): Icon {
   return icon
 }
 
-internal fun getIconForPath(actionManager: ActionManager, iconPath: String): Icon? {
-  val reuseFrom = actionManager.getAction(iconPath)
+internal fun getIconForPath(actionSupplier: (String) -> AnAction?, iconPath: String): Icon? {
+  val reuseFrom = actionSupplier(iconPath)
   if (reuseFrom != null) {
     return getOriginalIconFrom(reuseFrom)
   }

@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog", "OVERRIDE_DEPRECATION")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog", "OVERRIDE_DEPRECATION", "RemoveRedundantQualifierName")
 
 package com.intellij.openapi.actionSystem.impl
 
@@ -1340,8 +1340,9 @@ private fun tryToExecuteNow(action: AnAction,
                             inputEvent: InputEvent?,
                             result: ActionCallback) {
   val presentationFactory = PresentationFactory()
-  val dataContext = DataManager.getInstance().run {
-    if (contextComponent == null) dataContext else getDataContext(contextComponent)
+  @Suppress("DEPRECATION")
+  val dataContext = DataManager.getInstance().let {
+    if (contextComponent == null) it.dataContext else it.getDataContext(contextComponent)
   }
   val wrappedContext = Utils.createAsyncDataContext(dataContext)
   val componentAdjusted = PlatformDataKeys.CONTEXT_COMPONENT.getData(wrappedContext) ?: contextComponent
@@ -1375,8 +1376,9 @@ private suspend fun tryToExecuteSuspend(action: AnAction,
   (if (contextComponent != null) IdeFocusManager.findInstanceByComponent(contextComponent)
   else IdeFocusManager.getGlobalInstance()).awaitFocusSettlesDown()
 
-  val dataContext = DataManager.getInstance().run {
-    if (contextComponent == null) dataContext else getDataContext(contextComponent)
+  @Suppress("DEPRECATION")
+  val dataContext = DataManager.getInstance().let {
+    if (contextComponent == null) it.dataContext else it.getDataContext(contextComponent)
   }
   val wrappedContext = Utils.createAsyncDataContext(dataContext)
 
@@ -1400,9 +1402,9 @@ private class CapturingListener(@JvmField val timerListener: TimerListener) : Ti
 
   override fun run() {
     // this is periodic runnable that is invoked on timer; it should not complete a parent job
-    childContext.runInChildContext(completeOnFinish = false, {
+    childContext.runInChildContext(completeOnFinish = false) {
       timerListener.run()
-    })
+    }
   }
 }
 
@@ -1477,7 +1479,12 @@ private fun <T> instantiate(stubClassName: String,
   return null
 }
 
-private fun updateIconFromStub(stub: ActionStubBase, anAction: AnAction, componentManager: ComponentManager) {
+private fun updateIconFromStub(
+  stub: ActionStubBase,
+  anAction: AnAction,
+  componentManager: ComponentManager,
+  actionSupplier: (String) -> AnAction?,
+) {
   val iconPath = stub.iconPath
   if (iconPath != null) {
     val module = stub.plugin
@@ -1490,7 +1497,7 @@ private fun updateIconFromStub(stub: ActionStubBase, anAction: AnAction, compone
   val customActionsSchema = componentManager.serviceIfCreated<CustomActionsSchema>()
   if (customActionsSchema != null && !customActionsSchema.getIconPath(stub.id).isEmpty()) {
     RecursionManager.doPreventingRecursion<Any?>(stub.id, false) {
-      customActionsSchema.initActionIcon(anAction = anAction, actionId = stub.id, actionManager = ActionManager.getInstance())
+      customActionsSchema.initActionIcon(anAction = anAction, actionId = stub.id, actionSupplier = actionSupplier)
       null
     }
   }
@@ -1518,7 +1525,12 @@ private fun convertGroupStub(stub: ActionGroupStub, actionRegistrar: ActionRegis
       }
     }
   })
-  updateIconFromStub(stub = stub, anAction = group, componentManager = componentManager)
+  updateIconFromStub(
+    stub = stub,
+    anAction = group,
+    componentManager = componentManager,
+    actionSupplier = { actionRegistrar.getAction(it) },
+  )
   return group
 }
 
@@ -1686,15 +1698,16 @@ private fun updateHandlers(action: Any?) {
   }
 }
 
-internal fun convertStub(stub: ActionStub): AnAction? {
+internal fun convertStub(stub: ActionStub, actionSupplier: (String) -> AnAction?): AnAction? {
   val componentManager = ApplicationManager.getApplication() ?: throw AlreadyDisposedException("Application is already disposed")
-  val anAction = instantiate(stubClassName = stub.className,
-                             pluginDescriptor = stub.plugin,
-                             expectedClass = AnAction::class.java,
-                             componentManager = componentManager)
-                 ?: return null
+  val anAction = instantiate(
+    stubClassName = stub.className,
+    pluginDescriptor = stub.plugin,
+    expectedClass = AnAction::class.java,
+    componentManager = componentManager,
+  ) ?: return null
   stub.initAction(anAction)
-  updateIconFromStub(stub = stub, anAction = anAction, componentManager = componentManager)
+  updateIconFromStub(stub = stub, anAction = anAction, componentManager = componentManager, actionSupplier = actionSupplier)
   return anAction
 }
 
@@ -1750,27 +1763,28 @@ private fun addToMap(actionId: String,
                      action: AnAction,
                      projectType: ProjectType?,
                      registrar: ActionRegistrar): Boolean {
-  if (existing is ChameleonAction) {
-    return existing.addAction(action, projectType)
-  }
-  else if (existing != null) {
-    // we need to create ChameleonAction even if 'projectType==null', in case 'ActionStub.getProjectType() != null'
-    val chameleonAction = ChameleonAction(existing, null)
-    if (!chameleonAction.addAction(action, projectType)) {
+  val actionSupplier: (String) -> AnAction? = { registrar.getAction(it) }
+  when {
+    existing is ChameleonAction -> {
+      return existing.addAction(action, projectType, actionSupplier)
+    }
+    existing != null -> {
+      // we need to create ChameleonAction even if 'projectType==null', in case 'ActionStub.getProjectType() != null'
+      val chameleonAction = ChameleonAction(existing, null) { registrar.getAction(it) }
+      if (chameleonAction.addAction(action, projectType, actionSupplier)) {
+        registrar.putAction(actionId, chameleonAction)
+        return true
+      }
       return false
     }
-
-    registrar.putAction(actionId, chameleonAction)
-    return true
-  }
-  else if (projectType != null) {
-    val chameleonAction = ChameleonAction(action, projectType)
-    registrar.putAction(actionId, chameleonAction)
-    return true
-  }
-  else {
-    registrar.putAction(actionId, action)
-    return true
+    projectType != null -> {
+      registrar.putAction(actionId, ChameleonAction(action, projectType, actionSupplier))
+      return true
+    }
+    else -> {
+      registrar.putAction(actionId, action)
+      return true
+    }
   }
 }
 
@@ -2108,7 +2122,8 @@ private fun replaceStub(stub: ActionStubBase, convertedAction: AnAction, actionR
   updateHandlers(convertedAction)
 
   actionRegistrar.state.actionToId.put(convertedAction, stub.id)
-  val result = (if (stub is ActionStub) stub.projectType else null)?.let { ChameleonAction(convertedAction, it) } ?: convertedAction
+  val result = (if (stub is ActionStub) stub.projectType else null)
+                 ?.let { ChameleonAction(convertedAction, it) { actionRegistrar.getAction(it) } } ?: convertedAction
   actionRegistrar.putAction(stub.id, result)
   return result
 }
@@ -2170,7 +2185,7 @@ private fun getAction(id: String, canReturnStub: Boolean, actionRegistrar: Actio
   }
 
   val converted = if (action is ActionStub) {
-    convertStub(action)
+    convertStub(action, actionSupplier = { actionRegistrar.getAction(it) })
   }
   else {
     convertGroupStub(stub = action as ActionGroupStub, actionRegistrar = actionRegistrar)
