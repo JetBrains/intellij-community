@@ -51,7 +51,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
     }
 
     private fun enableInspections(beforeFileName: String) {
-        val inspectionFile = findInspectionFile(File(beforeFileName).parentFile)
+        val inspectionFile = findInspectionFile(File(beforeFileName).parentFile, this.pluginMode)
         if (inspectionFile != null) {
             val className = FileUtil.loadFile(inspectionFile).trim { it <= ' ' }
             val inspectionClass = Class.forName(className)

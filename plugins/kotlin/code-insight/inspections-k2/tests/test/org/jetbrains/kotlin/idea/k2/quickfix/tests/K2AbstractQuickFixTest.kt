@@ -33,7 +33,8 @@ abstract class K2AbstractQuickFixTest(private val relativePath: String) : LightI
     override fun getFileSuffix(fileName: String): String? {
         return if ("""^(\w+)\.((before\.Main\.\w+)|(test))$""".toRegex().matchEntire(fileName) != null) fileName // multi-file test
         else if (fileName.contains(".after") || fileName.contains(".before.") ) null // after files
-        else if (!fileName.contains('.')) return null  // looks like a directory
+        else if (!fileName.contains('.')) null  // looks like a directory
+        else if (fileName.equals(".inspection") || fileName.equals(".k2Inspection")) null // not a test
         else fileName // single-file test
     }
 

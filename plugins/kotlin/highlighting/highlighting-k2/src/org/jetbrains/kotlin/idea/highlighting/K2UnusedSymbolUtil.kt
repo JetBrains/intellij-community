@@ -277,7 +277,7 @@ object K2UnusedSymbolUtil {
 
   // variation of IDEA's AnnotationUtil.checkAnnotatedUsingPatterns()
   context(KaSession)
-  private fun checkAnnotatedUsingPatterns(declaration: KtNamedDeclaration, annotationPatterns: Collection<String>): Boolean {
+  fun checkAnnotatedUsingPatterns(declaration: KtNamedDeclaration, annotationPatterns: Collection<String>): Boolean {
       if (declaration.annotationEntries.isEmpty()) return false
       val annotationsPresent = declaration.annotationEntries.mapNotNull {
           val reference = it?.calleeExpression?.constructorReferenceExpression?.mainReference ?: return@mapNotNull null
