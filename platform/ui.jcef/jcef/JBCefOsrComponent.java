@@ -49,7 +49,7 @@ class JBCefOsrComponent extends JPanel {
   private final @NotNull AtomicLong myScheduleResizeMs = new AtomicLong(-1);
   private @Nullable Alarm myResizeAlarm;
 
-  private final @NotNull Alarm myGraphicsConfigurationAlarm = new Alarm();
+  private final @NotNull Alarm myGraphicsConfigurationAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   AtomicBoolean myScaleInitialized = new AtomicBoolean(false);
 
   private @NotNull Disposable myDisposable;
