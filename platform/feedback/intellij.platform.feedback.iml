@@ -40,5 +40,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.ide.internal" />
   </component>
 </module>

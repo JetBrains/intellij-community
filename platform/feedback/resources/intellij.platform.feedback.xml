@@ -40,6 +40,8 @@
     <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.demo.DemoExternalFeedbackSurvey"/>
 
     <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.twnames.TwNamesSurvey"/>
+
+    <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.pirates.SoftwareAccessibilitySurvey"/>
   </extensions>
 
   <applicationListeners>
@@ -66,5 +68,8 @@
 
     <action class="com.intellij.platform.feedback.demo.ShowExternalDemoFeedbackWithStatsAction" internal="true"/>
     <action class="com.intellij.platform.feedback.demo.ShowInIdeDemoFeedbackWithStatsAction" internal="true"/>
+
+    <action class="com.intellij.platform.feedback.pirates.ShowSoftwareAccessibilitySurveyAction" internal="true"
+            text="Show Software Accessibility Survey"/>
   </actions>
 </idea-plugin>
