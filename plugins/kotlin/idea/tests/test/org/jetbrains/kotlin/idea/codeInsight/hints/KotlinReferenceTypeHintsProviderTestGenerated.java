@@ -150,6 +150,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
         runTest("testData/codeInsight/hints/types/LambdaReturnType.kt");
     }
 
+    @TestMetadata("LocalClass.kt")
+    public void testLocalClass() throws Exception {
+        runTest("testData/codeInsight/hints/types/LocalClass.kt");
+    }
+
     @TestMetadata("LocalVariable.kt")
     public void testLocalVariable() throws Exception {
         runTest("testData/codeInsight/hints/types/LocalVariable.kt");
