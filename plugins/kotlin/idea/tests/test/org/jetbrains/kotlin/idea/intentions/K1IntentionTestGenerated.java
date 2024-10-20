@@ -19014,6 +19014,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/specifyTypeExplicitly/localClass.kt");
         }
 
+        @TestMetadata("localClassAndLocalProperty.kt")
+        public void testLocalClassAndLocalProperty() throws Exception {
+            runTest("testData/intentions/specifyTypeExplicitly/localClassAndLocalProperty.kt");
+        }
+
+        @TestMetadata("localClassInLambdaAndLocalProperty.kt")
+        public void testLocalClassInLambdaAndLocalProperty() throws Exception {
+            runTest("testData/intentions/specifyTypeExplicitly/localClassInLambdaAndLocalProperty.kt");
+        }
+
         @TestMetadata("localClassInSecondTypeParameter.kt")
         public void testLocalClassInSecondTypeParameter() throws Exception {
             runTest("testData/intentions/specifyTypeExplicitly/localClassInSecondTypeParameter.kt");

@@ -13,15 +13,14 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.endOffset
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
@@ -171,15 +170,33 @@ object CallableReturnTypeUpdaterUtils {
         return allTypesConsumer(declarationType, allTypes, cannotBeNull)
     }
 
+    private fun KaClassType.isLocal(): Boolean =
+        classId.isLocal == true
+
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     fun getTypeInfo(declaration: KtCallableDeclaration): TypeInfo {
+
         val calculateAllTypes = calculateAllTypes<TypeInfo>(declaration) { declarationType, allTypes, cannotBeNull ->
             if (isUnitTestMode()) {
                 selectForUnitTest(declaration, allTypes.toList())?.let { return@calculateAllTypes it }
             }
 
-            val approximatedDefaultType = declarationType.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true).let {
+            val declarationClassType = declarationType as? KaClassType
+            val approximateLocalTypes = if (declarationClassType?.isLocal() == true) {
+                val commonParent = PsiTreeUtil.findCommonParent(declarationType.symbol.psi, declaration)
+                !(commonParent is KtBlockExpression && commonParent.parent is KtNamedFunction)
+            } else {
+                val localSymbol = declarationClassType?.typeArguments?.firstOrNull { (it.type as? KaClassType)?.isLocal() == true }?.type?.symbol
+                if (localSymbol == null) {
+                    true
+                } else {
+                    val commonParent = PsiTreeUtil.findCommonParent(localSymbol.psi, declaration)
+                    !(commonParent is KtBlockExpression && commonParent.parent is KtNamedFunction)
+                }
+            }
+
+            val approximatedDefaultType = declarationType.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = approximateLocalTypes).let {
                 if (cannotBeNull) it.withNullability(KaTypeNullability.NON_NULLABLE)
                 else it
             }
