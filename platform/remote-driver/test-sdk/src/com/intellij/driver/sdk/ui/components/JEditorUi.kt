@@ -62,6 +62,12 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     return hints
   }
 
+  fun setSelection(startOffset: Int, endOffset: Int) {
+    driver.withContext(OnDispatcher.EDT) {
+      editor.getSelectionModel().setSelection(startOffset, endOffset)
+    }
+  }
+
   fun deleteFile() {
     driver.withWriteAction {
       editor.getVirtualFile().delete(null)
