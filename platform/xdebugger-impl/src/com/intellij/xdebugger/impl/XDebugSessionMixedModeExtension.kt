@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl
 import com.intellij.openapi.application.EDT
 import com.intellij.util.io.await
 import com.intellij.xdebugger.XDebugProcess
+import com.intellij.xdebugger.XDebugProcessDebuggeeInForeground
 import com.intellij.xdebugger.frame.XMixedModeSuspendContext
 import com.intellij.xdebugger.frame.XSuspendContext
 import kotlinx.coroutines.CompletableDeferred
@@ -11,6 +12,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.concurrent.Future
+
+private val logger = com.intellij.openapi.diagnostic.logger<XDebugProcessDebuggeeInForeground>()
 
 interface XMixedModeDebugProcess {
   fun pauseMixedModeSession(): Future<Void>
@@ -56,14 +59,14 @@ abstract class XDebugSessionMixedModeExtension(
     lowDebugPositionReachedDeferred = CompletableDeferred()
     highDebugPositionReachedDeferred = CompletableDeferred()
 
-    highMixedModeProcess.pauseMixedModeSession().await()
-    highDebugPositionReachedDeferred!!.await()
+    highMixedModeProcess.pauseMixedModeSession().await().also { logger.info("High level process has been stopped") }
+    highDebugPositionReachedDeferred!!.await().also { logger.info("High level stopped reached a position") }
 
     // pausing low level session
     // but some threads can be resumed to let high level debugger work
-    lowMixedModeProcess.pauseMixedModeSession().await()
+    lowMixedModeProcess.pauseMixedModeSession().await().also { logger.info("Low level process has been stopped") }
 
-    lowDebugPositionReachedDeferred!!.await()
+    lowDebugPositionReachedDeferred!!.await().also { logger.info("Low level stopped reached a position") }
 
     lowDebugPositionReachedDeferred = null
     highDebugPositionReachedDeferred = null
