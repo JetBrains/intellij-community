@@ -2,20 +2,27 @@
 
 package org.jetbrains.kotlin.idea.conversion.copy
 
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.progress.ProgressManager
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.name
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.descriptors.VariableDescriptorWithAccessors
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.blockExpressionsOrSingle
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
-import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedMemberDescriptor
-import org.jetbrains.kotlin.types.KotlinType
 
 internal data class JavaContextDeclarationStubs(
     val localDeclarations: String,
@@ -32,50 +39,53 @@ internal data class JavaContextDeclarationStubs(
  */
 internal object JavaContextDeclarationRenderer {
     fun render(contextElement: KtElement): JavaContextDeclarationStubs {
-        val localDeclarations = getLocalDeclarations(contextElement)
-        val memberDeclarations = getMemberDeclarations(contextElement)
-        val localDeclarationsJavaStubs = render(localDeclarations)
-        val memberDeclarationsJavaStubs = render(memberDeclarations)
-        return JavaContextDeclarationStubs(localDeclarationsJavaStubs, memberDeclarationsJavaStubs)
+        val task: () -> JavaContextDeclarationStubs = {
+            runReadAction {
+                analyze(contextElement) {
+                    val localDeclarations = getLocalDeclarations(contextElement)
+                    val memberDeclarations = getMemberDeclarations(contextElement)
+                    val localDeclarationsJavaStubs = render(localDeclarations)
+                    val memberDeclarationsJavaStubs = render(memberDeclarations)
+                    JavaContextDeclarationStubs(localDeclarationsJavaStubs, memberDeclarationsJavaStubs)
+                }
+            }
+        }
+
+        return ProgressManager.getInstance().runProcessWithProgressSynchronously<JavaContextDeclarationStubs, Exception>(
+            task, KotlinBundle.message("copy.text.rendering.declaration.stubs"), /* canBeCanceled = */ true, contextElement.project
+        )
     }
 
-    private fun getLocalDeclarations(contextElement: KtElement): List<DeclarationDescriptor> {
+    private fun KaSession.getLocalDeclarations(contextElement: KtElement): List<KaDeclarationSymbol> {
         val containerFunction = contextElement.getParentOfType<KtFunction>(strict = false) ?: return emptyList()
         val localDeclarations = containerFunction.bodyExpression
             ?.blockExpressionsOrSingle()
             ?.filterIsInstance<KtDeclaration>()
             .orEmpty()
-        return localDeclarations.mapNotNull { it.resolveToDescriptorIfAny() }.toList()
+        return localDeclarations.map { it.symbol }.toList()
     }
 
-    private fun getMemberDeclarations(contextElement: KtElement): List<DeclarationDescriptor> {
+    private fun KaSession.getMemberDeclarations(contextElement: KtElement): List<KaDeclarationSymbol> {
         val allMembers = contextElement.parentsWithSelf.flatMap { declaration ->
             when (declaration) {
-                is KtClass -> declaration.resolveToDescriptorIfAny()
-                    ?.unsubstitutedMemberScope
-                    ?.getContributedDescriptors()
-                    ?.asSequence()
-
-                is KtDeclarationContainer ->
-                    declaration.declarations.mapNotNull { it.resolveToDescriptorIfAny() }.asSequence()
-
+                is KtClass -> declaration.classSymbol?.declaredMemberScope?.declarations
+                is KtDeclarationContainer -> declaration.declarations.map { it.symbol }.asSequence()
                 else -> null
             } ?: emptySequence()
         }
         val filteredMembers = allMembers.filter { member ->
-            member !is DeserializedMemberDescriptor
-                    && !member.name.isSpecial
-                    && member.name.asString() != "dummy"
+            val name = member.name ?: return@filter false
+            !name.isSpecial && name.asString() != "dummy"
         }
 
         return filteredMembers.toList()
     }
 
-    private fun render(declarationDescriptors: List<DeclarationDescriptor>): String {
+    private fun KaSession.render(declarations: List<KaDeclarationSymbol>): String {
         val renderer = Renderer()
         return buildString {
-            for (declaration in declarationDescriptors) {
-                val renderedDeclaration = renderer.render(declaration)
+            for (declaration in declarations) {
+                val renderedDeclaration = renderer.render(declaration, session = this@render)
                 append(renderedDeclaration)
                 appendLine()
             }
@@ -86,29 +96,30 @@ internal object JavaContextDeclarationRenderer {
 private class Renderer {
     private val builder = StringBuilder()
 
-    fun render(declaration: DeclarationDescriptor): String {
-        renderDeclaration(declaration)
+    fun render(declaration: KaDeclarationSymbol, session: KaSession): String {
+        with(session) { renderDeclaration(declaration) }
         val result = builder.toString()
         builder.clear()
         return result
     }
 
-    private fun renderDeclaration(declaration: DeclarationDescriptor) {
+    private fun KaSession.renderDeclaration(declaration: KaDeclarationSymbol) {
         when (declaration) {
-            is VariableDescriptorWithAccessors -> {
-                renderType(declaration.type)
+            is KaVariableSymbol -> {
+                renderType(declaration.returnType)
                 append(" ")
                 append(declaration.name.asString())
                 append(" = null;")
             }
 
-            is FunctionDescriptor -> {
+            is KaFunctionSymbol -> {
+                val name = declaration.name ?: return
                 renderType(declaration.returnType)
                 append(" ")
-                append(declaration.name.asString())
+                append(name.asString())
                 append("(")
                 for ((i, parameter) in declaration.valueParameters.withIndex()) {
-                    renderType(parameter.type)
+                    renderType(parameter.returnType)
                     append(" ")
                     append(parameter.name.asString())
                     if (i != declaration.valueParameters.lastIndex) {
@@ -117,21 +128,23 @@ private class Renderer {
                 }
                 append(") {}")
             }
+
+            else -> {} // Do nothing
         }
     }
 
-    private fun renderType(type: KotlinType?) {
-        val fqName = type?.constructor?.declarationDescriptor?.fqNameUnsafe
-
+    private fun KaSession.renderType(type: KaType?) {
+        val fqName = type?.symbol?.getFqNameIfPackageOrNonLocal()
         if (fqName != null) {
-            renderFqName(fqName)
+            renderFqName(fqName.toUnsafe())
         } else {
             append("Object")
         }
-        if (!type?.arguments.isNullOrEmpty()) {
+
+        if (type is KaClassType && type.typeArguments.isNotEmpty()) {
             append("<")
-            for (typeArgument in type.arguments) {
-                if (typeArgument.isStarProjection) {
+            for (typeArgument in type.typeArguments) {
+                if (typeArgument is KaStarTypeProjection) {
                     append("?")
                 } else {
                     renderType(typeArgument.type)
