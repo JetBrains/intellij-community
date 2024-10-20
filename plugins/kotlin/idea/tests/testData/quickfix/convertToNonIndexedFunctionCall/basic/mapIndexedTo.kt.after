@@ -1,0 +1,7 @@
+// "Convert to 'mapTo'" "true"
+// WITH_STDLIB
+fun test(list: List<String>) {
+    list.mapTo(mutableListOf()) { s ->
+        s + s
+    }
+}
