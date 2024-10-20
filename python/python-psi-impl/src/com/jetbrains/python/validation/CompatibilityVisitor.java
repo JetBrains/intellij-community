@@ -7,6 +7,7 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsSafe;
@@ -803,6 +804,10 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
         file instanceof PyFile &&
         ((PyFile)file).hasImportFromFuture(FutureFeature.ANNOTATIONS) &&
         isInAnnotation) {
+      return;
+    }
+
+    if (DumbService.isDumb(file.getProject())) {
       return;
     }
 
