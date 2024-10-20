@@ -34,7 +34,19 @@ fun Finder.editor(@Language("xpath") xpath: String? = null, action: JEditorUiCom
 
 class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   private val editorComponent get() = driver.cast(component, EditorComponentImpl::class)
+  private val document: Document by lazy { editor.getDocument() }
+  private val caretPosition
+    get() = editor.getCaretModel().getLogicalPosition()
+
   val editor: Editor by lazy { editorComponent.getEditor() }
+
+  var text: String
+    get() = document.getText()
+    set(value) {
+      driver.withWriteAction {
+        document.setText(value)
+      }
+    }
 
   fun isEditable() = editorComponent.isEditable()
 
@@ -63,10 +75,11 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   }
 
   fun setSelection(startOffset: Int, endOffset: Int) {
-    driver.withContext(OnDispatcher.EDT) {
-      editor.getSelectionModel().setSelection(startOffset, endOffset)
+    interact {
+      getSelectionModel().setSelection(startOffset, endOffset)
     }
   }
+
 
   fun deleteFile() {
     driver.withWriteAction {
@@ -74,22 +87,9 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     }
   }
 
-  private val document: Document by lazy { editor.getDocument() }
-
-  private val caretPosition
-    get() = editor.getCaretModel().getLogicalPosition()
-
   fun selectAndDrag(from: Point, to: Point, delayMs: Int) {
     robot.selectAndDrag(component, to, from, delayMs)
   }
-
-  var text: String
-    get() = document.getText()
-    set(value) {
-      driver.withWriteAction {
-        document.setText(value)
-      }
-    }
 
   fun getCaretLine() = caretPosition.getLine() + 1
   fun getCaretColumn() = caretPosition.getColumn() + 1
