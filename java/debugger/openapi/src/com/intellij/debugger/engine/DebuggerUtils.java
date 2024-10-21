@@ -143,7 +143,7 @@ public abstract class DebuggerUtils {
   }
 
   @ApiStatus.Internal
-  public abstract <R, T extends Value> R processCollectibleValue(
+  public abstract <R, T> R processCollectibleValue(
     @NotNull ThrowableComputable<? extends T, ? extends EvaluateException> valueComputable,
     @NotNull Function<? super T, ? extends R> processor,
     @NotNull EvaluationContext evaluationContext) throws EvaluateException;

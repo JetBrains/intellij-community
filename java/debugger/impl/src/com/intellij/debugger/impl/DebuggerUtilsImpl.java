@@ -351,14 +351,14 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
   }
 
   @Override
-  public <R, T extends Value> R processCollectibleValue(
+  public <R, T> R processCollectibleValue(
     @NotNull ThrowableComputable<? extends T, ? extends EvaluateException> valueComputable,
     @NotNull Function<? super T, ? extends R> processor,
     @NotNull EvaluationContext evaluationContext) throws EvaluateException {
     int retries = 3;
     while (true) {
-      T result = valueComputable.compute();
       try {
+        T result = valueComputable.compute();
         return processor.apply(result);
       }
       catch (ObjectCollectedException oce) {

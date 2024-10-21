@@ -28,6 +28,8 @@ public final class EvaluationContextImpl implements EvaluationContext {
 
   private @Nullable ThreadReferenceProxyImpl myPreferableThread = null;
 
+  private boolean myMayRetryEvaluation = false;
+
   private EvaluationContextImpl(@NotNull SuspendContextImpl suspendContext,
                                 @Nullable StackFrameProxyImpl frameProxy,
                                 @NotNull DebuggerComputableValue thisObjectComputableValue) {
@@ -176,5 +178,15 @@ public final class EvaluationContextImpl implements EvaluationContext {
     else {
       return "Evaluating requested on " + myPreferableThread + ", started on " + myThreadForEvaluation + " for " + mySuspendContext;
     }
+  }
+
+  @ApiStatus.Internal
+  public boolean isMayRetryEvaluation() {
+    return myMayRetryEvaluation;
+  }
+
+  @ApiStatus.Internal
+  public void setMayRetryEvaluation(boolean mayRetryEvaluation) {
+    myMayRetryEvaluation = mayRetryEvaluation;
   }
 }

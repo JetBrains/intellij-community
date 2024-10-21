@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.SourcePosition
+import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
@@ -14,6 +15,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -232,6 +234,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         compiledData: CompiledCodeFragmentData,
         classLoader: ClassLoaderReference?
     ): InterpreterResult {
+        val mayRetry = context.evaluationContext.isMayRetryEvaluation
         val mainClassBytecode = compiledData.mainClass.bytes
         val mainClassAsmNode = ClassNode().apply { ClassReader(mainClassBytecode).accept(this, 0) }
         val mainMethod = mainClassAsmNode.methods.first { it.isEvaluationEntryPoint }
@@ -279,7 +282,23 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                     return context.debugProcess.findClass(context.evaluationContext, classType.className, classLoader)
                 }
             }
-            interpreterLoop(mainMethod, makeInitialFrame(mainMethod, args.map { it.asValue() }), eval)
+
+            fun interpreterLoop() = interpreterLoop(mainMethod, makeInitialFrame(mainMethod, args.map { it.asValue() }), eval)
+            fun keepResult(result: InterpreterResult) {
+                val jdiObject = when (result) {
+                    is ValueReturned -> result.result
+                    is ExceptionThrown -> result.exception
+                    else -> return
+                }.obj() as? ObjectReference? ?: return
+                context.evaluationContext.keep(jdiObject)
+            }
+            if (mayRetry) {
+                DebuggerUtils.getInstance().processCollectibleValue(object : ThrowableComputable<InterpreterResult, EvaluateException> {
+                    override fun compute() = interpreterLoop()
+                }, { keepResult(it); it }, context.evaluationContext)
+            } else {
+                interpreterLoop()
+            }
         }
     }
 
