@@ -2,6 +2,7 @@
 
 package com.intellij.ide.util.gotoByName;
 
+import com.google.common.base.Strings;
 import com.intellij.BundleBase;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -457,7 +458,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
         return MatchMode.SYNONYM;
       }
     }
-    if (description != null && !description.equals(text) && new WordPrefixMatcher(pattern).matches(description)) {
+    if (!Strings.isNullOrEmpty(description) && !description.equals(text) && new WordPrefixMatcher(pattern).matches(description)) {
       return MatchMode.DESCRIPTION;
     }
     if (text == null) {
