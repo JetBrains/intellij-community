@@ -5,7 +5,6 @@ import com.intellij.ide.dnd.DnDAction;
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDSource;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
-import com.intellij.ide.ui.AntiFlickeringPanel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -17,6 +16,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,14 +27,16 @@ import java.awt.*;
 public final class XDebuggerTreePanel implements DnDSource {
   private final XDebuggerTree myTree;
   private final JPanel myMainPanel;
+  private final @NotNull JComponent myContentComponent;
 
   public XDebuggerTreePanel(final @NotNull Project project, final @NotNull XDebuggerEditorsProvider editorsProvider,
                             @NotNull Disposable parentDisposable, final @Nullable XSourcePosition sourcePosition,
                             @NotNull @NonNls final String popupActionGroupId, @Nullable XValueMarkers<?, ?> markers) {
     myTree = new XDebuggerTree(project, editorsProvider, sourcePosition, popupActionGroupId, markers);
     myMainPanel = new JPanel(new BorderLayout());
-    Component content = DebuggerUIUtil.shouldUseAntiFlickeringPanel() ? new AntiFlickeringPanel(myTree) : myTree;
-    myMainPanel.add(ScrollPaneFactory.createScrollPane(content), BorderLayout.CENTER);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
+    myContentComponent = DebuggerUIUtil.wrapWithAntiFlickeringPanel(scrollPane);
+    myMainPanel.add(myContentComponent, BorderLayout.CENTER);
     Disposer.register(parentDisposable, myTree);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
@@ -52,6 +54,11 @@ public final class XDebuggerTreePanel implements DnDSource {
   @NotNull
   public JPanel getMainPanel() {
     return myMainPanel;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull JComponent getContentComponent() {
+    return myContentComponent;
   }
 
   @Override

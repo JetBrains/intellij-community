@@ -1003,7 +1003,6 @@ f:com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 - s:createValuePopup(com.intellij.openapi.project.Project,javax.swing.JComponent,java.lang.Runnable):com.intellij.openapi.ui.popup.JBPopup
 - s:enableEditorOnCheck(javax.swing.JCheckBox,javax.swing.JComponent):V
 - s:focusEditorOnCheck(javax.swing.JCheckBox,javax.swing.JComponent):V
-- s:freezePaintingToReduceFlickering(java.awt.Component):Z
 - s:getActionShortcutText(java.lang.String):java.lang.String
 - s:getColorScheme():com.intellij.openapi.editor.colors.EditorColorsScheme
 - s:getColorScheme(javax.swing.JComponent):com.intellij.openapi.editor.colors.EditorColorsScheme
@@ -1021,7 +1020,6 @@ f:com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 - s:repaintCurrentEditor(com.intellij.openapi.project.Project):V
 - s:setActionEnabled(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
 - s:setTreeNodeValue(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,com.intellij.xdebugger.XExpression,com.intellij.util.Consumer):V
-- s:shouldUseAntiFlickeringPanel():Z
 - s:showBreakpointEditor(com.intellij.openapi.project.Project,javax.swing.JComponent,java.awt.Point,javax.swing.JComponent,java.lang.Runnable,java.lang.Object):com.intellij.openapi.ui.popup.Balloon
 - s:showPopupForEditorLine(com.intellij.openapi.ui.popup.JBPopup,com.intellij.openapi.editor.Editor,I):V
 - s:showValuePopup(com.intellij.xdebugger.frame.XFullValueEvaluator,java.awt.event.MouseEvent,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):V

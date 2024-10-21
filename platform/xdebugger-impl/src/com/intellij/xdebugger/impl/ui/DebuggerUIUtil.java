@@ -13,7 +13,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteIntentReadAction;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ClientEditorManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -562,10 +565,16 @@ public final class DebuggerUIUtil {
     }
   }
 
-  public static boolean shouldUseAntiFlickeringPanel() {
+  private static boolean shouldUseAntiFlickeringPanel() {
     return !ApplicationManager.getApplication().isUnitTestMode() && Registry.intValue("debugger.anti.flickering.delay", 0) > 0;
   }
 
+  @ApiStatus.Internal
+  public static @NotNull JComponent wrapWithAntiFlickeringPanel(@NotNull JComponent component) {
+    return shouldUseAntiFlickeringPanel() ? new AntiFlickeringPanel(component) : component;
+  }
+
+  @ApiStatus.Internal
   public static boolean freezePaintingToReduceFlickering(@Nullable Component component) {
     if (component instanceof AntiFlickeringPanel antiFlickeringPanel) {
       int delay = Registry.intValue("debugger.anti.flickering.delay", 0);

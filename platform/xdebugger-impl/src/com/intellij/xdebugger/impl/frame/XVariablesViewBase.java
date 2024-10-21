@@ -80,7 +80,7 @@ public abstract class XVariablesViewBase extends XDebugView {
   protected void buildTreeAndRestoreState(@NotNull final XStackFrame stackFrame) {
     XSourcePosition position = stackFrame.getSourcePosition();
     XDebuggerTree tree = getTree();
-    DebuggerUIUtil.freezePaintingToReduceFlickering(tree.getParent());
+    DebuggerUIUtil.freezePaintingToReduceFlickering(myTreePanel.getContentComponent());
     tree.setSourcePosition(position);
     createNewRootNode(stackFrame);
     XVariablesView.InlineVariablesInfo.set(getSession(tree), new XVariablesView.InlineVariablesInfo());
