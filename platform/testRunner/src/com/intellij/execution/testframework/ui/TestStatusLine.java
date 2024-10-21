@@ -104,7 +104,7 @@ public class TestStatusLine extends NonOpaquePanel {
       if (testsTotal == 0) return;
     }
 
-    int passedCount = finishedTestsCount - failuresCount - ignoredTestsCount;
+    int passedCount = Math.max(finishedTestsCount - failuresCount - ignoredTestsCount, 0);
 
     if (finishedTestsCount != testsTotal) {
       final var stopped = endTime != 0;
@@ -113,9 +113,9 @@ public class TestStatusLine extends NonOpaquePanel {
         myState.append(" ");
       }
 
-      if (finishedTestsCount == passedCount) myState.append(TestRunnerBundle.message("test.result.in.progress.all.passed", finishedTestsCount, testsTotal));
-      else if (finishedTestsCount == failuresCount) appendColored(TestRunnerBundle.message("test.result.in.progress.failed", finishedTestsCount, testsTotal, failuresCount));
-      else if (finishedTestsCount == ignoredTestsCount) appendColored(TestRunnerBundle.message("test.result.in.progress.ignored", finishedTestsCount, testsTotal, ignoredTestsCount));
+      if (finishedTestsCount <= passedCount) myState.append(TestRunnerBundle.message("test.result.in.progress.all.passed", finishedTestsCount, testsTotal));
+      else if (finishedTestsCount <= failuresCount) appendColored(TestRunnerBundle.message("test.result.in.progress.failed", finishedTestsCount, testsTotal, failuresCount));
+      else if (finishedTestsCount <= ignoredTestsCount) appendColored(TestRunnerBundle.message("test.result.in.progress.ignored", finishedTestsCount, testsTotal, ignoredTestsCount));
       else if (ignoredTestsCount == 0) appendColored(TestRunnerBundle.message("test.result.in.progress.failed.passed", finishedTestsCount, testsTotal, failuresCount, passedCount));
       else if (passedCount == 0) appendColored(TestRunnerBundle.message("test.result.in.progress.failed.ignored", finishedTestsCount, testsTotal, failuresCount, ignoredTestsCount));
       else if (failuresCount == 0) appendColored(TestRunnerBundle.message("test.result.in.progress.passed.ignored", finishedTestsCount, testsTotal, passedCount, ignoredTestsCount));
