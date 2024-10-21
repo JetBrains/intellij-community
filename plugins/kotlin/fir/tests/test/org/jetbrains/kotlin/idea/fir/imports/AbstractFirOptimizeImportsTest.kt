@@ -2,14 +2,19 @@
 
 package org.jetbrains.kotlin.idea.fir.imports
 
+import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.AbstractImportsTest
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.imports.KotlinFirImportOptimizer
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractFirJvmOptimizeImportsTest : AbstractImportsTest() {
+
+    override fun getProjectDescriptor(): LightProjectDescriptor =
+        KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 
     override val runTestInWriteCommand: Boolean = false
 
