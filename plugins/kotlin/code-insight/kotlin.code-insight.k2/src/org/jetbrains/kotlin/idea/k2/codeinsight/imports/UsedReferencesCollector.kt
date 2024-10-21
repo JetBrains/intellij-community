@@ -82,7 +82,7 @@ internal class UsedReferencesCollector(private val file: KtFile) {
             for (symbol in symbols) {
                 if (!symbol.run { isResolvedWithImport() }) continue
 
-                val importableName = symbol.run { computeImportableFqName() } ?: continue
+                val importableName = symbol.run { computeImportableFqName() }
 
                 // Do not save symbols from the current package unless they are aliased
                 if (importableName.parent() == file.packageFqName && importableName !in aliases) continue

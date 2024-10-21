@@ -739,6 +739,16 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
                 runTest("../../idea/tests/testData/editor/optimizeImports/common/IteratorFunction2.kt");
             }
 
+            @TestMetadata("IteratorFunction_fromObject.kt")
+            public void testIteratorFunction_fromObject() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/IteratorFunction_fromObject.kt");
+            }
+
+            @TestMetadata("IteratorFunction_fromObject_unused.kt")
+            public void testIteratorFunction_fromObject_unused() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/IteratorFunction_fromObject_unused.kt");
+            }
+
             @TestMetadata("KT11640.kt")
             public void testKT11640() throws Exception {
                 runTest("../../idea/tests/testData/editor/optimizeImports/common/KT11640.kt");
@@ -872,6 +882,16 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
             @TestMetadata("ProvideDelegate2.kt")
             public void testProvideDelegate2() throws Exception {
                 runTest("../../idea/tests/testData/editor/optimizeImports/common/ProvideDelegate2.kt");
+            }
+
+            @TestMetadata("ProvideDelegate_fromObject.kt")
+            public void testProvideDelegate_fromObject() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/ProvideDelegate_fromObject.kt");
+            }
+
+            @TestMetadata("ProvideDelegate_fromObject_unused.kt")
+            public void testProvideDelegate_fromObject_unused() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/ProvideDelegate_fromObject_unused.kt");
             }
 
             @TestMetadata("ResolvedImportAndUnresolvedReference.kt")
