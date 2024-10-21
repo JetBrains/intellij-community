@@ -9,11 +9,13 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.buildSystemType
+import org.jetbrains.kotlin.idea.configuration.getNonDefaultLanguageFeatures
 import org.jetbrains.kotlin.idea.configuration.getPlatform
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
@@ -31,6 +33,7 @@ internal class ProjectConfigurationCollector : ProjectUsagesCollector() {
                 val buildSystem = getBuildSystemType(it)
                 val platform = getPlatform(it)
                 val languageLevel = KotlinFacet.get(it)?.configuration?.settings?.languageLevel?.versionString
+                val nonDefaultLanguageFeatures = getNonDefaultLanguageFeatures(it).sorted()
                 metrics.add(
                     buildEvent.metric(
                         systemField.with(buildSystem),
@@ -38,7 +41,8 @@ internal class ProjectConfigurationCollector : ProjectUsagesCollector() {
                         languageLevelField.with(languageLevel),
                         isMPPBuild.with(it.isMultiPlatformModule || it.isNewMultiPlatformModule),
                         pluginInfoField.with(KotlinIdePlugin.getPluginInfo()),
-                        eventFlags.with(KotlinASStatisticsEventFlags.calculateAndPackEventsFlagsToLong(it))
+                        eventFlags.with(KotlinASStatisticsEventFlags.calculateAndPackEventsFlagsToLong(it)),
+                        nonDefaultLanguageFeaturesField.with(nonDefaultLanguageFeatures)
                     )
                 )
             }
@@ -57,7 +61,7 @@ internal class ProjectConfigurationCollector : ProjectUsagesCollector() {
         }
     }
 
-    private val GROUP = EventLogGroup("kotlin.project.configuration", 11)
+    private val GROUP = EventLogGroup("kotlin.project.configuration", 12)
 
     private val systemField = EventFields.String("system", listOf("JPS", "Maven", "Gradle", "unknown"))
     private val platformField = EventFields.String("platform", composePlatformFields())
@@ -66,7 +70,7 @@ internal class ProjectConfigurationCollector : ProjectUsagesCollector() {
     private val pluginInfoField = EventFields.PluginInfo
 
     private val eventFlags = EventFields.Long("eventFlags")
-
+    private val nonDefaultLanguageFeaturesField = EventFields.EnumList<LanguageFeature>("nonDefaultLanguageFeatures") { it.name }
     private fun composePlatformFields(): List<String> {
         return listOf(
             listOf(
@@ -92,6 +96,7 @@ internal class ProjectConfigurationCollector : ProjectUsagesCollector() {
         isMPPBuild,
         languageLevelField,
         pluginInfoField,
-        eventFlags
+        eventFlags,
+        nonDefaultLanguageFeaturesField,
     )
 }
