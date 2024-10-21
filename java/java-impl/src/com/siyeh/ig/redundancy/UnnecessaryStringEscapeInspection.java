@@ -181,10 +181,11 @@ public final class UnnecessaryStringEscapeInspection extends BaseInspection impl
           else if (ch == '"' && doubleQuotes < 2) {
             if (i == end - 1) return -1;
             if (i == end - 2) return i - 1;
-            if (i < end - 2 && text.charAt(i + 1) == '"') {
-              if (doubleQuotes != 1 && text.charAt(i + 2) != '"') return i - 1;
+            if (doubleQuotes == 1) {
+              if (!text.startsWith("\"", i + 1) && !text.startsWith("\\\"", i + 1)) return i - 1;
             }
-            else {
+            else if (!text.startsWith("\"\"", i + 1) && !text.startsWith("\\\"\"", i + 1) &&
+                     !text.startsWith("\"\\\"", i + 1) && !text.startsWith("\\\"\\\"", i + 1)) {
               return i - 1;
             }
           }
