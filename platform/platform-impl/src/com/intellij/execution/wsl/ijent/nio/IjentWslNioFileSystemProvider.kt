@@ -45,7 +45,7 @@ import kotlin.io.path.name
  * an instance of [IjentWslNioFileSystem] can be obtained with a URL like "ijent://wsl/distribution-name".
  */
 class IjentWslNioFileSystemProvider(
-  wslDistribution: WSLDistribution,
+  private val wslDistribution: WSLDistribution,
   private val ijentFsProvider: FileSystemProvider,
   internal val originalFsProvider: FileSystemProvider,
 ) : FileSystemProvider(), RoutingAwareFileSystemProvider {
@@ -248,8 +248,33 @@ class IjentWslNioFileSystemProvider(
     }
   }
 
-  override fun isSameFile(path: Path, path2: Path): Boolean =
-    ijentFsProvider.isSameFile(path.toIjentPath(), path2.toIjentPath())
+  override fun isSameFile(path: Path, path2: Path): Boolean {
+    val conversionResult1 = tryConvertToWindowsPaths(path, path2)
+    if (conversionResult1 != null) {
+      return conversionResult1
+    }
+    val conversionResult2 = tryConvertToWindowsPaths(path2, path)
+    if (conversionResult2 != null) {
+      return conversionResult2
+    }
+    // so both paths are now
+    return ijentFsProvider.isSameFile(path.toIjentPath(), path2.toIjentPath())
+  }
+
+  private fun tryConvertToWindowsPaths(path1: Path, path2: Path): Boolean? {
+    if (!WslPath.isWslUncPath(path1.root.toString())) {
+      // then the second path is in WSL, but it may be mounted Windows dir
+      val resolvedPath2 = path2.toRealPath().toString() // protection against symlinks
+      val parsed = WslPath.parseWindowsUncPath(resolvedPath2)
+      if (parsed != null) {
+        val windowsRepresentation = wslDistribution.getWindowsPath(parsed.linuxPath)
+        if (windowsRepresentation == resolvedPath2) return false
+        return Files.isSameFile(path1.toOriginalPath(), Path.of(windowsRepresentation))
+      }
+      return false
+    }
+    return null
+  }
 
   override fun isHidden(path: Path): Boolean =
     originalFsProvider.isHidden(path.toOriginalPath())
