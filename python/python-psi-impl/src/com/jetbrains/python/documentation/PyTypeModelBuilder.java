@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -439,12 +440,12 @@ public class PyTypeModelBuilder {
   private static class TypeToStringVisitor extends TypeNameVisitor {
     @Override
     protected @NotNull HtmlChunk styled(@Nls String text, @NotNull TextAttributesKey style) {
-      return HtmlChunk.raw(text);
+      return HtmlChunk.raw(StringUtil.notNullize(text));
     }
 
     @Override
     protected @NotNull HtmlChunk escaped(@Nls String text) {
-      return HtmlChunk.raw(text);
+      return HtmlChunk.raw(StringUtil.notNullize(text));
     }
 
     @Override
@@ -454,7 +455,7 @@ public class PyTypeModelBuilder {
 
     @Override
     protected @NotNull HtmlChunk styledExpression(@Nls String expressionText, @NotNull PyExpression expression) {
-      return HtmlChunk.raw(expressionText);
+      return HtmlChunk.raw(StringUtil.notNullize(expressionText));
     }
 
     public String getString() {
@@ -550,12 +551,12 @@ public class PyTypeModelBuilder {
   private static class TypeToDescriptionVisitor extends TypeNameVisitor {
     @Override
     protected @NotNull HtmlChunk styled(@Nls String text, @NotNull TextAttributesKey style) {
-      return HtmlChunk.raw(text);
+      return HtmlChunk.raw(StringUtil.notNullize(text));
     }
 
     @Override
     protected @NotNull HtmlChunk escaped(@Nls String text) {
-      return HtmlChunk.raw(text);
+      return HtmlChunk.raw(StringUtil.notNullize(text));
     }
 
     @Override
@@ -565,7 +566,7 @@ public class PyTypeModelBuilder {
 
     @Override
     protected @NotNull HtmlChunk styledExpression(@Nls String expressionText, @NotNull PyExpression expression) {
-      return HtmlChunk.raw(expressionText);
+      return HtmlChunk.raw(StringUtil.notNullize(expressionText));
     }
 
     @NotNull
@@ -659,9 +660,11 @@ public class PyTypeModelBuilder {
       switchBuiltinToTyping = collectionOf.useTypingAlias;
       if (collectionOf.isTypeIs == null) {
         collectionOf.collectionType.accept(this);
-      } else if (collectionOf.isTypeIs) {
+      }
+      else if (collectionOf.isTypeIs) {
         add(styled("TypeIs", PyHighlighter.PY_CLASS_DEFINITION));
-      } else {
+      }
+      else {
         add(styled("TypeGuard", PyHighlighter.PY_CLASS_DEFINITION));
       }
       switchBuiltinToTyping = prevSwitchBuiltinToTyping;
