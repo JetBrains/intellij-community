@@ -488,8 +488,35 @@ class MavenProjectReader(private val myProject: Project) {
     return true
   }
 
+  private fun VirtualFile.hasPomFile(): Boolean {
+    return this.isDirectory && this.children.any { MavenUtil.isPomFile(it) }
+  }
+
+  private fun findModules_4_0_0(xmlModel: Element): List<String> = findChildrenValuesByPath(xmlModel, "modules", "module")
+
+  private fun findSubprojects(xmlModel: Element, projectFile: VirtualFile): List<String> {
+    val modelVersion = xmlModel.getChild("modelVersion")?.value
+
+    if (modelVersion != null && StringUtil.compareVersionNumbers(modelVersion, "4.0.0") > 0) {
+      val subprojects = findChildrenValuesByPath(xmlModel, "subprojects", "subproject")
+      if (!subprojects.isEmpty()) return subprojects
+
+      val modules = findModules_4_0_0(xmlModel)
+      if (!modules.isEmpty()) return modules
+
+      if (MavenConstants.TYPE_POM != xmlModel.getChild("packaging")?.value) return emptyList()
+
+      // subprojects discovery
+      // see org.apache.maven.internal.impl.model.DefaultModelBuilder.DefaultModelBuilderSession#doReadFileModel
+      return projectFile.parent.children.filter { it.hasPomFile() }.map { it.name }
+    }
+
+    return findModules_4_0_0(xmlModel)
+  }
+
   private fun readModelBody(mavenModelBase: MavenModelBase, mavenBuildBase: MavenBuildBase, xmlModel: Element, projectFile: VirtualFile) {
-    mavenModelBase.modules = myReadHelper.filterModules(findChildrenValuesByPath(xmlModel, "modules", "module"), projectFile)
+    val modules = findSubprojects(xmlModel, projectFile)
+    mavenModelBase.modules = myReadHelper.filterModules(modules, projectFile)
     collectProperties(findChildByPath(xmlModel, "properties"), mavenModelBase)
 
     val xmlBuild = findChildByPath(xmlModel, "build")
