@@ -32,6 +32,7 @@ import org.jetbrains.idea.maven.server.PomHashMap;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class Maven40ProjectResolver {
   @NotNull private final Maven40ServerEmbedderImpl myEmbedder;
@@ -194,7 +195,9 @@ public class Maven40ProjectResolver {
     return executionResults;
   }
 
-  private boolean transitiveDependenciesChanged(@NotNull File pomFile, String newDependencyHash, Map<File, String> fileToNewDependencyHash) {
+  private boolean transitiveDependenciesChanged(@NotNull File pomFile,
+                                                String newDependencyHash,
+                                                Map<File, String> fileToNewDependencyHash) {
     if (dependenciesChanged(pomFile, newDependencyHash)) return true;
     for (File dependencyPomFile : myPomHashMap.getFileDependencies(pomFile)) {
       if (dependenciesChanged(dependencyPomFile, fileToNewDependencyHash.get(dependencyPomFile))) return true;
@@ -288,7 +291,8 @@ public class Maven40ProjectResolver {
 
   @NotNull
   private MavenServerExecutionResult createExecutionResult(@NotNull MavenProject mavenProject, String dependencyHash) {
-    return createExecutionResult(mavenProject.getFile(), Collections.emptyList(), Collections.emptyList(), mavenProject, null, dependencyHash, true);
+    return createExecutionResult(mavenProject.getFile(), Collections.emptyList(), Collections.emptyList(), mavenProject, null,
+                                 dependencyHash, true);
   }
 
   @NotNull
@@ -357,11 +361,26 @@ public class Maven40ProjectResolver {
 
     Map<String, String> mavenModelMap = Maven40ModelConverter.convertToMap(mavenProject.getModel());
     MavenServerExecutionResult.ProjectData data =
-      new MavenServerExecutionResult.ProjectData(model, dependencyHash, dependencyResolutionSkipped, mavenModelMap, activatedProfiles);
+      new MavenServerExecutionResult.ProjectData(model, getManagedDependencies(mavenProject), dependencyHash, dependencyResolutionSkipped,
+                                                 mavenModelMap, activatedProfiles);
     if (null == model.getBuild() || null == model.getBuild().getDirectory()) {
       data = null;
     }
     return new MavenServerExecutionResult(data, problems, Collections.emptySet(), unresolvedProblems);
+  }
+
+  @NotNull
+  private static List<MavenId> getManagedDependencies(@Nullable MavenProject project) {
+
+    if (project == null ||
+        project.getDependencyManagement() == null ||
+        project.getDependencyManagement().getDependencies() == null) {
+      return Collections.emptyList();
+    }
+    //noinspection SSBasedInspection
+    return project.getDependencyManagement().getDependencies().stream().map(
+      dep -> new MavenId(dep.getGroupId(), dep.getArtifactId(), dep.getVersion())
+    ).collect(Collectors.toList());
   }
 
 

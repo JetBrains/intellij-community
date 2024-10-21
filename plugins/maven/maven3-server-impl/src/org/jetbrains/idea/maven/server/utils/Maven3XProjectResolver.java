@@ -37,6 +37,7 @@ import org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import static org.jetbrains.idea.maven.server.MavenServerEmbedder.MAVEN_EMBEDDER_VERSION;
 
@@ -199,7 +200,8 @@ public class Maven3XProjectResolver {
               if (myLongRunningTask.isCanceled()) return MavenServerExecutionResult.EMPTY;
               MavenServerExecutionResult result = myTelemetry.callWithSpan(
                 "resolveBuildingResult " + br.projectId, () ->
-                  resolveBuildingResult(repositorySession, addUnresolved, br.mavenProject, br.modelProblems, br.exceptions, br.dependencyHash));
+                  resolveBuildingResult(repositorySession, addUnresolved, br.mavenProject, br.modelProblems, br.exceptions,
+                                        br.dependencyHash));
               myLongRunningTask.incrementFinishedRequests();
               return result;
             }
@@ -213,7 +215,9 @@ public class Maven3XProjectResolver {
     return executionResults;
   }
 
-  private boolean transitiveDependenciesChanged(@NotNull File pomFile, String newDependencyHash, Map<File, String> fileToNewDependencyHash) {
+  private boolean transitiveDependenciesChanged(@NotNull File pomFile,
+                                                String newDependencyHash,
+                                                Map<File, String> fileToNewDependencyHash) {
     if (dependenciesChanged(pomFile, newDependencyHash)) return true;
     for (File dependencyPomFile : myPomHashMap.getFileDependencies(pomFile)) {
       if (dependenciesChanged(dependencyPomFile, fileToNewDependencyHash.get(dependencyPomFile))) return true;
@@ -345,10 +349,25 @@ public class Maven3XProjectResolver {
 
     Map<String, String> mavenModelMap = Maven3ModelConverter.convertToMap(mavenProject.getModel());
     MavenServerExecutionResult.ProjectData data =
-      new MavenServerExecutionResult.ProjectData(model, dependencyHash, dependencyResolutionSkipped, mavenModelMap, activatedProfiles);
+      new MavenServerExecutionResult.ProjectData(model, getManagedDependencies(mavenProject), dependencyHash, dependencyResolutionSkipped,
+                                                 mavenModelMap, activatedProfiles);
     Collection<MavenProjectProblem> unresolvedProblems = new HashSet<>();
     collectUnresolvedArtifactProblems(file, dependencyResolutionResult, unresolvedProblems);
     return new MavenServerExecutionResult(data, problems, Collections.emptySet(), unresolvedProblems);
+  }
+
+  @NotNull
+  private static List<MavenId> getManagedDependencies(@Nullable MavenProject project) {
+
+    if (project == null ||
+        project.getDependencyManagement() == null ||
+        project.getDependencyManagement().getDependencies() == null) {
+      return Collections.emptyList();
+    }
+    //noinspection SSBasedInspection
+    return project.getDependencyManagement().getDependencies().stream().map(
+      dep -> new MavenId(dep.getGroupId(), dep.getArtifactId(), dep.getVersion())
+    ).collect(Collectors.toList());
   }
 
   private static void fillSessionCache(MavenSession mavenSession,
