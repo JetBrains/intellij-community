@@ -45,7 +45,7 @@ public final class DeleteLineAction extends TextComponentEditorAction {
 
     @Override
     public void executeWriteAction(final @NotNull Editor editor, Caret caret, DataContext dataContext) {
-      CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
+      CommandProcessor.getInstance().setCurrentCommandGroupId(null);
       CopyPasteManager.getInstance().stopKillRings();
       final Document document = editor.getDocument();
 
