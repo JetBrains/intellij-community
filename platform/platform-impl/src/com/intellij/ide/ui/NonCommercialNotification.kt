@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
@@ -29,10 +30,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleContextCache
 import com.intellij.util.PlatformUtils
-import com.intellij.util.ui.HTMLEditorKitBuilder
-import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.StyleSheetUtil
+import com.intellij.util.ui.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.Graphics
@@ -109,7 +107,7 @@ private class NonCommercialWidget : CustomStatusBarWidget {
     icon.setInsets(JBUI.insets(if (!ExperimentalUI.Companion.isNewUI() || uiSettings.compactMode) 3 else 4, 8))
 
     val label = if (ExperimentalUI.Companion.isNewUI()) {
-      object : JLabel(icon) {
+      object : WidgetLabel(icon) {
         var compactMode = uiSettings.compactMode
         var scale = uiSettings.ideScale
         var oldFont = font
@@ -131,12 +129,14 @@ private class NonCommercialWidget : CustomStatusBarWidget {
       }
     }
     else {
-      JLabel(icon)
+      WidgetLabel(icon)
     }
     icon.setFontTransform(label.getFontMetrics(icon.font).fontRenderContext.transform)
     label.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, title)
 
-    NonCommercialPopup(this).installOn(label)
+    val popup = NonCommercialPopup(this)
+    label.clickListener = popup
+    popup.installOn(label)
 
     return label
   }
@@ -168,7 +168,9 @@ private class NonCommercialWidget : CustomStatusBarWidget {
     label.horizontalTextPosition = SwingConstants.LEFT
     label.border = JBUI.Borders.empty(0, 12)
 
-    NonCommercialPopup(this).installOn(label)
+    val popup = NonCommercialPopup(this)
+    label.clickListener = popup
+    popup.installOn(label)
 
     return label
   }
@@ -184,7 +186,9 @@ private class NonCommercialPopup(private val widget: NonCommercialWidget) : Clic
     NonCommercialWidgetUsagesCollector.widgetClick.log()
 
     val popupDisposable = Disposer.newDisposable(widget)
-    val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(createPanel(popupDisposable), null).createPopup()
+    val panel = createPanel(popupDisposable)
+    val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, panel.preferredFocusedComponent)
+      .setRequestFocus(true).createPopup()
 
     val dimension = popup.content.preferredSize
     val at = Point(event.component.width - dimension.width, -dimension.height)
@@ -198,7 +202,7 @@ private class NonCommercialPopup(private val widget: NonCommercialWidget) : Clic
     return true
   }
 
-  private fun createPanel(popupDisposable: Disposable): JPanel {
+  private fun createPanel(popupDisposable: Disposable): DialogPanel {
     return panel {
       row {
         val styleSheet = StyleSheetUtil.getDefaultStyleSheet()
@@ -210,7 +214,7 @@ private class NonCommercialPopup(private val widget: NonCommercialWidget) : Clic
 
         val component = text("").component
         component.editorKit = kit
-
+        component.isFocusable = true
         component.text = IdeBundle.message("popup.text.non.commercial.usage", BundleBase.replaceMnemonicAmpersand(url))
         component.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, StringUtil.stripHtml(component.text, " "))
 
@@ -235,6 +239,10 @@ private class NonCommercialPopup(private val widget: NonCommercialWidget) : Clic
       }
     }.also {
       it.border = JBUI.Borders.empty(16, 20, 12, 24)
+
+      it.isFocusCycleRoot = true
+      it.focusTraversalPolicy = LayoutFocusTraversalPolicy()
+      it.preferredFocusedComponent = UIUtil.findComponentOfType(it, JEditorPane::class.java)
     }
   }
 
