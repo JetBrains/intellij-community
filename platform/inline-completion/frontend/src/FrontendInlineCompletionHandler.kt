@@ -10,7 +10,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import kotlinx.coroutines.CoroutineScope
 
-class FrontendInlineCompletionHandler(
+internal class FrontendInlineCompletionHandler(
   scope: CoroutineScope,
   editor: Editor,
   parentDisposable: Disposable
