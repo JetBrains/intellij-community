@@ -151,7 +151,6 @@ class MavenProjectReader(private val myProject: Project) {
                                          recursionGuard: MutableSet<VirtualFile>,
                                          locator: MavenProjectReaderProjectLocator,
                                          problems: MutableCollection<MavenProjectProblem>): MavenModel {
-    var model = model
     if (recursionGuard.contains(file)) {
       problems.add(MavenProjectProblem.createProblem(
         file.path, MavenProjectBundle.message("maven.project.problem.recursiveInheritance"),
@@ -213,10 +212,10 @@ class MavenProjectReader(private val myProject: Project) {
           false))
       }
 
-      model = myReadHelper.assembleInheritance(projectPomDir, parentModel, model, file)
+      val modelWithInheritance = myReadHelper.assembleInheritance(projectPomDir, parentModel, model, file)
 
       // todo: it is a quick-hack here - we add inherited dummy profiles to correctly collect activated profiles in 'applyProfiles'.
-      val profiles = model.profiles
+      val profiles = modelWithInheritance.profiles
       for (each in parentModel.profiles) {
         val copyProfile = MavenProfile(each.id, each.source)
         if (each.activation != null) {
@@ -225,7 +224,7 @@ class MavenProjectReader(private val myProject: Project) {
 
         addProfileIfDoesNotExist(copyProfile, profiles)
       }
-      return model
+      return modelWithInheritance
     }
     finally {
       recursionGuard.remove(file)
