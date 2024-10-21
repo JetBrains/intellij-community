@@ -5970,6 +5970,18 @@ public class PyTypingTest extends PyTestCase {
     });
   }
 
+  // PY-36205
+  public void testIterateEnum() {
+    doTest("Foo",
+           """
+             from enum import Enum
+             class Foo(str, Enum):
+                 ONE = 1
+             for expr in Foo:
+                 pass
+             """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

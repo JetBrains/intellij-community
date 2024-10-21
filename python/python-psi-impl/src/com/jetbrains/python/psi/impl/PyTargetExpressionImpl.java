@@ -421,14 +421,23 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Nullable
   private static PyFunction findMethodByName(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
     final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
-    final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ, resolveContext);
+    final PyType actualType;
+    if (type instanceof PyClassType classType && classType.isDefinition()) {
+      PyClassLikeType metaclassType = classType.getMetaClassType(resolveContext.getTypeEvalContext(), true);
+      if (metaclassType == null) return null;
+      actualType = metaclassType;
+    }
+    else {
+      actualType = type;
+    }
+    final List<? extends RatedResolveResult> results = actualType.resolveMember(name, null, AccessDirection.READ, resolveContext);
     if (results != null) {
       List<PyFunction> allMethods = StreamEx.of(results)
         .map(RatedResolveResult::getElement)
         .select(PyFunction.class)
         .toList();
       // TODO Migrate this ad-hoc logic to the normal process of resolving overloads in PyCallExpressionHelper
-      PyFunction matchingBySelf = ContainerUtil.find(allMethods, method -> selfParameterMatchesReceiver(method, type, context));
+      PyFunction matchingBySelf = ContainerUtil.find(allMethods, method -> selfParameterMatchesReceiver(method, actualType, context));
       return matchingBySelf != null ? matchingBySelf : ContainerUtil.getFirstItem(allMethods);
     }
     return null;
