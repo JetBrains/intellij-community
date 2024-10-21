@@ -1,17 +1,9 @@
 package com.intellij.driver.client.impl
 
-import com.intellij.driver.client.Driver
-import com.intellij.driver.client.PolymorphRef
-import com.intellij.driver.client.PolymorphRefRegistry
-import com.intellij.driver.client.ProjectRef
-import com.intellij.driver.client.Remote
-import com.intellij.driver.client.Timed
-import com.intellij.driver.model.LockSemantics
-import com.intellij.driver.model.OnDispatcher
-import com.intellij.driver.model.ProductVersion
-import com.intellij.driver.model.RdTarget
+import com.intellij.driver.client.*
+import com.intellij.driver.model.*
 import com.intellij.driver.model.transport.*
-import java.lang.IllegalStateException
+import java.awt.IllegalComponentStateException
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Proxy
@@ -207,6 +199,12 @@ open class DriverImpl(host: JmxHost?, override val isRemoteIdeMode: Boolean) : D
   private fun makeCall(call: RemoteCall): RemoteCallResult {
     return try {
       invoker.invoke(call)
+    }
+    catch (ise: IllegalComponentStateException) {
+      throw ise
+    }
+    catch (ed: DriverIllegalStateException) {
+      throw ed
     }
     catch (e: Exception) {
       throw DriverCallException("Error on remote driver call", e)

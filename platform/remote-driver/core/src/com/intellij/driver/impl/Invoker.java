@@ -1,6 +1,6 @@
 package com.intellij.driver.impl;
 
-import com.intellij.driver.model.DriverIlligalStateException;
+import com.intellij.driver.model.DriverIllegalStateException;
 import com.intellij.driver.model.OnDispatcher;
 import com.intellij.driver.model.ProductVersion;
 import com.intellij.driver.model.RdTarget;
@@ -29,9 +29,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -130,7 +132,7 @@ public class Invoker implements InvokerMBean {
         LOG.error("Unable to get instance for " + call);
       }
 
-      throw new DriverIlligalStateException("Unable to get instance for " + call, e);
+      throw new DriverIllegalStateException("Unable to get instance for " + call, e);
     }
 
     if (call.getDispatcher() == OnDispatcher.EDT) {
@@ -166,7 +168,7 @@ public class Invoker implements InvokerMBean {
     // first lookup in the current session
     Session session = sessions.get(sessionId);
     if (session == null) {
-      throw new DriverIlligalStateException("No such session " + sessionId);
+      throw new DriverIllegalStateException("No such session " + sessionId);
     }
 
     Object value = session.findReference(id);
@@ -178,7 +180,7 @@ public class Invoker implements InvokerMBean {
       if (value != null) return value;
     }
 
-    throw new DriverIlligalStateException("No such reference with id " + id + ". " +
+    throw new DriverIllegalStateException("No such reference with id " + id + ". " +
                                           "It may happen if a weak reference to the variable expires. " +
                                           "Please use `Driver.withContext { }` for hard variable references.");
   }
@@ -249,7 +251,11 @@ public class Invoker implements InvokerMBean {
         return supplier.call();
       }
       catch (InvocationTargetException e) {
-        throw new DriverIlligalStateException(e);
+        if (e.getCause() instanceof IllegalComponentStateException) {
+          throw (IllegalComponentStateException)e.getCause();
+        }
+
+        throw new DriverIllegalStateException(e);
       }
       catch (Exception e) {
         ExceptionUtil.rethrow(e);
@@ -378,7 +384,7 @@ public class Invoker implements InvokerMBean {
       clazz = getClassLoader(call).loadClass(call.getClassName());
     }
     catch (ClassNotFoundException e) {
-      throw new DriverIlligalStateException(
+      throw new DriverIllegalStateException(
         (rdTarget == RdTarget.DEFAULT ? "" : rdTarget + ": ") + "No such class '" + call.getClassName() + "'", e);
     }
     return clazz;
@@ -393,7 +399,7 @@ public class Invoker implements InvokerMBean {
       String moduleId = StringsKt.substringAfter(pluginId, "/", pluginId);
 
       IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginId.getId(mainId));
-      if (plugin == null) throw new DriverIlligalStateException("No such plugin " + mainId);
+      if (plugin == null) throw new DriverIllegalStateException("No such plugin " + mainId);
 
       List<PluginContentDescriptor.ModuleItem> modules = ((IdeaPluginDescriptorImpl)plugin).content.modules;
       for (PluginContentDescriptor.ModuleItem module : modules) {
@@ -402,11 +408,11 @@ public class Invoker implements InvokerMBean {
         }
       }
 
-      throw new DriverIlligalStateException("No such plugin module " + pluginId);
+      throw new DriverIllegalStateException("No such plugin module " + pluginId);
     }
 
     IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginId.getId(pluginId));
-    if (plugin == null) throw new DriverIlligalStateException("No such plugin " + pluginId);
+    if (plugin == null) throw new DriverIllegalStateException("No such plugin " + pluginId);
 
     return plugin.getClassLoader();
   }
@@ -424,7 +430,7 @@ public class Invoker implements InvokerMBean {
       if (serviceInterface != null) {
         serviceClass = findServiceInterface(clazz, serviceInterface);
         if (serviceClass == null) {
-          throw new DriverIlligalStateException("Unable to find interface " + serviceInterface + " for service " + clazz);
+          throw new DriverIllegalStateException("Unable to find interface " + serviceInterface + " for service " + clazz);
         }
       }
 
@@ -448,7 +454,7 @@ public class Invoker implements InvokerMBean {
       Ref ref = ((RefCall)call).getRef();
       Object reference = getReference(call.getSessionId(), ref.id());
 
-      if (reference == null) throw new DriverIlligalStateException("No such ref exists " + ref);
+      if (reference == null) throw new DriverIllegalStateException("No such ref exists " + ref);
 
       return reference;
     }
