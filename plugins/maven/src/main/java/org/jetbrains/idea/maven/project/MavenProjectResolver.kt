@@ -38,14 +38,17 @@ import java.util.concurrent.ConcurrentLinkedQueue
 data class MavenProjectResolutionResult(val mavenProjectMap: Map<String, Collection<MavenProject>>)
 
 @ApiStatus.Internal
-class MavenProjectResolverResult(@JvmField val mavenModel: MavenModel,
-                                 @JvmField val dependencyHash: String?,
-                                 @JvmField val dependencyResolutionSkipped: Boolean,
-                                 @JvmField val nativeModelMap: Map<String, String>,
-                                 @JvmField val activatedProfiles: MavenExplicitProfiles,
-                                 @JvmField val readingProblems: MutableCollection<MavenProjectProblem>,
-                                 @JvmField val unresolvedArtifactIds: MutableSet<MavenId>,
-                                 val unresolvedProblems: Collection<MavenProjectProblem>)
+class MavenProjectResolverResult(
+  @JvmField val mavenModel: MavenModel,
+  @JvmField val managedDependencies: List<MavenId>,
+  @JvmField val dependencyHash: String?,
+  @JvmField val dependencyResolutionSkipped: Boolean,
+  @JvmField val nativeModelMap: Map<String, String>,
+  @JvmField val activatedProfiles: MavenExplicitProfiles,
+  @JvmField val readingProblems: MutableCollection<MavenProjectProblem>,
+  @JvmField val unresolvedArtifactIds: MutableSet<MavenId>,
+  val unresolvedProblems: Collection<MavenProjectProblem>,
+)
 
 @ApiStatus.Internal
 interface MavenProjectResolutionContributor {
@@ -73,14 +76,16 @@ interface MavenProjectResolutionContributor {
 
 @ApiStatus.Internal
 class MavenProjectResolver(private val myProject: Project) {
-  suspend fun resolve(incrementally: Boolean,
-                      mavenProjects: Collection<MavenProject>,
-                      tree: MavenProjectsTree,
-                      workspaceMap: MavenWorkspaceMap,
-                      generalSettings: MavenGeneralSettings,
-                      embeddersManager: MavenEmbeddersManager,
-                      progressReporter: RawProgressReporter,
-                      eventHandler: MavenEventHandler): MavenProjectResolutionResult {
+  suspend fun resolve(
+    incrementally: Boolean,
+    mavenProjects: Collection<MavenProject>,
+    tree: MavenProjectsTree,
+    workspaceMap: MavenWorkspaceMap,
+    generalSettings: MavenGeneralSettings,
+    embeddersManager: MavenEmbeddersManager,
+    progressReporter: RawProgressReporter,
+    eventHandler: MavenEventHandler,
+  ): MavenProjectResolutionResult {
     val updateSnapshots = MavenProjectsManager.getInstance(myProject).forceUpdateSnapshots || generalSettings.isAlwaysUpdateSnapshots
     val projectsWithUnresolvedPlugins = HashMap<String, Collection<MavenProject>>()
     val pomToDependencyHash = tree.projects.associate { it.file to if (incrementally) it.dependencyHash else null }
@@ -324,7 +329,7 @@ class MavenProjectResolver(private val myProject: Project) {
     eventHandler: MavenEventHandler,
     workspaceMap: MavenWorkspaceMap?,
     updateSnapshots: Boolean,
-    userProperties: Properties
+    userProperties: Properties,
   ): Pair<Collection<MavenProjectResolverResult>, Collection<MavenProjectProblem>> {
     val files = pomToDependencyHash.keys
     val resolverResults: MutableCollection<MavenProjectResolverResult> = ArrayList()
@@ -353,6 +358,7 @@ class MavenProjectResolver(private val myProject: Project) {
         else {
           resolverResults.add(MavenProjectResolverResult(
             projectData.mavenModel,
+            projectData.managedDependencies,
             projectData.dependencyHash,
             projectData.dependencyResolutionSkipped,
             projectData.mavenModelMap,
@@ -382,12 +388,14 @@ class MavenProjectResolver(private val myProject: Project) {
     return null
   }
 
-  private suspend fun collectProjectWithUnresolvedPlugins(result: MavenProjectResolverResult,
-                                                          artifactIdToMavenProjects: Map<String, List<MavenProject>>,
-                                                          generalSettings: MavenGeneralSettings,
-                                                          embedder: MavenEmbedderWrapper,
-                                                          tree: MavenProjectsTree,
-                                                          projectsWithUnresolvedPlugins: ConcurrentLinkedQueue<MavenProject>) {
+  private suspend fun collectProjectWithUnresolvedPlugins(
+    result: MavenProjectResolverResult,
+    artifactIdToMavenProjects: Map<String, List<MavenProject>>,
+    generalSettings: MavenGeneralSettings,
+    embedder: MavenEmbedderWrapper,
+    tree: MavenProjectsTree,
+    projectsWithUnresolvedPlugins: ConcurrentLinkedQueue<MavenProject>,
+  ) {
     val mavenId = result.mavenModel.mavenId
     val artifactId = mavenId.artifactId
     val mavenProjects = artifactIdToMavenProjects[artifactId]
@@ -414,13 +422,14 @@ class MavenProjectResolver(private val myProject: Project) {
     val keepPreviousArtifacts = keepPreviousResolutionResults || result.dependencyResolutionSkipped
 
     MavenLog.LOG.debug(
-      "Project resolution: updating maven project $mavenProjectCandidate, keepPreviousArtifacts=$keepPreviousArtifacts, dependencies: ${result.mavenModel.dependencies.size}")
+      "Project resolution: updating maven project $mavenProjectCandidate, keepPreviousArtifacts=$keepPreviousArtifacts, dependencies: ${result.mavenModel.dependencies.size}, managedDeps: ${result.managedDependencies.size}")
 
     MavenServerResultTransformer.getInstance(myProject)
       .transform(result.mavenModel, mavenProjectCandidate.file)
 
     mavenProjectCandidate.updateState(
       result.mavenModel,
+      result.managedDependencies,
       result.dependencyHash,
       result.readingProblems,
       result.activatedProfiles,
@@ -459,9 +468,11 @@ class MavenProjectResolver(private val myProject: Project) {
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use {@link #resolveProject()}")
-  internal fun resolveProjectSync(embedder: MavenEmbedderWrapper,
-                                  files: Collection<VirtualFile>,
-                                  explicitProfiles: MavenExplicitProfiles): Collection<MavenProjectResolverResult> {
+  internal fun resolveProjectSync(
+    embedder: MavenEmbedderWrapper,
+    files: Collection<VirtualFile>,
+    explicitProfiles: MavenExplicitProfiles,
+  ): Collection<MavenProjectResolverResult> {
     return runBlockingMaybeCancellable {
       resolveProjectsInEmbedder(
         embedder,
