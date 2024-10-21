@@ -2076,7 +2076,6 @@ f:com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 - com.intellij.openapi.components.PersistentStateComponent
 - sf:DEFAULT_PROJECT_PRESENTATION_PATH:java.lang.String
 - sf:SHELF_TOPIC:com.intellij.util.messages.Topic
-- <init>(com.intellij.openapi.project.Project):V
 - checkAndMigrateUnderProgress(java.io.File,java.io.File,Z):V
 - cleanUnshelved(J):V
 - gatherPatchFiles(java.util.Collection):java.util.List
@@ -2170,7 +2169,6 @@ c:com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager
 - sf:SHELVED_CHANGE_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:SHELVED_DELETED_CHANGELIST_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:SHELVED_RECYCLED_CHANGELIST_KEY:com.intellij.openapi.actionSystem.DataKey
-- <init>(com.intellij.openapi.project.Project):V
 - p:activateContent():V
 - activateView(com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList):V
 - p:addContent(com.intellij.ui.content.Content):V
