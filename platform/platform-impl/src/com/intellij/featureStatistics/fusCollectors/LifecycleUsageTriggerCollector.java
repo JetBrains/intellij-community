@@ -28,7 +28,7 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
 
-  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 72);
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 73);
 
   private static final EventField<Boolean> eapField = EventFields.Boolean("eap");
   private static final EventField<Boolean> testField = EventFields.Boolean("test");
@@ -66,14 +66,12 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
 
   private static final EventId1<Long> IDE_FREEZE = LIFECYCLE.registerEvent("ide.freeze", EventFields.DurationMs);
 
-  private static final EventId2<PluginInfo, Long> IDE_FREEZE_REPORTED_PLUGIN =
-    LIFECYCLE.registerEvent("ide.freeze.plugin", EventFields.PluginInfo, EventFields.DurationMs);
-  private static final EventId1<PluginInfo> IDE_FREEZE_PLUGIN_DISABLED =
-    LIFECYCLE.registerEvent("ide.freeze.disabled.plugin", EventFields.PluginInfo);
+  private static final EventId2<PluginInfo, Long> IDE_FREEZE_DETECTED_PLUGIN =
+    LIFECYCLE.registerEvent("ide.freeze.detected.plugin", EventFields.PluginInfo, EventFields.DurationMs);
+  private static final EventId1<PluginInfo> IDE_FREEZE_PLUGIN_ISSUE_REPORTED =
+    LIFECYCLE.registerEvent("ide.freeze.reported.plugin", EventFields.PluginInfo);
   private static final EventId1<PluginInfo> IDE_FREEZE_PLUGIN_IGNORED =
     LIFECYCLE.registerEvent("ide.freeze.ignored.plugin", EventFields.PluginInfo);
-  private static final EventId IDE_FREEZE_PLUGIN_ISSUE_TRACKER_OPENED =
-    LIFECYCLE.registerEvent("ide.freeze.issue.tracker.opened");
 
   private static final ClassEventField errorField = EventFields.Class("error");
   private static final EventField<VMOptions.MemoryKind> memoryErrorKindField =
@@ -231,19 +229,15 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     EARLY_ERRORS.log(numErrors);
   }
 
-  public static void pluginFreezeReported(@NotNull PluginId pluginId, long durationMs) {
-    IDE_FREEZE_REPORTED_PLUGIN.log(getPluginInfoById(pluginId), durationMs);
+  public static void pluginFreezeDetected(@NotNull PluginId pluginId, long durationMs) {
+    IDE_FREEZE_DETECTED_PLUGIN.log(getPluginInfoById(pluginId), durationMs);
   }
 
-  public static void pluginDisabledOnFreeze(@NotNull PluginId id) {
-    IDE_FREEZE_PLUGIN_DISABLED.log(getPluginInfoById(id));
+  public static void pluginFreezeReported(@NotNull PluginId pluginId) {
+    IDE_FREEZE_PLUGIN_ISSUE_REPORTED.log(getPluginInfoById(pluginId));
   }
 
   public static void pluginFreezeIgnored(@NotNull PluginId id) {
     IDE_FREEZE_PLUGIN_IGNORED.log(getPluginInfoById(id));
-  }
-
-  public static void pluginIssueTrackerOpened() {
-    IDE_FREEZE_PLUGIN_ISSUE_TRACKER_OPENED.log();
   }
 }

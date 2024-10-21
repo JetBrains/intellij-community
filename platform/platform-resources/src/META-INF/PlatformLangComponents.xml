@@ -4,6 +4,7 @@
     <!-- only bundled plugin can define extension -->
     <!--suppress PluginXmlDynamicPlugin -->
     <extensionPoint name="registerToolWindowTaskProvider" interface="com.intellij.toolWindow.RegisterToolWindowTaskProvider"/>
+    <extensionPoint qualifiedName="com.intellij.diagnostic.freezeNotifier" interface="com.intellij.diagnostic.FreezeNotifier"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

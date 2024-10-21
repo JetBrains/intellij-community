@@ -4,7 +4,9 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
-    <editorNotificationProvider implementation="com.intellij.platform.diagnostic.plugin.freeze.PluginFreezeNotifier"/>
+    <diagnostic.freezeNotifier implementation="com.intellij.platform.diagnostic.plugin.freeze.PluginFreezeNotifier"/>
+    <editorNotificationProvider implementation="com.intellij.platform.diagnostic.plugin.freeze.PluginFreezeNotificationPanel"/>
+
     <registryKey key="ide.diagnostics.notification.freezes.in.plugins"
                  defaultValue="true"
                  description="Show notification about freezes in plugins"/>
