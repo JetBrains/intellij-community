@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-compiler-cli" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-cli-for-ide:2.1.20-dev-1873">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-cli-for-ide:2.1.20-dev-2099">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.1.20-dev-1873/kotlin-compiler-cli-for-ide-2.1.20-dev-1873.jar">
-          <sha256sum>bd2525b9407cf403da08b75a189a1df39930a650ba156b68fa59233b763c8445</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.1.20-dev-2099/kotlin-compiler-cli-for-ide-2.1.20-dev-2099.jar">
+          <sha256sum>03568a58389cdade9b8b0fdad00ab6e139c562f8ff01a84c2c0c6a29996ee262</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.1.20-dev-1873/kotlin-compiler-cli-for-ide-2.1.20-dev-1873.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.1.20-dev-2099/kotlin-compiler-cli-for-ide-2.1.20-dev-2099.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.1.20-dev-1873/kotlin-compiler-cli-for-ide-2.1.20-dev-1873-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.1.20-dev-2099/kotlin-compiler-cli-for-ide-2.1.20-dev-2099-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
