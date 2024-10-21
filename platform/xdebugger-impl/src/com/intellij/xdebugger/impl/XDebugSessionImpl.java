@@ -322,7 +322,7 @@ public final class XDebugSessionImpl implements XDebugSession {
                      @Nullable RunContentDescriptor contentToReuse) {
     myMixedModeLowLevelDebugProcess = mixedModeLowLevelProcess;
     myMixedModeExtension =
-      /*TODO: move to rider cpp plugin*/
+      /*TODO[merge blocker]: move to rider cpp plugin*/
       new MonoXDebugSessionMixedModeExtension(this.myCoroutineScope, process, mixedModeLowLevelProcess);
     init(process, contentToReuse);
   }
@@ -518,7 +518,12 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   private void processAllHandlers(final XBreakpoint<?> breakpoint, final boolean register) {
-    for (XBreakpointHandler<?> handler : myDebugProcess.getBreakpointHandlers()) {
+    var handlers = new ArrayList<>(Arrays.asList(myDebugProcess.getBreakpointHandlers()));
+    if (myMixedModeExtension != null) {
+      handlers.addAll(Arrays.asList(myMixedModeLowLevelDebugProcess.getBreakpointHandlers()));
+    }
+
+    for (XBreakpointHandler<?> handler : handlers) {
       processBreakpoint(breakpoint, handler, register);
     }
   }
@@ -587,7 +592,17 @@ public final class XDebugSessionImpl implements XDebugSession {
     rememberUserActionStart(XDebuggerActions.STEP_INTO);
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
-    myDebugProcess.startStepInto(doResume());
+    var currentStackFrame = getCurrentStackFrame();
+    var suspendContext = doResume();
+    if (myMixedModeExtension != null) {
+      var mixedModeSuspendContext = Objects.requireNonNull((XMixedModeSuspendContext)suspendContext);
+      var suspendContextForStep = myMixedModeExtension.isLowStackFrame(Objects.requireNonNull(currentStackFrame))
+                                  ? mixedModeSuspendContext.getLowLevelDebugSuspendContext()
+                                  : mixedModeSuspendContext.getHighLevelDebugSuspendContext();
+      myMixedModeExtension.stepInto(suspendContextForStep);
+      return;
+    }
+    myDebugProcess.startStepInto(suspendContext);
   }
 
   @Override
@@ -1015,6 +1030,8 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   public void positionReached(@NotNull XSuspendContext suspendContext, boolean attract) {
     if (myMixedModeExtension != null) {
+      // for now, we consider that suspendContext is a context of high-level debug process, TODO: if you change the code of this method, please check if that's still so
+      mySuspendContext = suspendContext;
       var mixedSuspendContext = myMixedModeExtension.positionReached(suspendContext);
       if (mixedSuspendContext == null) {
         return;

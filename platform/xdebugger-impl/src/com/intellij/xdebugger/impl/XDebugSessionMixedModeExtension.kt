@@ -6,6 +6,7 @@ import com.intellij.util.io.await
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugProcessDebuggeeInForeground
 import com.intellij.xdebugger.frame.XMixedModeSuspendContext
+import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -17,7 +18,7 @@ private val logger = com.intellij.openapi.diagnostic.logger<XDebugProcessDebugge
 
 interface XMixedModeDebugProcess {
   fun pauseMixedModeSession(): Future<Void>
-  suspend fun resumeAndWait() : Boolean
+  suspend fun resumeAndWait(): Boolean
 }
 
 abstract class XDebugSessionMixedModeExtension(
@@ -25,13 +26,14 @@ abstract class XDebugSessionMixedModeExtension(
   private val high: XDebugProcess,
   private val low: XDebugProcess,
 ) {
-
-  val lowMixedModeProcess: XMixedModeDebugProcess
+  private val lowMixedModeProcess: XMixedModeDebugProcess
     get() = low as XMixedModeDebugProcess
-  val highMixedModeProcess: XMixedModeDebugProcess
+  private val highMixedModeProcess: XMixedModeDebugProcess
     get() = high as XMixedModeDebugProcess
+  val lowLevelSuspendContext: XSuspendContext? = null
 
   abstract fun isLowSuspendContext(suspendContext: XSuspendContext): Boolean
+  abstract fun isLowStackFrame(stackFrame: XStackFrame): Boolean
 
   fun pause() {
     coroutineScope.launch(Dispatchers.EDT) {
@@ -55,7 +57,7 @@ abstract class XDebugSessionMixedModeExtension(
   private var lowDebugPositionReachedDeferred: CompletableDeferred<XSuspendContext>? = null
   private var highDebugPositionReachedDeferred: CompletableDeferred<XSuspendContext>? = null
 
-  suspend fun pauseAsync() {
+  private suspend fun pauseAsync() {
     lowDebugPositionReachedDeferred = CompletableDeferred()
     highDebugPositionReachedDeferred = CompletableDeferred()
 
@@ -79,6 +81,14 @@ abstract class XDebugSessionMixedModeExtension(
       highMixedModeProcess.resumeAndWait()
     }
   }
+
+  fun stepInto(suspendContext: XSuspendContext) {
+    if (isLowSuspendContext(suspendContext)) {
+      this.low.startStepInto(suspendContext)
+    }
+    else
+      TODO("not yet supported")
+  }
 }
 
 
@@ -86,5 +96,9 @@ class MonoXDebugSessionMixedModeExtension(coroutineScope: CoroutineScope, high: 
   : XDebugSessionMixedModeExtension(coroutineScope, high, low) {
   override fun isLowSuspendContext(suspendContext: XSuspendContext): Boolean {
     return suspendContext.javaClass.name.contains("Cidr")
+  }
+
+  override fun isLowStackFrame(stackFrame: XStackFrame): Boolean {
+    return stackFrame.javaClass.name.contains("Cidr")
   }
 }
