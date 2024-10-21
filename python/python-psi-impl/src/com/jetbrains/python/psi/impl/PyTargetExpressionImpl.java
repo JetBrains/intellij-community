@@ -189,10 +189,6 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     PyType type = getTargetExpressionType(context);
     if (type != null) {
-      Ref<PyType> typeFromDescriptors = PyDescriptorTypeUtil.getDescriptorType(this, type, context);
-      if (typeFromDescriptors != null) {
-        return typeFromDescriptors.get();
-      }
       return type;
     }
     return null;

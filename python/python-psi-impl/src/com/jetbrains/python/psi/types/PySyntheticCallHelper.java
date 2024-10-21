@@ -76,7 +76,7 @@ public final class PySyntheticCallHelper {
   }
 
 
-  public static @NotNull List<PyFunction> resolveFunctionsByArgumentTypes(@NotNull String functionName,
+  static @NotNull List<PyFunction> resolveFunctionsByArgumentTypes(@NotNull String functionName,
                                                                            @NotNull List<PyType> argumentTypes,
                                                                            @Nullable PyType receiverType,
                                                                            @NotNull TypeEvalContext context) {
@@ -106,20 +106,21 @@ public final class PySyntheticCallHelper {
   }
 
   private static @NotNull List<PyFunction> matchOverloadsByArgumentTypes(@NotNull List<PyFunction> functions,
-                                                                         @NotNull List<PyType> arguments,
+                                                                         @NotNull List<PyType> argumentTypes,
                                                                          @Nullable PyType receiverType,
                                                                          @NotNull TypeEvalContext context) {
     PyFunction firstFunc = ContainerUtil.getFirstItem(functions);
     if (firstFunc != null && PyiUtil.isOverload(firstFunc, context)) {
       List<PyFunction> matchingOverloads = ContainerUtil.filter(
         functions,
-        function -> matchesByArgumentTypesOnTypesOnly(function, receiverType, arguments, context)
+        function -> PyiUtil.isOverload(function, context)
+                    && matchesByArgumentTypesOnTypesOnly(function, receiverType, argumentTypes, context)
       );
       if (matchingOverloads.isEmpty()) {
         return Collections.emptyList();
       }
       if (matchingOverloads.size() > 1) {
-        boolean someArgumentsHaveUnknownType = ContainerUtil.exists(arguments, arg -> arg == null);
+        boolean someArgumentsHaveUnknownType = ContainerUtil.exists(argumentTypes, arg -> arg == null);
         if (someArgumentsHaveUnknownType) {
           return matchingOverloads;
         }
@@ -154,7 +155,9 @@ public final class PySyntheticCallHelper {
     Map<Ref<PyType>, PyCallableParameter> mappedParams = new HashMap<>();
 
     for (int i = 0; i < explicitParameters.size(); i++) {
-      mappedParams.put(Ref.create(i < arguments.size() ? arguments.get(i) : null), explicitParameters.get(i));
+      if (i < arguments.size()) {
+        mappedParams.put(Ref.create(arguments.get(i)), explicitParameters.get(i));
+      }
     }
 
     return new SyntheticCallArgumentsMapping(functionType, implicitParameters, mappedParams, unmappedArguments);
