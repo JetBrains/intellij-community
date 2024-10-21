@@ -30,48 +30,60 @@ import org.jetbrains.jewel.ui.component.styling.TooltipStyle
 import org.jetbrains.jewel.ui.theme.tooltipStyle
 import org.jetbrains.jewel.ui.util.isDark
 
+/**
+ * Shows a tooltip when the mouse pointer lingers on the [content] for long enough. Provides the styling for the tooltip
+ * container.
+ *
+ * @param tooltip The content of the tooltip.
+ * @param modifier Modifier to apply to the content's wrapper
+ * @param enabled When true, the tooltip can be shown. When false, it will never show.
+ * @param style The style to apply to the tooltip.
+ * @param tooltipPlacement The placement of the tooltip.
+ * @param content The component for which to show the tooltip on hover.
+ */
 @Composable
 public fun Tooltip(
     tooltip: @Composable () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     style: TooltipStyle = JewelTheme.tooltipStyle,
     tooltipPlacement: TooltipPlacement = style.metrics.placement,
     content: @Composable () -> Unit,
 ) {
     TooltipArea(
-        tooltip = {
-            CompositionLocalProvider(
-                LocalContentColor provides style.colors.content,
-                LocalTextStyle provides LocalTextStyle.current.copy(color = style.colors.content),
-            ) {
-                Box(
-                    modifier =
-                        Modifier.shadow(
-                                elevation = style.metrics.shadowSize,
-                                shape = RoundedCornerShape(style.metrics.cornerSize),
-                                ambientColor = style.colors.shadow,
-                                spotColor = Color.Transparent,
-                            )
-                            .background(
-                                color = style.colors.background,
-                                shape = RoundedCornerShape(style.metrics.cornerSize),
-                            )
-                            .border(
-                                width = style.metrics.borderWidth,
-                                color = style.colors.border,
-                                shape = RoundedCornerShape(style.metrics.cornerSize),
-                            )
-                            .padding(style.metrics.contentPadding)
-                ) {
-                    OverrideDarkMode(style.colors.background.isDark()) { tooltip() }
-                }
-            }
-        },
+        tooltip = { if (enabled) TooltipImpl(style, tooltip) else Box {} },
         modifier = modifier,
         delayMillis = style.metrics.showDelay.inWholeMilliseconds.toInt(),
         tooltipPlacement = tooltipPlacement,
         content = content,
     )
+}
+
+@Composable
+private fun TooltipImpl(style: TooltipStyle, tooltip: @Composable () -> Unit) {
+    CompositionLocalProvider(
+        LocalContentColor provides style.colors.content,
+        LocalTextStyle provides LocalTextStyle.current.copy(color = style.colors.content),
+    ) {
+        Box(
+            modifier =
+                Modifier.shadow(
+                        elevation = style.metrics.shadowSize,
+                        shape = RoundedCornerShape(style.metrics.cornerSize),
+                        ambientColor = style.colors.shadow,
+                        spotColor = Color.Transparent,
+                    )
+                    .background(color = style.colors.background, shape = RoundedCornerShape(style.metrics.cornerSize))
+                    .border(
+                        width = style.metrics.borderWidth,
+                        color = style.colors.border,
+                        shape = RoundedCornerShape(style.metrics.cornerSize),
+                    )
+                    .padding(style.metrics.contentPadding)
+        ) {
+            OverrideDarkMode(style.colors.background.isDark()) { tooltip() }
+        }
+    }
 }
 
 /**
