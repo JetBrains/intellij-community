@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.NlsContexts;
@@ -286,16 +287,15 @@ public final class CommonActionsPanel extends JPanel {
   @ApiStatus.Internal
   public static RelativePoint getPreferredPopupPoint(@NotNull AnAction action, @Nullable Component contextComponent) {
     var c = contextComponent;
-    ActionToolbar toolbar = null;
-    while (c != null && (c = c.getParent()) != null) {
-      if (c instanceof JComponent
-          && (toolbar = (ActionToolbar)((JComponent)c).getClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY)) != null) {
-        break;
+    ActionToolbar toolbar = contextComponent instanceof ActionToolbar o ? o : null;
+    while (toolbar == null && c != null && (c = c.getParent()) != null) {
+      if (c instanceof JComponent o) {
+        toolbar = (ActionToolbar)o.getClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY);
       }
     }
 
-    if (toolbar instanceof JComponent) {
-      RelativePoint preferredPoint = computePreferredPopupPoint((JComponent)toolbar, action);
+    if (toolbar != null) {
+      RelativePoint preferredPoint = computePreferredPopupPoint(toolbar.getComponent(), action);
       if (preferredPoint != null) return preferredPoint;
     }
 
@@ -304,14 +304,11 @@ public final class CommonActionsPanel extends JPanel {
 
   static @Nullable RelativePoint computePreferredPopupPoint(@NotNull JComponent toolbar, @NotNull AnAction action) {
     for (Component comp : toolbar.getComponents()) {
-      if (comp instanceof ActionButtonComponent) {
-        if (comp instanceof AnActionHolder) {
-          AnAction componentAction = ((AnActionHolder)comp).getAction();
-          if (componentAction == action ||
-              (componentAction instanceof ActionWithDelegate<?> && ((ActionWithDelegate<?>)componentAction).getDelegate() == action)) {
-            return new RelativePoint(comp.getParent(), new Point(comp.getX(), comp.getY() + comp.getHeight()));
-          }
-        }
+      AnAction componentAction = comp instanceof AnActionHolder o ? o.getAction() :
+                                 comp instanceof JComponent o ? ClientProperty.get(o, CustomComponentAction.ACTION_KEY) : null;
+      if (componentAction == action ||
+          (componentAction instanceof ActionWithDelegate<?> && ((ActionWithDelegate<?>)componentAction).getDelegate() == action)) {
+        return new RelativePoint(comp.getParent(), new Point(comp.getX(), comp.getY() + comp.getHeight()));
       }
     }
     return null;

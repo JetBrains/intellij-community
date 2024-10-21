@@ -9,10 +9,7 @@ import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder;
-import com.intellij.openapi.actionSystem.impl.ActionMenu;
-import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator;
-import com.intellij.openapi.actionSystem.impl.PresentationFactory;
-import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.actionSystem.impl.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -483,12 +480,16 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @Override
   public @NotNull RelativePoint guessBestPopupLocation(@NotNull AnAction action, @NotNull AnActionEvent event) {
+    ActionUiKind uiKind = event.getUiKind();
+    ActionToolbar toolbar = uiKind instanceof ActualActionUiKind.Toolbar o ? o.getToolbar() :
+                            event.getInputEvent() != null &&
+                            event.getInputEvent().getSource() instanceof JComponent oo ? ActionToolbar.findToolbarBy(oo) : null;
     Component component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (!(component instanceof JComponent)) {
       throw new AssertionError("Component is null for " + action.getClass().getName() + "@" + event.getPlace() +
                                "(" + event.getPresentation().getText() + "): " + component);
     }
-    var point = CommonActionsPanel.getPreferredPopupPoint(action, component);
+    var point = CommonActionsPanel.getPreferredPopupPoint(action, toolbar != null ? toolbar.getComponent() : component);
     if (point != null) return point;
     if (event.getInputEvent() instanceof MouseEvent me &&
         me.getComponent() instanceof JComponent button) {
