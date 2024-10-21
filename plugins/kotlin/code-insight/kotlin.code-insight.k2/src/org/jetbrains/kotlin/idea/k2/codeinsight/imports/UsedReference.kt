@@ -56,12 +56,12 @@ internal class UsedReference private constructor(val reference: KtReference) {
 }
 
 internal class UsedSymbol(val reference: KtReference, val symbol: KaSymbol) {
-    fun KaSession.computeImportableFqName(): FqName? {
-        return computeImportableName(symbol, resolveDispatchReceiver(reference.element) as? KaImplicitReceiverValue?)
+    fun KaSession.computeImportableFqName(): FqName {
+        return toImportableKaSymbol().run { computeImportableName() }
     }
 
     fun KaSession.isResolvedWithImport(): Boolean {
-        if (symbol is KaReceiverParameterSymbol) return false
+        if (definitelyNotImported) return false
 
         val isNotAliased = symbol.name in reference.resolvesByNames
 
@@ -69,6 +69,16 @@ internal class UsedSymbol(val reference: KtReference, val symbol: KaSymbol) {
         if (isNotAliased && isAccessibleAsMemberClassifier(symbol, reference.element)) return false
 
         return canBeResolvedViaImport(reference, symbol)
+    }
+
+    private val KaSession.definitelyNotImported: Boolean get() = when {
+        symbol.isLocal -> true
+
+        symbol is KaPackageSymbol -> true
+        symbol is KaReceiverParameterSymbol -> true
+        symbol is KaTypeParameterSymbol -> true
+
+        else -> false
     }
 
     fun KaSession.toImportableKaSymbol(): ImportableKaSymbol {
@@ -188,6 +198,12 @@ private fun KaSession.isAccessibleAsMemberCallable(
         return isAccessibleAsMemberCallableDeclaration(symbol, element)
     }
 
+    if (element is KtForExpression || element is KtPropertyDelegate) {
+        // approximation until KT-70521 is fixed,
+        // and dispatcher receiver can be analyzed for such cases
+        return true
+    }
+
     val dispatchReceiver = resolveDispatchReceiver(element) ?: return false
 
     return isDispatchedCall(element, symbol, dispatchReceiver)
@@ -220,27 +236,6 @@ private fun KaSession.resolveDispatchReceiver(element: KtElement): KaReceiverVal
     val dispatchReceiver = adjustedElement.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.dispatchReceiver
 
     return dispatchReceiver
-}
-
-private fun KaSession.computeImportableName(
-    target: KaSymbol,
-    implicitDispatchReceiver: KaImplicitReceiverValue? // TODO: support other types of dispatcher values
-): FqName? {
-    if (implicitDispatchReceiver == null) {
-        return target.importableFqName
-    }
-
-    if (target !is KaCallableSymbol) return null
-
-    val callableId = target.callableId ?: return null
-    if (callableId.classId == null) return null
-
-    val implicitReceiver = implicitDispatchReceiver.symbol as? KaClassLikeSymbol ?: return null
-    val implicitReceiverClassId = implicitReceiver.classId ?: return null
-
-    val substitutedCallableId = callableId.withClassId(implicitReceiverClassId)
-
-    return substitutedCallableId.asSingleFqName()
 }
 
 private fun KaSession.canBeResolvedViaImport(reference: KtReference, target: KaSymbol): Boolean {
