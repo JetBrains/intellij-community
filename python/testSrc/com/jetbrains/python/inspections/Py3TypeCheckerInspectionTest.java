@@ -2262,6 +2262,25 @@ def foo(param: str | int) -> TypeGuard[str]:
                    """);
   }
 
+  // PY-76399
+  public void testAssignedValueMatchesWithDunderSetOfAttributeUsedInConstructor() {
+    doTestByText("""
+                   class MyDescriptor:
+                       def __set__(self, obj: object, value: str): ...
+                   
+                   
+                   class Test:
+                       member: MyDescriptor
+                   
+                       def __init__(self, member):
+                           self.member = member
+                   
+                   
+                   x = Test("foo")
+                   x.member = <warning descr="Expected type 'int' (from '__set__'), got 'str' instead">42</warning>
+                   """);
+  }
+
   // PY-23067
   public void testFunctoolsWrapsMultiFile() {
     doMultiFileTest();

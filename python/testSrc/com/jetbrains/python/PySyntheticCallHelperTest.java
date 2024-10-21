@@ -32,6 +32,30 @@ public class PySyntheticCallHelperTest extends PyTestCase {
     });
   }
 
+  public void testSimpleFunctionOnTopLevelTooFewArguments() {
+    doTest("int", """
+      def foo(x, y, z) -> int:
+        pass
+      """, () -> {
+      PyFunction function = myFixture.findElementByText("foo", PyFunction.class);
+      return PySyntheticCallHelper.getCallType(function, null, List.of(PyNoneType.INSTANCE),
+                                               TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()));
+    });
+  }
+
+  public void testSimpleFunctionOnTopLevelTooManyArguments() {
+    doTest("int", """
+      def foo(x) -> int:
+        pass
+      """, () -> {
+      PyFunction function = myFixture.findElementByText("foo", PyFunction.class);
+      return PySyntheticCallHelper.getCallType(function, null, List.of(PyNoneType.INSTANCE,
+                                                                       PyBuiltinCache.getInstance(myFixture.getFile()).getStrType(),
+                                                                       PyBuiltinCache.getInstance(myFixture.getFile()).getStrType()),
+                                               TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()));
+    });
+  }
+
   public void testSimpleFunctionWithOverloadsOnTopLevel() {
     doTest("str", """
       from typing import overload, Any
