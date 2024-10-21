@@ -7,6 +7,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction.createSimple
 import com.intellij.notification.NotificationAction.createSimpleExpiring
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
@@ -65,9 +66,10 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
     val manual = DiagnosticBundle.message("defender.config.manual")
     WindowsDefenderExcludeUtil.notification(DiagnosticBundle.message("defender.config.prompt", pathList, auto, manual), NotificationType.INFORMATION)
       .addAction(createSimpleExpiring(auto) { WindowsDefenderExcludeUtil.updateDefenderConfig(checker, project, paths) })
-      .addAction(createSimple(manual) { showInstructions(checker, project) })
       .addAction(createSimpleExpiring(DiagnosticBundle.message("defender.config.suppress1")) { suppressCheck(checker, project, globally = false) })
       .addAction(createSimpleExpiring(DiagnosticBundle.message("defender.config.suppress2")) { suppressCheck(checker, project, globally = true) })
+      .addAction(Separator.getInstance())
+      .addAction(createSimple(manual) { showInstructions(checker, project) })
       .setSuggestionType(true)
       .setImportantSuggestion(true)
       .apply { collapseDirection = Notification.CollapseActionsDirection.KEEP_LEFTMOST }
