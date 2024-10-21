@@ -497,4 +497,72 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
             project.assertKotlinVersion("1.8.0", true, "module")
         }
     }
+
+    private fun simpleBuildSrcProjectWithVersionCatalog(useKotlinDsl: Boolean) = projectInfo("project", useKotlinDsl) {
+        moduleInfo("project.buildSrc", "buildSrc") {
+            withBuildFile {
+                withDependency {
+                    addElement(code("libs.kotlinGradlePlugin"))
+                }
+            }
+            withSettingsFile {
+                addCode(
+                    """
+                        dependencyResolutionManagement {
+        
+                            // Use Maven Central and Gradle Plugin Portal for resolving dependencies in the shared build logic ("buildSrc") project
+                            @Suppress("UnstableApiUsage")
+                            repositories {
+                                mavenCentral()
+                            }
+        
+                            // Re-use the version catalog from the main build
+                            versionCatalogs {
+                                create("libs") {
+                                    from(files("../gradle/libs.versions.toml"))
+                                }
+                            }
+                        }
+                    """.trimIndent()
+                )
+            }
+        }
+        withSettingsFile {
+            setProjectName("project")
+        }
+        withFile(
+            "gradle/libs.versions.toml",
+            """
+                 [versions]
+                 kotlin = "2.0.21"
+
+                 [libraries]
+                 kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+             """.trimIndent()
+        )
+    }
+
+    @Test
+    fun testNewModuleWithVersionCatalog() {
+        runNewModuleTestCase(
+            useKotlinDsl = false,
+            expectedNewModules = listOf("module"),
+            projectInfo = simpleBuildSrcProjectWithVersionCatalog(true)
+        ) { project ->
+            // It should not specify an explicit version because it is defined in the version catalog
+            Assertions.assertNull(project.findKotlinVersion(false, "module"))
+        }
+    }
+
+    @Test
+    fun testNewModuleWithVersionCatalogKts() {
+        runNewModuleTestCase(
+            useKotlinDsl = true,
+            expectedNewModules = listOf("module"),
+            projectInfo = simpleBuildSrcProjectWithVersionCatalog(true)
+        ) { project ->
+            // It should not specify an explicit version because it is defined in the version catalog
+            Assertions.assertNull(project.findKotlinVersion(true, "module"))
+        }
+    }
 }
