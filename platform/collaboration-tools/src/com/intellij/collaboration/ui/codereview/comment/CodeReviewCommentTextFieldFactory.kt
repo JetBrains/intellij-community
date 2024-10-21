@@ -36,10 +36,11 @@ object CodeReviewCommentTextFieldFactory {
     cs: CoroutineScope, vm: CodeReviewSubmittableTextViewModel,
     actions: CommentInputActionsComponentFactory.Config,
     icon: CommentTextFieldFactory.IconConfig? = null,
-  ): JComponent = createIn(cs, vm, actions, icon) {}
+    setupEditor: (Editor) -> Unit = {},
+  ): JComponent = create(cs, vm, actions, icon, setupEditor)
 
   @ApiStatus.Internal
-  fun createIn(
+  private fun create(
     cs: CoroutineScope, vm: CodeReviewSubmittableTextViewModel,
     actions: CommentInputActionsComponentFactory.Config,
     icon: CommentTextFieldFactory.IconConfig? = null,
@@ -63,8 +64,7 @@ object CodeReviewCommentTextFieldFactory {
           EditorFactory.getInstance().releaseEditor(editor)
         }
       }
-    }
-    // also forces component revalidation on newline
+    } // also forces component revalidation on newline
     // if this is removed, a separate document listener is required
     editor.installScrollIfChangedController(ScrollOnChangePolicy.ScrollToField)
     val textLength = editor.document.textLength
@@ -151,14 +151,13 @@ object CodeReviewCommentTextFieldFactory {
     })
   }
 
-  private fun <T, R> StateFlow<T>.mapToValueModel(cs: CoroutineScope, mapper: (T) -> R): SingleValueModel<R> =
-    SingleValueModel(mapper(value)).apply {
-      cs.launch {
-        collect {
-          value = mapper(it)
-        }
+  private fun <T, R> StateFlow<T>.mapToValueModel(cs: CoroutineScope, mapper: (T) -> R): SingleValueModel<R> = SingleValueModel(mapper(value)).apply {
+    cs.launch {
+      collect {
+        value = mapper(it)
       }
     }
+  }
 }
 
 fun <VM : CodeReviewSubmittableTextViewModel> VM.submitActionIn(cs: CoroutineScope, name: @Nls String, doSubmit: VM.() -> Unit): Action {
