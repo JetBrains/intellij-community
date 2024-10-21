@@ -7,10 +7,7 @@ import com.intellij.json.JsonBundle;
 import com.intellij.openapi.util.NlsSafe;
 import com.jetbrains.jsonSchema.extension.JsonErrorPriority;
 import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter;
-import com.jetbrains.jsonSchema.impl.fixes.AddMissingPropertyFix;
-import com.jetbrains.jsonSchema.impl.fixes.FixPropertyNameTypoFix;
-import com.jetbrains.jsonSchema.impl.fixes.RemoveProhibitedPropertyFix;
-import com.jetbrains.jsonSchema.impl.fixes.SuggestEnumValuesFix;
+import com.jetbrains.jsonSchema.impl.fixes.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,11 +36,17 @@ public final class JsonValidationError {
     NonEnumValue,
     ProhibitedType,
     TypeMismatch,
+    DuplicateArrayItem,
     None
   }
 
   public interface IssueData {
 
+  }
+
+  public static final class DuplicateArrayItemIssueData implements IssueData {
+    public final int[] duplicateIndices;
+    public DuplicateArrayItemIssueData(int[] indices) { duplicateIndices = indices; }
   }
 
   public static final class MissingOneOfPropsIssueData implements IssueData {
@@ -162,6 +165,9 @@ public final class JsonValidationError {
           .toArray(LocalQuickFix[]::new);
       case ProhibitedProperty -> getProhibitedPropertyFixes(quickFixAdapter);
       case NonEnumValue -> new SuggestEnumValuesFix[]{new SuggestEnumValuesFix(quickFixAdapter)};
+      case DuplicateArrayItem -> new RemoveDuplicateArrayItemsFix[]{ new RemoveDuplicateArrayItemsFix(
+        ((DuplicateArrayItemIssueData)myIssueData).duplicateIndices
+      ) };
       default -> LocalQuickFix.EMPTY_ARRAY;
     };
   }

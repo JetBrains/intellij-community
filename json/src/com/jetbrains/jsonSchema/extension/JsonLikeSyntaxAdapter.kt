@@ -38,6 +38,7 @@ interface JsonLikeSyntaxAdapter {
    * @return the [PsiElement] representing the item that was added.
    */
   fun addArrayItem(array: PsiElement, itemValue: String): PsiElement
+  fun removeArrayItem(item: PsiElement)
   
   fun ensureComma(self: PsiElement?, newElement: PsiElement?)
   fun removeIfComma(forward: PsiElement?)

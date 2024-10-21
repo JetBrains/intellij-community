@@ -365,6 +365,48 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
       return preferInline ? generator.createEmptyArray() : generator.createEmptySequence();
     }
 
+    @Nullable
+    private static PsiElement skipWsBackward(@Nullable PsiElement item) {
+      while (item instanceof PsiWhiteSpace || item instanceof PsiComment) {
+        item = PsiTreeUtil.prevLeaf(item);
+      }
+      return item;
+    }
+
+    @Nullable
+    private static PsiElement skipWsForward(@Nullable PsiElement item) {
+      while (item instanceof PsiWhiteSpace || item instanceof PsiComment) {
+        item = PsiTreeUtil.nextLeaf(item);
+      }
+      return item;
+    }
+
+    @Override
+    public void removeArrayItem(@NotNull PsiElement item) {
+      PsiElement parent = item instanceof YAMLSequenceItem ? item : item.getParent();
+      if (parent instanceof YAMLSequenceItem) {
+        PsiElement grandParent = parent.getParent();
+        PsiElement prev = skipWsBackward(PsiTreeUtil.prevLeaf(parent));
+        PsiElement next = skipWsForward(PsiTreeUtil.nextLeaf(parent));
+        parent.delete();
+        if (grandParent instanceof YAMLArrayImpl && prev instanceof LeafPsiElement && ((LeafPsiElement)prev).getElementType() == YAMLTokenTypes.COMMA) {
+          prev.delete();
+        }
+        else if (grandParent instanceof YAMLArrayImpl && next instanceof LeafPsiElement && ((LeafPsiElement)next).getElementType() == YAMLTokenTypes.COMMA) {
+          next.delete();
+        }
+        if (!(grandParent instanceof YAMLArrayImpl) && prev instanceof LeafPsiElement && ((LeafPsiElement)prev).getElementType() == YAMLTokenTypes.EOL) {
+          prev.delete();
+        }
+        else if (!(grandParent instanceof YAMLArrayImpl) && next instanceof LeafPsiElement && ((LeafPsiElement)next).getElementType() == YAMLTokenTypes.EOL) {
+          next.delete();
+        }
+      }
+      else {
+        throw new IllegalArgumentException("Cannot remove item from a non-sequence element");
+      }
+    }
+
     @Override
     public @NotNull PsiElement addArrayItem(@NotNull PsiElement array, @NotNull String itemValue) {
       if (array instanceof YAMLArrayImpl) {

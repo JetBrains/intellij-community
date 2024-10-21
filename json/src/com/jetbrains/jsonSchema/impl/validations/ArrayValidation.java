@@ -12,6 +12,7 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.impl.JsonComplianceCheckerOptions;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaType;
+import com.jetbrains.jsonSchema.impl.JsonValidationError;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -171,7 +172,12 @@ public class ArrayValidation implements JsonSchemaValidation {
         if (entry.getValue().size() > 1) {
           for (JsonValueAdapter item: entry.getValue()) {
             if (!item.shouldCheckAsValue()) continue;
-            consumer.error(JsonBundle.message("schema.validation.not.unique"), item.getDelegate(), JsonErrorPriority.TYPE_MISMATCH);
+            consumer.error(JsonBundle.message("schema.validation.not.unique"), item.getDelegate(),
+                           JsonValidationError.FixableIssueKind.DuplicateArrayItem,
+                           new JsonValidationError.DuplicateArrayItemIssueData(
+                             entry.getValue().stream().mapToInt(v -> list.indexOf(v)).toArray()
+                           ),
+                           JsonErrorPriority.TYPE_MISMATCH);
             if (options.shouldStopValidationAfterAnyErrorFound()) return false;
           }
         }

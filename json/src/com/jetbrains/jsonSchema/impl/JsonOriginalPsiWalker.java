@@ -9,8 +9,10 @@ import com.intellij.json.psi.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -223,6 +225,38 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
     @Override
     public @NotNull PsiElement createEmptyArray(@NotNull Project project, boolean preferInline) {
       return new JsonElementGenerator(project).createEmptyArray();
+    }
+
+    @Nullable
+    private static PsiElement skipWsBackward(@Nullable PsiElement item) {
+      while (item instanceof PsiWhiteSpace || item instanceof PsiComment) {
+        item = PsiTreeUtil.prevLeaf(item);
+      }
+      return item;
+    }
+
+    @Nullable
+    private static PsiElement skipWsForward(@Nullable PsiElement item) {
+      while (item instanceof PsiWhiteSpace || item instanceof PsiComment) {
+        item = PsiTreeUtil.nextLeaf(item);
+      }
+      return item;
+    }
+
+
+    @Override
+    public void removeArrayItem(@NotNull PsiElement item) {
+      PsiElement parent = item.getParent();
+      if (!(parent instanceof JsonArray)) throw new IllegalArgumentException("Cannot remove item from a non-array element");
+      PsiElement prev = skipWsBackward(PsiTreeUtil.prevLeaf(item));
+      PsiElement next = skipWsForward(PsiTreeUtil.nextLeaf(item));
+      if (prev instanceof LeafPsiElement && ((LeafPsiElement)prev).getElementType() == JsonElementTypes.COMMA) {
+        prev.delete();
+      }
+      else if (next instanceof LeafPsiElement && ((LeafPsiElement)next).getElementType() == JsonElementTypes.COMMA) {
+        next.delete();
+      }
+      item.delete();
     }
 
     @Override
