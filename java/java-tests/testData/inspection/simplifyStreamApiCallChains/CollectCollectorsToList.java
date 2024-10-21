@@ -164,6 +164,29 @@ class TernaryTest {
   }
 }
 
+// IDEA-356315
+class MissingIteratorRemoveAnalysis {
+  public void problem() {
+    final List<String> strings = Stream.of("anything", "at", "all")
+      .collect(Collectors.toList());
+
+    for(Iterator<String> iterator = strings.iterator(); iterator.hasNext(); ) {
+      String string = iterator.next();
+      iterator.remove();
+    }
+  }
+
+  public void noRemove() {
+    final List<String> strings = Stream.of("anything", "at", "all")
+      .<warning descr="'collect(toList())' can be replaced with 'toList()'">collect(Collectors.toList())</warning>;
+
+    for(Iterator<String> iterator = strings.iterator(); iterator.hasNext(); ) {
+      String string = iterator.next();
+      System.out.println(string);
+    }
+  }
+}
+
 //class TODO() {
 //
 //    void testMustHave1(Stream<String> stream) {

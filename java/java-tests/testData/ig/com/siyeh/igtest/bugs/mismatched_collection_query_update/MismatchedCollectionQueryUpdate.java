@@ -22,8 +22,8 @@ import java.util.concurrent.*;
 
 public class MismatchedCollectionQueryUpdate {
     private Set foo = new HashSet();
-    private Set <warning descr="Contents of collection 'foo2' are queried, but never updated">foo2</warning> = new HashSet();
-    private Set <warning descr="Contents of collection 'bar' are queried, but never updated">bar</warning> ;
+    private Set <warning descr="Contents of empty collection 'foo2' are queried, but it's never populated">foo2</warning> = new HashSet();
+    private Set <warning descr="Contents of empty collection 'bar' are queried, but it's never populated">bar</warning> ;
     private Set bar2 = new HashSet(foo2);
     private Set bal ;
     private Set<String> injected = new HashSet<>();
@@ -86,7 +86,7 @@ public class MismatchedCollectionQueryUpdate {
     }
 
     Object[] testRemoveFromAnotherCollection(List<List<String>> list) {
-      List<String> <warning descr="Contents of collection 'l' are queried, but never updated">l</warning> = new ArrayList<>();
+      List<String> <warning descr="Contents of empty collection 'l' are queried, but it's never populated">l</warning> = new ArrayList<>();
       list.remove(l);
       process(list);
       return l.toArray();
@@ -95,7 +95,7 @@ public class MismatchedCollectionQueryUpdate {
     native void process(List<List<String>> list);
 
     void testPureMethod() {
-      List<String> <warning descr="Contents of collection 'list' are queried, but never updated">list</warning> = new ArrayList<>();
+      List<String> <warning descr="Contents of empty collection 'list' are queried, but it's never populated">list</warning> = new ArrayList<>();
       if(hasNull(list)) {
         System.out.println("has nulls!");
       }
@@ -134,13 +134,13 @@ public class MismatchedCollectionQueryUpdate {
     }
 
     boolean testSeparateInitialization() {
-      List<String> <warning descr="Contents of collection 'list' are queried, but never updated">list</warning>;
+      List<String> <warning descr="Contents of empty collection 'list' are queried, but it's never populated">list</warning>;
       list = new ArrayList<>();
       return list.isEmpty();
     }
 
     void testKeySet() {
-      Map<String, String> <warning descr="Contents of collection 'map' are queried, but never updated">map</warning> = new HashMap<>();
+      Map<String, String> <warning descr="Contents of empty collection 'map' are queried, but it's never populated">map</warning> = new HashMap<>();
       for(String s : map.keySet()) {
         System.out.println(s);
       }
@@ -163,16 +163,38 @@ public class MismatchedCollectionQueryUpdate {
       System.out.println(i.next());
     }
 
+    void testListIterator2() {
+      List<String> <warning descr="Contents of empty collection 'test' are queried, but it's never populated">test</warning> = new ArrayList<String>();
+      ListIterator<String> i = test.listIterator(0);
+      System.out.println(i.next());
+    }
+    
+    void testListIterator3() {
+      List<String> <warning descr="Update operations on empty collection 'test' have no effect">test</warning> = new ArrayList<String>();
+      ListIterator<String> iter = test.listIterator();
+      while(iter.hasNext()) {
+        iter.next();
+        iter.set("foo");
+      }
+    }
+
     void testIterator() {
-      List<String> <warning descr="Contents of collection 'test' are queried, but never updated">test</warning> = new ArrayList<String>();
+      List<String> <warning descr="Update operations on empty collection 'test' have no effect">test</warning> = new ArrayList<String>();
       Iterator<String> i = test.iterator();
       while(i.hasNext()) {
         if(i.next() == null) {
-          // Normally iterator cannot add, remove only. If collection is always empty (not updated in any other way),
-          // this is useless anyways
           i.remove();
         }
       }
+    }
+
+    void derivedWrite() {
+        List<String> <warning descr="Contents of collection 'list' are updated, but never queried">list</warning> = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            list.add(String.valueOf(i));
+        }
+        List<String> subList = list.subList(0, 10);
+        subList.add("Hi!");
     }
 
     void add(TestPrivateClass tpc) {
@@ -300,14 +322,26 @@ public class MismatchedCollectionQueryUpdate {
   }
 
   void methodArgument() {
-    List<String> <warning descr="Contents of collection 'foos' are updated, but never queried">foos</warning> = new ArrayList<>();
-    List<String> <warning descr="Contents of collection 'bars' are queried, but never updated">bars</warning> = new ArrayList<>();
+    List<String> <warning descr="Update operations on empty collection 'foos' have no effect">foos</warning> = new ArrayList<>();
+    List<String> <warning descr="Contents of empty collection 'bars' are queried, but it's never populated">bars</warning> = new ArrayList<>();
 
     foos.removeAll( bars );
 
     List<String> other = new ArrayList<>();
     other.add("a");
     m(other);
+  }
+
+  private final List<String> <warning descr="Update operations on empty collection 'noAdd' have no effect">noAdd</warning> = new ArrayList<>();
+  void updateEmptyAndQuery() {
+    noAdd.remove("xyz");
+    if (noAdd.indexOf("a") > 10) {
+      noAdd.remove("b");
+    }
+  }
+  
+  void sortEmpty() {
+    noAdd.sort(Comparator.naturalOrder());
   }
 
   void m(List l) {}
@@ -347,7 +381,7 @@ public class MismatchedCollectionQueryUpdate {
 
   public void foofoo()
   {
-    final Map<String, String> <warning descr="Contents of collection 'anotherMap' are queried, but never updated">anotherMap</warning> = new HashMap<String, String>();
+    final Map<String, String> <warning descr="Contents of empty collection 'anotherMap' are queried, but it's never populated">anotherMap</warning> = new HashMap<String, String>();
     final SortedMap<String, String> map = new TreeMap<String, String>(anotherMap);
     final Iterator<String> it = map.keySet().iterator();
     while(it.hasNext()){
@@ -444,12 +478,12 @@ class CollectionsUser {
   }
 
   void c() {
-    List<String> <warning descr="Contents of collection 'l' are queried, but never updated">l</warning> = new ArrayList();
+    List<String> <warning descr="Contents of empty collection 'l' are queried, but it's never populated">l</warning> = new ArrayList();
     final int frequency = Collections.frequency(l, "one");
   }
 
   List<String> d() {
-    List<String> <warning descr="Contents of collection 'l' are queried, but never updated">l</warning> = new ArrayList();
+    List<String> <warning descr="Contents of empty collection 'l' are queried, but it's never populated">l</warning> = new ArrayList();
     return Collections.unmodifiableList(l);
   }
 
@@ -573,7 +607,7 @@ class SomeList extends ArrayList<Integer> {
 
 class UnmodifiableTernaryTest {
   private final List<String> myList = new ArrayList<>();
-  private final List<String> <warning descr="Contents of collection 'myList2' are queried, but never updated">myList2</warning> = new ArrayList<>();
+  private final List<String> <warning descr="Contents of empty collection 'myList2' are queried, but it's never populated">myList2</warning> = new ArrayList<>();
 
   void add() {
     myList.add("foo");
@@ -609,7 +643,7 @@ class InLambdaTest {
 
 class AssertTest {
   void test() {
-    List<String> <warning descr="Contents of collection 'list' are queried, but never updated">list</warning> = new ArrayList<>();
+    List<String> <warning descr="Contents of empty collection 'list' are queried, but it's never populated">list</warning> = new ArrayList<>();
     assert list.isEmpty() : list;
   }
 }

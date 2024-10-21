@@ -20,7 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -45,7 +44,8 @@ public final class CollectionUtils {
     CallMatcher.anyOf(
       CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "keySet", "values", "entrySet").parameterCount(0),
       CallMatcher.instanceCall("java.util.NavigableMap", "descendingKeySet", "descendingMap", "navigableKeySet").parameterCount(0),
-      CallMatcher.instanceCall("java.util.NavigableSet", "descendingSet").parameterCount(0)
+      CallMatcher.instanceCall("java.util.NavigableSet", "descendingSet").parameterCount(0),
+      CallMatcher.instanceCall("java.util.SequencedCollection", "reversed").parameterCount(0)
     );
 
   /**
