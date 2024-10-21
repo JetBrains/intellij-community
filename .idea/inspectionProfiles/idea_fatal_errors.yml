@@ -1,0 +1,8 @@
+baseProfile: idea.fatal.errors
+include:
+  - "default_ignores.yml"
+inspections:
+  - group: GLOBAL
+    enabled: false
+  - inspection: MissingActionUpdateThread
+  - inspection: JComponentDataProviderInspection

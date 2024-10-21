@@ -1,0 +1,23 @@
+inspections:
+  - group: ALL
+    ignore:
+      - "integration-test-run/**"
+      - ".reports/**"
+      - "temp/**"
+      - "android/**"
+      - "testData/**"
+      - "**/testData/**"
+      - "**/testdata/**"
+      - "**/test-data/**"
+      - "**/ideTestData/**"
+      - "**/source/fileTemplates/**"
+      - "**/src/fileTemplates/**"
+      - "**/mvc-testdata/**"
+      - "**/*.ft"
+      - "**/source/fileTemplates/**"
+      - "**/src/fileTemplates/**"
+      - "**/src/tips/**"
+      - "**/resources/tips/**"
+  - inspection: LightServiceMigrationXML
+    ignore:
+      - "plugins/git4idea/resources/intellij.vcs.git.xml"

@@ -1,7 +1,4 @@
 version: 1.0
+disableSanityInspections: true
 profile:
-  name: idea.fatal.errors
-exclude:
-  - name: All
-    paths:
-      - lib
+  path: .idea/inspectionProfiles/idea_fatal_errors.yml
