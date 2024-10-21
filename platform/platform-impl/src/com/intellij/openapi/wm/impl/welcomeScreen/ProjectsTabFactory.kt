@@ -45,6 +45,7 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.Insets
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -216,6 +217,7 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
     val actionManager = ActionManager.getInstance()
     val baseGroup = actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_PROJECTS_STATE) as ActionGroup
     val toolbarGroup = object : ActionGroupWrapper(baseGroup) {
+      val wrappers = ConcurrentHashMap<AnAction, AnAction>()
       override fun postProcessVisibleChildren(e: AnActionEvent, visibleChildren: List<AnAction>): List<AnAction> {
         val mapped = visibleChildren.mapIndexed { index, action ->
           when {
@@ -223,7 +225,7 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
             action is ActionGroup && action is ActionsWithPanelProvider -> {
               val p = e.updateSession.presentation(action)
               val wrapper = p.getClientProperty(ActionUtil.INLINE_ACTIONS)?.first()
-                            ?: ActionGroupPanelWrapper.wrapGroups(action, parentDisposable).also {
+                            ?: wrappers.getOrPut(action) { ActionGroupPanelWrapper.wrapGroups(action, parentDisposable) } .also {
                               p.putClientProperty(ActionUtil.INLINE_ACTIONS, listOf(it))
                             }
               e.updateSession.presentation(wrapper)
@@ -233,9 +235,12 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
               val children = e.updateSession.children(action).toList()
               when {
                 children.isEmpty() -> action
-                else -> children.first().also {
-                  e.updateSession.presentation(it).putClientProperty(
+                else -> {
+                  val first = children.first()
+                  val wrapper = wrappers.getOrPut(first) { ActionGroupPanelWrapper.wrapGroups(first, parentDisposable) }
+                  e.updateSession.presentation(wrapper).putClientProperty(
                     ActionUtil.INLINE_ACTIONS, children.subList(1, children.size))
+                  wrapper
                 }
               }
             }
