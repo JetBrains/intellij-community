@@ -1,11 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.searching.usages.dialogs
 
-import com.intellij.find.FindSettings
+import com.intellij.find.FindUsagesSettings
 import com.intellij.find.findUsages.FindMethodUsagesDialog
 import com.intellij.find.findUsages.FindUsagesHandler
 import com.intellij.find.findUsages.JavaMethodFindUsagesOptions
-import com.intellij.java.JavaBundle
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.ui.SimpleColoredComponent
@@ -71,7 +70,7 @@ class KotlinFindFunctionUsagesDialog(
         }
         myCbIncludeOverloadedMethods = addCheckboxToPanel(
             message("find.declaration.include.overloaded.methods.checkbox"),
-            FindSettings.getInstance().isSearchOverloadedMethods(),
+            FindUsagesSettings.getInstance().isSearchOverloadedMethods(),
             optionsPanel,
             false
         )
