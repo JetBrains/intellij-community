@@ -8,7 +8,7 @@ import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.sun.jdi.BooleanValue
@@ -129,8 +129,14 @@ private class SessionThreadsData(val disposable: Disposable) {
 private fun initializeThreadState(suspendContext: SuspendContextImpl): ObjectReference? {
   val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.frameProxy)
   val cancellationClass = findClassOrNull(evaluationContext, CANCELLATION_FQN) as? ClassType ?: return null
-  return DebuggerUtilsImpl.invokeClassMethod(evaluationContext, cancellationClass, "initThreadNonCancellableState",
-                                             "()Lcom/intellij/openapi/progress/Cancellation\$DebugNonCancellableState;") as? ObjectReference
+  val method = DebuggerUtilsImpl.findMethod(cancellationClass,
+                                            "initThreadNonCancellableState",
+                                            "()Lcom/intellij/openapi/progress/Cancellation\$DebugNonCancellableState;")
+               ?: run {
+                 logger<SteppingStartListener>().debug("Init method not found. Unsupported IJ platform version?")
+                 return null
+               }
+  return evaluationContext.debugProcess.invokeMethod(evaluationContext, cancellationClass, method, emptyList()) as? ObjectReference
 }
 
 private fun booleanValue(suspendContext: SuspendContextImpl, b: Boolean): BooleanValue = suspendContext.virtualMachineProxy.mirrorOf(b)
