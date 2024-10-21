@@ -140,8 +140,8 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     if (!myReferenceElement.isValid() || (referenceElement = myReference.getElement()) != myReferenceElement && !referenceElement.isValid()) {
       return PsiClass.EMPTY_ARRAY;
     }
-    if (myReference instanceof PsiJavaReference) {
-      JavaResolveResult result = ((PsiJavaReference)myReference).advancedResolve(true);
+    if (myReference instanceof PsiJavaReference ref) {
+      JavaResolveResult result = ref.advancedResolve(true);
       PsiElement element = result.getElement();
       // already imported
       // can happen when e.g., class name happened to be in a method position
@@ -162,18 +162,18 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     Project project = psiFile.getProject();
 
     PsiElement parent = myReferenceElement.getParent();
-    if (parent instanceof PsiNewExpression && ((PsiNewExpression)parent).getQualifier() != null) {
+    if (parent instanceof PsiNewExpression newExpression && newExpression.getQualifier() != null) {
       return PsiClass.EMPTY_ARRAY;
     }
 
-    if (parent instanceof PsiReferenceExpression) {
-      PsiExpression expression = ((PsiReferenceExpression)parent).getQualifierExpression();
+    if (parent instanceof PsiReferenceExpression ref) {
+      PsiExpression expression = ref.getQualifierExpression();
       if (expression != null && expression != myReferenceElement) {
         return PsiClass.EMPTY_ARRAY;
       }
     }
 
-    if (psiFile instanceof PsiJavaCodeReferenceCodeFragment && !((PsiJavaCodeReferenceCodeFragment)psiFile).isClassesAccepted()) {
+    if (psiFile instanceof PsiJavaCodeReferenceCodeFragment ref && !ref.isClassesAccepted()) {
       return PsiClass.EMPTY_ARRAY;
     }
 
