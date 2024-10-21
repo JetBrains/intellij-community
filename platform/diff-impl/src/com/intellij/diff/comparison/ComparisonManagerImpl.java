@@ -39,6 +39,11 @@ public final class ComparisonManagerImpl extends ComparisonManager {
     return (ComparisonManagerImpl)getInstance();
   }
 
+  @Override
+  public @NotNull CancellationChecker createCancellationChecker(@NotNull ProgressIndicator indicator) {
+    return new IndicatorCancellationChecker(indicator);
+  }
+
   @NotNull
   @Override
   public List<LineFragment> compareLines(@NotNull CharSequence text1,

@@ -5,10 +5,7 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.merge.*;
-import com.intellij.diff.requests.BinaryMergeRequestImpl;
-import com.intellij.diff.requests.ContentDiffRequest;
-import com.intellij.diff.requests.SimpleDiffRequest;
-import com.intellij.diff.requests.TextMergeRequestImpl;
+import com.intellij.diff.requests.*;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diff.DiffBundle;
@@ -474,5 +471,20 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
   private static @Nullable LocalFilePath toFilePath(@Nullable VirtualFile file) {
     if (file == null) return null;
     return new LocalFilePath(file.getPath(), file.isDirectory());
+  }
+
+  @Override
+  public @NotNull DiffRequest createOperationCanceled(@Nullable String requestName) {
+    return new OperationCanceledDiffRequest(requestName);
+  }
+
+  @Override
+  public @NotNull DiffRequest createNothingToShow(@Nullable String requestName) {
+    return new NoDiffRequest(requestName);
+  }
+
+  @Override
+  public @NotNull DiffRequest createLoading(@Nullable String requestName) {
+    return new LoadingDiffRequest(requestName);
   }
 }

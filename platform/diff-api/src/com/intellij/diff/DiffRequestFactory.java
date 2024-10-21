@@ -6,6 +6,7 @@ import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.merge.TextMergeRequest;
 import com.intellij.diff.requests.ContentDiffRequest;
+import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
@@ -197,4 +198,10 @@ public abstract class DiffRequestFactory {
                                                                    @Nullable @NlsContexts.DialogTitle String title,
                                                                    @NotNull List<@NlsContexts.Label String> contentTitles,
                                                                    @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException;
+
+  public abstract @NotNull DiffRequest createOperationCanceled(@Nullable @NlsContexts.DialogTitle String requestName);
+
+  public abstract @NotNull DiffRequest createNothingToShow(@Nullable @NlsContexts.DialogTitle String requestName);
+
+  public abstract @NotNull DiffRequest createLoading(@Nullable @NlsContexts.DialogTitle String requestName);
 }

@@ -604,9 +604,7 @@ e:com.intellij.vcs.log.impl.VcsLogTabLocation
 - java.lang.Enum
 - sf:Companion:com.intellij.vcs.log.impl.VcsLogTabLocation$Companion
 - sf:TOOL_WINDOW:com.intellij.vcs.log.impl.VcsLogTabLocation
-- b:<init>(java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - s:getEntries():kotlin.enums.EnumEntries
-- a:select(com.intellij.openapi.project.Project,com.intellij.vcs.log.VcsLogUi):Z
 - s:valueOf(java.lang.String):com.intellij.vcs.log.impl.VcsLogTabLocation
 - s:values():com.intellij.vcs.log.impl.VcsLogTabLocation[]
 f:com.intellij.vcs.log.impl.VcsLogTabLocation$Companion

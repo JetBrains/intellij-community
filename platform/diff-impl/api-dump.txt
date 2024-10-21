@@ -174,10 +174,6 @@ f:com.intellij.diff.comparison.DiffIterableUtilEx
 - s:diff(java.util.List,java.util.List,com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.comparison.iterables.FairDiffIterable
 - s:diff(I[],I[],com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.comparison.iterables.FairDiffIterable
 - s:diff(java.lang.Object[],java.lang.Object[],com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.comparison.iterables.FairDiffIterable
-f:com.intellij.diff.comparison.IndicatorCancellationChecker
-- com.intellij.diff.comparison.CancellationChecker
-- <init>(com.intellij.openapi.progress.ProgressIndicator):V
-- checkCanceled():V
 a:com.intellij.diff.contents.DocumentContentBase
 - com.intellij.diff.contents.DiffContentBase
 - com.intellij.diff.contents.DocumentContent
@@ -547,12 +543,8 @@ a:com.intellij.diff.lang.LangDiffIgnoredRangeProvider
 - getIgnoredRanges(com.intellij.openapi.project.Project,java.lang.CharSequence,com.intellij.diff.contents.DiffContent):java.util.List
 c:com.intellij.diff.requests.LoadingDiffRequest
 - com.intellij.diff.requests.MessageDiffRequest
-- <init>():V
-- <init>(java.lang.String):V
 c:com.intellij.diff.requests.OperationCanceledDiffRequest
 - com.intellij.diff.requests.MessageDiffRequest
-- <init>():V
-- <init>(java.lang.String):V
 c:com.intellij.diff.requests.UnknownFileTypeDiffRequest
 - com.intellij.diff.requests.ComponentDiffRequest
 - <init>(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
@@ -1725,12 +1717,6 @@ com.intellij.diff.tools.util.text.FineMergeLineFragment
 - com.intellij.diff.fragments.MergeLineFragment
 - a:getConflictType():com.intellij.diff.util.MergeConflictType
 - a:getInnerFragments():com.intellij.diff.tools.util.text.MergeInnerDifferences
-c:com.intellij.diff.tools.util.text.FineMergeLineFragmentImpl
-- com.intellij.diff.fragments.MergeLineFragmentImpl
-- com.intellij.diff.tools.util.text.FineMergeLineFragment
-- <init>(com.intellij.diff.fragments.MergeLineFragment,com.intellij.diff.util.MergeConflictType,com.intellij.diff.tools.util.text.MergeInnerDifferences):V
-- getConflictType():com.intellij.diff.util.MergeConflictType
-- getInnerFragments():com.intellij.diff.tools.util.text.MergeInnerDifferences
 f:com.intellij.diff.tools.util.text.LineOffsetsUtil
 - <init>():V
 - s:create(com.intellij.openapi.editor.Document):com.intellij.diff.tools.util.text.LineOffsets

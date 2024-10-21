@@ -23,6 +23,8 @@ public abstract class ComparisonManager {
     return ApplicationManager.getApplication().getService(ComparisonManager.class);
   }
 
+  public abstract @NotNull CancellationChecker createCancellationChecker(@NotNull ProgressIndicator indicator);
+
   /**
    * Compare two texts by-line
    */
