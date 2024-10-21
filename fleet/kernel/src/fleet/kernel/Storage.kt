@@ -52,7 +52,7 @@ suspend fun <T> withStorage(
       }
     }.onFailure { x ->
       // Throwing exception only if we're in test mode
-      if (coroutineContext[NoSupervisorForSagas] != null)
+      if (coroutineContext[FailFastMarker] != null)
         throw x
       else
         Storage.logger.error(x) { "couldn't restore state for $storageKey" }
