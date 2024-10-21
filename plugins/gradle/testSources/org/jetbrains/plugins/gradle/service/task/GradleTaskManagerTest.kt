@@ -45,8 +45,8 @@ class GradleTaskManagerTest: UsefulTestCase() {
     taskId = ExternalSystemTaskId.create(GradleConstants.SYSTEM_ID,
                                              ExternalSystemTaskType.EXECUTE_TASK,
                                              myProject)
-    gradleExecSettings = GradleExecutionSettings(null, null,
-                                                     DistributionType.WRAPPED, false)
+    gradleExecSettings = GradleExecutionSettings()
+    gradleExecSettings.distributionType = DistributionType.WRAPPED
   }
 
   override fun tearDown() {

@@ -18,16 +18,16 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   private final @NotNull GradleExecutionWorkspace myExecutionWorkspace;
 
-  private @Nullable String myGradleHome;
+  private @Nullable String myGradleHome = null;
 
-  private final @Nullable String myServiceDirectory;
-  private final boolean myIsOfflineWork;
+  private @Nullable String myServiceDirectory = null;
+  private boolean myIsOfflineWork = false;
 
-  private @NotNull DistributionType myDistributionType;
-  private @Nullable String wrapperPropertyFile;
+  private @NotNull DistributionType myDistributionType = DistributionType.BUNDLED;
+  private @Nullable String wrapperPropertyFile = null;
 
-  private @Nullable String myJavaHome;
-  private @Nullable String myIdeProjectPath;
+  private @Nullable String myJavaHome = null;
+  private @Nullable String myIdeProjectPath = null;
   private boolean resolveModulePerSourceSet = true;
   private boolean useQualifiedModuleNames = false;
   private boolean delegatedBuild = true;
@@ -36,22 +36,28 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   private boolean myBuiltInTestEventsUsed = false;
 
+  /**
+   * @deprecated use default constructor instead
+   */
+  @Deprecated
   public GradleExecutionSettings(
     @Nullable String gradleHome,
     @Nullable String serviceDirectory,
     @NotNull DistributionType distributionType,
     boolean isOfflineWork
   ) {
-    myExecutionWorkspace = new GradleExecutionWorkspace();
+    this();
 
-    myGradleHome = gradleHome;
-    myServiceDirectory = serviceDirectory;
-    myDistributionType = distributionType;
-    myIsOfflineWork = isOfflineWork;
-
-    setVerboseProcessing(SystemProperties.getBooleanProperty(USE_VERBOSE_GRADLE_API_KEY, USE_VERBOSE_GRADLE_API_DEFAULT));
+    setGradleHome(gradleHome);
+    setServiceDirectory(serviceDirectory);
+    setDistributionType(distributionType);
+    setOfflineWork(isOfflineWork);
   }
 
+  /**
+   * @deprecated use default constructor instead
+   */
+  @Deprecated
   public GradleExecutionSettings(
     @Nullable String gradleHome,
     @Nullable String serviceDirectory,
@@ -63,6 +69,12 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     if (daemonVmOptions != null) {
       withVmOptions(ParametersListUtil.parse(daemonVmOptions));
     }
+  }
+
+  public GradleExecutionSettings() {
+    myExecutionWorkspace = new GradleExecutionWorkspace();
+
+    setVerboseProcessing(SystemProperties.getBooleanProperty(USE_VERBOSE_GRADLE_API_KEY, USE_VERBOSE_GRADLE_API_DEFAULT));
   }
 
   public GradleExecutionSettings(@NotNull GradleExecutionSettings settings) {
@@ -112,6 +124,10 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     return myServiceDirectory;
   }
 
+  public void setServiceDirectory(@Nullable String serviceDirectory) {
+    myServiceDirectory = serviceDirectory;
+  }
+
   @Nullable
   public String getJavaHome() {
     return myJavaHome;
@@ -123,6 +139,10 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   public boolean isOfflineWork() {
     return myIsOfflineWork;
+  }
+
+  public void setOfflineWork(boolean offlineWork) {
+    myIsOfflineWork = offlineWork;
   }
 
   public boolean isResolveModulePerSourceSet() {

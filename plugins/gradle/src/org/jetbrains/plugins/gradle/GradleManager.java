@@ -44,6 +44,7 @@ import com.intellij.psi.search.ExecutionSearchScopes;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
@@ -135,18 +136,23 @@ public final class GradleManager
           projectLevelSettings.getDistributionType() == null ? DistributionType.LOCAL : projectLevelSettings.getDistributionType();
       }
 
-      GradleExecutionSettings result = new GradleExecutionSettings(localGradlePath,
-                                                                   settings.getServiceDirectoryPath(),
-                                                                   distributionType,
-                                                                   settings.getGradleVmOptions(),
-                                                                   settings.isOfflineWork());
+      String daemonVmOptions = settings.getGradleVmOptions();
+
+      GradleExecutionSettings result = new GradleExecutionSettings();
+      result.setGradleHome(localGradlePath);
+      result.setServiceDirectory(settings.getServiceDirectoryPath());
+      result.setDistributionType(distributionType);
+      if (daemonVmOptions != null) {
+        result.withVmOptions(ParametersListUtil.parse(daemonVmOptions));
+      }
+      result.setOfflineWork(settings.isOfflineWork());
       String javaHome = gradleInstallationManager.getGradleJvmPath(project, rootProjectPath);
       if (!StringUtil.isEmpty(javaHome)) {
         LOG.info("Instructing gradle to use java from " + javaHome);
       }
       result.setJavaHome(javaHome);
       GradleSystemSettings systemSettings = GradleSystemSettings.getInstance();
-      String vmOptions = Objects.requireNonNullElse(settings.getGradleVmOptions(), "");
+      String vmOptions = Objects.requireNonNullElse(daemonVmOptions, "");
       if (vmOptions.contains("-Didea.gradle.download.sources.force=false")) {
         result.setDownloadSources(false);
       } else {

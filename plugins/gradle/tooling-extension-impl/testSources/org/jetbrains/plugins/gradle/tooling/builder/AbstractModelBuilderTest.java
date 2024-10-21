@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder;
-import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver;
 import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction;
@@ -158,7 +157,7 @@ public abstract class AbstractModelBuilderTest {
 
     Path targetPathMapperInitScript = GradleInitScriptUtil.createTargetPathMapperInitScript();
     Path mainInitScript = GradleInitScriptUtil.createMainInitScript(false, getToolingExtensionClasses());
-    ExternalSystemExecutionSettings executionSettings = new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false)
+    ExternalSystemExecutionSettings executionSettings = new GradleExecutionSettings()
       .withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, targetPathMapperInitScript.toString())
       .withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, mainInitScript.toString())
       .withVmOptions(getDefaultGradleVmOptions());

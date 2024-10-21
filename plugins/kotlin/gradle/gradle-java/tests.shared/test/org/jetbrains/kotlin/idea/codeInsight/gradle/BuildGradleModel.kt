@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.tooling.core.Extras
 import org.jetbrains.plugins.gradle.service.execution.attachTargetPathMapperInitScript
 import org.jetbrains.plugins.gradle.service.execution.createMainInitScript
 import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder
-import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -90,7 +89,7 @@ fun <T : Any> buildGradleModel(
                 )
             )
 
-        val executionSettings = GradleExecutionSettings(null, null, DistributionType.BUNDLED, false)
+        val executionSettings = GradleExecutionSettings()
         attachTargetPathMapperInitScript(executionSettings)
         val toolingExtensionClasses = AbstractModelBuilderTest.getToolingExtensionClasses()
         val kotlinToolingExtensionClasses = setOf(

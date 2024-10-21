@@ -73,7 +73,6 @@ import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder;
 import org.jetbrains.plugins.gradle.service.modelAction.GradleModelFetchActionRunner;
 import org.jetbrains.plugins.gradle.service.syncAction.GradleModelFetchActionResultHandler;
 import org.jetbrains.plugins.gradle.service.syncAction.GradleProjectResolverResultHandler;
-import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -273,7 +272,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     GradleExecutionSettings executionSettings = resolverContext.getSettings();
     if (executionSettings == null) {
-      executionSettings = new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false);
+      executionSettings = new GradleExecutionSettings();
     }
 
     configureExecutionArgumentsAndVmOptions(executionSettings, resolverContext);
