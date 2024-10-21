@@ -26,6 +26,9 @@ import com.intellij.util.Consumer
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
+import java.util.concurrent.atomic.AtomicBoolean
+
+internal val NOTIFY_SUCCESS_EACH_REPORT = AtomicBoolean(true) // dirty hack, reporter API does not support any optional args
 
 /**
  * This is an internal implementation of [ErrorReportSubmitter] which is used to report exceptions in IntelliJ platform
@@ -91,7 +94,12 @@ open class ITNReporter(private val postUrl: String = "https://ea-report.jetbrain
     previousReport = if (eventDate != null) eventDate.time to reportId else null
   }
 
-  private fun submit(project: Project?, errorBean: ErrorBean, parentComponent: Component, callback: (SubmittedReportInfo) -> Unit): Boolean {
+  private fun submit(
+    project: Project?,
+    errorBean: ErrorBean,
+    parentComponent: Component,
+    callback: (SubmittedReportInfo) -> Unit,
+  ): Boolean {
     service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
       try {
         val reportId = if (project != null) {
@@ -115,6 +123,9 @@ open class ITNReporter(private val postUrl: String = "https://ea-report.jetbrain
   private fun onSuccess(project: Project?, reportId: Int, callback: (SubmittedReportInfo) -> Unit) {
     val reportUrl = ITNProxy.getBrowseUrl(reportId)
     callback(SubmittedReportInfo(reportUrl, reportId.toString(), SubmittedReportInfo.SubmissionStatus.NEW_ISSUE))
+
+    if (!NOTIFY_SUCCESS_EACH_REPORT.get()) return
+
     val content = DiagnosticBundle.message("error.report.gratitude")
     val title = DiagnosticBundle.message("error.report.submitted")
     val notification = Notification("Error Report", title, content, NotificationType.INFORMATION).setImportant(false)
