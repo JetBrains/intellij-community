@@ -1,327 +1,304 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.changes;
+@file:Suppress("ReplaceGetOrSet")
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileTypeEvent;
-import com.intellij.openapi.fileTypes.FileTypeListener;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.impl.VcsInitObject;
-import com.intellij.openapi.vcs.impl.VcsStartupActivity;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashingStrategy;
-import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.openapi.vcs.changes
 
-import java.util.*;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileTypes.FileTypeEvent
+import com.intellij.openapi.fileTypes.FileTypeListener
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootEvent
+import com.intellij.openapi.roots.ModuleRootListener
+import com.intellij.openapi.util.ActionCallback
+import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.registry.Registry.Companion.`is`
+import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsRoot
+import com.intellij.openapi.vcs.impl.VcsInitObject
+import com.intellij.openapi.vcs.impl.VcsStartupActivity
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.ReflectionUtil
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.HashingStrategy
+import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.CancellationException
+
+private val LOG = logger<VcsDirtyScopeManagerImpl>()
 
 @ApiStatus.Internal
-public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Disposable {
-  private static final Logger LOG = Logger.getInstance(VcsDirtyScopeManagerImpl.class);
+class VcsDirtyScopeManagerImpl(private val project: Project) : VcsDirtyScopeManager(), Disposable {
+  private var dirtBuilder = DirtBuilder()
+  private var dirtInProgress: DirtBuilder? = null
+  private var refreshInProgress: ActionCallback? = null
 
-  private final Project project;
+  private var isReady = false
+  private val LOCK = Any()
 
-  @NotNull private DirtBuilder myDirtBuilder = new DirtBuilder();
-  @Nullable private DirtBuilder myDirtInProgress;
-  @Nullable private ActionCallback myRefreshInProgress;
-
-  private boolean myReady;
-  private final Object LOCK = new Object();
-
-  @NotNull
-  public static VcsDirtyScopeManagerImpl getInstanceImpl(@NotNull Project project) {
-    return ((VcsDirtyScopeManagerImpl)getInstance(project));
-  }
-
-  public VcsDirtyScopeManagerImpl(@NotNull Project project) {
-    this.project = project;
-
-    MessageBusConnection busConnection = this.project.getMessageBus().connect();
-    busConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
-      @Override
-      public void fileTypesChanged(@NotNull FileTypeEvent event) {
+  init {
+    val busConnection = project.getMessageBus().connect()
+    busConnection.subscribe(FileTypeManager.TOPIC, object : FileTypeListener {
+      override fun fileTypesChanged(event: FileTypeEvent) {
         // Listen changes in 'FileTypeManager.getIgnoredFilesList':
         //   'ProjectLevelVcsManager.getVcsFor' depends on it via 'ProjectLevelVcsManager.isIgnored',
         //   which might impact which files are visible in ChangeListManager.
 
-        // Event does not allow to listen for 'getIgnoredFilesList' changes directly, listen for all generic events instead.
-        boolean isGenericEvent = event.getAddedFileType() == null && event.getRemovedFileType() == null;
+        // Event does not allow listening for 'getIgnoredFilesList' changes directly, listen for all generic events instead.
+
+        val isGenericEvent = event.addedFileType == null && event.removedFileType == null
         if (isGenericEvent) {
-          ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.nonModal(), VcsDirtyScopeManagerImpl.this.project.getDisposed());
+          ApplicationManager.getApplication().invokeLater({ markEverythingDirty() }, ModalityState.nonModal(), project.getDisposed())
         }
       }
-    });
+    })
 
-    if (Registry.is("ide.hide.excluded.files")) {
-      busConnection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
-        @Override
-        public void rootsChanged(@NotNull ModuleRootEvent event) {
+    if (`is`("ide.hide.excluded.files")) {
+      busConnection.subscribe<ModuleRootListener>(ModuleRootListener.TOPIC, object : ModuleRootListener {
+        override fun rootsChanged(event: ModuleRootEvent) {
           // 'ProjectLevelVcsManager.getVcsFor' depends on excluded roots via 'ProjectLevelVcsManager.isIgnored'
-          ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.nonModal(), VcsDirtyScopeManagerImpl.this.project.getDisposed());
+          ApplicationManager.getApplication().invokeLater({ markEverythingDirty() }, ModalityState.nonModal(), project.getDisposed())
         }
-      });
+      })
       //busConnection.subscribe(AdditionalLibraryRootsListener.TOPIC, ((presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> {
       //  ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.NON_MODAL, myProject.getDisposed());
       //}));
     }
   }
 
-  private static ProjectLevelVcsManager getVcsManager(@NotNull Project project) {
-    return ProjectLevelVcsManager.getInstance(project);
+  companion object {
+    @JvmStatic
+    fun getInstanceImpl(project: Project): VcsDirtyScopeManagerImpl {
+      return (getInstance(project) as VcsDirtyScopeManagerImpl)
+    }
+
+    @JvmStatic
+    fun getDirtyScopeHashingStrategy(vcs: AbstractVcs): HashingStrategy<FilePath>? {
+      return if (vcs.needsCaseSensitiveDirtyScope()) ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY else null
+    }
   }
 
-  private void startListenForChanges() {
-    ReadAction.run(() -> {
-      boolean ready = !project.isDisposed() && project.isOpen();
-      synchronized (LOCK) {
-        myReady = ready;
-      }
-      if (ready) {
-        project.getService(VcsDirtyScopeVfsListener.class);
-        markEverythingDirty();
-      }
-    });
+  private fun startListenForChanges() {
+    val ready = !project.isDisposed() && project.isOpen()
+    synchronized(LOCK) {
+      isReady = ready
+    }
+    if (ready) {
+      project.getService<VcsDirtyScopeVfsListener?>(VcsDirtyScopeVfsListener::class.java)
+      markEverythingDirty()
+    }
   }
 
-  @Override
-  public void markEverythingDirty() {
-    if ((!project.isOpen()) || project.isDisposed() || getVcsManager(project).getAllActiveVcss().length == 0) {
-      return;
+  override fun markEverythingDirty() {
+    if ((!project.isOpen()) || project.isDisposed() || ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().isEmpty()) {
+      return
     }
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("everything dirty: " + findFirstInterestingCallerClass());
+      LOG.debug("everything dirty: " + findFirstInterestingCallerClass())
     }
 
-    boolean wasReady;
-    ActionCallback ongoingRefresh;
-    synchronized (LOCK) {
-      wasReady = myReady;
+    val wasReady: Boolean
+    val ongoingRefresh: ActionCallback?
+    synchronized(LOCK) {
+      wasReady = isReady
       if (wasReady) {
-        myDirtBuilder.markEverythingDirty();
+        dirtBuilder.markEverythingDirty()
       }
-      ongoingRefresh = myRefreshInProgress;
+      ongoingRefresh = refreshInProgress
     }
 
     if (wasReady) {
-      ChangeListManagerImpl.getInstanceImpl(project).scheduleUpdateImpl();
-      if (ongoingRefresh != null) ongoingRefresh.setRejected();
+      ChangeListManagerImpl.getInstanceImpl(project).scheduleUpdateImpl()
+      ongoingRefresh?.setRejected()
     }
   }
 
-  @Override
-  public void dispose() {
-    synchronized (LOCK) {
-      myReady = false;
-      myDirtBuilder = new DirtBuilder();
-      myDirtInProgress = null;
-      myRefreshInProgress = null;
+  override fun dispose() {
+    synchronized(LOCK) {
+      isReady = false
+      dirtBuilder = DirtBuilder()
+      dirtInProgress = null
+      refreshInProgress = null
     }
   }
 
-  private @NotNull Map<VcsRoot, Set<FilePath>> groupByVcs(@Nullable Iterable<? extends FilePath> from) {
+  private fun groupByVcs(from: Sequence<FilePath>?): Map<VcsRoot, Set<FilePath>> {
     if (from == null) {
-      return Collections.emptyMap();
+      return emptyMap()
     }
 
-    ProjectLevelVcsManager vcsManager = getVcsManager(project);
-    Map<VcsRoot, Set<FilePath>> map = new HashMap<>();
-    for (FilePath path : from) {
-      VcsRoot vcsRoot = vcsManager.getVcsRootObjectFor(path);
-      if (vcsRoot != null && vcsRoot.getVcs() != null) {
-        Set<FilePath> pathSet = map.computeIfAbsent(vcsRoot, key -> {
-          HashingStrategy<FilePath> strategy = getDirtyScopeHashingStrategy(key.getVcs());
-          return strategy == null ? new HashSet<>() : CollectionFactory.createCustomHashingStrategySet(strategy);
-        });
-        pathSet.add(path);
+    val vcsManager = ProjectLevelVcsManager.getInstance(project)
+    val map = HashMap<VcsRoot, MutableSet<FilePath>>()
+    for (path in from) {
+      val vcsRoot = vcsManager.getVcsRootObjectFor(path) ?: continue
+      if (vcsRoot.vcs != null) {
+        val pathSet = map.computeIfAbsent(vcsRoot) { key ->
+          val strategy = getDirtyScopeHashingStrategy(key.vcs!!)
+          if (strategy == null) HashSet() else CollectionFactory.createCustomHashingStrategySet(strategy)
+        }
+        pathSet.add(path)
       }
     }
-    return map;
+    return map
   }
 
-  @NotNull
-  private Map<VcsRoot, Set<FilePath>> groupFilesByVcs(@Nullable Collection<? extends VirtualFile> from) {
-    if (from == null) return Collections.emptyMap();
-    return groupByVcs(() -> ContainerUtil.mapIterator(from.iterator(), file -> VcsUtil.getFilePath(file)));
+  private fun groupFilesByVcs(from: Collection<VirtualFile>?): Map<VcsRoot, Set<FilePath>> {
+    if (from == null) {
+      return emptyMap()
+    }
+    return groupByVcs(from.asSequence().map { VcsUtil.getFilePath(it) })
   }
 
-  void fileVcsPathsDirty(@NotNull Map<VcsRoot, Set<FilePath>> filesConverted,
-                         @NotNull Map<VcsRoot, Set<FilePath>> dirsConverted) {
-    if (filesConverted.isEmpty() && dirsConverted.isEmpty()) return;
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(String.format("dirty files: %s; dirty dirs: %s; %s",
-                              toString(filesConverted), toString(dirsConverted), findFirstInterestingCallerClass()));
+  fun fileVcsPathsDirty(
+    filesConverted: Map<VcsRoot, Set<FilePath>>,
+    dirsConverted: Map<VcsRoot, Set<FilePath>>
+  ) {
+    if (filesConverted.isEmpty() && dirsConverted.isEmpty()) {
+      return
     }
 
-    boolean hasSomethingDirty = false;
-    for (VcsRoot vcsRoot : ContainerUtil.union(filesConverted.keySet(), dirsConverted.keySet())) {
-      Set<FilePath> files = ContainerUtil.notNullize(filesConverted.get(vcsRoot));
-      Set<FilePath> dirs = ContainerUtil.notNullize(dirsConverted.get(vcsRoot));
+    LOG.debug { "dirty files: ${toString(filesConverted)}; dirty dirs: ${toString(dirsConverted)}; ${findFirstInterestingCallerClass()}" }
 
-      synchronized (LOCK) {
-        if (myReady) {
-          hasSomethingDirty |= myDirtBuilder.addDirtyFiles(vcsRoot, files, dirs);
+    var hasSomethingDirty = false
+    for (vcsRoot in ContainerUtil.union<VcsRoot>(filesConverted.keys, dirsConverted.keys)) {
+      val files = filesConverted.get(vcsRoot) ?: emptySet()
+      val dirs = dirsConverted.get(vcsRoot) ?: emptySet()
+
+      synchronized(LOCK) {
+        if (isReady) {
+          hasSomethingDirty = hasSomethingDirty or dirtBuilder.addDirtyFiles(vcsRoot = vcsRoot, files = files, dirs = dirs)
         }
       }
     }
 
     if (hasSomethingDirty) {
-      ChangeListManagerImpl.getInstanceImpl(project).scheduleUpdateImpl();
+      ChangeListManagerImpl.getInstanceImpl(project).scheduleUpdateImpl()
     }
   }
 
-  @Override
-  public void filePathsDirty(@Nullable Collection<? extends FilePath> filesDirty,
-                             @Nullable Collection<? extends FilePath> dirsRecursivelyDirty) {
+  override fun filePathsDirty(
+    filesDirty: Collection<FilePath>?,
+    dirsRecursivelyDirty: Collection<FilePath>?
+  ) {
     try {
-      fileVcsPathsDirty(groupByVcs(filesDirty), groupByVcs(dirsRecursivelyDirty));
+      fileVcsPathsDirty(groupByVcs(filesDirty?.asSequence()), groupByVcs(dirsRecursivelyDirty?.asSequence()))
     }
-    catch (ProcessCanceledException ignore) {
+    catch (_: CancellationException) {
     }
   }
 
-  @Override
-  public void filesDirty(@Nullable Collection<? extends VirtualFile> filesDirty,
-                         @Nullable Collection<? extends VirtualFile> dirsRecursivelyDirty) {
+  override fun filesDirty(
+    filesDirty: Collection<VirtualFile>?,
+    dirsRecursivelyDirty: Collection<VirtualFile>?
+  ) {
     try {
-      fileVcsPathsDirty(groupFilesByVcs(filesDirty), groupFilesByVcs(dirsRecursivelyDirty));
+      fileVcsPathsDirty(groupFilesByVcs(filesDirty), groupFilesByVcs(dirsRecursivelyDirty))
     }
-    catch (ProcessCanceledException ignore) {
+    catch (_: CancellationException) {
     }
   }
 
-  @Override
-  public void fileDirty(@NotNull final VirtualFile file) {
-    fileDirty(VcsUtil.getFilePath(file));
+  override fun fileDirty(file: VirtualFile) {
+    fileDirty(VcsUtil.getFilePath(file))
   }
 
-  @Override
-  public void fileDirty(@NotNull final FilePath file) {
-    filePathsDirty(Collections.singleton(file), null);
+  override fun fileDirty(file: FilePath) {
+    filePathsDirty(filesDirty = setOf(file), dirsRecursivelyDirty = null)
   }
 
-  @Override
-  public void dirDirtyRecursively(@NotNull final VirtualFile dir) {
-    dirDirtyRecursively(VcsUtil.getFilePath(dir));
+  override fun dirDirtyRecursively(dir: VirtualFile) {
+    dirDirtyRecursively(VcsUtil.getFilePath(dir))
   }
 
-  @Override
-  public void dirDirtyRecursively(@NotNull final FilePath path) {
-    filePathsDirty(null, Collections.singleton(path));
+  override fun dirDirtyRecursively(path: FilePath) {
+    filePathsDirty(filesDirty = null, dirsRecursivelyDirty = setOf(path))
   }
 
   /**
-   * Take current dirty scope into processing.
-   * Should call {@link #changesProcessed} when done to notify {@link #whatFilesDirty} that scope is no longer dirty.
+   * Take the current dirty scope into processing.
+   * Should call [.changesProcessed] when done to notify [.whatFilesDirty] that scope is no longer dirty.
    */
-  @Nullable
-  public VcsInvalidated retrieveScopes() {
-    ActionCallback callback = new ActionCallback();
-    DirtBuilder dirtBuilder;
-    synchronized (LOCK) {
-      if (!myReady) return null;
-      LOG.assertTrue(myDirtInProgress == null);
+  fun retrieveScopes(): VcsInvalidated? {
+    val callback = ActionCallback()
+    val dirtBuilder: DirtBuilder?
+    synchronized(LOCK) {
+      if (!isReady) return null
+      LOG.assertTrue(dirtInProgress == null)
 
-      dirtBuilder = myDirtBuilder;
-      myDirtInProgress = dirtBuilder;
-      myDirtBuilder = new DirtBuilder();
-      myRefreshInProgress = callback;
+      dirtBuilder = this@VcsDirtyScopeManagerImpl.dirtBuilder
+      dirtInProgress = dirtBuilder
+      this@VcsDirtyScopeManagerImpl.dirtBuilder = DirtBuilder()
+      refreshInProgress = callback
     }
-    return calculateInvalidated(dirtBuilder, callback);
+    return calculateInvalidated(dirtBuilder!!, callback)
   }
 
-  public boolean hasDirtyScopes() {
-    synchronized (LOCK) {
-      if (!myReady) return false;
-      LOG.assertTrue(myDirtInProgress == null);
-
-      return !myDirtBuilder.isEmpty();
+  fun hasDirtyScopes(): Boolean {
+    synchronized(LOCK) {
+      if (!isReady) return false
+      LOG.assertTrue(dirtInProgress == null)
+      return !dirtBuilder.isEmpty()
     }
   }
 
-  public void changesProcessed() {
-    synchronized (LOCK) {
-      myDirtInProgress = null;
-      myRefreshInProgress = null;
+  fun changesProcessed() {
+    synchronized(LOCK) {
+      dirtInProgress = null
+      refreshInProgress = null
     }
   }
 
-  @NotNull
-  private VcsInvalidated calculateInvalidated(@NotNull DirtBuilder dirt, @NotNull ActionCallback callback) {
-    boolean isEverythingDirty = dirt.isEverythingDirty();
-    List<VcsModifiableDirtyScope> scopes = dirt.buildScopes(project);
-    return new VcsInvalidated(scopes, isEverythingDirty, callback);
+  private fun calculateInvalidated(dirt: DirtBuilder, callback: ActionCallback): VcsInvalidated {
+    return VcsInvalidated(scopes = dirt.buildScopes(project), isEverythingDirty = dirt.isEverythingDirty, callback = callback)
   }
 
-  @NotNull
-  @Override
-  public Collection<FilePath> whatFilesDirty(@NotNull final Collection<? extends FilePath> files) {
-    return ReadAction.compute(() -> {
-      Collection<FilePath> result = new ArrayList<>();
-      synchronized (LOCK) {
-        if (!myReady) return Collections.emptyList();
-
-        for (FilePath fp : files) {
-          if (myDirtBuilder.isFileDirty(fp) ||
-              myDirtInProgress != null && myDirtInProgress.isFileDirty(fp)) {
-            result.add(fp);
+  override fun whatFilesDirty(files: MutableCollection<out FilePath>): Collection<FilePath> {
+    return ApplicationManager.getApplication().runReadAction(ThrowableComputable {
+      val result = ArrayList<FilePath>()
+      synchronized(LOCK) {
+        if (!isReady) {
+          return@ThrowableComputable emptyList()
+        }
+        for (fp in files) {
+          if (dirtBuilder.isFileDirty(fp) || dirtInProgress != null && dirtInProgress!!.isFileDirty(fp)) {
+            result.add(fp)
           }
         }
       }
-      return result;
-    });
+      result
+    })
   }
 
-  @NotNull
-  private static String toString(@NotNull Map<VcsRoot, Set<FilePath>> filesByVcs) {
-    return StringUtil.join(filesByVcs.keySet(), vcs
-      -> vcs.getVcs() + ": " + StringUtil.join(filesByVcs.get(vcs), path -> path.getPath(), "\n"), "\n");
-  }
-
-  @Nullable
-  private static Class<?> findFirstInterestingCallerClass() {
-    for (int i = 1; i <= 7; i++) {
-      Class<?> clazz = ReflectionUtil.findCallerClass(i);
-      if (clazz == null || !clazz.getName().contains(VcsDirtyScopeManagerImpl.class.getName())) return clazz;
-    }
-    return null;
-  }
-
-  public static @Nullable HashingStrategy<FilePath> getDirtyScopeHashingStrategy(@NotNull AbstractVcs vcs) {
-    return vcs.needsCaseSensitiveDirtyScope() ? ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
-                                              : null;
-  }
-
-  static final class MyStartupActivity implements VcsStartupActivity {
-    @Override
-    public void runActivity(@NotNull Project project) {
-      getInstanceImpl(project).startListenForChanges();
+  internal class MyStartupActivity : VcsStartupActivity {
+    override suspend fun execute(project: Project) {
+      getInstanceImpl(project).startListenForChanges()
     }
 
-    @Override
-    public int getOrder() {
-      return VcsInitObject.DIRTY_SCOPE_MANAGER.getOrder();
+    override val order: Int
+      get() = VcsInitObject.DIRTY_SCOPE_MANAGER.order
+  }
+}
+
+private fun toString(filesByVcs: Map<VcsRoot, Set<FilePath>>): String {
+  return filesByVcs.keys.joinToString("\n") { vcs ->
+    vcs.vcs.toString() + ": " + filesByVcs.getValue(vcs).joinToString("\n") { it.getPath() }
+  }
+}
+
+private fun findFirstInterestingCallerClass(): Class<*>? {
+  for (i in 1..7) {
+    val clazz = ReflectionUtil.findCallerClass(i)
+    if (clazz == null || !clazz.getName().contains(VcsDirtyScopeManagerImpl::class.java.getName())) {
+      return clazz
     }
   }
+  return null
 }
