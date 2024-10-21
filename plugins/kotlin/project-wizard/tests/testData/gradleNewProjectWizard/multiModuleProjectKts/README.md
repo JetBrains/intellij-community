@@ -11,9 +11,11 @@ or run it directly from the terminal:
 * Run `./gradlew clean` to clean all build outputs
 
 Note the usage of Gradle Wrapper (`./gradlew`). This is the suggested way to use Gradle in production
-projects. [Learn more about Gradle Wrapper](https://docs.gradle.org/current/userguide/gradle_wrapper.html)
+projects.
 
-[Learn more about Gradle tasks](https://docs.gradle.org/current/userguide/command_line_interface.html#common_tasks)
+[Learn more about Gradle Wrapper](https://docs.gradle.org/current/userguide/gradle_wrapper.html).
+
+[Learn more about Gradle tasks](https://docs.gradle.org/current/userguide/command_line_interface.html#common_tasks).
 
 
 The project follows suggested multi-module setup and consists of "app" and "utils" subprojects.
