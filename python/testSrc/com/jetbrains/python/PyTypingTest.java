@@ -5980,7 +5980,7 @@ public class PyTypingTest extends PyTestCase {
           expr: Alias
       """);
   }
-  
+
   // PY-76243
   public void testGenericClassDeclaredInStubPackage() {
     runWithAdditionalClassEntryInSdkRoots("types/" + getTestName(false) + "/site-packages", () -> {
@@ -6119,6 +6119,18 @@ public class PyTypingTest extends PyTestCase {
       
       expr = Specific().get()
       """);
+  }
+
+  // PY-36205
+  public void testIterateEnum() {
+    doTest("Foo",
+           """
+             from enum import Enum
+             class Foo(str, Enum):
+                 ONE = 1
+             for expr in Foo:
+                 pass
+             """);
   }
 
   private void doTestNoInjectedText(@NotNull String text) {
