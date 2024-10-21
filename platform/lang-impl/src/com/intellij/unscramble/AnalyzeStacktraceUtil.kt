@@ -7,9 +7,11 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.impl.ConsoleViewUtil
 import com.intellij.execution.ui.*
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ClipboardUtil
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
@@ -19,8 +21,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import javax.swing.Icon
@@ -98,8 +103,12 @@ class AnalyzeStacktraceUtil private constructor(){
         runContentManager.showRunContent(executor, descriptor)
 
         EP_CONTENT_PROVIDER.getExtensions(project).forEach { provider ->
-          provider.createRunTabDescriptor(project, text)?.let { contentDescriptor ->
-            runContentManager.showRunContent(executor, contentDescriptor)
+          runWithModalProgressBlocking(project, LangBundle.message("unscramble.progress.title.analyzing.stacktrace")) {
+            provider.createRunTabDescriptor(project, text)?.let { contentDescriptor ->
+              withContext(Dispatchers.EDT) {
+                runContentManager.showRunContent(executor, contentDescriptor)
+              }
+            }
           }
         }
       }
