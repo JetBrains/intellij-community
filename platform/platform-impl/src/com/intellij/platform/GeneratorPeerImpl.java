@@ -29,6 +29,15 @@ public class GeneratorPeerImpl<T> implements ProjectGeneratorPeer<T> {
     return myComponent;
   }
 
+  /**
+   * @deprecated  It is here only for backward compatibility: some plugins still call it, call {@link #getComponent(TextFieldWithBrowseButton, Runnable)}
+   */
+  @Override
+  @Deprecated
+  public @NotNull JComponent getComponent() {
+    return myComponent;
+  }
+
   @Override
   public void buildUI(@NotNull SettingsStep settingsStep) {}
 
