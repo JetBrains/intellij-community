@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
@@ -150,7 +149,7 @@ public final class NewMappings implements Disposable {
 
     boolean wasChanged = activator.activate();
     if (forceFireEvent || wasChanged) {
-      BackgroundTaskUtil.syncPublisher(myProject, ProjectLevelVcsManagerEx.VCS_ACTIVATED).vcsesActivated(myActiveVcses);
+      myProject.getMessageBus().syncPublisher(ProjectLevelVcsManagerEx.VCS_ACTIVATED).vcsesActivated(myActiveVcses);
 
       refreshMainMenu();
     }
@@ -575,7 +574,7 @@ public final class NewMappings implements Disposable {
   }
 
   public void notifyMappingsChanged() {
-    BackgroundTaskUtil.syncPublisher(myProject, ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
+    myProject.getMessageBus().syncPublisher(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
     myFileWatchRequestsManager.ping();
   }
 
@@ -643,9 +642,7 @@ public final class NewMappings implements Disposable {
   }
 
   public @NotNull List<VirtualFile> getMappingsAsFilesUnderVcs(@NotNull AbstractVcs vcs) {
-    return ContainerUtil.mapNotNull(myMappedRoots, root -> {
-      return vcs.equals(root.vcs) ? root.root : null;
-    });
+    return ContainerUtil.mapNotNull(myMappedRoots, root -> vcs.equals(root.vcs) ? root.root : null);
   }
 
   @Override

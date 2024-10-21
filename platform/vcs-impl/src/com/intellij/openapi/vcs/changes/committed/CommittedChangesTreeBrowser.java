@@ -233,7 +233,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements UiDataProvide
     myDetailsView.setUseCase(useCase);
     myChangeLists = new ArrayList<>(items);
     myFilteringStrategy.setFilterBase(items);
-    BackgroundTaskUtil.syncPublisher(myProject, ITEMS_RELOADED).itemsReloaded();
+    myProject.getMessageBus().syncPublisher(ITEMS_RELOADED).itemsReloaded();
     updateModel();
   }
 
@@ -497,7 +497,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements UiDataProvide
     myChangesTree.setModel(buildTreeModel(myFilteringStrategy.filterChangeLists(myChangeLists)));
     state.applyTo(myChangesTree, myChangesTree.getModel().getRoot());
     TreeUtil.expandAll(myChangesTree);
-    BackgroundTaskUtil.syncPublisher(myProject, ITEMS_RELOADED).itemsReloaded();
+    myProject.getMessageBus().syncPublisher(ITEMS_RELOADED).itemsReloaded();
   }
 
   public static class MoreLauncher implements Runnable {

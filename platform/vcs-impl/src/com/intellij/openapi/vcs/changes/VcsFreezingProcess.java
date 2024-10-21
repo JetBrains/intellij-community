@@ -6,7 +6,6 @@ import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.messages.Topic;
@@ -80,12 +79,12 @@ public class VcsFreezingProcess {
   }
 
   private void freeze() {
-    BackgroundTaskUtil.syncPublisher(myProject, Listener.TOPIC).onFreeze();
+    myProject.getMessageBus().syncPublisher(Listener.TOPIC).onFreeze();
     myChangeListManager.freeze(VcsBundle.message("local.changes.freeze.message", myOperationTitle));
   }
 
   private void unfreeze() {
-    BackgroundTaskUtil.syncPublisher(myProject, Listener.TOPIC).onUnfreeze();
+    myProject.getMessageBus().syncPublisher(Listener.TOPIC).onUnfreeze();
     myChangeListManager.unfreeze();
   }
 

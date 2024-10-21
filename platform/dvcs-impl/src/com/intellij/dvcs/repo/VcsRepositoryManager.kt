@@ -36,7 +36,6 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.Volatile
 
 /**
  * VcsRepositoryManager creates, stores and updates all repository's information using registered [VcsRepositoryCreator]
@@ -71,7 +70,7 @@ class VcsRepositoryManager @ApiStatus.Internal constructor(
     EP_NAME.addChangeListener(coroutineScope) {
       disposeAllRepositories(false)
       scheduleUpdate()
-      BackgroundTaskUtil.syncPublisher(project, VCS_REPOSITORY_MAPPING_UPDATED).mappingChanged()
+      project.messageBus.syncPublisher(VCS_REPOSITORY_MAPPING_UPDATED).mappingChanged()
     }
     updateAlarm = Alarm(
       threadToUse = Alarm.ThreadToUse.POOLED_THREAD,
@@ -396,7 +395,7 @@ class VcsRepositoryManager @ApiStatus.Internal constructor(
     finally {
       MODIFY_LOCK.unlock()
     }
-    BackgroundTaskUtil.syncPublisher(project, VCS_REPOSITORY_MAPPING_UPDATED).mappingChanged()
+    project.messageBus.syncPublisher(VCS_REPOSITORY_MAPPING_UPDATED).mappingChanged()
   }
 
   private fun findNewRoots(knownRoots: Set<VirtualFile>): Map<VirtualFile, Repository> {

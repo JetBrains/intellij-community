@@ -2226,9 +2226,6 @@ c:com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager$DisplayNameSu
 - java.util.function.Supplier
 - <init>():V
 - get():java.lang.String
-c:com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager$MyShelfManagerListener
-- <init>(com.intellij.openapi.project.Project):V
-- shelvedListsChanged():V
 c:com.intellij.openapi.vcs.changes.shelf.UnshelveWithDialogAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V

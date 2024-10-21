@@ -25,7 +25,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
@@ -201,9 +200,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
   @RequiresEdt
   void updateTreeView() {
-    updateTreeIfShown(tree -> {
-      tree.rebuildTree();
-    });
+    updateTreeIfShown(tree -> tree.rebuildTree());
   }
 
   @ApiStatus.Internal
@@ -1126,7 +1123,7 @@ public class ShelvedChangesViewManager implements Disposable {
     }
   }
 
-  public static class MyShelfManagerListener implements ShelveChangesManagerListener {
+  static final class MyShelfManagerListener implements ShelveChangesManagerListener {
     private final Project myProject;
 
     public MyShelfManagerListener(@NotNull Project project) {
@@ -1136,7 +1133,7 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public void shelvedListsChanged() {
       ApplicationManager.getApplication().invokeLater(() -> {
-        BackgroundTaskUtil.syncPublisher(myProject, ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged();
+        myProject.getMessageBus().syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged();
       });
     }
   }

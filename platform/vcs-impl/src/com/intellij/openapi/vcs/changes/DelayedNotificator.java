@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.local.ChangeListCommand;
@@ -154,6 +153,6 @@ public final class DelayedNotificator implements ChangeListListener {
 
   @NotNull
   private ChangeListListener getMulticaster() {
-    return BackgroundTaskUtil.syncPublisher(myProject, ChangeListListener.TOPIC);
+    return myProject.getMessageBus().syncPublisher(ChangeListListener.TOPIC);
   }
 }

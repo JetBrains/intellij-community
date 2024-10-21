@@ -55,7 +55,7 @@ public final class RemoteRevisionsCache implements VcsListener {
         boolean somethingChanged = myRemoteRevisionsNumbersCache.updateStep();
         somethingChanged |= myRemoteRevisionsStateCache.updateStep();
         if (somethingChanged) {
-          BackgroundTaskUtil.syncPublisher(myProject, REMOTE_VERSION_CHANGED).run();
+          myProject.getMessageBus().syncPublisher(REMOTE_VERSION_CHANGED).run();
         }
       }
       return shouldBeDone;
