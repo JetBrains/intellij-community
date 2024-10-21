@@ -83,10 +83,10 @@ fun MethodHandles.Lookup.findConstructorOrNull(clazz: Class<*>, type: MethodType
   return try {
     findConstructor(clazz, type)
   }
-  catch (e: NoSuchMethodException) {
+  catch (_: NoSuchMethodException) {
     return null
   }
-  catch (e: IllegalAccessException) {
+  catch (_: IllegalAccessException) {
     return null
   }
 }
@@ -188,9 +188,6 @@ abstract class ComponentManagerImpl(
     else null,
     ordered = false,
   )
-
-  val serviceContainerInternal: InstanceContainerInternal
-    get() = serviceContainer
 
   private val componentContainer = InstanceContainerImpl(
     scopeHolder = scopeHolder,
@@ -731,7 +728,7 @@ abstract class ComponentManagerImpl(
         return try {
           holder.tryGetInstance() as T?
         }
-        catch (ce: CancellationException) {
+        catch (_: CancellationException) {
           // container scope might be canceled => holder might hold CE
           return null
         }
@@ -975,7 +972,7 @@ abstract class ComponentManagerImpl(
 
   final override fun createError(error: Throwable, pluginId: PluginId): RuntimeException {
     return when (val effectiveError: Throwable = if (error is InvocationTargetException) error.targetException else error) {
-      is ProcessCanceledException, is ExtensionNotApplicableException, is PluginException -> effectiveError as RuntimeException
+      is ProcessCanceledException, is ExtensionNotApplicableException, is PluginException -> effectiveError
       else -> PluginException(effectiveError, pluginId)
     }
   }
@@ -1374,31 +1371,26 @@ abstract class ComponentManagerImpl(
   }
 
   fun instanceCoroutineScope(pluginClass: Class<*>): CoroutineScope {
-    val pluginClassloader = pluginClass.classLoader
-    val intersectionScope = pluginCoroutineScope(pluginClassloader)
+    val intersectionScope = pluginCoroutineScope(pluginClass.classLoader)
     // The parent scope should become canceled only when the container is disposed, or the plugin is unloaded.
     // Leaking the parent scope might lead to premature cancellation.
     // Fool proofing: a fresh child scope is created per instance to avoid leaking the parent to clients.
     return intersectionScope.childScope(pluginClass.name)
   }
 
-  @Internal // to run post-start-up activities - to not create scope for each class and do not keep it alive
+  // to run post-start-up activities - to not create scope for each class and do not keep it alive
   fun pluginCoroutineScope(pluginClassloader: ClassLoader): CoroutineScope {
     val intersectionScope = if (pluginClassloader is PluginAwareClassLoader) {
       val pluginScope = pluginClassloader.pluginCoroutineScope
-      val parentScope = parent?.intersectionCoroutineScope(pluginScope) // for consistency
-                        ?: pluginScope
-      intersectionCoroutineScope(parentScope)
+      // for consistency
+      val parentScope = parent?.scopeHolder?.intersectScope(pluginScope) ?: pluginScope
+      scopeHolder.intersectScope(parentScope)
     }
     else {
       // non-unloadable
       scopeHolder.containerScope
     }
     return intersectionScope
-  }
-
-  private fun intersectionCoroutineScope(pluginScope: CoroutineScope): CoroutineScope {
-    return scopeHolder.intersectScope(pluginScope)
   }
 }
 
@@ -1535,7 +1527,7 @@ private fun InstanceHolder.getInstanceBlocking(debugString: String, keyClass: Cl
     try {
       return tryGetInstance()
     }
-    catch (ce: CancellationException) {
+    catch (_: CancellationException) {
       return null
     }
   }
@@ -1628,13 +1620,13 @@ private fun dontLogAccessInClinit(): AccessToken {
 /**
  * Should be used everywhere [ComponentManagerImpl.checkState] is used.
  */
-private fun <X> checkState(x: () -> X): X {
-  return try {
-    x()
+private inline fun <X> checkState(x: () -> X): X {
+  try {
+    return x()
   }
-  catch (cde: ContainerDisposedException) {
+  catch (e: ContainerDisposedException) {
     ProgressManager.checkCanceled()
-    throw cde
+    throw e
   }
 }
 
@@ -1642,11 +1634,11 @@ private fun <X> checkState(x: () -> X): X {
  * Used everywhere the adapter was requested from the `ComponentManagerImpl.componentKeyToAdapter`
  * but [ComponentManagerImpl.checkState] is not used.
  */
-private fun <X> ignoreDisposal(x: () -> X): X? {
+private inline fun <X> ignoreDisposal(x: () -> X): X? {
   return try {
     x()
   }
-  catch (cde: ContainerDisposedException) {
+  catch (_: ContainerDisposedException) {
     null
   }
 }
@@ -1655,12 +1647,12 @@ private inline fun <X> rethrowCEasPCE(action: () -> X): X {
   try {
     return action()
   }
-  catch (pce : ProcessCanceledException) {
-    throw pce
+  catch (e : ProcessCanceledException) {
+    throw e
   }
-  catch (ce: CancellationException) {
-    throwAlreadyDisposedIfNotUnderIndicatorOrJob(cause = ce)
-    throw CeProcessCanceledException(ce)
+  catch (e: CancellationException) {
+    throwAlreadyDisposedIfNotUnderIndicatorOrJob(cause = e)
+    throw CeProcessCanceledException(e)
   }
 }
 
@@ -1683,19 +1675,16 @@ private fun <X> runBlockingInitialization(action: suspend CoroutineScope.() -> X
       @Suppress("RAW_RUN_BLOCKING")
       runBlocking(contextForInitializer, action)
     }
-    catch (pce : ProcessCanceledException) {
-      throw pce
+    catch (e: ProcessCanceledException) {
+      throw e
     }
-    catch (ce: CancellationException) {
-      throw CeProcessCanceledException(ce)
+    catch (e: CancellationException) {
+      throw CeProcessCanceledException(e)
     }
   }
 }
 
-@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "CANNOT_OVERRIDE_INVISIBLE_MEMBER")
+@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "CANNOT_OVERRIDE_INVISIBLE_MEMBER", "ERROR_SUPPRESSION")
 private class NestedBlockingEventLoop(override val thread: Thread) : EventLoopImplBase() {
-
-  override fun shouldBeProcessedFromContext(): Boolean {
-    return true
-  }
+  override fun shouldBeProcessedFromContext(): Boolean = true
 }

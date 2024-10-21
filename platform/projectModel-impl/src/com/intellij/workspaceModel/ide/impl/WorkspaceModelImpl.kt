@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -25,6 +24,7 @@ import com.intellij.platform.workspace.storage.query.CollectionQuery
 import com.intellij.platform.workspace.storage.query.StorageQuery
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.serviceContainer.AlreadyDisposedException
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
@@ -148,7 +148,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   @OptIn(EntityStorageInstrumentationApi::class)
   @Synchronized
   final override fun updateProjectModel(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
     checkRecursiveUpdate()
 
     val updateTimeMillis: Long
@@ -327,7 +327,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
   @OptIn(EntityStorageInstrumentationApi::class)
   override fun updateUnloadedEntities(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
     if (project.isDisposed) return
 
     val time = measureTimeMillis {
@@ -355,7 +355,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
   @Synchronized
   final override fun replaceProjectModel(replacement: StorageReplacement): Boolean {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
 
     if (entityStorage.version != replacement.version) return false
 
@@ -369,7 +369,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
   @Synchronized
   fun replaceProjectModel(mainStorageReplacement: StorageReplacement, unloadStorageReplacement: StorageReplacement): Boolean {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
 
     if (entityStorage.version != mainStorageReplacement.version ||
         unloadedEntitiesStorage.version != unloadStorageReplacement.version) return false
@@ -409,7 +409,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
    * Order of events: initialize project libraries, initialize module bridge + module friends, all other listeners
    */
   private fun onBeforeChanged(change: VersionedStorageChange) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
     if (project.isDisposed) return
 
     onBeforeChangedTimeMs.addMeasuredTime {
@@ -420,7 +420,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   }
 
   private fun onChanged(change: VersionedStorageChange) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
     if (project.isDisposed) return
     //it is important to update WorkspaceFileIndex before other listeners are called because they may rely on it
     logErrorOnEventHandling {
