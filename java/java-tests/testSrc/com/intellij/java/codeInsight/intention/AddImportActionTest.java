@@ -76,6 +76,26 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
                             """);
   }
 
+  public void testClassNameResolvesToVariableName() {
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      public class Base {
+      	private <caret>URL URL;
+      
+      	protected void test(URL url) {
+      	}
+      }""");
+    importClass();
+    myFixture.checkResult("""
+                            import java.net.URL;
+                            
+                            public class Base {
+                            	private URL URL;
+                            
+                            	protected void test(URL url) {
+                            	}
+                            }""");
+  }
+
   public void testMethodReference() {
     myFixture.configureByText(JavaFileType.INSTANCE, """
       public class Importing {

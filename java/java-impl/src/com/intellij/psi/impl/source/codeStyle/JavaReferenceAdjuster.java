@@ -299,7 +299,7 @@ public final class JavaReferenceAdjuster implements ReferenceAdjuster {
           }
         }
       }
-      return helper.resolveReferencedVariable(referenceText, psiReference) == null;
+      return !(psiReference instanceof PsiReferenceExpression) || helper.resolveReferencedVariable(referenceText, psiReference) == null;
     }
     return false;
   }
