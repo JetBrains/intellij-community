@@ -38,7 +38,6 @@
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="jsoup" level="project" />
     <orderEntry type="library" name="javax.annotation-api" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="org.codehaus.groovy:groovy" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Ant" level="project" />
     <orderEntry type="module" module-name="intellij.python.psi.impl" exported="" />
     <orderEntry type="module" module-name="intellij.python.sdk" exported="" />
