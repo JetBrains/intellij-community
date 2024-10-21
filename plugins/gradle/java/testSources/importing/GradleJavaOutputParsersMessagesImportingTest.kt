@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
-import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
@@ -77,6 +76,18 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
     compileModules("project.impl.main")
     assertBuildViewTreeSame(expectedExecutionTree)
 
+    val cause = when {
+      isGradleAtLeast("8.11") -> """
+      
+          ';' expected
+      $projectPath/brokenProject/src/main/java/my/pack/App2.java:4: error: invalid method declaration; return type required
+      public int metho d() { return 1; }}
+      ^
+      2 errors
+      """.trimIndent()
+      else -> ""
+    }
+
     when {
       isGradleAtLeast("4.7") -> expectedExecutionTree =
         "-\n" +
@@ -84,7 +95,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
         "  -:brokenProject:compileJava\n" +
         "   -App2.java\n" +
         "    ';' expected\n" +
-        "    invalid method declaration; return type required"
+        "    invalid method declaration; return type required$cause"
       else -> expectedExecutionTree =
         "-\n" +
         " -failed\n" +
