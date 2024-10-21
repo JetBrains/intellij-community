@@ -2891,6 +2891,8 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Debugger {
 	public final fun getForceStepInto ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getForceStepOver ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getFrame ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getFreeze ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getFreezeAll ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getKillProcess ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getLambdaBreakpoint ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getMultipleBreakpoints ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -2906,6 +2908,8 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Debugger {
 	public final fun getSelfreference ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getShowCurrentFrame ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getSmartStepInto ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getThaw ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getThawAll ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getThreadAtBreakpoint ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getThreadCurrent ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getThreadFrozen ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
