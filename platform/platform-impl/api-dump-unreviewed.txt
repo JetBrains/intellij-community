@@ -12779,6 +12779,7 @@ c:com.intellij.platform.GeneratorPeerImpl
 - <init>(java.lang.Object,javax.swing.JComponent):V
 - addSettingsStateListener(com.intellij.platform.WebProjectGenerator$SettingsStateListener):V
 - buildUI(com.intellij.ide.util.projectWizard.SettingsStep):V
+- getComponent():javax.swing.JComponent
 - getComponent(com.intellij.openapi.ui.TextFieldWithBrowseButton,java.lang.Runnable):javax.swing.JComponent
 - getSettings():java.lang.Object
 - isBackgroundJobRunning():Z
