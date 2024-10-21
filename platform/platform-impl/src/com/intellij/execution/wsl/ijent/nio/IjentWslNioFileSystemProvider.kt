@@ -262,7 +262,7 @@ class IjentWslNioFileSystemProvider(
     if (conversionResult2 != null) {
       return conversionResult2
     }
-    // so both paths are now
+    // so both paths are now located in WSL
     return ijentFsProvider.isSameFile(path.toIjentPath(), path2.toIjentPath())
   }
 
