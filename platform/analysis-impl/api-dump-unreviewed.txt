@@ -3062,6 +3062,16 @@ a:com.intellij.find.FindSettings
 - a:setSkipResultsWithOneUsage(Z):V
 - a:setWholeWordsOnly(Z):V
 - a:setWithSubdirectories(Z):V
+com.intellij.find.FindUsagesSettings
+- a:getDefaultScopeName():java.lang.String
+- s:getInstance():com.intellij.find.FindUsagesSettings
+- a:isSearchOverloadedMethods():Z
+- a:isShowResultsInSeparateView():Z
+- a:isSkipResultsWithOneUsage():Z
+- a:setDefaultScopeName(java.lang.String):V
+- a:setSearchOverloadedMethods(Z):V
+- a:setShowResultsInSeparateView(Z):V
+- a:setSkipResultsWithOneUsage(Z):V
 c:com.intellij.find.findUsages.FindUsagesHandlerBase
 - pf:myPsiElement:com.intellij.psi.PsiElement
 - <init>(com.intellij.psi.PsiElement):V

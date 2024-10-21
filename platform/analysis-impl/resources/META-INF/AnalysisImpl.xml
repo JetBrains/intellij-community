@@ -40,6 +40,7 @@
     <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceCompletion"
                         serviceImplementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceCompletionImpl"/>
     <applicationService serviceImplementation="com.intellij.find.impl.FindSettingsImpl$FindRecents"/>
+    <applicationService serviceInterface="com.intellij.find.FindUsagesSettings" serviceImplementation="com.intellij.find.impl.FindUsagesSettingsImpl" />
     <applicationService serviceInterface="com.intellij.find.TextSearchService"
                         serviceImplementation="com.intellij.find.ngrams.TrigramTextSearchService"/>
     <applicationService serviceInterface="com.intellij.codeInsight.template.TemplateBuilderFactory"
