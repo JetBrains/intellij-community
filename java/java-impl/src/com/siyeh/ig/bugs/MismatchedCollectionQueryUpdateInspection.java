@@ -659,6 +659,8 @@ public final class MismatchedCollectionQueryUpdateInspection extends BaseInspect
     PsiElement parent = effectiveReference.getParent();
     Set<PsiReferenceExpression> ignored = new HashSet<>();
     if (parent instanceof PsiAssignmentExpression assignmentExpression) {
+      // Do not process when the result of assignment is used: rare case
+      if (!ExpressionUtils.isVoidContext(assignmentExpression)) return false;
       if(assignmentExpression.getLExpression() instanceof PsiReferenceExpression referenceExpression){
         ignored.add(referenceExpression);
         parent = referenceExpression.resolve();

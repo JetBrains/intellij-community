@@ -185,64 +185,63 @@ class MissingIteratorRemoveAnalysis {
       System.out.println(string);
     }
   }
+
+    void testMustHave1(Stream<String> stream) {
+        List<String> list1;
+        list1 = stream.<warning descr="'collect(toList())' can be replaced with 'toList()'">collect(Collectors.toList())</warning>;
+        list1.forEach(System.out::println);
+    }
+
+    void testMustHave2(Stream<String> stream) {
+        List<String> list1;
+        list1 = stream.collect(Collectors.toList());
+        list1.add("foo");
+    }
+
+    void test1(Stream<String> stream) {
+        List<String> list1;
+        List<String> list2;
+        // Theoretically could be supported but for now we ignore cases when assignment result is used
+        list1 = ((list2 = ((stream.collect(Collectors.toList())))));
+        list1.forEach(System.out::println);
+        list2.forEach(System.out::println);
+    }
+
+    void test2(Stream<String> stream) {
+        List<String> w1;
+        List<String> w2;
+        w1 = ((w2 = ((stream.collect(Collectors.toList())))));
+        w1.add("foo");
+    }
+
+    void test3(Stream<String> stream) {
+        List<String> w1;
+        List<String> w2;
+        w1 = ((w2 = ((stream.collect(Collectors.toList())))));
+        w2.add("foo");
+    }
+
+    void test4(Stream<String> stream) {
+        List<String> list1;
+        list1 = stream.collect(Collectors.toList());
+        list1.add("foo");
+    }
+
+    void test5(Stream<String> stream) {
+        List<String> subList = stream.collect(Collectors.toList()).subList(0, 3);
+        subList.add("foo");
+    }
+
+    void test6(Stream<String> stream) {
+        List<String> subList = stream.<warning descr="'collect(toList())' can be replaced with 'toList()'">collect(Collectors.toList())</warning>.subList(0, 3);
+        subList.forEach(System.out::println);
+    }
+
+    // TODO
+    void test7(Stream<String> stream) {
+        List<String> list = stream.collect(Collectors.toList());
+        list.forEach(System.out::println);
+        list = new ArrayList<>();
+        list.add("foo");
+    }
 }
-
-//class TODO() {
-//
-//    void testMustHave1(Stream<String> stream) {
-//        List<String> list1;
-//        list1 = stream.collect(Collectors.toList());
-//        list1.forEach(System.out::println);
-//    }
-//
-//    void testMustHave2(Stream<String> stream) {
-//        List<String> list1;
-//        list1 = stream.collect(Collectors.toList());
-//        list1.add("foo");
-//    }
-//
-//    void test1(Stream<String> stream) {
-//        List<String> list1;
-//        List<String> list2;
-//        list1 = ((list2 = ((stream.collect(Collectors.toList())))));
-//        list1.forEach(System.out::println);
-//        list2.forEach(System.out::println);
-//    }
-//
-//    void test2(Stream<String> stream) {
-//        List<String> list1;
-//        List<String> list2;
-//        list1 = ((list2 = ((stream.collect(Collectors.toList())))));
-//        list1.add("foo");
-//    }
-//
-//    void test3(Stream<String> stream) {
-//        List<String> list1;
-//        List<String> list2;
-//        list1 = ((list2 = ((stream.collect(Collectors.toList())))));
-//        list2.add("foo");
-//    }
-//
-//    void test4(Stream<String> stream) {
-//        List<String> list1;
-//        list1 = stream.collect(Collectors.toList());
-//        list1.add("foo");
-//    }
-//
-//    void test5(Stream<String> stream) {
-//        List<String> subList = stream.collect(Collectors.toList()).subList(0, 3);
-//        subList.add("foo");
-//    }
-//
-//    void test6(Stream<String> stream) {
-//        List<String> subList = stream.collect(Collectors.toList()).subList(0, 3);
-//        subList.forEach(System.out::println);
-//    }
-
-//    void test7(Stream<String> stream) {
-//        List<String> list = stream.collect(Collectors.toList());
-//        list.forEach(System.out::println);
-//        list = new ArrayList<>();
-//        list.add("foo");
-//    }
-//}
