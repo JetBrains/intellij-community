@@ -2,6 +2,7 @@
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.rename.RenameJavaMemberProcessor;
@@ -18,7 +19,7 @@ class JavaResolveSnapshot extends ResolveSnapshotProvider.ResolveSnapshot {
 
   JavaResolveSnapshot(final PsiElement scope) {
     myProject = scope.getProject();
-    myDocument = PsiDocumentManager.getInstance(myProject).getDocument(scope.getContainingFile());
+    myDocument = FileDocumentManager.getInstance().getDocument(scope.getContainingFile().getViewProvider().getVirtualFile(), myProject);
     final SmartPointerManager pointerManager = SmartPointerManager.getInstance(myProject);
     final Map<PsiElement, SmartPsiElementPointer<?>> pointers = new HashMap<>();
     scope.accept(new JavaRecursiveElementWalkingVisitor() {
