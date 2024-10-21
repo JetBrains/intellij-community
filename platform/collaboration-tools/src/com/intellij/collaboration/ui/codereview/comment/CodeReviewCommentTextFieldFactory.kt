@@ -23,7 +23,6 @@ import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
@@ -38,7 +37,6 @@ object CodeReviewCommentTextFieldFactory {
     icon: CommentTextFieldFactory.IconConfig? = null,
   ): JComponent = createIn(cs, vm, actions, icon) {}
 
-  @ApiStatus.Internal
   fun createIn(
     cs: CoroutineScope, vm: CodeReviewSubmittableTextViewModel,
     actions: CommentInputActionsComponentFactory.Config,
