@@ -3,9 +3,11 @@
 
 package com.intellij.openapi.vcs.changes
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeEvent
@@ -29,13 +31,17 @@ import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.vcsUtil.VcsUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CancellationException
 
 private val LOG = logger<VcsDirtyScopeManagerImpl>()
 
 @ApiStatus.Internal
-class VcsDirtyScopeManagerImpl(private val project: Project) : VcsDirtyScopeManager(), Disposable {
+class VcsDirtyScopeManagerImpl(private val project: Project, coroutineScope: CoroutineScope) : VcsDirtyScopeManager() {
   private var dirtBuilder = DirtBuilder()
   private var dirtInProgress: DirtBuilder? = null
   private var refreshInProgress: ActionCallback? = null
@@ -44,7 +50,16 @@ class VcsDirtyScopeManagerImpl(private val project: Project) : VcsDirtyScopeMana
   private val LOCK = Any()
 
   init {
-    val busConnection = project.getMessageBus().connect()
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      synchronized(LOCK) {
+        isReady = false
+        dirtBuilder = DirtBuilder()
+        dirtInProgress = null
+        refreshInProgress = null
+      }
+    }
+
+    val busConnection = project.getMessageBus().connect(coroutineScope)
     busConnection.subscribe(FileTypeManager.TOPIC, object : FileTypeListener {
       override fun fileTypesChanged(event: FileTypeEvent) {
         // Listen changes in 'FileTypeManager.getIgnoredFilesList':
@@ -55,7 +70,9 @@ class VcsDirtyScopeManagerImpl(private val project: Project) : VcsDirtyScopeMana
 
         val isGenericEvent = event.addedFileType == null && event.removedFileType == null
         if (isGenericEvent) {
-          ApplicationManager.getApplication().invokeLater({ markEverythingDirty() }, ModalityState.nonModal(), project.getDisposed())
+          coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+            markEverythingDirty()
+          }
         }
       }
     })
@@ -64,7 +81,9 @@ class VcsDirtyScopeManagerImpl(private val project: Project) : VcsDirtyScopeMana
       busConnection.subscribe<ModuleRootListener>(ModuleRootListener.TOPIC, object : ModuleRootListener {
         override fun rootsChanged(event: ModuleRootEvent) {
           // 'ProjectLevelVcsManager.getVcsFor' depends on excluded roots via 'ProjectLevelVcsManager.isIgnored'
-          ApplicationManager.getApplication().invokeLater({ markEverythingDirty() }, ModalityState.nonModal(), project.getDisposed())
+          coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+            markEverythingDirty()
+          }
         }
       })
       //busConnection.subscribe(AdditionalLibraryRootsListener.TOPIC, ((presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> {
@@ -75,9 +94,7 @@ class VcsDirtyScopeManagerImpl(private val project: Project) : VcsDirtyScopeMana
 
   companion object {
     @JvmStatic
-    fun getInstanceImpl(project: Project): VcsDirtyScopeManagerImpl {
-      return (getInstance(project) as VcsDirtyScopeManagerImpl)
-    }
+    fun getInstanceImpl(project: Project): VcsDirtyScopeManagerImpl = (getInstance(project) as VcsDirtyScopeManagerImpl)
 
     @JvmStatic
     fun getDirtyScopeHashingStrategy(vcs: AbstractVcs): HashingStrategy<FilePath>? {
@@ -85,15 +102,12 @@ class VcsDirtyScopeManagerImpl(private val project: Project) : VcsDirtyScopeMana
     }
   }
 
-  private fun startListenForChanges() {
+  private fun startListenForChanges(): Boolean {
     val ready = !project.isDisposed() && project.isOpen()
     synchronized(LOCK) {
       isReady = ready
     }
-    if (ready) {
-      project.getService<VcsDirtyScopeVfsListener?>(VcsDirtyScopeVfsListener::class.java)
-      markEverythingDirty()
-    }
+    return ready
   }
 
   override fun markEverythingDirty() {
@@ -101,9 +115,7 @@ class VcsDirtyScopeManagerImpl(private val project: Project) : VcsDirtyScopeMana
       return
     }
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("everything dirty: " + findFirstInterestingCallerClass())
-    }
+    LOG.debug { "everything dirty: ${findFirstInterestingCallerClass()}" }
 
     val wasReady: Boolean
     val ongoingRefresh: ActionCallback?
@@ -118,15 +130,6 @@ class VcsDirtyScopeManagerImpl(private val project: Project) : VcsDirtyScopeMana
     if (wasReady) {
       ChangeListManagerImpl.getInstanceImpl(project).scheduleUpdateImpl()
       ongoingRefresh?.setRejected()
-    }
-  }
-
-  override fun dispose() {
-    synchronized(LOCK) {
-      isReady = false
-      dirtBuilder = DirtBuilder()
-      dirtInProgress = null
-      refreshInProgress = null
     }
   }
 
@@ -157,7 +160,7 @@ class VcsDirtyScopeManagerImpl(private val project: Project) : VcsDirtyScopeMana
     return groupByVcs(from.asSequence().map { VcsUtil.getFilePath(it) })
   }
 
-  fun fileVcsPathsDirty(
+  internal fun fileVcsPathsDirty(
     filesConverted: Map<VcsRoot, Set<FilePath>>,
     dirsConverted: Map<VcsRoot, Set<FilePath>>
   ) {
@@ -260,26 +263,32 @@ class VcsDirtyScopeManagerImpl(private val project: Project) : VcsDirtyScopeMana
     return VcsInvalidated(scopes = dirt.buildScopes(project), isEverythingDirty = dirt.isEverythingDirty, callback = callback)
   }
 
-  override fun whatFilesDirty(files: MutableCollection<out FilePath>): Collection<FilePath> {
+  override fun whatFilesDirty(files: Collection<FilePath>): Collection<FilePath> {
     return ApplicationManager.getApplication().runReadAction(ThrowableComputable {
-      val result = ArrayList<FilePath>()
       synchronized(LOCK) {
         if (!isReady) {
           return@ThrowableComputable emptyList()
         }
+
+        val result = ArrayList<FilePath>()
         for (fp in files) {
           if (dirtBuilder.isFileDirty(fp) || dirtInProgress != null && dirtInProgress!!.isFileDirty(fp)) {
             result.add(fp)
           }
         }
+        result
       }
-      result
     })
   }
 
   internal class MyStartupActivity : VcsStartupActivity {
     override suspend fun execute(project: Project) {
-      getInstanceImpl(project).startListenForChanges()
+      val dirtyScopeManager = project.serviceAsync<VcsDirtyScopeManager>() as VcsDirtyScopeManagerImpl
+      val ready = dirtyScopeManager.startListenForChanges()
+      if (ready) {
+        project.serviceAsync<VcsDirtyScopeVfsListener>()
+        dirtyScopeManager.markEverythingDirty()
+      }
     }
 
     override val order: Int
