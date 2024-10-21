@@ -508,7 +508,11 @@ public final class PythonSdkUpdater {
   }
 
   private static @NotNull List<VirtualFile> getBundledStubs() {
-    VirtualFile bundledStubRoot = StandardFileSystems.local().findFileByPath(PythonHelpersLocator.findPathStringInHelpers("bundled_stubs"));
+    var helpersPath = PythonHelpersLocator.findPathStringInHelpers("bundled_stubs");
+    if (helpersPath.isEmpty()) {
+      return Collections.emptyList();
+    }
+    VirtualFile bundledStubRoot = StandardFileSystems.local().findFileByPath(helpersPath);
     if (bundledStubRoot == null) return Collections.emptyList();
     return List.of(bundledStubRoot);
   }
