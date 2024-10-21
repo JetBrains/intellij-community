@@ -14,7 +14,7 @@ import java.util.function.BiConsumer;
  * Concurrent strong key:K -> weak value:V map
  * Null keys are NOT allowed
  * Null values are NOT allowed
- * Use {@link ContainerUtil#createConcurrentWeakValueMap()} to create this
+ * Use {@link ContainerUtil#createConcurrentWeakValueMap()} to create
  */
 final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,V> {
 

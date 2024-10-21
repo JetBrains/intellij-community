@@ -10,6 +10,7 @@ import java.lang.ref.WeakReference;
  * Concurrent weak key:K -> strong value:V map.
  * Null keys are NOT allowed
  * Null values are NOT allowed
+ * To create, use {@link CollectionFactory#createConcurrentWeakMap}
  */
 final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
   ConcurrentWeakHashMap(float loadFactor) {
