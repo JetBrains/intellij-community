@@ -18921,11 +18921,11 @@ c:com.intellij.unscramble.AnalyzeStacktraceAction
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.unscramble.AnalyzeStacktraceUtil
 - sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
-- s:addConsole(com.intellij.openapi.project.Project,com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory,java.lang.String,java.lang.String):V
-- s:addConsole(com.intellij.openapi.project.Project,com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory,java.lang.String,java.lang.String,javax.swing.Icon):com.intellij.execution.ui.RunContentDescriptor
-- s:addConsole(com.intellij.openapi.project.Project,com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Boolean):com.intellij.execution.ui.RunContentDescriptor
-- s:createEditorPanel(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):com.intellij.unscramble.AnalyzeStacktraceUtil$StacktraceEditorPanel
-- s:printStacktrace(com.intellij.execution.ui.ConsoleView,java.lang.String):V
+- sf:addConsole(com.intellij.openapi.project.Project,com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory,java.lang.String,java.lang.String):V
+- sf:addConsole(com.intellij.openapi.project.Project,com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory,java.lang.String,java.lang.String,javax.swing.Icon):com.intellij.execution.ui.RunContentDescriptor
+- sf:addConsole(com.intellij.openapi.project.Project,com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory,java.lang.String,java.lang.String,javax.swing.Icon,Z):com.intellij.execution.ui.RunContentDescriptor
+- sf:createEditorPanel(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):com.intellij.unscramble.AnalyzeStacktraceUtil$StacktraceEditorPanel
+- sf:printStacktrace(com.intellij.execution.ui.ConsoleView,java.lang.String):V
 com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory
 - a:createConsoleComponent(com.intellij.execution.ui.ConsoleView,com.intellij.openapi.actionSystem.DefaultActionGroup):javax.swing.JComponent
 f:com.intellij.unscramble.AnalyzeStacktraceUtil$StacktraceEditorPanel
@@ -18934,11 +18934,11 @@ f:com.intellij.unscramble.AnalyzeStacktraceUtil$StacktraceEditorPanel
 - com.intellij.openapi.actionSystem.UiDataProvider
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):V
 - dispose():V
-- getEditor():com.intellij.openapi.editor.Editor
-- getEditorComponent():javax.swing.JComponent
-- getText():java.lang.String
-- pasteTextFromClipboard():V
-- setText(java.lang.String):V
+- f:getEditor():com.intellij.openapi.editor.Editor
+- f:getEditorComponent():javax.swing.JComponent
+- f:getText():java.lang.String
+- f:pasteTextFromClipboard():V
+- f:setText(java.lang.String):V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.usageView.impl.UsageViewContentManagerImpl
 - com.intellij.usageView.UsageViewContentManager
