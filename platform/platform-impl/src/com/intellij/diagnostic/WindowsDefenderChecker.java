@@ -60,10 +60,10 @@ public class WindowsDefenderChecker {
     return ApplicationManager.getApplication().getService(WindowsDefenderChecker.class);
   }
 
-  public final boolean isStatusCheckIgnored(@NotNull Project project) {
+  public final boolean isStatusCheckIgnored(@Nullable Project project) {
     return !Registry.is("ide.check.windows.defender.rules") ||
            PropertiesComponent.getInstance().isTrueValue(IGNORE_STATUS_CHECK) ||
-           PropertiesComponent.getInstance(project).isTrueValue(IGNORE_STATUS_CHECK);
+           (project != null && PropertiesComponent.getInstance(project).isTrueValue(IGNORE_STATUS_CHECK));
   }
 
   public final void ignoreStatusCheck(@Nullable Project project, boolean ignore) {
