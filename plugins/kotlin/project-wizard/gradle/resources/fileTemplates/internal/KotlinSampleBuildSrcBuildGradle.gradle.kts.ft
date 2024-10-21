@@ -10,6 +10,6 @@ kotlin {
 }
 
 dependencies {
-    // add a dependency on Kotlin Gradle Plugin, so that convention plugins can apply KGP.
+    // Add a dependency on Kotlin Gradle Plugin, so that convention plugins can apply KGP.
     implementation(libs.kotlinGradlePlugin)
 }
