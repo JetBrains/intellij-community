@@ -398,9 +398,19 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * It is called on the UI thread with all data in the provided {@link DataContext} instance.
    * <p>
    * The data context of {@link AnActionEvent#getData(DataKey)} MAY occasionally NOT HAVE the necessary data.
-   * The implementors shoud not assume that {@link #update(AnActionEvent)} or {@link #beforeActionPerformedUpdate(AnActionEvent)} have been called before,
+   * <p>
+   * The implementors should not assume that {@link #update(AnActionEvent)}
+   * or {@link #beforeActionPerformedUpdate(AnActionEvent)} have been called before,
    * and MUST to re-check that context is suitable, and do nothing if it is not.
+   * <p>
+   * The method must not be called directly.
+   * Use {@link com.intellij.openapi.actionSystem.ex.ActionUtil#performActionDumbAwareWithCallbacks} or
+   * (when delegating) {@link ActionWrapperUtil#actionPerformed}
+   *
+   * @see com.intellij.openapi.actionSystem.ex.ActionUtil#performActionDumbAwareWithCallbacks
+   * @see ActionWrapperUtil#actionPerformed
    */
+  @ApiStatus.OverrideOnly
   public abstract void actionPerformed(@NotNull AnActionEvent e);
 
   @ApiStatus.Internal
