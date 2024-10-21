@@ -681,6 +681,15 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         }
 
         /**
+         * Returns if there is a Kotlin Gradle Plugin version defined in the Gradle version catalog.
+         */
+        fun hasVersionCatalogVersion(module: Module): Boolean {
+            val gradleFolder = module.getBuildScriptSettingsPsiFile()?.parent?.findSubdirectory("gradle") ?: return false
+            val tomlFile = gradleFolder.findFile("libs.versions.toml") ?: return false
+            return tomlFile.text.contains("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        }
+
+        /**
          * Returns the defined Kotlin version in the pluginManagement block in the settings.gradle file for the [module].
          * Returns null if the version is not defined in the settings.gradle file.
          * Returns a non-null value, but null version inside the object, if the version was defined but could not be parsed.
