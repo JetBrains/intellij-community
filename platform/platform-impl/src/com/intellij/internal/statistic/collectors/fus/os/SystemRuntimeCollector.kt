@@ -23,6 +23,7 @@ import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
 import com.intellij.util.ui.UIUtil
 import com.sun.management.OperatingSystemMXBean
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
