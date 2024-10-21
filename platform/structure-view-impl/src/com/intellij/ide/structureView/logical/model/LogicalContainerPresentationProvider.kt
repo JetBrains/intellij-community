@@ -23,7 +23,7 @@ abstract class LogicalContainerPresentationProvider<T: ContainerElementsProvider
   /**
    * If true, then elements will be shown not grouped but right under the parent model node
    */
-  open fun isFlatElements(): Boolean = false
+  open fun isFlatElements(t: Any?): Boolean = false
 
   /**
    * Allows to customise representation for the group's node

@@ -117,7 +117,7 @@ private class ElementsBuilder {
         }
       }
       else if (groupingObject is ContainerElementsProvider<*, *>
-               && LogicalContainerPresentationProvider.getForObject(groupingObject)?.isFlatElements() == true) {
+               && LogicalContainerPresentationProvider.getForObject(groupingObject)?.isFlatElements(assembledModel.model) == true) {
         for (child in childrenProvider()) {
           result.add(createViewTreeElement(child))
         }
