@@ -42,5 +42,6 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.internal" />
+    <orderEntry type="library" name="jna" level="project" />
   </component>
 </module>
