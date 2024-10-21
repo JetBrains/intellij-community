@@ -21,7 +21,8 @@ object FreezeAnalyzer {
     when {
       !edt.isWaiting && !edt.isSleeping -> findFirstRelevantMethod(edt.stackTrace)?.let { FreezeAnalysisResult("EDT is busy with $it", listOf(edt)) }
       edt.isWaiting && isWriteLockWait(edt) -> findThreadThatTookReadWriteLock(threadDumpParsed)?.let { FreezeAnalysisResult(it.message, it.threads + listOf(edt), it.additionalMessage) }
-      edt.isWaiting && !isEDTFreezed(edt) -> FreezeAnalysisResult("${testName ?: ""}: EDT is not blocked/busy (freeze can be the result of extensive GC)", listOf(edt))
+      edt.isWaiting && !isEDTFreezed(edt) && testName == null -> null
+      edt.isWaiting && !isEDTFreezed(edt) && testName != null -> FreezeAnalysisResult("${testName}: EDT is not blocked/busy (freeze can be the result of extensive GC)", listOf(edt))
       edt.isWaiting -> analyzeLock(edt, threadDumpParsed)
       else -> null
     }

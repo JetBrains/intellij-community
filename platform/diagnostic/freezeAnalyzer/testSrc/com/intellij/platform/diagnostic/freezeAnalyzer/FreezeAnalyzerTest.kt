@@ -120,4 +120,10 @@ class FreezeAnalyzerTest {
     val threadDump = File(this::class.java.classLoader.getResource("freezes/noFreeze/lowMemory.txt")!!.path).toPath().readText().replace("2.", ".")
     FreezeAnalyzer.analyzeFreeze(threadDump, testName = "kotlin/testCase")?.message.shouldBe("kotlin/testCase: EDT is not blocked/busy (freeze can be the result of extensive GC)")
   }
+
+  @Test
+  fun testNoFreezeOutsideOfTest() {
+    val threadDump = File(this::class.java.classLoader.getResource("freezes/noFreeze/lowMemory.txt")!!.path).toPath().readText().replace("2.", ".")
+    FreezeAnalyzer.analyzeFreeze(threadDump, testName = null)?.shouldBe(null)
+  }
 }
