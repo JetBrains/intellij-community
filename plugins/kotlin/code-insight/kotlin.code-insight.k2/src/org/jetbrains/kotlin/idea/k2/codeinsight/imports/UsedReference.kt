@@ -40,7 +40,7 @@ internal class UsedReference private constructor(val reference: KtReference) {
     }
 
     fun KaSession.resolveToImportableSymbols(): Collection<UsedSymbol> {
-        return reference.resolveToSymbols().mapNotNull { toImportableSymbol(it, reference) }.map { UsedSymbol(reference, it) }
+        return reference.resolveToSymbols().mapNotNull { adjustSymbolIfNeeded(it, reference) }.map { UsedSymbol(reference, it) }
     }
 
     companion object {
@@ -61,6 +61,8 @@ internal class UsedSymbol(val reference: KtReference, val symbol: KaSymbol) {
     }
 
     fun KaSession.isResolvedWithImport(): Boolean {
+        if (symbol is KaReceiverParameterSymbol) return false
+
         val isNotAliased = symbol.name in reference.resolvesByNames
 
         if (isNotAliased && isAccessibleAsMemberCallable(symbol, reference.element)) return false
@@ -126,13 +128,14 @@ private fun KaSession.isEmptyInvokeReference(reference: KtReference): Boolean {
     return !isImplicitInvoke
 }
 
-private fun KaSession.toImportableSymbol(
+/**
+ * Provides a better, more precise alternative to [target] symbol if necessary.
+ */
+private fun KaSession.adjustSymbolIfNeeded(
     target: KaSymbol,
     reference: KtReference,
     containingFile: KtFile = reference.element.containingKtFile,
 ): KaSymbol? = when {
-    target is KaReceiverParameterSymbol -> null
-
     reference.isImplicitReferenceToCompanion() -> {
         (target as? KaNamedClassSymbol)?.containingSymbol
     }
