@@ -5,7 +5,6 @@ import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -67,10 +66,8 @@ public final class GradleBuildSrcProjectsResolver {
     if (mainBuildEnvironment != null) {
       jvmOptions.addAll(mainBuildEnvironment.getJava().getJvmArguments());
     }
+
     GradleExecutionSettings mainBuildExecutionSettings = myResolverContext.getSettings();
-    if (mainBuildExecutionSettings != null) {
-      jvmOptions.addAll(mainBuildExecutionSettings.getJvmArguments());
-    }
 
     for (GradleLightBuild build : myResolverContext.getAllBuilds()) {
       String buildPath = FileUtil.toSystemIndependentName(build.getBuildIdentifier().getRootDir().getPath());
@@ -78,27 +75,10 @@ public final class GradleBuildSrcProjectsResolver {
       GradleExecutionSettings buildSrcProjectSettings;
       if (myGradleHome != null) {
         if (mainBuildExecutionSettings != null) {
-          buildSrcProjectSettings = new GradleExecutionSettings(
-            myGradleHome,
-            mainBuildExecutionSettings.getServiceDirectory(),
-            DistributionType.LOCAL,
-            mainBuildExecutionSettings.isOfflineWork()
-          );
-          buildSrcProjectSettings.setIdeProjectPath(mainBuildExecutionSettings.getIdeProjectPath());
-          buildSrcProjectSettings.setJavaHome(mainBuildExecutionSettings.getJavaHome());
-          buildSrcProjectSettings.setResolveModulePerSourceSet(mainBuildExecutionSettings.isResolveModulePerSourceSet());
-          buildSrcProjectSettings.setUseQualifiedModuleNames(mainBuildExecutionSettings.isUseQualifiedModuleNames());
-          buildSrcProjectSettings.setRemoteProcessIdleTtlInMs(mainBuildExecutionSettings.getRemoteProcessIdleTtlInMs());
-          buildSrcProjectSettings.setVerboseProcessing(mainBuildExecutionSettings.isVerboseProcessing());
-          buildSrcProjectSettings.setWrapperPropertyFile(mainBuildExecutionSettings.getWrapperPropertyFile());
-          buildSrcProjectSettings.setDownloadSources(mainBuildExecutionSettings.isDownloadSources());
-          buildSrcProjectSettings.setParallelModelFetch(mainBuildExecutionSettings.isParallelModelFetch());
-          buildSrcProjectSettings.setDelegatedBuild(mainBuildExecutionSettings.isDelegatedBuild());
-          buildSrcProjectSettings.withArguments(mainBuildExecutionSettings.getArguments());
-          buildSrcProjectSettings.withEnvironmentVariables(mainBuildExecutionSettings.getEnv());
-          buildSrcProjectSettings.passParentEnvs(mainBuildExecutionSettings.isPassParentEnvs());
+          buildSrcProjectSettings = new GradleExecutionSettings(mainBuildExecutionSettings);
+          buildSrcProjectSettings.setGradleHome(myGradleHome);
+          buildSrcProjectSettings.setDistributionType(DistributionType.LOCAL);
           buildSrcProjectSettings.withVmOptions(jvmOptions);
-          reuseTargetEnvironmentConfigurationProvider(buildSrcProjectSettings, mainBuildExecutionSettings);
         }
         else {
           buildSrcProjectSettings = new GradleExecutionSettings(myGradleHome, null, DistributionType.LOCAL, false);
@@ -164,12 +144,6 @@ public final class GradleBuildSrcProjectsResolver {
                        CompositeBuildData compositeBuildData,
                        MultiMap<Path, DataNode<BuildScriptClasspathData>> buildClasspathNodesMap,
                        Map<String, DataNode<ModuleData>> includedModulesPaths) {
-  }
-
-  private static void reuseTargetEnvironmentConfigurationProvider(@NotNull GradleExecutionSettings buildSrcProjectSettings,
-                                                                  @NotNull GradleExecutionSettings mainBuildExecutionSettings) {
-    var environmentConfigurationProvider = ExternalSystemExecutionAware.getEnvironmentConfigurationProvider(mainBuildExecutionSettings);
-    ExternalSystemExecutionAware.setEnvironmentConfigurationProvider(buildSrcProjectSettings, environmentConfigurationProvider);
   }
 
   private void includeRootBuildIncludedBuildsIfNeeded(@NotNull GradleExecutionSettings buildSrcProjectSettings,

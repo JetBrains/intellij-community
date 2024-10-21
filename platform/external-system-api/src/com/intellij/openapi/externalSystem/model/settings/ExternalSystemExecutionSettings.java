@@ -30,16 +30,32 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
   private final @NotNull List<String> myJvmArguments;
   private final @NotNull List<String> myArguments;
   private final @NotNull Map<String, String> myEnv;
-  private boolean myPassParentEnvs = true;
+  private boolean myPassParentEnvs;
 
-  @NotNull private final transient UserDataHolderBase myUserData = new UserDataHolderBase();
+  private final transient @NotNull UserDataHolderBase myUserData = new UserDataHolderBase();
 
   public ExternalSystemExecutionSettings() {
-    int ttl = SystemProperties.getIntProperty(REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, DEFAULT_REMOTE_PROCESS_TTL_MS);
-    setRemoteProcessIdleTtlInMs(ttl);
+    myRemoteProcessIdleTtlInMs = SystemProperties.getIntProperty(REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, DEFAULT_REMOTE_PROCESS_TTL_MS);
+
+    myVerboseProcessing = false;
+
     myJvmArguments = new ArrayList<>();
     myArguments = new ArrayList<>();
     myEnv = new LinkedHashMap<>();
+    myPassParentEnvs = true;
+  }
+
+  public ExternalSystemExecutionSettings(@NotNull ExternalSystemExecutionSettings settings) {
+    myRemoteProcessIdleTtlInMs = settings.myRemoteProcessIdleTtlInMs;
+
+    myVerboseProcessing = settings.myVerboseProcessing;
+
+    myJvmArguments = new ArrayList<>(settings.myJvmArguments);
+    myArguments = new ArrayList<>(settings.myArguments);
+    myEnv = new LinkedHashMap<>(settings.myEnv);
+    myPassParentEnvs = settings.myPassParentEnvs;
+
+    settings.myUserData.copyUserDataTo(myUserData);
   }
 
   /**

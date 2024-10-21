@@ -742,6 +742,7 @@ c:com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSett
 - sf:DEBUG_SERVER_PROCESS_KEY:com.intellij.openapi.util.Key
 - sf:REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY:java.lang.String
 - <init>():V
+- <init>(com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings):V
 - equals(java.lang.Object):Z
 - getArguments():java.util.List
 - getEnv():java.util.Map
