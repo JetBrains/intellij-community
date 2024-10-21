@@ -474,7 +474,15 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
                                                                              condition,
                                                                            this::createConditionCodeFragment));
         });
-        boolean evaluationResult = DebuggerUtilsEx.evaluateBoolean(evaluator, context);
+        boolean evaluationResult;
+        try {
+          if (Registry.is("debugger.retry.conditional.breakpoints", true)) {
+            context.setMayRetryEvaluation(true);
+          }
+          evaluationResult = DebuggerUtilsEx.evaluateBoolean(evaluator, context);
+        } finally {
+          context.setMayRetryEvaluation(false);
+        }
         JavaDebuggerEvaluatorStatisticsCollector.logEvaluationResult(myProject, evaluator, true, XEvaluationOrigin.BREAKPOINT_CONDITION);
         if (!evaluationResult) {
           return false;
