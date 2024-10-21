@@ -213,6 +213,10 @@ interface InlineCompletionEvent {
    *
    * @param event The lookup event associated with the cancellation.
    */
+  @Deprecated(
+    message = "This event is not supported in RemDev, so it's going to be removed or replaced.",
+    level = DeprecationLevel.WARNING
+  )
   class LookupCancelled @ApiStatus.Internal constructor(
     @ApiStatus.Experimental
     override val editor: Editor,
