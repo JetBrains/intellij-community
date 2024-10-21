@@ -142,6 +142,13 @@ private fun adjustClasspath(source: List<Path>): List<Path> {
     }
 }
 
+/**
+ * This workaround prevents Gradle sync from hanging up.
+ * Slow file read caused by a bug in p9rdr.sys (the plan 9 redirector driver), which handles the \wsl$<distro> file accesses.
+ * The bug causes a transaction to be left in a pending state forever resulting in the freeze for an enormous amount of time.
+ * This workaround is only applied on Windows with a project open from a WSL machine.
+ * The copy operation has no side effects from the bug in p9, and we can avoid the freeze.
+ */
 private fun moveJarFromWslToHost(source: Path, targetFolderPathResolver: Lazy<Path?>): Path {
     val targetFolderPath = targetFolderPathResolver.value ?: return source
     val fileNameWithExtension = PathUtil.getFileName(source.toCanonicalPath())
