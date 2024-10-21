@@ -51,5 +51,14 @@ internal fun Array<VirtualFile>.calculateEntriesVirtualFileSystems(): Set<NewVir
         val newVirtualFile = file as? NewVirtualFile ?: return null
         fileSystems.add(newVirtualFile.fileSystem)
     }
+    if (fileSystems.isEmpty()) {
+        // No roots case:
+        // When we get an event from the workspace model that library was changed, vfs might have no file on disc, yet
+        // at this point we might call current (`calculateEntriesVirtualFileSystems`) method and remember an empty set.
+        // Later, when we create the scope based on such LibraryInfo, the cached set would be used together with calls to lib#getFiles()
+        // which would return non-null values because changes were arrived to vfs.
+        // So the cache file systems would result in wrong `contains`
+        return null
+    }
     return fileSystems
 }
