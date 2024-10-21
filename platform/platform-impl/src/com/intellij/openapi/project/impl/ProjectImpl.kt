@@ -117,6 +117,11 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
   @JvmField
   val asyncPreloadServiceScope: CoroutineScope = getCoroutineScope().childScope(supervisor = false)
 
+  @Internal
+  @JvmField
+  val activityScope: CoroutineScope = getCoroutineScope()
+    .childScope(supervisor = false, name = "project activities")
+
   private val earlyDisposable = AtomicReference(Disposer.newDisposable())
 
   @Volatile
@@ -417,5 +422,6 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     super.stopServicePreloading()
 
     asyncPreloadServiceScope.cancel()
+    activityScope.cancel()
   }
 }

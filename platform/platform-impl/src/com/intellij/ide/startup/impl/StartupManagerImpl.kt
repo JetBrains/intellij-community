@@ -35,7 +35,8 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.platform.util.coroutines.attachAsChildTo
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import io.opentelemetry.api.common.AttributeKey
@@ -175,12 +176,12 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
       if (app.isDispatchThread) {
         // doesn't block project opening
         coroutineScope.launch {
-          runPostStartupActivities(async = true)
+          doRunPostStartupActivities()
         }
         waitAndProcessInvocationEventsInIdeEventQueue(this)
       }
       else {
-        runPostStartupActivities(async = true)
+        doRunPostStartupActivities()
       }
     }
     else {
@@ -192,7 +193,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
         }
 
         withContext(tracer.span("runPostStartupActivities")) {
-          runPostStartupActivities(async = true)
+          doRunPostStartupActivities()
         }
       }
     }
@@ -232,7 +233,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
   }
 
   // Must be executed in a pooled thread outside a project loading modal task. The only exclusion - test mode.
-  private suspend fun runPostStartupActivities(async: Boolean) {
+  private suspend fun doRunPostStartupActivities() {
     try {
       LOG.assertTrue(isInitProjectActivitiesPassed)
       val snapshot = PerformanceWatcher.takeSnapshot()
@@ -252,34 +253,28 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
         val pluginDescriptor = item.pluginDescriptor
 
         if (activity is ProjectActivity) {
-          if (async) {
-            val job = if (ApplicationManager.getApplication().isUnitTestMode) {
-              blockingContext {
-                // We propagate modality only in unit tests
-                // because in unit tests, activities are often started in a modal context (see TestProjectManager).
-                // Thus, any "invokeAndWait" will hang without modality propagation.
-                // In the future, we aim to avoid .joinAll in runPostStartupActivities altogether.
-                @Suppress("DEPRECATION")
-                val modalityContext = currentThreadContextModality()?.asContextElement() ?: EmptyCoroutineContext
-                launchActivity(
-                  activity = activity,
-                  project = project,
-                  pluginId = pluginDescriptor.pluginId,
-                  additionalContext = modalityContext,
-                )
-              }
-            }
-            else {
-              launchActivity(activity = activity, project = project, pluginId = pluginDescriptor.pluginId)
-            }
-            if (ApplicationManager.getApplication().isUnitTestMode) {
+          if (ApplicationManager.getApplication().isUnitTestMode) {
+            blockingContext {
+              // We propagate modality only in unit tests
+              // because in unit tests, activities are often started in a modal context (see TestProjectManager).
+              // Thus, any "invokeAndWait" will hang without modality propagation.
+              // In the future, we aim to avoid .joinAll in runPostStartupActivities altogether.
+              @Suppress("DEPRECATION")
+              val modalityContext = currentThreadContextModality()?.asContextElement() ?: EmptyCoroutineContext
+              val job = launchActivity(
+                activity = activity,
+                project = project,
+                pluginId = pluginDescriptor.pluginId,
+                additionalContext = modalityContext,
+              )
               runningProjectActivities.put(activity.javaClass, job)
               job.invokeOnCompletion { runningProjectActivities.remove(activity.javaClass) }
             }
           }
           else {
-            activity.execute(project)
+            launchActivity(activity = activity, project = project, pluginId = pluginDescriptor.pluginId)
           }
+
           continue
         }
 
@@ -461,11 +456,11 @@ private fun launchBackgroundPostStartupActivity(activity: Any, pluginId: PluginI
   }
 
   if (activity is ProjectActivity) {
-    launchActivity(activity = activity, project = project as ProjectImpl, pluginId = pluginId)
+    launchActivity(activity = activity, project = project, pluginId = pluginId)
     return
   }
 
-  ((project as ComponentManagerImpl).pluginCoroutineScope(activity.javaClass.classLoader)).launch {
+  createActivityScope(project, activity.javaClass).launch {
     try {
       blockingContext {
         @Suppress("UsagesOfObsoleteApi")
@@ -490,7 +485,7 @@ private fun launchActivity(
   pluginId: PluginId,
   additionalContext: CoroutineContext = EmptyCoroutineContext,
 ): Job {
-  return (project as ComponentManagerImpl).pluginCoroutineScope(activity.javaClass.classLoader).launch(
+  return createActivityScope(project, activity.javaClass).launch(
     additionalContext +
     tracer.rootSpan(name = "run activity", arrayOf("class", activity.javaClass.name, "plugin", pluginId.idString)),
   ) {
@@ -504,6 +499,12 @@ private fun launchActivity(
       LOG.error(PluginException(e, pluginId))
     }
   }
+}
+
+private fun createActivityScope(project: Project, aClass: Class<*>): CoroutineScope {
+  val scope = (project as ProjectImpl).activityScope.childScope(name = aClass.name, supervisor = false)
+  scope.attachAsChildTo(project.pluginCoroutineScope(aClass.classLoader))
+  return scope
 }
 
 // allow `invokeAndWait` inside startup activities
