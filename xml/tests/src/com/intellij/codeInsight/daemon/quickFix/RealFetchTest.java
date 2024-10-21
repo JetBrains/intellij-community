@@ -36,35 +36,35 @@ public class RealFetchTest extends BasePlatformTestCase {
   }
 
   public void testFetchDtd() throws Exception {
+    final String url = "http://java.sun.com/dtd/preferences.dtd";
+    assertEquals(url, ExternalResourceManager.getInstance().getResourceLocation(url, getProject()));
+    myFixture.configureByText(XmlFileType.INSTANCE, "<!DOCTYPE images SYSTEM \"http://java.sun.com/dtd/prefer<caret>ences.dtd\">");
+    invokeFetchIntention(url);
+    String location = ExternalResourceManager.getInstance().getResourceLocation(url, getProject());
+    assertNotSame(url, location);
+    assertTrue(location.endsWith("preferences.dtd")); // no ".xml" suffix added
+    ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().removeResource(url));
+  }
+
+  private void invokeFetchIntention(String url) throws Exception {
     TestLoggerKt.rethrowLoggedErrorsIn(() -> {
-      final String url = "http://java.sun.com/dtd/preferences.dtd";
-      assertEquals(url, ExternalResourceManager.getInstance().getResourceLocation(url, getProject()));
-      myFixture.configureByText(XmlFileType.INSTANCE, "<!DOCTYPE images SYSTEM \"http://java.sun.com/dtd/prefer<caret>ences.dtd\">");
-      invokeFetchIntention(url);
-      String location = ExternalResourceManager.getInstance().getResourceLocation(url, getProject());
-      assertNotSame(url, location);
-      assertTrue(location.endsWith("preferences.dtd")); // no ".xml" suffix added
-      ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().removeResource(url));
+      IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("xml.intention.fetch.name"));
+      assertNotNull(intention);
+      try {
+        intention.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
+      }
+      catch (Throwable e) {
+        Throwable cause = ExceptionUtil.getRootCause(e);
+        if (cause.getMessage().startsWith(XmlBundle.message("xml.intention.fetch.error.fetching.title")) ||
+            cause.getMessage().startsWith("Could not fetch")) {
+          ExternalResourcesChecker.reportUnavailability(url, cause);
+        }
+        throw new RuntimeException(e);
+      }
     });
   }
 
-  private void invokeFetchIntention(String url) {
-    IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("xml.intention.fetch.name"));
-    assertNotNull(intention);
-    try {
-      intention.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
-    }
-    catch (Throwable e) {
-      Throwable cause = ExceptionUtil.getRootCause(e);
-      if (cause.getMessage().startsWith(XmlBundle.message("xml.intention.fetch.error.fetching.title")) ||
-          cause.getMessage().startsWith("Could not fetch")) {
-        ExternalResourcesChecker.reportUnavailability(url, cause);
-      }
-      throw new RuntimeException(e);
-    }
-  }
-
-  public void testRelativePath() {
+  public void testRelativePath() throws Exception {
     final String url = "https://community.rti.com/schema/6.0.0/rti_dds_qos_profiles.xsd";
     assertEquals(url, ExternalResourceManager.getInstance().getResourceLocation(url, getProject()));
     myFixture.configureByText(XmlFileType.INSTANCE,
@@ -80,7 +80,7 @@ public class RealFetchTest extends BasePlatformTestCase {
     ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().removeResource(url));
   }
 
-  public void testNestedRelativePath() {
+  public void testNestedRelativePath() throws Exception {
     final String url = "https://community.rti.com/schema/6.0.0/rti_dds_profiles.xsd";
     assertEquals(url, ExternalResourceManager.getInstance().getResourceLocation(url, getProject()));
     myFixture.configureByText(XmlFileType.INSTANCE,
@@ -88,7 +88,7 @@ public class RealFetchTest extends BasePlatformTestCase {
                                 <?xml version="1.0" encoding="UTF-8" ?>
                                 <dds xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                                      xsi:noNamespaceSchemaLocation="https://community.rti.com/schema/6.0.0/rti_dd<caret>s_profiles.xsd">
-
+                                
                                   <types/>
                                   <domain_library name="xxx"/>
                                   <domain_participant_library name="ffff"/>
@@ -106,7 +106,7 @@ public class RealFetchTest extends BasePlatformTestCase {
     ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().removeResource(url));
   }
 
-  public void testAbsolutePath() {
+  public void testAbsolutePath() throws Exception {
     String url = "https://csrc.nist.gov/schema/xccdf/1.2/xc<caret>cdf_1.2.xsd";
     myFixture.configureByText(XmlFileType.INSTANCE,
                               """
@@ -120,21 +120,19 @@ public class RealFetchTest extends BasePlatformTestCase {
   }
 
   public void testOverwriteFetchDtd() throws Exception {
-    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
-      final String url = "http://java.sun.com/dtd/preferences.dtd";
-      VirtualFile virtualFile = myFixture.getTempDirFixture().createFile("images.dtd", "");
-      ExternalResourceManagerExImpl.registerResourceTemporarily(url, virtualFile.getPath(), getTestRootDisposable());
+    final String url = "http://java.sun.com/dtd/preferences.dtd";
+    VirtualFile virtualFile = myFixture.getTempDirFixture().createFile("images.dtd", "");
+    ExternalResourceManagerExImpl.registerResourceTemporarily(url, virtualFile.getPath(), getTestRootDisposable());
 
-      myFixture.enableInspections(new XmlUnresolvedReferenceInspection());
-      myFixture.configureByText(XmlFileType.INSTANCE, """
-        <!DOCTYPE preferences SYSTEM "<error descr="Resource registered by this uri is not recognized (Settings | Languages & Frameworks | Schemas and DTDs)">http://java.sun.com/dtd/prefe<caret>rences.dtd</error>"><preferences>
-          <root type="system"><map/></root>
-        </preferences>""");
-      myFixture.testHighlighting();
-      invokeFetchIntention(url);
-      List<HighlightInfo> infos = myFixture.doHighlighting();
-      assertEmpty(infos);
-      ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().removeResource(url));
-    });
+    myFixture.enableInspections(new XmlUnresolvedReferenceInspection());
+    myFixture.configureByText(XmlFileType.INSTANCE, """
+      <!DOCTYPE preferences SYSTEM "<error descr="Resource registered by this uri is not recognized (Settings | Languages & Frameworks | Schemas and DTDs)">http://java.sun.com/dtd/prefe<caret>rences.dtd</error>"><preferences>
+        <root type="system"><map/></root>
+      </preferences>""");
+    myFixture.testHighlighting();
+    invokeFetchIntention(url);
+    List<HighlightInfo> infos = myFixture.doHighlighting();
+    assertEmpty(infos);
+    ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().removeResource(url));
   }
 }
