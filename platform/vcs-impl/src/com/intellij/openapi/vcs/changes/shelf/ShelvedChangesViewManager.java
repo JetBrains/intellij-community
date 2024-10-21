@@ -49,10 +49,7 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
-import com.intellij.util.Consumer;
-import com.intellij.util.ModalityUiUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.PathUtil;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.DateFormatUtil;
@@ -112,16 +109,15 @@ public class ShelvedChangesViewManager implements Disposable {
   public static final DataKey<List<ShelvedChange>> SHELVED_CHANGE_KEY = DataKey.create("ShelveChangesManager.ShelvedChange");
   public static final DataKey<List<ShelvedBinaryFile>> SHELVED_BINARY_FILE_KEY = DataKey.create("ShelveChangesManager.ShelvedBinaryFile");
 
-  public static ShelvedChangesViewManager getInstance(Project project) {
+  public static ShelvedChangesViewManager getInstance(@NotNull Project project) {
     return project.getService(ShelvedChangesViewManager.class);
   }
 
-  public ShelvedChangesViewManager(Project project) {
+  ShelvedChangesViewManager(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
-    myUpdateQueue = new MergingUpdateQueue("Update Shelf Content", 200, true, null, myProject, null, true);
+    myUpdateQueue = new MergingUpdateQueue("Update Shelf Content", 200, true, null, myProject, null, Alarm.ThreadToUse.SWING_THREAD, coroutineScope);
 
-    MessageBusConnection connection = project.getMessageBus().connect(this);
-    connection.subscribe(ShelveChangesManager.SHELF_TOPIC, () -> scheduleTreeUpdate());
+    project.getMessageBus().connect(coroutineScope).subscribe(ShelveChangesManager.SHELF_TOPIC, () -> scheduleTreeUpdate());
   }
 
   private void scheduleTreeUpdate() {
@@ -1120,21 +1116,6 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public @Nullable Color getBackgroundColor(@NotNull Project project) {
       return getBackgroundColorFor(project, myFilePath);
-    }
-  }
-
-  static final class MyShelfManagerListener implements ShelveChangesManagerListener {
-    private final Project myProject;
-
-    public MyShelfManagerListener(@NotNull Project project) {
-      myProject = project;
-    }
-
-    @Override
-    public void shelvedListsChanged() {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        myProject.getMessageBus().syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged();
-      });
     }
   }
 }
