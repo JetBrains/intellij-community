@@ -256,8 +256,6 @@ private object RunInBackgroundWriteActionMarker
 fun CoroutineContext.isBackgroundWriteAction(): Boolean =
   currentThreadContext()[RunInBackgroundWriteActionMarker] != null
 
-private val useBackgroundWriteAction = System.getProperty("idea.background.write.action.enabled", "false").toBoolean()
-
 internal fun isBackgroundWriteActionPossible(contextModality: ModalityState?): Boolean {
   if (!useBackgroundWriteAction) {
     return false
