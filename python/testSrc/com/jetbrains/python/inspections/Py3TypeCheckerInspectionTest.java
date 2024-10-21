@@ -358,6 +358,46 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-36889
+  public void testInstanceAndClassAttributeAssignment() {
+    doTestByText("""
+                   from typing import ClassVar
+                   
+                   class ClassAnnotations:
+                       attr: int
+                       class_attr: ClassVar[int]
+                   
+                   ClassAnnotations().attr = <warning descr="Expected type 'int', got 'str' instead">"foo"</warning>
+                   ClassAnnotations.class_attr = <warning descr="Expected type 'int', got 'str' instead">"foo"</warning>
+                   
+                   class ClassAnnotationInstanceAssignment:
+                       attr: int
+                       def __init__(self, x):
+                           self.attr = x
+                   
+                   ClassAnnotationInstanceAssignment(42).attr = <warning descr="Expected type 'int', got 'str' instead">"foo"</warning>
+                   
+                   class InstanceAnnotationAndAssignment:
+                       def __init__(self):
+                           self.attr: int = 42
+                   
+                   InstanceAnnotationAndAssignment().attr = <warning descr="Expected type 'int', got 'str' instead">"foo"</warning>
+                   """);
+  }
+
+  // PY-36889
+  public void testDataclassInstanceAssignment() {
+    doTestByText("""
+                   from dataclasses import dataclass
+                   
+                   @dataclass
+                   class C:
+                       attr: int
+                   
+                   C().attr = <warning descr="Expected type 'int', got 'str' instead">"foo"</warning>
+                   """);
+  }
+
   // PY-24832
   public void testNoTypeMismatchInAssignmentWithoutTypeAnnotation() {
     doTest();
