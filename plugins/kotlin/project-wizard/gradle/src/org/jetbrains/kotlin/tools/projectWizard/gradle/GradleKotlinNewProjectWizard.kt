@@ -38,9 +38,9 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootMap
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.configuration.getGradleKotlinVersion
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
+import org.jetbrains.kotlin.idea.gradleJava.kotlinGradlePluginVersion
 import org.jetbrains.kotlin.tools.projectWizard.*
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard.Companion.DEFAULT_KOTLIN_VERSION
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.SRC_MAIN_KOTLIN_PATH
@@ -106,6 +106,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
         override var generateSingleModule by generateSingleModuleProperty
 
         private val gradleVersionSupportsConventionPlugins = propertyGraph.property(false)
+
         init {
             propertyGraph.dependsOn(gradleVersionSupportsConventionPlugins, gradleVersionProperty) {
                 val selectedGradleVersion = runCatching { GradleVersion.version(gradleVersion) }.getOrNull() ?: return@dependsOn false
@@ -294,6 +295,17 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             return KotlinWithGradleConfigurator.getPluginManagementVersion(parentModule)?.parsedVersion
         }
 
+        private fun hasVersionCatalogVersion(project: Project): Boolean {
+            if (isCreatingNewRootModule()) return false
+            val parentModule = project.findParentModule()?.baseModule ?: return false
+
+            return KotlinWithGradleConfigurator.hasVersionCatalogVersion(parentModule)
+        }
+
+        private fun hasBuildSrcFolder(project: Project): Boolean {
+            return project.modules.any { it.name.contains("buildSrc") }
+        }
+
         override fun setupProject(project: Project) {
             initializeProjectValues(project)
 
@@ -306,13 +318,19 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             moduleBuilder.setCreateEmptyContentRoots(false)
 
             val parentKotlinVersion = project.findParentModule()?.sourceRootModules?.firstNotNullOfOrNull {
-                it.getGradleKotlinVersion()
+                it.kotlinGradlePluginVersion?.versionString
             }
             val pluginManagementVersion = getPluginManagementKotlinVersion(project)
+            val hasVersionCatalogVersion = hasVersionCatalogVersion(project)
+            val hasBuildSrcFolder = hasBuildSrcFolder(project)
 
             setupBuilder(moduleBuilder)
             setupBuildScript(moduleBuilder) {
-                withKotlinJvmPlugin(kotlinVersionToUse.takeIf { pluginManagementVersion == null && parentKotlinVersion == null })
+                withKotlinJvmPlugin(kotlinVersionToUse.takeUnless {
+                    pluginManagementVersion != null || // uses the version from pluginManagement
+                            parentKotlinVersion != null || // uses the version from parent
+                            (hasVersionCatalogVersion && hasBuildSrcFolder) // uses the version from the version catalog
+                })
                 withKotlinTest()
 
                 selectedJdkJvmTarget?.takeIf { canUseFoojay }?.let {

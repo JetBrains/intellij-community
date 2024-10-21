@@ -4,6 +4,7 @@
     <plugin id="org.jetbrains.plugins.gradle"/>
     <module name="kotlin.project-wizard.idea"/>
     <module name="kotlin.gradle.code-insight-common"/>
+    <module name="kotlin.gradle.gradle-java"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
