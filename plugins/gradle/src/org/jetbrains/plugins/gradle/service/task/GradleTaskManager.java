@@ -333,16 +333,16 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   public static void appendInitScriptArgument(
     @NotNull List<String> taskNames,
     @Nullable String jvmParametersSetup,
-    @NotNull GradleExecutionSettings effectiveSettings
+    @NotNull GradleExecutionSettings settings
   ) {
-    appendInitScriptArgument(null, taskNames, jvmParametersSetup, effectiveSettings, null);
+    appendInitScriptArgument(null, taskNames, jvmParametersSetup, settings, null);
   }
 
   private static void appendInitScriptArgument(
     @Nullable Project project,
     @NotNull List<String> taskNames,
     @Nullable String jvmParametersSetup,
-    @NotNull GradleExecutionSettings effectiveSettings,
+    @NotNull GradleExecutionSettings settings,
     @Nullable GradleVersion gradleVersion
   ) {
     final List<String> initScripts = new ArrayList<>();
@@ -354,18 +354,18 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       Map<String, String> enhancementParameters = new HashMap<>();
       enhancementParameters.put(GradleProjectResolverExtension.JVM_PARAMETERS_SETUP_KEY, jvmParametersSetup);
 
-      var isRunAsTest = effectiveSettings.isRunAsTest();
+      var isRunAsTest = settings.isRunAsTest();
       enhancementParameters.put(GradleProjectResolverExtension.IS_RUN_AS_TEST_KEY, String.valueOf(isRunAsTest));
-      var isBuiltInTestEventsUsed = effectiveSettings.isBuiltInTestEventsUsed();
+      var isBuiltInTestEventsUsed = settings.isBuiltInTestEventsUsed();
       enhancementParameters.put(GradleProjectResolverExtension.IS_BUILT_IN_TEST_EVENTS_USED_KEY, String.valueOf(isBuiltInTestEventsUsed));
 
-      Integer debugDispatchPort = effectiveSettings.getUserData(DEBUGGER_DISPATCH_PORT_KEY);
+      Integer debugDispatchPort = settings.getUserData(DEBUGGER_DISPATCH_PORT_KEY);
       if (debugDispatchPort != null) {
         enhancementParameters.put(GradleProjectResolverExtension.DEBUG_DISPATCH_PORT_KEY, String.valueOf(debugDispatchPort));
-        String debugOptions = effectiveSettings.getUserData(DEBUGGER_PARAMETERS_KEY);
+        String debugOptions = settings.getUserData(DEBUGGER_PARAMETERS_KEY);
         enhancementParameters.put(GradleProjectResolverExtension.DEBUG_OPTIONS_KEY, debugOptions);
       }
-      String debugDispatchAddr = effectiveSettings.getUserData(DEBUGGER_DISPATCH_ADDR_KEY);
+      String debugDispatchAddr = settings.getUserData(DEBUGGER_DISPATCH_ADDR_KEY);
       if (debugDispatchAddr != null) {
         enhancementParameters.put(GradleProjectResolverExtension.DEBUG_DISPATCH_ADDR_KEY, debugDispatchAddr);
       }
@@ -387,26 +387,26 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     }
 
     if (!initScripts.isEmpty()) {
-      writeAndAppendScript(effectiveSettings, StringUtil.join(initScripts, System.lineSeparator()), "ijresolvers");
+      writeAndAppendScript(settings, StringUtil.join(initScripts, System.lineSeparator()), "ijresolvers");
     }
 
-    final String initScript = effectiveSettings.getUserData(INIT_SCRIPT_KEY);
+    final String initScript = settings.getUserData(INIT_SCRIPT_KEY);
     if (StringUtil.isNotEmpty(initScript)) {
-      writeAndAppendScript(effectiveSettings, initScript, notNullize(effectiveSettings.getUserData(INIT_SCRIPT_PREFIX_KEY), "ijmiscinit"));
+      writeAndAppendScript(settings, initScript, notNullize(settings.getUserData(INIT_SCRIPT_PREFIX_KEY), "ijmiscinit"));
     }
 
-    final Collection<VersionSpecificInitScript> scripts = effectiveSettings.getUserData(VERSION_SPECIFIC_SCRIPTS_KEY);
+    final Collection<VersionSpecificInitScript> scripts = settings.getUserData(VERSION_SPECIFIC_SCRIPTS_KEY);
     if (gradleVersion != null && scripts != null && !scripts.isEmpty()) {
         scripts.stream()
           .filter(script -> script.isApplicableTo(gradleVersion))
           .filter(script -> StringUtil.isNotEmpty(script.getScript()))
-          .forEach(script -> writeAndAppendScript(effectiveSettings, script.getScript(), notNullize(script.getFilePrefix(), "ijverspecinit")));
+          .forEach(script -> writeAndAppendScript(settings, script.getScript(), notNullize(script.getFilePrefix(), "ijverspecinit")));
     }
 
-    if (effectiveSettings.getArguments().contains(GradleConstants.INIT_SCRIPT_CMD_OPTION)) {
-      GradleInitScriptUtil.attachTargetPathMapperInitScript(effectiveSettings);
+    if (settings.getArguments().contains(GradleConstants.INIT_SCRIPT_CMD_OPTION)) {
+      GradleInitScriptUtil.attachTargetPathMapperInitScript(settings);
     }
-    effectiveSettings.withEnvironmentVariables(executionEnvironmentVariables);
+    settings.withEnvironmentVariables(executionEnvironmentVariables);
   }
 
   private static void writeAndAppendScript(@NotNull GradleExecutionSettings effectiveSettings,
