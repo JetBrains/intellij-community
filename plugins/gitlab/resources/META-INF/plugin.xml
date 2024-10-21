@@ -65,8 +65,10 @@
     <projectService serviceInterface="org.jetbrains.plugins.gitlab.GitLabProjectsManager"
                     serviceImplementation="org.jetbrains.plugins.gitlab.GitLabProjectsManagerImpl"/>
 
+    <!--suppress PluginXmlI18n - intentionally suppress the inspection to avoid translating `GitLab` technology name-->
     <projectConfigurable parentId="project.propVCSSupport.Mappings" groupWeight="-500"
-                         instance="org.jetbrains.plugins.gitlab.GitLabSettingsConfigurable"/>
+                         instance="org.jetbrains.plugins.gitlab.GitLabSettingsConfigurable"
+                         displayName="GitLab"/>
 
     <!--TODO: correct icon-->
     <toolWindow id="Merge Requests" icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabToolWindow"
