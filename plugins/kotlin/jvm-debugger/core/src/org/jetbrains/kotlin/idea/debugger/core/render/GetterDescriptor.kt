@@ -1,6 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-package org.jetbrains.kotlin.idea.debugger.core
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.debugger.core.render
 
 import com.intellij.debugger.DebuggerContext
 import com.intellij.debugger.engine.DebugProcessImpl
@@ -10,7 +9,6 @@ import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
 import com.intellij.debugger.ui.tree.DescriptorWithParentObject
 import com.intellij.debugger.ui.tree.render.NodeRenderer
 import com.intellij.debugger.ui.tree.render.OnDemandRenderer
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiExpression
 import com.intellij.ui.IconManager
@@ -20,6 +18,7 @@ import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Type
 import org.jetbrains.kotlin.idea.debugger.base.util.safeReturnType
+import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
 import java.util.concurrent.CompletableFuture
 
 class GetterDescriptor(
