@@ -35,7 +35,7 @@ class TypeMappingConversion(
                     JKNewExpression(
                         newClassSymbol,
                         element::arguments.detached(),
-                        element::typeArgumentList.detached().fixTypeArguments(newClassSymbol),
+                        element.fixTypeArguments(newClassSymbol),
                         element::classBody.detached(),
                         element.isAnonymousClass,
                         canMoveLambdaOutsideParentheses = element.canMoveLambdaOutsideParentheses
@@ -46,20 +46,35 @@ class TypeMappingConversion(
         return recurse(element)
     }
 
-    private fun JKTypeArgumentList.fixTypeArguments(classSymbol: JKClassSymbol): JKTypeArgumentList {
-        if (typeArguments.isNotEmpty()) {
-            return JKTypeArgumentList(
-                typeArguments.map { typeArgument ->
-                    JKTypeElement(typeArgument.type.mapType(null), typeArgument::annotationList.detached())
-                }
-            )
-        }
-        return when (val typeParametersCount = classSymbol.expectedTypeParametersCount()) {
-            0 -> this
-            else -> JKTypeArgumentList(List(typeParametersCount) {
+    private fun JKNewExpression.fixTypeArguments(classSymbol: JKClassSymbol): JKTypeArgumentList {
+        val typeArguments = this::typeArgumentList.detached()
+        val typeArgumentList = when {
+            typeArguments.typeArguments.isNotEmpty() -> typeArguments.typeArguments.map { typeArgument ->
+                JKTypeElement(typeArgument.type.mapType(null), typeArgument::annotationList.detached())
+            }
+
+            classSymbol.expectedTypeParametersCount() == 0 -> null
+            else -> List(classSymbol.expectedTypeParametersCount()) {
                 JKTypeElement(typeFactory.types.nullableAny)
-            })
+            }
+        } ?: return typeArguments
+
+        if (arguments.arguments.size != typeArgumentList.size) return JKTypeArgumentList(typeArgumentList)
+
+        val arrayTypes = listOf("java.util.ArrayList", "List", "HashMap", "demo.Collection")
+        val newTypeArgumentList = mutableListOf<JKTypeElement>()
+        typeArgumentList.forEachIndexed { index, jkTypeElement ->
+            val innerValueType = arguments.arguments[index].value.calculateType(typeFactory)
+            when {
+                jkTypeElement.type.fqName != "kotlin.Any" || innerValueType == null -> newTypeArgumentList.add(jkTypeElement)
+                innerValueType.fqName != "kotlin.Int" && !arrayTypes.contains(innerValueType.fqName) -> newTypeArgumentList.add(
+                    innerValueType.asTypeElement()
+                )
+
+                typeArgumentList.size != 1 -> newTypeArgumentList.add(jkTypeElement)
+            }
         }
+        return JKTypeArgumentList(newTypeArgumentList)
     }
 
     private fun JKType.fixRawType(typeElement: JKTypeElement?) =
