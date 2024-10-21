@@ -6,6 +6,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.descriptors.ModuleCapability
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.CommonizerNativeTargetsCompat.commonizerNativeTargetsCompat
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
 import org.jetbrains.kotlin.konan.properties.propertyList
 import org.jetbrains.kotlin.library.BaseKotlinLibrary
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.platform.konan.NativePlatforms.nativePlatformByTarge
 import org.jetbrains.kotlin.resolve.ImplicitIntegerCoercion
 import java.io.IOException
 
+@K1ModeProjectStructureApi
 class NativeKlibLibraryInfo internal constructor(project: Project, library: LibraryEx, libraryRoot: String) :
     AbstractKlibLibraryInfo(project, library, libraryRoot) {
     // If you're changing this, please take a look at ideaModelDependencies as well

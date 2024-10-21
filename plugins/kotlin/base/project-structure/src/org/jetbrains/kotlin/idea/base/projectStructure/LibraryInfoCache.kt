@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.isKlibLibraryRootForPlatform
 import org.jetbrains.kotlin.idea.base.platforms.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.platform.IdePlatformKind
@@ -40,6 +41,7 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.flattenTo
 
 @Service(Service.Level.PROJECT)
+@K1ModeProjectStructureApi
 class LibraryInfoCache(project: Project) : Disposable {
 
     private val libraryInfoCache = LibraryInfoInnerCache(project)

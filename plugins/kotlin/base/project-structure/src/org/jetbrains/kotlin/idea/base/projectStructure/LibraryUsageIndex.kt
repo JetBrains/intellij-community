@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 
 /**
  * For each [LibraryInfo], [LibraryUsageIndex] contains all [Module]s which depend on that library info. The index supports deduplicated
@@ -11,6 +12,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
  *
  * The resulting dependents are stable and do not depend on the state of [LibraryInfoCache], as they are computed from the project model.
  */
+@K1ModeProjectStructureApi
 interface LibraryUsageIndex {
     fun getDependentModules(libraryInfo: LibraryInfo): Sequence<Module>
     fun hasDependentModule(libraryInfo: LibraryInfo, module: Module): Boolean

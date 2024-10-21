@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderService
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.*
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
@@ -41,6 +42,7 @@ import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
  *
  * @see LibraryInfoCache
  */
+@K1ModeProjectStructureApi
 abstract class LibraryInfo internal constructor(
     override val project: Project,
     val library: LibraryEx,

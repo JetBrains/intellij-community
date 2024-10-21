@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptStdlibDetectorFa
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJvmStdlibDetectorFacility
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NativeKlibLibraryInfo
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 
 /**
  * Stores mappings from [LibraryInfo] to all its variants. "Library variant" here means an imported library
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NativeKlibLibr
  * Only Kotlin Multiplatform libraries imported through Gradle are supported
  */
 @Service(Service.Level.PROJECT)
+@K1ModeProjectStructureApi
 class LibraryInfoVariantsService(project: Project) : Disposable {
 
     private val storage = mutableMapOf<MavenGroupArtifactId, MutableSet<LibraryInfo>>()

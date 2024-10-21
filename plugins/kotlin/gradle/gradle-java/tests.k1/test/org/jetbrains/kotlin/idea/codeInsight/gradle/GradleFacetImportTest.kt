@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootMap
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
@@ -845,6 +846,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         }
     }
 
+    @OptIn(K1ModeProjectStructureApi::class)
     private fun checkStableModuleName(projectName: String, expectedName: String, platform: TargetPlatform, isProduction: Boolean) {
         runReadAction {
             val module = getModule(projectName)

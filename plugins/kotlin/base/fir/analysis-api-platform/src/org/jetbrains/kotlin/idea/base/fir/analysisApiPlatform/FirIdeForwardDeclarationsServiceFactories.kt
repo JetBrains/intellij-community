@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProvider
 import org.jetbrains.kotlin.analysis.api.platform.packages.createPackageProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.KtNativeKlibLibraryModuleByModuleInfo
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 
 /**
  * FIR IDE declaration provider factory implementation for Kotlin/Native forward declarations.
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.KtNativeKlibLibraryModule
  * @see [org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsFileGenerator]
  */
 internal class FirIdeForwardDeclarationProviderFactory : KotlinForwardDeclarationProviderFactory {
+    @OptIn(K1ModeProjectStructureApi::class)
     override fun createDeclarationProvider(module: KaModule): KotlinDeclarationProvider? {
         if (module !is KtNativeKlibLibraryModuleByModuleInfo) return null
 
@@ -33,6 +35,7 @@ internal class FirIdeForwardDeclarationProviderFactory : KotlinForwardDeclaratio
  * @see [org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsFileGenerator]
  */
 internal class FirIdeForwardDeclarationPackageProviderFactory : KotlinForwardDeclarationsPackageProviderFactory {
+    @OptIn(K1ModeProjectStructureApi::class)
     override fun createPackageProvider(module: KaModule): KotlinPackageProvider? {
         if (module !is KtNativeKlibLibraryModuleByModuleInfo) return null
 

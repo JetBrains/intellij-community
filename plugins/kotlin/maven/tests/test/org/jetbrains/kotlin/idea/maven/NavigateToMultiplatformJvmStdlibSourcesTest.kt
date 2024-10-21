@@ -8,6 +8,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndSeparatedMultiplatformJvmStdlibDescriptor
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
 
@@ -22,6 +23,7 @@ class NavigateToMultipartJvmStdlibSourcesTest : LightJavaCodeInsightFixtureTestC
     }
 
     // See KTIJ-23874
+    @OptIn(K1ModeProjectStructureApi::class)
     fun testNavigateToCorrectStdlibSourcesInMavenProject() {
         MavenProjectsManager.getInstance(myFixture.project).initForTests()
         val stdlibCommonElement = configureAndResolve("""

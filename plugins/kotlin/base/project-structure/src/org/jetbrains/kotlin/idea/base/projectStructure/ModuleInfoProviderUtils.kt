@@ -12,11 +12,14 @@ import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificatio
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider.Configuration
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.psi.KtFile
 
+@K1ModeProjectStructureApi
 val PsiElement.moduleInfo: IdeaModuleInfo
     get() = moduleInfoOrNull ?: NotUnderContentRootModuleInfo(project, containingFile as? KtFile)
 
+@K1ModeProjectStructureApi
 val PsiElement.moduleInfoOrNull: IdeaModuleInfo?
     get() {
         val anchorElement = ModuleInfoProvider.findAnchorElement(this)
@@ -39,20 +42,25 @@ private fun cachedModuleInfo(
     )
 }
 
+@K1ModeProjectStructureApi
 fun ModuleInfoProvider.firstOrNull(element: PsiElement, config: Configuration = Configuration.Default): IdeaModuleInfo? =
     collect(element, config).unwrap(ModuleInfoProvider.LOG::warn).firstOrNull()
 
+@K1ModeProjectStructureApi
 fun ModuleInfoProvider.firstOrNull(virtualFile: VirtualFile): IdeaModuleInfo? =
     collect(virtualFile).unwrap(ModuleInfoProvider.LOG::warn).firstOrNull()
 
+@K1ModeProjectStructureApi
 fun ModuleInfoProvider.collectLibraryBinariesModuleInfos(virtualFile: VirtualFile): Sequence<BinaryModuleInfo> {
     return collectOfType<BinaryModuleInfo>(virtualFile)
 }
 
+@K1ModeProjectStructureApi
 fun ModuleInfoProvider.collectLibrarySourcesModuleInfos(virtualFile: VirtualFile): Sequence<LibrarySourceInfo> {
     return collectOfType<LibrarySourceInfo>(virtualFile)
 }
 
+@K1ModeProjectStructureApi
 fun ModuleInfo.unwrapModuleSourceInfo(): ModuleSourceInfo? {
     return when (this) {
         is ModuleSourceInfo -> this

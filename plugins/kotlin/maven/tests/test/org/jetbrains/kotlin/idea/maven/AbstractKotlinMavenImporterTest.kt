@@ -44,6 +44,7 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAndGetResult
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
@@ -119,6 +120,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         }
     }
 
+    @OptIn(K1ModeProjectStructureApi::class)
     protected suspend fun checkStableModuleName(
         projectName: String,
         expectedName: String,

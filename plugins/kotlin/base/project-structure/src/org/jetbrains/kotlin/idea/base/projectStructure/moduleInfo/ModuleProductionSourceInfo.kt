@@ -10,8 +10,10 @@ import org.jetbrains.kotlin.idea.base.facet.stableName
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinResolveScopeEnlarger
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.ModuleSourcesScope
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.name.Name
 
+@K1ModeProjectStructureApi
 data class ModuleProductionSourceInfo internal constructor(
     override val module: Module
 ) : ModuleSourceInfoWithExpectedBy(forProduction = true) {

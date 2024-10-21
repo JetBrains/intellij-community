@@ -66,10 +66,12 @@ interface ProjectStructureInsightsProvider {
 }
 
 @ApiStatus.Internal
+@K1ModeProjectStructureApi
 fun IdeaModuleInfo.toKaModule(): KaModule = ProjectStructureProviderIdeImpl.getKtModuleByModuleInfo(this)
 
 @ApiStatus.Internal
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+@K1ModeProjectStructureApi
 inline fun <reified T : KaModule> IdeaModuleInfo.toKaModuleOfType(): @kotlin.internal.NoInfer T {
     return toKaModule() as T
 }

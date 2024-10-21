@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderS
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.caching.*
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.findSdkBridge
@@ -47,6 +48,7 @@ import org.jetbrains.kotlin.platform.isCommon
 import java.util.concurrent.ConcurrentHashMap
 
 /** null-platform means that we should get all modules */
+@K1ModeProjectStructureApi
 fun getModuleInfosFromIdeaModel(project: Project, platform: TargetPlatform? = null): List<IdeaModuleInfo> {
     return runReadAction {
         val ideaModelInfosCache = getIdeaModelInfosCache(project)
@@ -58,8 +60,10 @@ fun getModuleInfosFromIdeaModel(project: Project, platform: TargetPlatform? = nu
     }
 }
 
+@K1ModeProjectStructureApi
 fun getIdeaModelInfosCache(project: Project): IdeaModelInfosCache = project.service()
 
+@K1ModeProjectStructureApi
 interface IdeaModelInfosCache {
     fun forPlatform(platform: TargetPlatform): List<IdeaModuleInfo>
 
@@ -71,6 +75,7 @@ interface IdeaModelInfosCache {
 
 }
 
+@K1ModeProjectStructureApi
 class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelInfosCache, Disposable {
     private val moduleCache = ModuleCache()
     private val sdkCache = SdkCache()
@@ -358,6 +363,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
     override fun getSdkInfoForSdk(sdk: Sdk): SdkInfo = sdkCache[sdk]
 }
 
+@K1ModeProjectStructureApi
 private fun mergePlatformModules(
     allModules: List<ModuleSourceInfo>,
     platform: TargetPlatform

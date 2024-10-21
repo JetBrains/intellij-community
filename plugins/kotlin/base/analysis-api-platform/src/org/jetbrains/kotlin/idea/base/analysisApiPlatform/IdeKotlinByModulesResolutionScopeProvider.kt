@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.fileScope
 import org.jetbrains.kotlin.idea.base.util.minus
 
+@K1ModeProjectStructureApi
 internal class IdeKotlinByModulesResolutionScopeProvider(private val project: Project) : KotlinResolutionScopeProvider {
     override fun getResolutionScope(module: KaModule): GlobalSearchScope {
         val scope = when (module) {

@@ -43,16 +43,20 @@ import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 private annotation class ModuleInfoDsl
 
 @ModuleInfoDsl
+@K1ModeProjectStructureApi
 fun SeqScope<Result<IdeaModuleInfo>>.register(moduleInfo: IdeaModuleInfo) = yield { Result.success(moduleInfo) }
 
 @ModuleInfoDsl
+@K1ModeProjectStructureApi
 fun SeqScope<Result<IdeaModuleInfo>>.register(block: () -> IdeaModuleInfo?) = yield {
     block()?.let(Result.Companion::success)
 }
 
 @ModuleInfoDsl
+@K1ModeProjectStructureApi
 fun SeqScope<Result<IdeaModuleInfo>>.reportError(error: Throwable) = yield { Result.failure(error) }
 
+@K1ModeProjectStructureApi
 interface ModuleInfoProviderExtension {
     companion object {
         val EP_NAME: ExtensionPointName<ModuleInfoProviderExtension> =
@@ -71,6 +75,7 @@ interface ModuleInfoProviderExtension {
 }
 
 @Service(Service.Level.PROJECT)
+@K1ModeProjectStructureApi
 class ModuleInfoProvider(private val project: Project) {
     companion object {
         internal val LOG = Logger.getInstance(ModuleInfoProvider::class.java)
@@ -452,6 +457,7 @@ class ModuleInfoProvider(private val project: Project) {
     }
 }
 
+@K1ModeProjectStructureApi
 private sealed class UserDataModuleContainer {
     abstract val module: Module?
 
@@ -490,6 +496,7 @@ private sealed class UserDataModuleContainer {
 }
 
 @ApiStatus.Internal
+@K1ModeProjectStructureApi
 fun Sequence<Result<IdeaModuleInfo>>.unwrap(
     errorHandler: (String, Throwable) -> Unit,
     stopOnErrors: Boolean = true

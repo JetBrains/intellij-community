@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.base.facet.kotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService
@@ -64,6 +65,7 @@ fun PsiFile.getFqNameByDirectory(): FqName {
 fun PsiDirectory.getFqNameWithImplicitPrefix(): FqName? {
     val packageFqName = getNonRootFqNameOrNull() ?: return null
     sourceRoot?.takeIf { !it.hasExplicitPackagePrefix(project) }?.let { sourceRoot ->
+        @OptIn(K1ModeProjectStructureApi::class)
         val implicitPrefix = PerModulePackageCacheService.getInstance(project).getImplicitPackagePrefix(sourceRoot)
         return FqName.fromSegments((implicitPrefix.pathSegments() + packageFqName.pathSegments()).map { it.asString() })
     }

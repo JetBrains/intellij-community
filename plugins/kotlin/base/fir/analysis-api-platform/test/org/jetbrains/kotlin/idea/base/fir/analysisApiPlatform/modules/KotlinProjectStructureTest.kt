@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
@@ -353,6 +354,7 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         assertKaModuleType<KaSourceModule>("Test.kt")
     }
 
+    @OptIn(K1ModeProjectStructureApi::class)
     fun `test different jdks attached to project modules`() {
         val mockJdkA = IdeaTestUtil.getMockJdk17("module A JDK")
         val mockJdkB = IdeaTestUtil.getMockJdk17("module B JDK")

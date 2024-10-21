@@ -9,6 +9,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 
 /**
@@ -37,6 +38,7 @@ class ScriptDependenciesResolveScopeProvider : ResolveScopeProvider() {
             return null
         }
 
+        @OptIn(K1ModeProjectStructureApi::class)
         val scope = GlobalSearchScope.union(
             arrayOf(
                 GlobalSearchScope.fileScope(project, file),

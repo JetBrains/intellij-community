@@ -6,6 +6,7 @@ package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.asKotlinLogger
 import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.library.*
@@ -25,6 +26,7 @@ sealed class KlibCompatibilityInfo(val isCompatible: Boolean) {
     class IncompatibleMetadata(val isOlder: Boolean) : KlibCompatibilityInfo(false)
 }
 
+@K1ModeProjectStructureApi
 abstract class AbstractKlibLibraryInfo internal constructor(project: Project, library: LibraryEx, val libraryRoot: String) :
     LibraryInfo(project, library) {
     val resolvedKotlinLibrary: KotlinLibrary = resolveSingleFileKlib(

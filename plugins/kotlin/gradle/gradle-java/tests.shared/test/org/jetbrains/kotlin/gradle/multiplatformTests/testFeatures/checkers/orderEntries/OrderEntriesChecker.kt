@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 
 // Sorting is configured in TestConfiguration
 object OrderEntriesChecker : WorkspaceModelChecker<OrderEntriesChecksConfiguration>(respectOrder = true) {
@@ -50,6 +51,7 @@ object OrderEntriesChecker : WorkspaceModelChecker<OrderEntriesChecksConfigurati
         }
     }
 
+    @OptIn(K1ModeProjectStructureApi::class)
     override fun PrinterContext.buildReportDataForModule(module: Module): List<ModuleReportData> {
         val orderEntries = runReadAction { ModuleRootManager.getInstance(module).orderEntries }
         val filteredEntries = orderEntries.filterNot { shouldRemoveOrderEntry(it) }
@@ -157,6 +159,7 @@ object OrderEntriesChecker : WorkspaceModelChecker<OrderEntriesChecksConfigurati
             .replace(projectRoot.absolutePath, "{{PROJECT_ROOT}}")
             .removePrefix("Gradle: ")
 
+    @K1ModeProjectStructureApi
     private fun PrinterContext.getModuleInfos(orderEntry: OrderEntry): Set<IdeaModuleInfo> {
         when (orderEntry) {
             is ModuleOrderEntry -> return setOfNotNull(orderEntry.module?.toModuleInfo())
@@ -173,6 +176,7 @@ object OrderEntriesChecker : WorkspaceModelChecker<OrderEntriesChecksConfigurati
         }
     }
 
+    @K1ModeProjectStructureApi
     private fun Module.toModuleInfo(): IdeaModuleInfo? {
         val sourceModuleInfos = sourceModuleInfos
         check(sourceModuleInfos.size <= 1) {

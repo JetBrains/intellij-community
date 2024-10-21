@@ -13,10 +13,12 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.BinaryModuleIn
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.utils.SmartList
 
 @ApiStatus.Internal
+@OptIn(K1ModeProjectStructureApi::class)
 class FirLibrarySourceScopeService: LibrarySourceScopeService {
     override fun targetClassFilesToSourcesScopes(virtualFile: VirtualFile, project: Project): List<GlobalSearchScope> {
         val binaryModuleInfos = ModuleInfoProvider.getInstance(project)

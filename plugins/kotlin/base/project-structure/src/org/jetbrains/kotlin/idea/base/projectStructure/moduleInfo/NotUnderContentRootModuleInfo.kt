@@ -8,12 +8,14 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analyzer.NonSourceModuleInfoBase
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 
+@K1ModeProjectStructureApi
 class NotUnderContentRootModuleInfo(
     override val project: Project,
     file: KtFile?

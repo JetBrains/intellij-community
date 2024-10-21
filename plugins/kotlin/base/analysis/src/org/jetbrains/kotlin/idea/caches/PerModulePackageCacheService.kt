@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.firstOrNull
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService.Companion.DEBUG_LOG_ENABLE_PerModulePackageCache
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getSourceRoot
@@ -50,6 +51,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 
+@K1ModeProjectStructureApi
 class KotlinPackageStatementPsiTreeChangePreprocessor(private val project: Project) : PsiTreeChangePreprocessor {
     override fun treeChanged(event: PsiTreeChangeEventImpl) {
         // skip events out of scope of this processor
@@ -199,6 +201,7 @@ class ImplicitPackagePrefixCache(private val project: Project) {
 }
 
 @Service(Service.Level.PROJECT)
+@K1ModeProjectStructureApi
 class PerModulePackageCacheService(private val project: Project) : Disposable {
 
     /*
@@ -437,6 +440,7 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
     }
 }
 
+@OptIn(K1ModeProjectStructureApi::class)
 private fun Logger.debugIfEnabled(project: Project, withCurrentTrace: Boolean = false, message: () -> String) {
     if (isUnitTestMode() && project.DEBUG_LOG_ENABLE_PerModulePackageCache) {
         val msg = message()

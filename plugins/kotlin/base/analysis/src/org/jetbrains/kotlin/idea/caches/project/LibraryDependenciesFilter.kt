@@ -6,12 +6,14 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.analysis.libraries.KlibLibraryDependencyCandidate
 import org.jetbrains.kotlin.idea.base.analysis.libraries.LibraryDependencyCandidate
 import org.jetbrains.kotlin.idea.base.platforms.isSharedNative
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.platform.SimplePlatform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatformUnspecifiedTarget
 import org.jetbrains.kotlin.platform.konan.NativePlatformWithTarget
 
 @ApiStatus.Internal
+@K1ModeProjectStructureApi
 fun interface LibraryDependenciesFilter {
     operator fun invoke(platform: TargetPlatform, candidates: Collection<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate>
 }
@@ -22,6 +24,7 @@ fun interface LibraryDependenciesFilter {
  * jvm, js, native -> jvm, js {NO} (missing native platform)
  */
 @ApiStatus.Internal
+@K1ModeProjectStructureApi
 object DefaultLibraryDependenciesFilter : LibraryDependenciesFilter {
     override fun invoke(platform: TargetPlatform, candidates: Collection<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate> {
         return candidates.filterTo(LinkedHashSet(candidates.size)) { candidate -> platform representsSubsetOf candidate.platform }
@@ -41,6 +44,7 @@ object DefaultLibraryDependenciesFilter : LibraryDependenciesFilter {
  * leading to potential clash in resolution. See KTIJ-15758
  */
 @ApiStatus.Internal
+@K1ModeProjectStructureApi
 object StrictEqualityForPlatformSpecificCandidatesFilter : LibraryDependenciesFilter {
     override fun invoke(platform: TargetPlatform, candidates: Collection<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate> {
         return candidates.filterTo(LinkedHashSet(candidates.size)) { candidate ->
@@ -62,6 +66,7 @@ object StrictEqualityForPlatformSpecificCandidatesFilter : LibraryDependenciesFi
  * see: https://youtrack.jetbrains.com/issue/KT-40814
  */
 @ApiStatus.Internal
+@K1ModeProjectStructureApi
 object SharedNativeLibraryToNativeInteropFallbackDependenciesFilter : LibraryDependenciesFilter {
     override fun invoke(platform: TargetPlatform, candidates: Collection<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate> {
         /* Filter only works on shared native dependee libraries to interop dependency libraries */
@@ -120,6 +125,7 @@ private fun SimplePlatform.representsSubsetOf(to: SimplePlatform): Boolean {
 /* Operators on LibraryDependenciesFilter */
 
 @ApiStatus.Internal
+@K1ModeProjectStructureApi
 infix fun LibraryDependenciesFilter.union(other: LibraryDependenciesFilter): LibraryDependenciesFilter {
     if (this is LibraryDependenciesFilterUnion && other is LibraryDependenciesFilterUnion) {
         return LibraryDependenciesFilterUnion(this.filters + other.filters)
@@ -134,6 +140,7 @@ infix fun LibraryDependenciesFilter.union(other: LibraryDependenciesFilter): Lib
 }
 
 @ApiStatus.Internal
+@K1ModeProjectStructureApi
 class LibraryDependenciesFilterUnion(
     val filters: List<LibraryDependenciesFilter>
 ) : LibraryDependenciesFilter {

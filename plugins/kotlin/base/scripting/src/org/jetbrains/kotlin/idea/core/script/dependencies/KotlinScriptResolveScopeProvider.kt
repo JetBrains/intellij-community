@@ -11,6 +11,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptModuleInfo
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.compilerAllowsAnyScriptsInSourceRoots
@@ -57,6 +58,7 @@ class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
         return ktFile.calculateScopeForStandaloneScript(file, project)
     }
 
+    @OptIn(K1ModeProjectStructureApi::class)
     private fun KtFile.isStandaloneScript(): Boolean = moduleInfoOrNull is ScriptModuleInfo // not ModuleSourceInfo (production|test)
 
     private fun KtFile.getScopeAccordingToLanguageFeature(

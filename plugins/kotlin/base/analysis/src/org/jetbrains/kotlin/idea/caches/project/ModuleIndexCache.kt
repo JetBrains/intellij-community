@@ -15,11 +15,13 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import java.util.*
 
 //NOTE: this is an approximation that may contain more module infos than the exact solution
+@K1ModeProjectStructureApi
 fun ModuleSourceInfo.getDependentModules(): Set<ModuleSourceInfo> {
     val dependents = getDependents(module)
     @Suppress("DEPRECATION")

@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.KtLibraryModuleByModuleIn
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.symbolicId
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProductionOrTest
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus.checkCanceled
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -42,6 +43,7 @@ internal class K2IdeKotlinModuleDependentsProvider(project: Project) : IdeKotlin
         }
     }
 
+    @OptIn(K1ModeProjectStructureApi::class)
     override fun getDirectDependentsForLibraryNonSdkModule(module: KaLibraryModule): Set<KaModule> {
         require(module is KtLibraryModuleByModuleInfo)
 
@@ -67,6 +69,7 @@ private class K2LibraryUsageIndex(private val project: Project) {
     }
 
     private fun computeLibraryModuleDependents(): Map<LibraryId, List<ModuleId>> {
+        @OptIn(K1ModeProjectStructureApi::class)
         val libraryInfoCache = LibraryInfoCache.getInstance(project)
 
         val result = mutableMapOf<LibraryId, MutableList<ModuleId>>()
@@ -78,6 +81,7 @@ private class K2LibraryUsageIndex(private val project: Project) {
 
                 // We still use LibraryInfoCache here for deduplication.
                 // The next steps will be to implement KaModule without IdeaModuleInfo and try to get rid of the deduplication logic
+                @OptIn(K1ModeProjectStructureApi::class)
                 val library = entry.library?.let { libraryInfoCache.deduplicatedLibrary(it)  } ?: continue
                 check(library is LibraryBridge)
                 result.getOrPut(library.libraryId) { mutableListOf() } += module.moduleEntityId

@@ -6,9 +6,11 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.workspaceModel.ide.legacyBridge.findLibraryEntity
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
+@K1ModeProjectStructureApi
 class JvmLibraryInfo internal constructor(project: Project, library: LibraryEx) : LibraryInfo(project, library) {
     val source: EntitySource? = library.findLibraryEntity(project.workspaceModel.currentSnapshot)?.entitySource
 

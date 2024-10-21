@@ -11,10 +11,12 @@ import org.jetbrains.kotlin.analyzer.TrackableModuleInfo
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinModificationTrackerProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo as OldModuleSourceInfo
 
+@K1ModeProjectStructureApi
 interface ModuleSourceInfo : OldModuleSourceInfo, IdeaModuleInfo, TrackableModuleInfo, ModuleSourceInfoBase {
     override val module: Module
 

@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.scripting.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.scripting.getPlatform
 import org.jetbrains.kotlin.idea.base.scripting.getTargetPlatformVersion
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptSearchScope
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
@@ -33,6 +34,7 @@ import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
+@OptIn(K1ModeProjectStructureApi::class)
 data class ScriptModuleInfo(
     override val project: Project,
     val scriptFile: VirtualFile,
@@ -143,7 +145,8 @@ internal fun VirtualFile.scriptModuleEntity(project: Project, snapshot: EntitySt
     return snapshot.getVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl).firstNotNullOfOrNull { it as? ModuleEntity }
 }
 
-fun VirtualFile.scriptLibraryDependencies(project: Project): Sequence<LibraryInfo> {
+@K1ModeProjectStructureApi
+internal fun VirtualFile.scriptLibraryDependencies(project: Project): Sequence<LibraryInfo> {
     val storage = WorkspaceModel.getInstance(project).currentSnapshot
     val cache = LibraryInfoCache.getInstance(project)
 

@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenc
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesSourceInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptModuleInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.scriptLibraryDependencies
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.SeqScope
 import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 
+@OptIn(K1ModeProjectStructureApi::class)
 internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtension {
     override fun SeqScope<Result<IdeaModuleInfo>>.collectByElement(
         element: PsiElement,

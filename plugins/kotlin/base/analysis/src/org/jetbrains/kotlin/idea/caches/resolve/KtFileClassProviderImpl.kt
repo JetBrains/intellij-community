@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.fileClasses.isJvmMultifileClassFile
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.isInDumbMode
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -31,12 +32,14 @@ class KtFileClassProviderImpl(val project: Project) : KtFileClassProvider {
         // TODO We don't currently support finding light classes for scripts
         if (runReadAction { file.isScript() }) return emptyArray()
 
+        @OptIn(K1ModeProjectStructureApi::class)
         val moduleInfo = file.moduleInfoOrNull ?: return emptyArray()
 
         // prohibit obtaining light classes for non-jvm modules trough KtFiles
         // common files might be in fact compiled to jvm and thus correspond to a PsiClass
         // this API does not provide context (like GSS) to be able to determine if this file is in fact seen through a jvm module
         // this also fixes a problem where a Java JUnit run configuration producer would produce run configurations for a common file
+        @OptIn(K1ModeProjectStructureApi::class)
         if (!moduleInfo.platform.isJvm()) return emptyArray()
 
         val result = arrayListOf<PsiClass>()

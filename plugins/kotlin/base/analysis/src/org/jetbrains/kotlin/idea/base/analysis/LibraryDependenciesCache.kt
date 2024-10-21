@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.allSdks
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.checkValidity
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.caching.*
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.configuration.isMavenized
@@ -37,6 +38,7 @@ import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@K1ModeProjectStructureApi
 private open class LibraryDependencyCandidatesAndSdkInfos(
     open val libraryDependencyCandidates: Collection<LibraryDependencyCandidate>,
     open val sdkInfos: Collection<SdkInfo>
@@ -48,6 +50,7 @@ private open class LibraryDependencyCandidatesAndSdkInfos(
     }
 }
 
+@K1ModeProjectStructureApi
 private class LibraryDependencyCandidatesAndSdkInfosBuilder(
     override val libraryDependencyCandidates: MutableSet<LibraryDependencyCandidate> = linkedSetOf(),
     override val sdkInfos: MutableSet<SdkInfo> = LinkedHashSet(1)
@@ -80,6 +83,7 @@ private class LibraryDependencyCandidatesAndSdkInfosBuilder(
     }
 }
 
+@K1ModeProjectStructureApi
 class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDependenciesCache, Disposable {
     companion object {
         fun getInstance(project: Project): LibraryDependenciesCache = project.service()

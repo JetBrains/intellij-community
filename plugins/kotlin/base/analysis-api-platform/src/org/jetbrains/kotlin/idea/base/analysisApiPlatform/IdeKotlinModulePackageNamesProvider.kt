@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.base.indices.names.isSupportedByBinaryRootToPac
 import org.jetbrains.kotlin.idea.base.projectStructure.KtLibraryModuleByModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.KtSdkLibraryModuleByModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.KtSourceModuleByModuleInfo
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.utils.addToStdlib.flattenTo
 
@@ -68,6 +69,7 @@ internal class IdeKotlinModulePackageNamesProvider(private val project: Project)
     }
 
     fun computePackageNames(module: KaModule): Set<String>? =
+        @OptIn(K1ModeProjectStructureApi::class)
         when (module) {
             is KtSourceModuleByModuleInfo -> computeSourceModulePackageSet(module)
 
@@ -82,6 +84,7 @@ internal class IdeKotlinModulePackageNamesProvider(private val project: Project)
             else -> null
         }
 
+    @OptIn(K1ModeProjectStructureApi::class)
     private fun computeSourceModulePackageSet(module: KtSourceModuleByModuleInfo): Set<String>? = null // KTIJ-27450
 
     private fun computePackageSetFromBinaryRoots(binaryRoots: Array<VirtualFile>): Set<String>? {
@@ -139,6 +142,7 @@ internal class IdeKotlinModulePackageNamesProvider(private val project: Project)
         binaryRootsCache.map.clear()
     }
 
+    @OptIn(K1ModeProjectStructureApi::class)
     private val KaModule.binaryRootFiles: Array<VirtualFile>?
         get() = when (this) {
             is KtSdkLibraryModuleByModuleInfo -> moduleInfo.sdk.rootProvider.getFiles(OrderRootType.CLASSES)

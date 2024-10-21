@@ -28,6 +28,7 @@ import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex
@@ -35,6 +36,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 // TODO(kirpichenkov): works only for JVM (see KT-44552)
+@K1ModeProjectStructureApi
 interface KotlinStdlibCache {
     fun isStdlib(libraryInfo: LibraryInfo): Boolean
     fun isStdlibDependency(libraryInfo: LibraryInfo): Boolean
@@ -285,8 +287,11 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
     }
 }
 
+@K1ModeProjectStructureApi
 fun LibraryInfo.isCoreKotlinLibrary(project: Project): Boolean = isKotlinStdlib(project) || isKotlinStdlibDependency(project)
 
+@K1ModeProjectStructureApi
 fun LibraryInfo.isKotlinStdlib(project: Project): Boolean = KotlinStdlibCache.getInstance(project).isStdlib(this)
 
+@K1ModeProjectStructureApi
 fun LibraryInfo.isKotlinStdlibDependency(project: Project): Boolean = KotlinStdlibCache.getInstance(project).isStdlibDependency(this)

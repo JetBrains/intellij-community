@@ -45,6 +45,7 @@ val KaModule.moduleInfo: IdeaModuleInfo
     }
 
 
+@K1ModeProjectStructureApi
 val ModuleInfo.kotlinSourceRootType: KotlinSourceRootType?
     get() = when (this) {
         is ModuleProductionSourceInfo -> SourceKotlinRootType
@@ -52,6 +53,7 @@ val ModuleInfo.kotlinSourceRootType: KotlinSourceRootType?
         else -> null
     }
 
+@K1ModeProjectStructureApi
 val Module.productionSourceInfo: ModuleProductionSourceInfo?
     get() {
         val hasProductionRoots = hasRootsOfType(setOf(JavaSourceRootType.SOURCE, SourceKotlinRootType))
@@ -60,6 +62,7 @@ val Module.productionSourceInfo: ModuleProductionSourceInfo?
         return if (hasProductionRoots) ModuleProductionSourceInfo(this) else null
     }
 
+@K1ModeProjectStructureApi
 val Module.testSourceInfo: ModuleTestSourceInfo?
     get() {
         val hasTestRoots = hasRootsOfType(setOf(JavaSourceRootType.TEST_SOURCE, TestSourceKotlinRootType))
@@ -68,6 +71,7 @@ val Module.testSourceInfo: ModuleTestSourceInfo?
         return if (hasTestRoots) ModuleTestSourceInfo(this) else null
     }
 
+@K1ModeProjectStructureApi
 fun Module.asSourceInfo(sourceRootType: KotlinSourceRootType?): ModuleSourceInfoWithExpectedBy? =
     when (sourceRootType) {
         SourceKotlinRootType -> ModuleProductionSourceInfo(this)
@@ -75,6 +79,7 @@ fun Module.asSourceInfo(sourceRootType: KotlinSourceRootType?): ModuleSourceInfo
         else -> null
     }
 
+@K1ModeProjectStructureApi
 val Module.sourceModuleInfos: List<ModuleSourceInfo>
     get() = listOfNotNull(testSourceInfo, productionSourceInfo)
 
@@ -87,6 +92,7 @@ private fun Module.hasRootsOfType(rootTypes: Set<JpsModuleSourceRootType<*>>): B
  * [ModuleInfoProvider] might cache the module info.
  */
 @Suppress("UnusedReceiverParameter")
+@K1ModeProjectStructureApi
 var PsiFile.forcedModuleInfo: ModuleInfo? by UserDataProperty(Key.create("FORCED_MODULE_INFO"))
     @ApiStatus.Internal get
     @ApiStatus.Internal set
@@ -158,11 +164,13 @@ fun GlobalSearchScope.hasKotlinJvmRuntime(project: Project): Boolean {
     }
 }
 
+@K1ModeProjectStructureApi
 fun ModuleInfo.findSdkAcrossDependencies(): SdkInfo? {
     val project = (this as? IdeaModuleInfo)?.project ?: return null
     return SdkInfoCache.getInstance(project).findOrGetCachedSdk(this)
 }
 
+@K1ModeProjectStructureApi
 fun IdeaModuleInfo.findJvmStdlibAcrossDependencies(): LibraryInfo? {
     val project = project
     return KotlinStdlibCache.getInstance(project).findStdlibInModuleDependencies(this)

@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.descriptors.ModuleCapability
 import org.jetbrains.kotlin.idea.base.platforms.isSharedNative
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.*
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 
+@K1ModeProjectStructureApi
 data class PlatformModuleInfo(
     override val platformModule: ModuleSourceInfo,
     private val commonModules: List<ModuleSourceInfo> // NOTE: usually contains a single element for current implementation
