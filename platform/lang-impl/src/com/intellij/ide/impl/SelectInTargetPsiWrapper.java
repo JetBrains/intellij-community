@@ -3,9 +3,9 @@ package com.intellij.ide.impl;
 
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
-import com.intellij.ide.projectView.impl.SelectInProjectViewImplKt;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -13,10 +13,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
+  @ApiStatus.Internal
+  protected static final Logger LOG = Logger.getInstance(SelectInTargetPsiWrapper.class);
+  
   protected final Project myProject;
 
   protected SelectInTargetPsiWrapper(final @NotNull Project project) {
@@ -36,15 +40,15 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
 
   protected boolean canSelectInner(@NotNull SelectInContext context) {
     PsiFileSystemItem psiFile = getContextPsiFile(context);
-    if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-      SelectInProjectViewImplKt.getLOG().debug("PSI file for context " + context + " is " + psiFile);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("PSI file for context " + context + " is " + psiFile);
     }
     if (psiFile == null) {
       return false;
     }
     boolean canSelect = canSelect(psiFile);
-    if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-      SelectInProjectViewImplKt.getLOG().debug("Can " + (canSelect ? "select" : "NOT select") + " file " + psiFile + " in " + this);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Can " + (canSelect ? "select" : "NOT select") + " file " + psiFile + " in " + this);
     }
     return canSelect;
   }
@@ -54,8 +58,8 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
 
     VirtualFile virtualFile = context.getVirtualFile();
     boolean valid = virtualFile.isValid();
-    if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-      SelectInProjectViewImplKt.getLOG().debug("File " + virtualFile + " is " + (valid ? "valid" : "NOT valid"));
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("File " + virtualFile + " is " + (valid ? "valid" : "NOT valid"));
     }
     return valid;
   }
@@ -78,8 +82,8 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
 
   @Override
   public final void selectIn(@NotNull SelectInContext context, boolean requestFocus) {
-    if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-      SelectInProjectViewImplKt.getLOG().debug(
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(
         "SelectInTargetPsiWrapper.selectIn: Select in " + this +
         ", requestFocus=" + requestFocus +
         " using context " + context
@@ -88,13 +92,13 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
     ReadAction.nonBlocking(() -> {
         VirtualFile file = context.getVirtualFile();
         Object selector = context.getSelectorInFile();
-        if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-          SelectInProjectViewImplKt.getLOG().debug("File is " + file + ", selector is " + selector);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("File is " + file + ", selector is " + selector);
         }
         if (selector == null) {
           selector = PsiUtilCore.findFileSystemItem(myProject, file);
-          if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-            SelectInProjectViewImplKt.getLOG().debug("Falling back to selector " + selector);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Falling back to selector " + selector);
           }
         }
         if (selector instanceof PsiElement) {
@@ -116,15 +120,15 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
         var original = computed.original;
         if (selector instanceof PsiElement) {
           try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
-            if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-              SelectInProjectViewImplKt.getLOG().debug("Selecting " + original);
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Selecting " + original);
             }
             select(original, requestFocus);
           }
         }
         else {
-          if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-            SelectInProjectViewImplKt.getLOG().debug("Selecting non-PSI selector " + selector + " in file " + file);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Selecting non-PSI selector " + selector + " in file " + file);
           }
           select(selector, file, requestFocus);
         }
@@ -144,8 +148,8 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
     if (toSelect == null) {
       if (element instanceof PsiFile || element instanceof PsiDirectory) {
         toSelect = element;
-        if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-          SelectInProjectViewImplKt.getLOG().debug("Will select PSI file/dir " + toSelect);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Will select PSI file/dir " + toSelect);
         }
       }
       else {
@@ -153,8 +157,8 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
         if (containingFile != null) {
           FileViewProvider viewProvider = containingFile.getViewProvider();
           toSelect = viewProvider.getPsi(viewProvider.getBaseLanguage());
-          if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-            SelectInProjectViewImplKt.getLOG().debug("Will select PSI element " + toSelect + " provided by " + viewProvider);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Will select PSI element " + toSelect + " provided by " + viewProvider);
           }
         }
       }
@@ -164,8 +168,8 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
       PsiElement originalElement = null;
       try {
         originalElement = toSelect.getOriginalElement();
-        if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-          SelectInProjectViewImplKt.getLOG().debug("Original element to select is " + originalElement);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Original element to select is " + originalElement);
         }
       }
       catch (IndexNotReadyException ignored) { }

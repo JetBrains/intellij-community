@@ -7,7 +7,6 @@ import com.intellij.ide.SelectInContext;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.SelectInProjectViewImplKt;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.project.Project;
@@ -54,11 +53,11 @@ public final class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
   @Override
   public void select(PsiElement element, boolean requestFocus) {
     if (getSubId() == null) {
-      SelectInProjectViewImplKt.getLOG().debug("getSubId() == null, looking for a fallback");
+      LOG.debug("getSubId() == null, looking for a fallback");
       PsiFile file = element.getContainingFile();
       NamedScopeFilter filter = getContainingFilter(file == null ? null : file.getVirtualFile());
-      if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-        SelectInProjectViewImplKt.getLOG().debug("The fallback is " + filter);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("The fallback is " + filter);
       }
       if (filter == null) return;
       setSubId(filter.toString());
@@ -78,27 +77,27 @@ public final class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
 
   @Override
   public boolean isSubIdSelectable(@NotNull String subId, @NotNull SelectInContext context) {
-    if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-      SelectInProjectViewImplKt.getLOG().debug("ScopePaneSelectInTarget.isSubIdSelectable: subId=" + subId + ", context is " + context);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("ScopePaneSelectInTarget.isSubIdSelectable: subId=" + subId + ", context is " + context);
     }
     PsiFileSystemItem file = getContextPsiFile(context);
     if (!(file instanceof PsiFile)) {
-      if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-        SelectInProjectViewImplKt.getLOG().debug("Can NOT select " + file + " because it's not a PsiFile");
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Can NOT select " + file + " because it's not a PsiFile");
       }
       return false;
     }
     ScopeViewPane pane = getScopeViewPane();
     NamedScopeFilter filter = pane == null ? null : pane.getFilter(subId);
     if (filter == null) {
-      if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-        SelectInProjectViewImplKt.getLOG().debug("Can NOT select " + file + " because filter is null");
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Can NOT select " + file + " because filter is null");
       }
       return false;
     }
     boolean accept = filter.accept(file.getVirtualFile());
-    if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-      SelectInProjectViewImplKt.getLOG().debug("The filter " + filter + (accept ? "accepts" : "does NOT accept") + " file " + file);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("The filter " + filter + (accept ? "accepts" : "does NOT accept") + " file " + file);
     }
     return accept;
   }

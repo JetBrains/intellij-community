@@ -14,9 +14,7 @@ import io.opentelemetry.context.Context
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicBoolean
 
-@JvmField
-@Internal
-val ProjectViewInit: Scope = Scope("projectViewInit")
+private val projectViewInit: Scope = Scope("projectViewInit")
 
 @Service(Service.Level.PROJECT)
 internal class ProjectViewInitNotifier(private val project: Project) {
@@ -28,7 +26,7 @@ internal class ProjectViewInitNotifier(private val project: Project) {
 
   fun initStarted() {
     if (!startedOccurred.compareAndSet(false, true)) return
-    MY_LOG.info("Project View initialization started")
+    LOG.info("Project View initialization started")
     tracingHelper.initStarted()
     project.messageBus.syncPublisher(ProjectViewListener.TOPIC).initStarted()
   }
@@ -36,21 +34,21 @@ internal class ProjectViewInitNotifier(private val project: Project) {
   fun initCachedNodesLoaded() {
     if (!cachedNodesLoadedOccurred.compareAndSet(false, true)) return
     tracingHelper.initCachedNodesLoaded()
-    MY_LOG.info("Project View cached nodes loaded")
+    LOG.info("Project View cached nodes loaded")
     project.messageBus.syncPublisher(ProjectViewListener.TOPIC).initCachedNodesLoaded()
   }
 
   fun initCompleted() {
     if (!completedOccurred.compareAndSet(false, true)) return
     tracingHelper.initCompleted()
-    MY_LOG.info("Project View initialization completed")
+    LOG.info("Project View initialization completed")
     project.messageBus.syncPublisher(ProjectViewListener.TOPIC).initCompleted()
   }
 
   private inner class TracingHelper {
     private val mainSpan = Ref<Span>()
     private val cachedNodesSpan = Ref<Span>()
-    private val projectViewInitTracer: Tracer = TelemetryManager.getInstance().getTracer(ProjectViewInit);
+    private val projectViewInitTracer: Tracer = TelemetryManager.getInstance().getTracer(projectViewInit)
 
     fun initStarted() {
       val span = projectViewInitTracer.spanBuilder("projectViewInit").startSpan().also { mainSpan.set(it) }
@@ -69,4 +67,4 @@ internal class ProjectViewInitNotifier(private val project: Project) {
   }
 }
 
-private val MY_LOG = logger<ProjectViewInitNotifier>()
+private val LOG = logger<ProjectViewInitNotifier>()
