@@ -1061,16 +1061,9 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
   private void updateScopeDetailsPanel() {
     ((CardLayout)myScopeDetailsPanel.getLayout()).show(myScopeDetailsPanel, mySelectedScope.name);
-    Component firstFocusableComponent = focusableComponents(myScopeDetailsPanel).find(
-      c -> c.isFocusable() && c.isEnabled() && c.isShowing()
-    );
     myScopeDetailsPanel.revalidate();
     myScopeDetailsPanel.repaint();
-    if (firstFocusableComponent != null) {
-      ApplicationManager.getApplication().invokeLater(
-        () -> IdeFocusManager.getInstance(myProject).requestFocus(firstFocusableComponent, true));
-    }
-    if (firstFocusableComponent == null && !mySearchComponent.isFocusOwner() && !myReplaceComponent.isFocusOwner()) {
+    if (!mySearchComponent.isFocusOwner() && !myReplaceComponent.isFocusOwner()) {
       ApplicationManager.getApplication().invokeLater(
         () -> IdeFocusManager.getInstance(myProject).requestFocus(mySearchComponent, true));
     }
