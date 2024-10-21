@@ -10,9 +10,11 @@ com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InlineLookupEve
 *f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InsertNextWord
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$LookupCancelled
+- com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InlineLookupEvent
 - *:getEditor():com.intellij.openapi.editor.Editor
 f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$LookupChange
+- com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InlineLookupEvent
 - *:getEditor():com.intellij.openapi.editor.Editor
 *f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$ManualCall
