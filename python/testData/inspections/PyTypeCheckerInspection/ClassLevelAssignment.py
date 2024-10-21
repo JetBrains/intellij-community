@@ -18,4 +18,4 @@ class C:
         self.class_var = 1
         self.class_var = <warning descr="Expected type 'int', got 'str' instead">'bar'</warning>
         C.class_var = 1
-        C.class_var = 'bar'
+        C.class_var = <warning descr="Expected type 'int', got 'str' instead">'bar'</warning>
