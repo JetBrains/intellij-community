@@ -9,6 +9,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.feedback.ExternalFeedbackSurveyConfig
 import com.intellij.platform.feedback.ExternalFeedbackSurveyType
 import com.intellij.platform.feedback.FeedbackSurvey
@@ -18,6 +19,8 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.io.URLUtil.encodeURIComponent
 import com.intellij.util.system.OS
 import com.intellij.util.withQuery
+import com.sun.jna.platform.win32.Advapi32Util
+import com.sun.jna.platform.win32.WinReg
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import java.net.URI
@@ -53,8 +56,15 @@ private class SoftwareAccessibilitySurveyConfig : ExternalFeedbackSurveyConfig {
   override fun getUrlToSurvey(project: Project): String {
     val uri = URI.create("https://surveys.jetbrains.com/s3/jetbrains-ide-experience-survey")
 
+    val region = if (SystemInfo.isWindows) {
+      Advapi32Util.registryGetStringValue(WinReg.HKEY_CURRENT_USER, "Control Panel\\International\\Geo", "Name") ?: "unknown"
+    }
+    else {
+      System.getProperty("user.country", "unknown")
+    }
+
     val os = encodeURIComponent(OS.CURRENT.toString().lowercase())
-    val country = encodeURIComponent(System.getProperty("user.country", "unknown"))
+    val country = encodeURIComponent(region)
     val lang = encodeURIComponent(System.getProperty("user.language", "unknown"))
     val version = encodeURIComponent(ApplicationInfo.getInstance().fullVersion)
     val product = encodeURIComponent(ApplicationInfoImpl.getShadowInstanceImpl().build.productCode)
