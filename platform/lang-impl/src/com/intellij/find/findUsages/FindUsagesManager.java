@@ -5,7 +5,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.FindBundle;
-import com.intellij.find.FindSettings;
+import com.intellij.find.FindUsagesSettings;
 import com.intellij.find.findUsages.FindUsagesHandlerFactory.OperationMode;
 import com.intellij.ide.util.scopeChooser.ScopeService;
 import com.intellij.lang.findUsages.LanguageFindUsages;
@@ -252,7 +252,7 @@ public final class FindUsagesManager {
                          editor);
     }
     else {
-      boolean skipResultsWithOneUsage = FindSettings.getInstance().isSkipResultsWithOneUsage();
+      boolean skipResultsWithOneUsage = FindUsagesSettings.getInstance().isSkipResultsWithOneUsage();
       findUsages(primaryElements, secondaryElements, handler, findUsagesOptions, skipResultsWithOneUsage);
     }
   }
@@ -324,17 +324,17 @@ public final class FindUsagesManager {
   public @NotNull UsageViewPresentation createPresentation(@NotNull FindUsagesHandlerBase handler, @NotNull FindUsagesOptions findUsagesOptions) {
     PsiElement element = handler.getPsiElement();
     LOG.assertTrue(element.isValid());
-    return createPresentation(element, findUsagesOptions, FindSettings.getInstance().isShowResultsInSeparateView());
+    return createPresentation(element, findUsagesOptions, FindUsagesSettings.getInstance().isShowResultsInSeparateView());
   }
 
   private void setOpenInNewTab(boolean toOpenInNewTab) {
     if (!mustOpenInNewTab()) {
-      FindSettings.getInstance().setShowResultsInSeparateView(toOpenInNewTab);
+      FindUsagesSettings.getInstance().setShowResultsInSeparateView(toOpenInNewTab);
     }
   }
 
   private boolean shouldOpenInNewTab() {
-    return mustOpenInNewTab() || FindSettings.getInstance().isShowResultsInSeparateView();
+    return mustOpenInNewTab() || FindUsagesSettings.getInstance().isShowResultsInSeparateView();
   }
 
   private boolean mustOpenInNewTab() {

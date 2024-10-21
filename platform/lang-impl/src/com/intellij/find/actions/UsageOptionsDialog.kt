@@ -2,7 +2,7 @@
 package com.intellij.find.actions
 
 import com.intellij.find.FindBundle.message
-import com.intellij.find.FindSettings
+import com.intellij.find.FindUsagesSettings
 import com.intellij.find.usages.api.UsageOptions
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo
@@ -78,7 +78,7 @@ internal class UsageOptionsDialog(
   }
 
   private val myCbOpenInNewTab: JBCheckBox? = if (canReuseTab) {
-    JBCheckBox(message("find.open.in.new.tab.checkbox"), FindSettings.getInstance().isShowResultsInSeparateView)
+    JBCheckBox(message("find.open.in.new.tab.checkbox"), FindUsagesSettings.getInstance().isShowResultsInSeparateView)
   }
   else {
     null
@@ -109,7 +109,7 @@ internal class UsageOptionsDialog(
 
   override fun doOKAction() {
     super.doOKAction()
-    FindSettings.getInstance().apply {
+    FindUsagesSettings.getInstance().apply {
       if (showScopeChooser) {
         defaultScopeName = myScope.displayName
       }

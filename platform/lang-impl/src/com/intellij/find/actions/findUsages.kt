@@ -3,7 +3,7 @@
 
 package com.intellij.find.actions
 
-import com.intellij.find.FindSettings
+import com.intellij.find.FindUsagesSettings
 import com.intellij.find.actions.SearchOptionsService.SearchVariant
 import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.api.UsageHandler
@@ -51,7 +51,7 @@ internal fun findUsages(project: Project, target: SearchTarget, allOptions: AllS
     searchString = target.usageHandler.getSearchString(allOptions)
     scopeText = allOptions.options.searchScope.displayName
     tabText = UsageViewBundle.message("search.title.0.in.1", searchString, scopeText)
-    isOpenInNewTab = FindSettings.getInstance().isShowResultsInSeparateView || !canReuseTab(project)
+    isOpenInNewTab = FindUsagesSettings.getInstance().isShowResultsInSeparateView || !canReuseTab(project)
   }
   UsageViewManager.getInstance(project).searchAndShowUsages(
     arrayOf(SearchTarget2UsageTarget(project, target, allOptions)),

@@ -3,7 +3,7 @@
 package com.intellij.find.findUsages;
 
 import com.intellij.analysis.AnalysisBundle;
-import com.intellij.find.FindSettings;
+import com.intellij.find.FindUsagesSettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.PredefinedSearchScopeProvider;
@@ -27,7 +27,7 @@ public class FindUsagesOptions implements Cloneable {
   }
 
   public FindUsagesOptions(@NotNull Project project, final @Nullable DataContext dataContext) {
-    this(findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName()));
+    this(findScopeByName(project, dataContext, FindUsagesSettings.getInstance().getDefaultScopeName()));
   }
 
   public FindUsagesOptions(@NotNull SearchScope searchScope) {

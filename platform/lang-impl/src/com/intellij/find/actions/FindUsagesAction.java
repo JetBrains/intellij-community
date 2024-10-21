@@ -3,7 +3,7 @@ package com.intellij.find.actions;
 
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
-import com.intellij.find.FindSettings;
+import com.intellij.find.FindUsagesSettings;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.usages.api.SearchTarget;
 import com.intellij.openapi.actionSystem.*;
@@ -21,7 +21,6 @@ import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.List;
 
 import static com.intellij.find.actions.FindUsagesKt.findUsages;
 import static com.intellij.find.actions.ResolverKt.allTargets;
@@ -57,7 +56,7 @@ public class FindUsagesAction extends AnAction {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     DataContext dataContext = e.getDataContext();
     SearchScope searchScope = FindUsagesOptions.findScopeByName(
-      project, dataContext, FindSettings.getInstance().getDefaultScopeName()
+      project, dataContext, FindUsagesSettings.getInstance().getDefaultScopeName()
     );
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     JBPopupFactory popupFactory = JBPopupFactory.getInstance();

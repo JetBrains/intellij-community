@@ -7,7 +7,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
-import com.intellij.find.FindSettings;
+import com.intellij.find.FindUsagesSettings;
 import com.intellij.find.findUsages.*;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.find.impl.UsageAdaptersKt;
@@ -210,7 +210,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     RelativePoint popupPosition = editor != null
                                   ? popupFactory.guessBestPopupLocation(editor)
                                   : popupFactory.guessBestPopupLocation(dataContext);
-    SearchScope searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName());
+    SearchScope searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindUsagesSettings.getInstance().getDefaultScopeName());
     ReadAction.nonBlocking(() -> ResolverKt.allTargets(dataContext))
       .expireWith(project).finishOnUiThread(ModalityState.nonModal(), variants -> showUsages(project, variants, popupPosition, editor, searchScope))
       .submit(AppExecutorUtil.getAppExecutorService());
@@ -260,7 +260,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
                                 @NotNull RelativePoint popupPosition,
                                 @NotNull SearchTarget target) {
     Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
-    SearchScope searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName());
+    SearchScope searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindUsagesSettings.getInstance().getDefaultScopeName());
     ShowTargetUsagesActionHandler.showUsages(
       project, searchScope, target,
       ShowUsagesParameters.initial(project, editor, popupPosition)
@@ -303,7 +303,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         options.searchScope = scope;
       }
       else {
-        options.searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName());
+        options.searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindUsagesSettings.getInstance().getDefaultScopeName());
       }
       actionHandler = createActionHandler(handler, options, title);
     }
@@ -428,7 +428,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         findUsagesManager.findUsages(
           handler.getPrimaryElements(), handler.getSecondaryElements(),
           handler, options,
-          FindSettings.getInstance().isSkipResultsWithOneUsage()
+          FindUsagesSettings.getInstance().isSkipResultsWithOneUsage()
         );
       }
 
