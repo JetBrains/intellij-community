@@ -18,6 +18,10 @@
             qualifiedName="org.jetbrains.kotlin.classImportFilter"
             interface="org.jetbrains.kotlin.idea.util.ClassImportFilter"
             dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.expressionWeigherFactory"
+            interface="org.jetbrains.kotlin.idea.actions.ExpressionWeigherFactory"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
