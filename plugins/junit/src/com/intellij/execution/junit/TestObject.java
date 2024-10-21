@@ -60,6 +60,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.text.VersionComparatorUtil;
@@ -456,8 +457,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     Collection<OrderRoot> roots;
     try {
       Application application = ApplicationManager.getApplication();
-      application.assertReadAccessNotAllowed();
       application.assertIsNonDispatchThread();
+      ThreadingAssertions.assertNoOwnReadAccess();
       TargetProgressIndicator targetProgressIndicator = getTargetProgressIndicator();
       if (targetProgressIndicator != null) {
         String title = JavaUiBundle.message("jar.repository.manager.dialog.resolving.dependencies.title", 1);

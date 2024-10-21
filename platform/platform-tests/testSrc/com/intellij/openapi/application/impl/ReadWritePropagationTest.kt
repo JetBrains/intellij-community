@@ -5,6 +5,8 @@ package com.intellij.openapi.application.impl
 import com.intellij.openapi.application.*
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.concurrency.ImplicitBlockingContextTest
@@ -57,16 +59,16 @@ class ReadWritePropagationTest {
     checkInheritanceViaStructureConcurrency(::writeAction, { ApplicationManager.getApplication().isWriteAccessAllowed })
   }
 
-  private fun checkInheritanceViaNewContext(wrapper: suspend (() -> Unit) -> Unit, checker: () -> Boolean): Unit = timeoutRunBlocking {
+  private fun checkInheritanceViaNewContext(wrapper: suspend (() -> Unit) -> Unit, checker: () -> Boolean, innerChecker: () -> Boolean = checker): Unit = timeoutRunBlocking {
     wrapper {
       assertTrue(checker())
       runBlockingCancellable {
         assertTrue(checker())
         launch(Dispatchers.Default) {
-          assertTrue(checker())
+          assertTrue(innerChecker())
         }
         launch(Dispatchers.IO) {
-          assertTrue(checker())
+          assertTrue(innerChecker())
         }
         assertTrue(checker())
       }
@@ -81,7 +83,10 @@ class ReadWritePropagationTest {
 
   @RepeatedTest(REPETITIONS)
   fun `write intent read action is inherited by new context`() {
-    checkInheritanceViaNewContext(::writeIntentReadAction, { ApplicationManager.getApplication().isWriteIntentLockAcquired })
+    // WIL check works only on owning thread
+    checkInheritanceViaNewContext(::writeIntentReadAction,
+                                  { ApplicationManager.getApplication().isWriteIntentLockAcquired },
+                                  { ApplicationManager.getApplication().isReadAccessAllowed })
   }
 
   private fun checkNoInheritanceViaNonStructuredConcurrency(wrapper: suspend (() -> Unit) -> Unit, checker: () -> Boolean): Unit = timeoutRunBlocking {
@@ -120,12 +125,14 @@ class ReadWritePropagationTest {
 
   @RepeatedTest(REPETITIONS)
   fun `nested read action can be run even if write is waiting`(): Unit = timeoutRunBlocking {
-    val sema = beforeWrite()
+    val writePending = beforeWrite()
+    val readTaskReady = Semaphore(1)
     val ra = launch(Dispatchers.Default) {
       ApplicationManager.getApplication().runReadAction {
+        readTaskReady.up()
         runBlockingCancellable {
           withContext(Dispatchers.Default) {
-            sema.waitFor()
+            writePending.waitFor()
             ApplicationManager.getApplication().runReadAction {
               assertTrue(ApplicationManager.getApplication().isReadAccessAllowed)
             }
@@ -133,12 +140,38 @@ class ReadWritePropagationTest {
         }
       }
     }
+    readTaskReady.waitFor()
     val wa = launch(Dispatchers.Default) {
       assertFalse(ApplicationManager.getApplication().isReadAccessAllowed)
       ApplicationManager.getApplication().invokeAndWait {
         ApplicationManager.getApplication().runWriteAction {
           assertTrue(ApplicationManager.getApplication().isWriteIntentLockAcquired)
         }
+      }
+    }
+    joinAll(ra, wa)
+  }
+
+  @RepeatedTest(REPETITIONS)
+  fun `nested read action can be run under modal progress even if write is waiting`(): Unit = timeoutRunBlocking {
+    val writePending = beforeWrite()
+    val readTaskReady = Semaphore(1)
+    val ra = launch(Dispatchers.EDT) {
+      ApplicationManager.getApplication().runReadAction {
+        runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
+          readTaskReady.up()
+          writePending.waitFor()
+          ApplicationManager.getApplication().runReadAction {
+            assertTrue(ApplicationManager.getApplication().isReadAccessAllowed)
+          }
+        }
+      }
+    }
+    readTaskReady.waitFor()
+    val wa = launch(Dispatchers.Default) {
+      assertFalse(ApplicationManager.getApplication().isReadAccessAllowed)
+      ApplicationManager.getApplication().runWriteAction {
+        assertTrue(ApplicationManager.getApplication().isWriteAccessAllowed)
       }
     }
     joinAll(ra, wa)

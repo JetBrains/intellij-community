@@ -168,6 +168,15 @@ public final class ThreadingAssertions {
   }
 
   /**
+   * Asserts that the current thread has <b>no</b> read access local to this thread (non-inherited).
+   */
+  public static void assertNoOwnReadAccess() {
+    if (ApplicationManager.getApplication().holdsReadLock()) {
+      throwThreadAccessException(MUST_NOT_EXECUTE_IN_READ_ACTION);
+    }
+  }
+
+  /**
    * Asserts that the current thread has write-intent read access.
    */
   public static void assertWriteIntentReadAccess() {

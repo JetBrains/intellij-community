@@ -29,12 +29,6 @@ public interface ApplicationEx extends Application {
   int ELEVATE = 0x08;
 
   /**
-   * @return true if this thread is inside read action.
-   * @see #runReadAction(Runnable)
-   */
-  boolean holdsReadLock();
-
-  /**
    * @return true if the EDT is performing write action right now.
    * @see #runWriteAction(Runnable)
    */

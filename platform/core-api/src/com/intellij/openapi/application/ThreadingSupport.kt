@@ -29,7 +29,10 @@ interface ThreadingSupport {
   fun <T, E : Throwable?> runWriteIntentReadAction(computation: ThrowableComputable<T, E>): T
 
   /**
-   * Checks, is Write Intent lock  acquired by the current thread.
+   * Checks, if Write Intent lock acquired by the current thread.
+   *
+   * As Write Intent Lock has very special status, this method doesn't check for "inherited" lock, it returns `true` if and only if
+   * current thread is the owner of Write Intent Lock.
    *
    * This is low-level API, please use [WriteIntentReadAction].
    *
@@ -307,7 +310,10 @@ interface ThreadingSupport {
   fun isInsideUnlockedWriteIntentLock(): Boolean
 
   @ApiStatus.Internal
-  fun getPermitAsContextElement(): CoroutineContext
+  fun getPermitAsContextElement(shared: Boolean): CoroutineContext
+
+  @ApiStatus.Internal
+  fun returnPermitFromContextElement(ctx: CoroutineContext)
 
   @ApiStatus.Internal
   fun hasPermitAsContextElement(context: CoroutineContext): Boolean

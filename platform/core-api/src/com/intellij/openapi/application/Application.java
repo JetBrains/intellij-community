@@ -334,6 +334,12 @@ public interface Application extends ComponentManager {
   void saveSettings();
 
   /**
+   * @return true if this thread is inside read action.
+   * @see #runReadAction(Runnable)
+   */
+  boolean holdsReadLock();
+
+  /**
    * Exits the application, showing the exit confirmation prompt if it is enabled.
    */
   void exit();
@@ -681,8 +687,13 @@ public interface Application extends ComponentManager {
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  default CoroutineContext getLockStateAsCoroutineContext() {
+  default CoroutineContext getLockStateAsCoroutineContext(boolean shared) {
     return EmptyCoroutineContext.INSTANCE;
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  default void returnPermitFromContextElement(CoroutineContext ctx) {
   }
 
   @ApiStatus.Experimental

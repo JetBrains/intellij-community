@@ -1107,6 +1107,7 @@ com.intellij.openapi.application.Application
 - a:getModalityStateForComponent(java.awt.Component):com.intellij.openapi.application.ModalityState
 - a:getStartTime():J
 - a:hasWriteAction(java.lang.Class):Z
+- a:holdsReadLock():Z
 - a:invokeAndWait(java.lang.Runnable):V
 - a:invokeAndWait(java.lang.Runnable,com.intellij.openapi.application.ModalityState):V
 - a:invokeLater(java.lang.Runnable):V
@@ -5836,6 +5837,7 @@ f:com.intellij.util.UniqueResultsQuery
 f:com.intellij.util.concurrency.ThreadingAssertions
 - s:assertBackgroundThread():V
 - s:assertEventDispatchThread():V
+- s:assertNoOwnReadAccess():V
 - s:assertNoReadAccess():V
 - s:assertReadAccess():V
 - s:assertWriteAccess():V

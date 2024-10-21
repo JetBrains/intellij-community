@@ -947,7 +947,6 @@ com.intellij.openapi.application.ex.ApplicationEx
 - exit(I,I):V
 - exit(Z,Z):V
 - exit(Z,Z,I):V
-- a:holdsReadLock():Z
 - isComponentCreated():Z
 - isLightEditMode():Z
 - a:isWriteActionInProgress():Z

@@ -895,7 +895,6 @@ abstract class ComponentManagerImpl(
 
   final override fun <T : Any> instantiateClass(aClass: Class<T>, pluginId: PluginId): T {
     checkCanceledIfNotInClassInit()
-
     return resetThreadContext().use {
       doInstantiateClass(aClass, pluginId)
     }
@@ -1669,7 +1668,7 @@ private fun <X> runBlockingInitialization(action: suspend CoroutineScope.() -> X
       val contextForInitializer =
         (ctx.contextModality()?.asContextElement() ?: EmptyCoroutineContext) + // leak modality state into initialization coroutine
         (ctx[Job] ?: EmptyCoroutineContext) + // bind to caller Job
-        readActionContext() + // capture whether the caller holds the read lock
+        getLockPermitContext() + // capture whether the caller holds the read lock
         (currentTemporaryThreadContextOrNull() ?: EmptyCoroutineContext) + // propagate modality state/CurrentlyInitializingInstance
         NestedBlockingEventLoop(Thread.currentThread()) // avoid processing events from outer runBlocking (if any)
       @Suppress("RAW_RUN_BLOCKING")

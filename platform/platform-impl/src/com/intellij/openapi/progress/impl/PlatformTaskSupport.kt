@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.isHeadlessEnv
 import com.intellij.openapi.util.EmptyRunnable
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.IdeFrameEx
@@ -204,6 +205,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     }
   }
 
+  @OptIn(IntellijInternalApi::class)
   private fun <T> CoroutineScope.runWithModalProgressBlockingInternal(
     dispatcher: CoroutineDispatcher?,
     descriptor: ModalIndicatorDescriptor,
@@ -214,7 +216,8 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
       val dispatcherCtx = dispatcher ?: EmptyCoroutineContext
       val modalityContext = newModalityState.asContextElement()
       val pipe = cs.createProgressPipe()
-      val taskJob = async(dispatcherCtx + modalityContext) {
+      val permitCtx = getLockPermitContext(true)
+      val taskJob = async(dispatcherCtx + modalityContext + permitCtx) {
           progressStarted(descriptor.title, descriptor.cancellation, pipe.progressUpdates())
           // an unhandled exception in `async` can kill the entire computation tree
           // we need to propagate the exception to the caller, since they may have some way to handle it.
@@ -239,8 +242,13 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
         exitCondition = modalJob::isCompleted,
         modalComponent = deferredDialog::modalComponent,
       )
-      @OptIn(ExperimentalCoroutinesApi::class)
-      taskJob.getCompleted().getOrThrow()
+      try {
+        @OptIn(ExperimentalCoroutinesApi::class)
+        taskJob.getCompleted().getOrThrow()
+      }
+      finally {
+        closeLockPermitContext(permitCtx)
+      }
     }
   }
 }

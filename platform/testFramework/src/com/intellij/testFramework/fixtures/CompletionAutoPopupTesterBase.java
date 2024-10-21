@@ -16,6 +16,7 @@ import com.intellij.testFramework.TestModeFlags;
 import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
@@ -85,8 +86,8 @@ public abstract class CompletionAutoPopupTesterBase {
         committed.set(true);
       });
     })));
-    ApplicationManager.getApplication().assertReadAccessNotAllowed();
     ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ThreadingAssertions.assertNoOwnReadAccess();
     long start = System.currentTimeMillis();
     while (!committed.get()) {
       if (System.currentTimeMillis() - start >= 20000) {

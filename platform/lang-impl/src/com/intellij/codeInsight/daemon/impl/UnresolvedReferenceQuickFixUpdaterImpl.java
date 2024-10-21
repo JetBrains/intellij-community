@@ -26,6 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
@@ -52,7 +53,7 @@ public final class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedR
 
   public void waitQuickFixesSynchronously(@NotNull PsiFile file, @NotNull Editor editor, @NotNull List<? extends HighlightInfo> infos) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    ApplicationManager.getApplication().assertReadAccessNotAllowed(); // have to be able to wait over the write action to finish, must not hold RA for that
+    ThreadingAssertions.assertNoOwnReadAccess(); // have to be able to wait over the write action to finish, must not hold RA for that
     for (HighlightInfo info : infos) {
       PsiReference reference = info.unresolvedReference;
       if (reference == null) continue;

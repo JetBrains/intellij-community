@@ -1016,7 +1016,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   @ApiStatus.Experimental
   public static void waitForUnresolvedReferencesQuickFixesUnderCaret(@NotNull PsiFile file, @NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    ApplicationManager.getApplication().assertReadAccessNotAllowed();
+    ThreadingAssertions.assertNoOwnReadAccess();
     List<HighlightInfo> relevantInfos = new ArrayList<>();
     Project project = file.getProject();
     ReadAction.run(() -> {

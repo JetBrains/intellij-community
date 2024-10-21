@@ -33,6 +33,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,7 +106,7 @@ public final class MainPassesRunner {
                              @NotNull ProgressIndicatorEx progress,
                              @Nullable HighlightSeverity minimumSeverity) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    ApplicationManager.getApplication().assertReadAccessNotAllowed();
+    ThreadingAssertions.assertNoOwnReadAccess();
     progress.setIndeterminate(false);
     List<Pair<VirtualFile, DaemonProgressIndicator>> daemonIndicators = Collections.synchronizedList(new ArrayList<>(files.size()));
     progress.addStateDelegate(new AbstractProgressIndicatorExBase() {

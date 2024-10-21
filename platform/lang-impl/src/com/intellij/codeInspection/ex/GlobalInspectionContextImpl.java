@@ -354,8 +354,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           // PCE may be thrown from inside wrapper when write action started.
           // Go on with the write action and then resume processing the rest of the queue.
           if (!isOfflineInspections) {
-            ApplicationManager.getApplication().assertReadAccessNotAllowed();
             ApplicationManager.getApplication().assertIsNonDispatchThread();
+            ThreadingAssertions.assertNoOwnReadAccess();
           }
 
           // wait for write action to complete
