@@ -414,15 +414,14 @@ public class JavaCoverageEngine extends CoverageEngine {
       return null;
     }
 
-    final List<Integer> uncoveredLines = new ArrayList<>();
     try {
-      SourceLineCounterUtil.collectSrcLinesForUntouchedFiles(uncoveredLines, content, suite.getProject());
+      return SourceLineCounterUtil.collectSrcLinesForUntouchedFiles(content, suite.getProject());
     }
     catch (Exception e) {
       if (e instanceof ControlFlowException) throw e;
       LOG.error("Fail to process class from: " + classFile.getPath(), e);
     }
-    return uncoveredLines;
+    return null;
   }
 
   @Override
