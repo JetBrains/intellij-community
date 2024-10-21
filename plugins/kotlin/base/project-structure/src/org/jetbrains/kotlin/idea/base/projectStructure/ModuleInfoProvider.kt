@@ -147,7 +147,7 @@ class ModuleInfoProvider(private val project: Project) {
 
         val containingKtFile = containingFile as? KtFile
         if (containingKtFile != null) {
-            @OptIn(KaImplementationDetail::class, Frontend10ApiUsage::class)
+            @OptIn(KaImplementationDetail::class, K1ModeProjectStructureApi::class)
             containingFile.virtualFile?.analysisContextModule?.let { module ->
                 register(module.moduleInfo)
             }

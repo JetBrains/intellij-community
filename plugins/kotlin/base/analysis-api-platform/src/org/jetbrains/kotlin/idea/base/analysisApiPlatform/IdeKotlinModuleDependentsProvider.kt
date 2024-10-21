@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleD
 import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.projectStructure.*
-import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addIfNotNull
 
@@ -112,7 +112,7 @@ abstract class IdeKotlinModuleDependentsProvider(protected val project: Project)
             computeTransitiveDependents(it)
         }
 
-    @OptIn(Frontend10ApiUsage::class)
+    @OptIn(K1ModeProjectStructureApi::class)
     override fun getRefinementDependents(module: KaModule): Set<KaModule> {
         if (module !is KaSourceModule) return emptySet()
         val implementingModules = module.openapiModule.implementingModules

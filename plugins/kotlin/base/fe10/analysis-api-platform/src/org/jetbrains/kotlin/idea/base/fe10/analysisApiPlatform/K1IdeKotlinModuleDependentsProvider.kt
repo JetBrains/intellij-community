@@ -16,10 +16,10 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceIn
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProductionOrTest
 import org.jetbrains.kotlin.idea.base.projectStructure.util.getTransitiveLibraryDependencyInfos
-import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 
 internal class K1IdeKotlinModuleDependentsProvider(project: Project) : IdeKotlinModuleDependentsProvider(project) {
-    @OptIn(Frontend10ApiUsage::class)
+    @OptIn(K1ModeProjectStructureApi::class)
     override fun addAnchorModuleDependents(
         module: KaSourceModule,
         to: MutableSet<KaModule>

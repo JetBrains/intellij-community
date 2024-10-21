@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.base.fe10.analysisApiPlatform
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.ThreadingAssertions
-import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinAnchorModuleProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.base.fe10.analysis.ResolutionAnchorCacheService
@@ -12,11 +11,11 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
-import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 
 class K1IdeKotlinAnchorModuleProvider(val project: Project) : IdeKotlinAnchorModuleProvider {
     override fun getAnchorModule(libraryModule: KaLibraryModule): KaSourceModule? {
-        @OptIn(Frontend10ApiUsage::class)
+        @OptIn(K1ModeProjectStructureApi::class)
         val libraryInfo = libraryModule.moduleInfo as? LibraryInfo ?: return null
         return ResolutionAnchorCacheService.getInstance(project).resolutionAnchorsForLibraries[libraryInfo]?.toKaModule() as? KaSourceModule
     }
@@ -27,7 +26,7 @@ class K1IdeKotlinAnchorModuleProvider(val project: Project) : IdeKotlinAnchorMod
             .mapNotNull { it.toKaModule() as? KaSourceModule }
 
 
-    @OptIn(Frontend10ApiUsage::class)
+    @OptIn(K1ModeProjectStructureApi::class)
     override fun getAnchorLibraries(sourceModule: KaSourceModule): List<KaLibraryModule> {
         val sourceModuleInfo = sourceModule.moduleInfo as? ModuleSourceInfo ?: return emptyList()
         return ResolutionAnchorCacheService.getInstance(project)

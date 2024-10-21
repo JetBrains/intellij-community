@@ -33,11 +33,11 @@ import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.facet.kotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
-import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.runWithAlternativeResolveEnabled
 import org.jetbrains.kotlin.psi.UserDataProperty
 
-@Frontend10ApiUsage
+@K1ModeProjectStructureApi
 val KaModule.moduleInfo: IdeaModuleInfo
     get() {
         require(this is KtModuleByModuleInfoBase)
