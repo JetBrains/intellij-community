@@ -1,29 +1,21 @@
 package com.intellij.platform.diagnostic.plugin.freeze
 
-import com.intellij.diagnostic.IdePerformanceListener
 import com.intellij.diagnostic.ThreadDump
-import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtilImpl
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.platform.diagnostic.freezeAnalyzer.FreezeAnalyzer
 import com.intellij.threadDumpParser.ThreadState
-import com.intellij.ui.EditorNotifications
-import java.nio.file.Path
-import kotlin.io.path.absolutePathString
 
 @Service(Service.Level.APP)
-internal class PluginFreezeWatcher : IdePerformanceListener, Disposable {
+internal class PluginFreezeWatcher {
   @Volatile
-  private var latestFrozenPlugin: PluginId? = null
-  @Volatile
-  private var lastFreezeDuration: Long = -1
+  private var reason: FreezeReason? = null
 
   private val stackTracePattern: Regex = """at (\S+)\.(\S+)\(([^:]+):(\d+)\)""".toRegex()
 
@@ -32,66 +24,29 @@ internal class PluginFreezeWatcher : IdePerformanceListener, Disposable {
     fun getInstance(): PluginFreezeWatcher = service()
   }
 
-  init {
-    ApplicationManager.getApplication().messageBus.connect(this)
-      .subscribe(IdePerformanceListener.TOPIC, this)
-  }
-
-  fun getFreezeReason(): PluginId? = latestFrozenPlugin
+  fun getFreezeReason(): FreezeReason? = reason
 
   fun reset() {
-    latestFrozenPlugin = null
-    lastFreezeDuration = -1
+    reason = null
   }
 
-  override fun dispose() {}
-
-  override fun uiFreezeStarted(reportDir: Path) {
-    if (latestFrozenPlugin != null) return
-
-    lastFreezeDuration = -1
-  }
-
-  override fun uiFreezeFinished(durationMs: Long, reportDir: Path?) {
-    if (lastFreezeDuration < 0) {
-      lastFreezeDuration = durationMs
-
-      reportCounters()
-    }
-  }
-
-  override fun dumpedThreads(toFile: Path, dump: ThreadDump) {
-    if (latestFrozenPlugin != null) return // user have not yet handled previous failure
-
+  fun dumpedThreads(event: IdeaLoggingEvent, dump: ThreadDump, durationMs: Long) : FreezeReason? {
     val freezeCausingThreads = FreezeAnalyzer.analyzeFreeze(dump.rawDump, null)?.threads.orEmpty()
     val pluginIds = freezeCausingThreads.mapNotNull { analyzeFreezeCausingPlugin(it) }
-    val frozenPlugin = pluginIds.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key ?: return
+    val frozenPlugin = pluginIds.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key ?: return null
+
+    val pluginDescriptor = PluginManagerCore.getPlugin(frozenPlugin) ?: return null
+
+    if (pluginDescriptor.isImplementationDetail || ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(frozenPlugin)) return null
+    if (pluginDescriptor.isBundled && !ApplicationManager.getApplication().isInternal) return null
 
     val freezeStorageService = PluginsFreezesService.getInstance()
-    if (freezeStorageService.shouldBeIgnored(frozenPlugin)) return
+    if (freezeStorageService.shouldBeIgnored(frozenPlugin)) return null
     freezeStorageService.setLatestFreezeDate(frozenPlugin)
 
-    latestFrozenPlugin = frozenPlugin
+    reason = FreezeReason(frozenPlugin, event, durationMs)
 
-    Logger.getInstance(PluginFreezeWatcher::class.java)
-      .warn("Plugin '$frozenPlugin' caused IDE freeze." +
-            "Find thread dumps at ${toFile.absolutePathString()}")
-
-    reportCounters()
-
-    ReadAction.compute<Unit, Throwable> {
-      for (project in ProjectManager.getInstance().openProjects) {
-        EditorNotifications.getInstance(project).updateAllNotifications()
-      }
-    }
-  }
-
-  private fun reportCounters() {
-    latestFrozenPlugin?.let {
-      if (lastFreezeDuration > 0) {
-        LifecycleUsageTriggerCollector.pluginFreezeReported(it, lastFreezeDuration)
-      }
-    }
+    return reason
   }
 
   private fun analyzeFreezeCausingPlugin(threadInfo: ThreadState): PluginId? {
@@ -110,3 +65,9 @@ internal class PluginFreezeWatcher : IdePerformanceListener, Disposable {
     }
   }
 }
+
+internal data class FreezeReason(
+  val pluginId: PluginId,
+  val event: IdeaLoggingEvent,
+  val durationMs: Long
+)
