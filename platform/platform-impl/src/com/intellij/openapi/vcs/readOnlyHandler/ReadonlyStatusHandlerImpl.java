@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.readOnlyHandler;
 
 import com.intellij.ide.IdeEventQueue;
@@ -85,7 +85,7 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       if (myClearReadOnlyInTests) {
-        processFiles(new ArrayList<>(fileInfos), null);
+        processFiles(new ArrayList<>(fileInfos), null, false);
       }
       return createResultStatus(originalFiles, files);
     }
@@ -103,7 +103,7 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
       new ReadOnlyStatusDialog(myProject, presentableFileInfos).show();
     }
     else {
-      processFiles(new ArrayList<>(fileInfos), null); // the collection passed is modified
+      processFiles(new ArrayList<>(fileInfos), null, false); // the collection passed is modified
     }
     IdeEventQueue.getInstance().setEventCount(savedEventCount);
     return createResultStatus(originalFiles, files);
@@ -120,7 +120,7 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
     });
   }
 
-  public static void processFiles(@NotNull List<? extends FileInfo> fileInfos, @Nullable String changelist) {
+  static void processFiles(@NotNull List<? extends FileInfo> fileInfos, @Nullable String changelist, boolean setChangeListActive) {
     FileInfo[] copy = fileInfos.toArray(new FileInfo[0]);
     MultiMap<HandleType, VirtualFile> handleTypeToFile = new MultiMap<>();
     for (FileInfo fileInfo : copy) {
@@ -128,7 +128,7 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
     }
 
     for (HandleType handleType : handleTypeToFile.keySet()) {
-      handleType.processFiles(handleTypeToFile.get(handleType), changelist);
+      handleType.processFiles(handleTypeToFile.get(handleType), changelist, setChangeListActive);
     }
 
     for (FileInfo fileInfo : copy) {

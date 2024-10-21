@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.readOnlyHandler;
 
 import com.intellij.ide.IdeBundle;
@@ -36,6 +36,7 @@ public final class ReadOnlyStatusDialog extends OptionsDialog {
   private JRadioButton myUsingFileSystemRadioButton;
   private JRadioButton myUsingVcsRadioButton;
   private JComboBox<String> myChangelist;
+  private JCheckBox myMakeChangeListActive;
   private List<PresentableFileInfo> myFiles;
 
   public ReadOnlyStatusDialog(Project project, @NotNull List<PresentableFileInfo> files) {
@@ -148,7 +149,7 @@ public final class ReadOnlyStatusDialog extends OptionsDialog {
 
     List<PresentableFileInfo> files = new ArrayList<>(myFiles);
     String changelist = (String)myChangelist.getSelectedItem();
-    ReadonlyStatusHandlerImpl.processFiles(files, changelist);
+    ReadonlyStatusHandlerImpl.processFiles(files, changelist, myMakeChangeListActive.isSelected());
 
     if (files.isEmpty()) {
       super.doOKAction();
