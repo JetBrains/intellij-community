@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.jetbrains.rd.util.collections.SynchronizedList
 import kotlinx.coroutines.launch
 import java.nio.file.Path
 
@@ -37,3 +38,5 @@ internal object WindowsDefenderExcludeUtil {
   internal fun notification(@NlsContexts.NotificationContent content: String, type: NotificationType): Notification =
     Notification("WindowsDefender", DiagnosticBundle.message("notification.group.defender.config"), content, type)
 }
+
+internal val pathsToExclude = SynchronizedList<Path>()
