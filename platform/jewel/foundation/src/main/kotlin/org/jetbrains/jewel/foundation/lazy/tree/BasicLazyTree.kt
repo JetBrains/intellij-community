@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
-import org.jetbrains.jewel.foundation.lazy.BasicSelectableLazyColumn
+import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
 import org.jetbrains.jewel.foundation.lazy.SelectionMode
 import org.jetbrains.jewel.foundation.lazy.itemsIndexed
@@ -109,7 +109,7 @@ public fun <T> BasicLazyTree(
         )
     }
 
-    BasicSelectableLazyColumn(
+    SelectableLazyColumn(
         modifier = modifier,
         state = treeState.delegate,
         selectionMode = selectionMode,

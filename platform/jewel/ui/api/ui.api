@@ -721,10 +721,6 @@ public final class org/jetbrains/jewel/ui/component/SelectableIconButtonState$Co
 	public static synthetic fun of-z9lnavA$default (Lorg/jetbrains/jewel/ui/component/SelectableIconButtonState$Companion;ZZZZZZILjava/lang/Object;)J
 }
 
-public final class org/jetbrains/jewel/ui/component/SelectableLazyColumnKt {
-	public static final fun SelectableLazyColumn (Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Landroidx/compose/foundation/layout/PaddingValues;ZLkotlin/jvm/functions/Function1;Landroidx/compose/foundation/layout/Arrangement$Vertical;Landroidx/compose/ui/Alignment$Horizontal;Landroidx/compose/foundation/gestures/FlingBehavior;Lorg/jetbrains/jewel/foundation/lazy/tree/KeyActions;Lorg/jetbrains/jewel/foundation/lazy/tree/PointerEventActions;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;III)V
-}
-
 public final class org/jetbrains/jewel/ui/component/SliderKt {
 	public static final fun Slider (FLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/ClosedFloatingPointRange;ILkotlin/jvm/functions/Function0;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/SliderStyle;Landroidx/compose/runtime/Composer;II)V
 }

@@ -43,7 +43,7 @@ import org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions
 
 /** A composable that displays a scrollable and selectable list of items in a column arrangement. */
 @Composable
-public fun BasicSelectableLazyColumn(
+public fun SelectableLazyColumn(
     modifier: Modifier = Modifier,
     selectionMode: SelectionMode = SelectionMode.Multiple,
     state: SelectableLazyListState = rememberSelectableLazyListState(),
