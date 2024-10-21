@@ -2,10 +2,7 @@
 package com.intellij.ide.ui
 
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
-import com.intellij.ui.AppUIUtil
-import com.intellij.ui.ComponentUtil
-import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.JBColor
+import com.intellij.ui.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -14,9 +11,15 @@ import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.TexturePaint
+import java.awt.event.MouseEvent
 import java.awt.geom.Rectangle2D
+import javax.accessibility.AccessibleAction
+import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.UIManager
 import javax.swing.border.Border
 import javax.swing.border.CompoundBorder
 import kotlin.math.floor
@@ -25,7 +28,43 @@ import kotlin.math.floor
  * @author Alexander Lobas
  */
 @ApiStatus.Internal
-open class RiderWidgetLabel(text: @Nls String, private val clientSide: Boolean) : JLabel(text) {
+open class WidgetLabel : JLabel {
+  constructor(text: @Nls String) : super(text)
+  constructor(image: Icon) : super(image)
+
+  var clickListener: ClickListener? = null
+
+  override fun getAccessibleContext(): AccessibleContext? {
+    if (accessibleContext == null) {
+      accessibleContext = object : AccessibleJLabel(), AccessibleAction {
+        override fun getAccessibleRole() = AccessibleRole.PUSH_BUTTON
+
+        override fun getAccessibleAction() = this
+
+        override fun getAccessibleActionCount() = 1
+
+        override fun getAccessibleActionDescription(i: Int): String? {
+          if (i == 0) {
+            return UIManager.getString("AbstractButton.clickText")
+          }
+          return null
+        }
+
+        override fun doAccessibleAction(i: Int): Boolean {
+          if (i == 0 && clickListener != null) {
+            clickListener!!.onClick(MouseEvent(this@WidgetLabel, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false), 1)
+            return true
+          }
+          return false
+        }
+      }
+    }
+    return accessibleContext
+  }
+}
+
+@ApiStatus.Internal
+open class RiderWidgetLabel(text: @Nls String, private val clientSide: Boolean) : WidgetLabel(text) {
   companion object {
     fun createStatusBarBorder(): Border {
       if (ExperimentalUI.Companion.isNewUI()) {
