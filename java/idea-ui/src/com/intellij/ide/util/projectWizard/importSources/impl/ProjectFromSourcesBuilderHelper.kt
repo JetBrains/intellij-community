@@ -69,7 +69,7 @@ internal class ProjectFromSourcesBuilderHelper(private val project: Project,
       }
     }
     catch (e: Exception) {
-      LOG.info(e)
+      LOG.error("Cannot commit", e)
       Messages.showErrorDialog(IdeCoreBundle.message("error.adding.module.to.project", e.message),
                                IdeCoreBundle.message("title.add.module"))
     }
