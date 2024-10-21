@@ -131,7 +131,7 @@ class PythonNewVirtualenvCreator(model: PythonMutableTargetAddInterpreterModel) 
           .bindSelected(model.state.inheritSitePackages)
       }
       row("") {
-        checkBox(message("sdk.create.custom.make.available"))
+        checkBox(message("available.to.all.projects"))
           .bindSelected(model.state.makeAvailable)
       }
     }
