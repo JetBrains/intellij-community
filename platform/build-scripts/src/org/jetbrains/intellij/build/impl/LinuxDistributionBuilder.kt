@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -82,7 +83,7 @@ class LinuxDistributionBuilder(
     updateExecutablePermissions(osAndArchSpecificDistPath, executableFileMatchers)
     context.executeStep(spanBuilder("Build Linux artifacts").setAttribute("arch", arch.name), BuildOptions.LINUX_ARTIFACTS_STEP) {
       if (customizer.buildArtifactWithoutRuntime) {
-        launch(Dispatchers.IO) {
+        launch(Dispatchers.IO + CoroutineName("Build Linux $arch .tar.gz without bundled Runtime")) {
           context.executeStep(
             spanBuilder("Build Linux .tar.gz without bundled Runtime")
               .setAttribute("arch", arch.name)
@@ -109,7 +110,7 @@ class LinuxDistributionBuilder(
       ) { _ ->
         buildTarGz(arch, runtimeDir, osAndArchSpecificDistPath, suffix(arch))
       }
-      launch(Dispatchers.IO) {
+      launch(Dispatchers.IO + CoroutineName("build Span package")) {
         buildSnapPackage(runtimeDir, osAndArchSpecificDistPath, arch)
       }
 

@@ -13,6 +13,7 @@ import com.jetbrains.JBR
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -411,7 +412,7 @@ private suspend fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinarie
   spanBuilder("load project").use(Dispatchers.IO) { span ->
     pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", Path.of(System.getProperty("user.home"), ".m2/repository").invariantSeparatorsPathString)
     val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
-    loadProject(model.project, pathVariables, JpsPathMapper.IDENTITY, projectHome, null, { it: Runnable -> launch { it.run() } }, false)
+    loadProject(model.project, pathVariables, JpsPathMapper.IDENTITY, projectHome, null, { it: Runnable -> launch(CoroutineName("loading project")) { it.run() } }, false)
     span.setAllAttributes(
       Attributes.of(
         AttributeKey.stringKey("project"), projectHome.toString(),

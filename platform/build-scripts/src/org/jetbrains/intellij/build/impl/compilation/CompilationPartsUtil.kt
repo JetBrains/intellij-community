@@ -7,6 +7,7 @@ package org.jetbrains.intellij.build.impl.compilation
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -414,9 +415,10 @@ private suspend fun checkPreviouslyUnpackedDirectories(
 
   val start = System.nanoTime()
   withContext(Dispatchers.IO) {
-    launch {
+    val name = "remove stalled directories not present in metadata"
+    launch(CoroutineName(name)) {
       @Suppress("RemoveRedundantQualifierName")
-      spanBuilder("remove stalled directories not present in metadata").setAttribute(AttributeKey.stringArrayKey("keys"), java.util.List.copyOf(metadata.files.keys)).use {
+      spanBuilder(name).setAttribute(AttributeKey.stringArrayKey("keys"), java.util.List.copyOf(metadata.files.keys)).use {
         removeStalledDirs(metadata, classOutput)
       }
     }
@@ -494,7 +496,7 @@ private fun CoroutineScope.removeStalledDirs(
   }
 
   for (dir in stalledDirs) {
-    launch {
+    launch(CoroutineName("delete stalled dir $dir")) {
       spanBuilder("delete stalled dir").setAttribute("dir", dir.toString()).use {
         dir.deleteRecursively()
       }

@@ -5,6 +5,7 @@ import com.intellij.util.text.NameUtilCore
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.apache.maven.model.Dependency
@@ -392,7 +393,7 @@ private suspend fun layoutMavenArtifacts(modulesToPublish: Map<MavenArtifactData
   val publishSourceFilter = context.productProperties.mavenArtifacts.publishSourcesFilter
   coroutineScope {
     for ((artifactData, modules) in modulesToPublish.entries) {
-      launch {
+      launch(CoroutineName("layout maven artifact ${artifactData.coordinates}")) {
         val modulesWithSources = modules.filter {
           it.getSourceRoots(JavaSourceRootType.SOURCE).any() || it.getSourceRoots(JavaResourceRootType.RESOURCE).any()
         }

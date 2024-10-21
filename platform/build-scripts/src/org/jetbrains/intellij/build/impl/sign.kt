@@ -37,6 +37,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.name
+import kotlin.io.path.relativeTo
 
 internal fun isMacLibrary(name: String): Boolean =
   name.endsWith(".jnilib") ||
@@ -66,14 +67,14 @@ internal fun CoroutineScope.recursivelySignMacBinaries(root: Path,
     }
   })
 
-  launch {
+  launch(CoroutineName("signing macOS binaries")) {
     signMacBinaries(binaries.filter {
       isMacBinary(it) && !isSigned(it)
     }, context)
   }
 
   for (file in archives) {
-    launch {
+    launch(CoroutineName("signing macOS binaries in ${file.relativeTo(root)}")) {
       signAndRepackZipIfMacSignaturesAreMissing(file, context)
     }
   }

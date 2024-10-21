@@ -214,7 +214,7 @@ class SoftwareBillOfMaterialsImpl(
     return withContext(Dispatchers.IO) {
       distributions.associateWith { distribution ->
         getFiles(distribution)
-          .map { async { Checksums(it) } }
+          .map { async(CoroutineName("checksums for $it")) { Checksums(it) } }
           .map { it.await() }
       }
     }.flatMap { (distribution, filesWithChecksums) ->
@@ -429,8 +429,9 @@ class SoftwareBillOfMaterialsImpl(
         .map { it.path }.distinct()
         // non-bundled plugins, for example
         .filterNot { it.startsWith(context.paths.tempDir) }
-        .toList().map { async { Checksums(it) } }
-        .map { it.await() }
+        .toList().map {
+          async(CoroutineName("checksums for $it")) { Checksums(it) }
+        }.map { it.await() }
     }
   }
 
@@ -478,8 +479,8 @@ class SoftwareBillOfMaterialsImpl(
       }.distinctBy {
         it.first.mavenDescriptor?.mavenId ?: it.first.name
       }.groupBy({ it.first }, { it.second }).map { (library, modules) ->
-        async {
-          val libraryName = getLibraryFilename(library)
+        val libraryName = getLibraryFilename(library)
+        async(CoroutineName("maven library $libraryName")) {
           val libraryEntry = librariesBundledInDistributions.get(libraryName)
           val libraryFile = libraryEntry?.libraryFile ?: return@async null
           val libraryLicense = context.productProperties.allLibraryLicenses.firstOrNull {

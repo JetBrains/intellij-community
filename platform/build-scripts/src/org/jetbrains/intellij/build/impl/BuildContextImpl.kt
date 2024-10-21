@@ -187,7 +187,7 @@ class BuildContextImpl internal constructor(
   }
 
   @OptIn(DelicateCoroutinesApi::class)
-  private val bundledPluginModulesForModularLoader = GlobalScope.async(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
+  private val bundledPluginModulesForModularLoader = GlobalScope.async(Dispatchers.Unconfined + CoroutineName("bundled plugin modules for modular loader"), start = CoroutineStart.LAZY) {
     productProperties.rootModuleForModularLoader?.let { rootModule ->
       getOriginalModuleRepository().loadRawProductModules(rootModule, productProperties.productMode).bundledPluginMainModules.map {
         it.stringId
@@ -212,7 +212,7 @@ class BuildContextImpl internal constructor(
   }
 
   @OptIn(DelicateCoroutinesApi::class)
-  private val _jetBrainsClientModuleFilter = GlobalScope.async(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
+  private val _jetBrainsClientModuleFilter = GlobalScope.async(Dispatchers.Unconfined + CoroutineName("JetBrains client module filter"), start = CoroutineStart.LAZY) {
     val mainModule = productProperties.embeddedJetBrainsClientMainModule
     if (mainModule != null && options.enableEmbeddedJetBrainsClient) {
       val productModules = getOriginalModuleRepository().loadProductModules(mainModule, ProductMode.FRONTEND)
@@ -402,7 +402,7 @@ class BuildContextImpl internal constructor(
   }
 
   @OptIn(DelicateCoroutinesApi::class)
-  private val devModeProductRunner = GlobalScope.async(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
+  private val devModeProductRunner = GlobalScope.async(Dispatchers.Unconfined + CoroutineName("dev mode product runner"), start = CoroutineStart.LAZY) {
     createDevModeProductRunner(this@BuildContextImpl)
   }
 

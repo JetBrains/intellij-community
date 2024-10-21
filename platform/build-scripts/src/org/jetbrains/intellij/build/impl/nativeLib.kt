@@ -7,6 +7,7 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.lang.ZipFile
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.plus
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
@@ -121,7 +122,7 @@ internal fun CoroutineScope.packNativePresignedFiles(
 ) {
   for ((source, paths) in nativeFiles) {
     val sourceFile = source.file
-    launch(Dispatchers.IO) {
+    launch(Dispatchers.IO + CoroutineName("pack native presigned file $sourceFile")) {
       unpackNativeLibraries(
         sourceFile = sourceFile,
         paths = paths,
@@ -206,12 +207,12 @@ private suspend fun unpackNativeLibraries(
   if (signTool.signNativeFileMode == SignNativeFileMode.PREPARE) {
     val versionOption = mapOf(SignTool.LIB_VERSION_OPTION_NAME to libVersion)
     coroutineScope {
-      launch {
+      launch(CoroutineName("signing macOS binaries")) {
         unsignedFiles.get(OsFamily.MACOS)?.let {
           signMacBinaries(files = it, context = context, additionalOptions = versionOption, checkPermissions = false)
         }
       }
-      launch {
+      launch(CoroutineName("signing Windows binaries")) {
         unsignedFiles.get(OsFamily.WINDOWS)?.let {
           @Suppress("SpellCheckingInspection")
           context.signFiles(

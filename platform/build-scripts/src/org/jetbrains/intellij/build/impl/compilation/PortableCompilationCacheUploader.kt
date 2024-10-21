@@ -7,6 +7,7 @@ import io.netty.handler.codec.http.HttpResponseStatus
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -89,7 +90,7 @@ internal suspend fun uploadJpsCache(
       val urlPathPrefix = uploadUrl.path
       val zstdCompressContextPool = ZstdCompressContextPool()
       withContext(Dispatchers.IO) {
-        launch {
+        launch(CoroutineName("upload JPS data")) {
           spanBuilder("upload JPS data").use {
             uploadJpsData(
               urlPathPrefix = urlPathPrefix,

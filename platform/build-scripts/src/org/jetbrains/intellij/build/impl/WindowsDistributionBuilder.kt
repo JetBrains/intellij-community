@@ -113,14 +113,14 @@ internal class WindowsDistributionBuilder(
 
       if (customizer.buildZipArchiveWithBundledJre) {
         val zipNameSuffix = suffix(arch) + customizer.zipArchiveWithBundledJreSuffix
-        launch(Dispatchers.IO) {
+        launch(Dispatchers.IO + CoroutineName("build Windows ${zipNameSuffix}.zip distribution")) {
           zipWithJbrPath = createBuildWinZipTask(runtimeDir, zipNameSuffix, osAndArchSpecificDistPath, arch, customizer, context)
         }
       }
 
       if (customizer.buildZipArchiveWithoutBundledJre) {
         val zipNameSuffix = suffix(arch) + customizer.zipArchiveWithoutBundledJreSuffix
-        launch(Dispatchers.IO) {
+        launch(Dispatchers.IO + CoroutineName("build Windows ${zipNameSuffix}.zip distribution")) {
           createBuildWinZipTask(runtimeDir = null, zipNameSuffix, osAndArchSpecificDistPath, arch, customizer, context)
         }
       }
@@ -130,7 +130,7 @@ internal class WindowsDistributionBuilder(
         val jsonText = generateProductJson(productJsonDir, context, arch)
         val installationDirectories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, runtimeDir)
         validateProductJson(jsonText, relativePathToProductJson = "", installationDirectories, installationArchives = emptyList(), context)
-        launch(Dispatchers.IO) {
+        launch(Dispatchers.IO + CoroutineName("build Windows ${arch.dirName} installer")) {
           exePath = buildNsisInstaller(osAndArchSpecificDistPath, additionalDirectoryToInclude = productJsonDir, suffix(arch), customizer, runtimeDir, context)
         }
       }

@@ -124,13 +124,13 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
   coroutineScope {
     val moduleOutputPatcher = ModuleOutputPatcher()
 
-    val platformLayout = async {
+    val platformLayout = async(CoroutineName("create platform layout")) {
       createPlatformLayout(context = context)
     }
 
     val searchableOptionSet = getSearchableOptionSet(context)
 
-    val platformDistributionEntriesDeferred = async {
+    val platformDistributionEntriesDeferred = async(CoroutineName("platform distribution entries")) {
       launch(Dispatchers.IO) {
         // PathManager.getBinPath() is used as a working dir for maven
         val binDir = Files.createDirectories(runDir.resolve("bin"))
@@ -183,7 +183,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       }
     }
 
-    val pluginDistributionEntriesDeferred = async {
+    val pluginDistributionEntriesDeferred = async(CoroutineName("build plugins")) {
       buildPlugins(
         request = request,
         runDir = runDir,
@@ -417,7 +417,7 @@ private suspend fun createBuildContext(
 ): BuildContext {
   return coroutineScope {
     // ~1 second
-    val productProperties = async {
+    val productProperties = async(CoroutineName("create product properties")) {
       createProductProperties()
     }
 
@@ -433,7 +433,7 @@ private suspend fun createBuildContext(
     }
 
     // load project is executed as part of compilation context creation - ~1 second
-    val compilationContextDeferred = async {
+    val compilationContextDeferred = async(CoroutineName("create build context")) {
       spanBuilder("create build context").use {
         // we cannot inject a proper build time as it is a part of resources, so, set to the first day of the current month
         val options = BuildOptions(

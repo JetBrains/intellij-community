@@ -204,7 +204,7 @@ class JarPackager private constructor(
 
       return coroutineScope {
         if (nativeFiles.isNotEmpty()) {
-          launch {
+          launch(CoroutineName("pack native presigned files")) {
             packNativePresignedFiles(nativeFiles = nativeFiles, dryRun = dryRun, context = context, toRelativePath = { libName, fileName ->
               "lib/$libName/$fileName"
             })
@@ -792,7 +792,7 @@ private suspend fun buildJars(
 
   val list = withContext(Dispatchers.IO) {
     assets.map { asset ->
-      async {
+      async(CoroutineName("build jar for ${asset.relativePath}")) {
         if (asset.isDir) {
           updateModuleSourceHash(asset)
           return@async emptyMap()

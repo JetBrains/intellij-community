@@ -188,7 +188,7 @@ class MacDistributionBuilder(
     withContext(Dispatchers.IO) {
       signMacBinaries(files = binariesToSign, context)
       for (dir in listOf(osAndArchSpecificDistPath, runtimeDist)) {
-        launch {
+        launch(CoroutineName("recursively signing macOS binaries in $dir")) {
           recursivelySignMacBinaries(root = dir, context, executableFileMatchers = matchers)
         }
       }

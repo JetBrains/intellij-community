@@ -673,7 +673,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
     return coroutineScope {
       context.project.modules.map { module ->
-        async {
+        async(CoroutineName("loading tests annotated with @SkipInHeadlessEnvironment from the module '${module.name}'")) {
           val root = context.getModuleTestsOutputDir(module)
           if (Files.exists(root)) {
             Files.walk(root).use { stream ->
