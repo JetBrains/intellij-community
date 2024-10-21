@@ -35,6 +35,7 @@ import java.io.*
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
+import kotlin.Throws
 
 class MavenProject(val file: VirtualFile) {
   enum class ConfigFileKind(val myRelativeFilePath: String, val myValueIfMissing: String) {
@@ -79,6 +80,7 @@ class MavenProject(val file: VirtualFile) {
       myState,
       true,
       readerResult.mavenModel,
+      emptyList(),
       readerResult.readingProblems,
       readerResult.activatedProfiles,
       setOf(),
@@ -98,6 +100,7 @@ class MavenProject(val file: VirtualFile) {
   @Internal
   fun updateState(
     model: MavenModel,
+    managedDependencies: List<MavenId>,
     dependencyHash: String?,
     readingProblems: Collection<MavenProjectProblem>,
     activatedProfiles: MavenExplicitProfiles,
@@ -111,6 +114,7 @@ class MavenProject(val file: VirtualFile) {
       myState,
       false,
       model,
+      managedDependencies,
       readingProblems,
       activatedProfiles,
       unresolvedArtifactIds,
@@ -139,7 +143,7 @@ class MavenProject(val file: VirtualFile) {
 
   @Internal
   fun updateState(readingProblems: Collection<MavenProjectProblem>): MavenProjectChanges {
-    val newState= myState.copy(readingProblems = readingProblems)
+    val newState = myState.copy(readingProblems = readingProblems)
     return setState(newState)
   }
 
@@ -714,6 +718,8 @@ class MavenProject(val file: VirtualFile) {
     setState(newState)
   }
 
+  fun findManagedDependency(groupId: String, artifactId: String): MavenId? = myState.managedDependencies["$groupId:$artifactId"]
+
   fun findDependencies(depProject: MavenProject): List<MavenArtifact> {
     return findDependencies(depProject.mavenId)
   }
@@ -856,10 +862,10 @@ class MavenProject(val file: VirtualFile) {
     if (configs.size == 1) return getCompilerLevel(level, configs[0])
 
     return configs
-      .mapNotNull { findChildValueByPath(it, level) }
-      .map { LanguageLevel.parse(it) ?: LanguageLevel.HIGHEST }
-      .maxWithOrNull(Comparator.naturalOrder())
-      ?.toJavaVersion()?.toFeatureString() ?: myState.properties!!.getProperty("maven.compiler.$level")
+             .mapNotNull { findChildValueByPath(it, level) }
+             .map { LanguageLevel.parse(it) ?: LanguageLevel.HIGHEST }
+             .maxWithOrNull(Comparator.naturalOrder())
+             ?.toJavaVersion()?.toFeatureString() ?: myState.properties!!.getProperty("maven.compiler.$level")
   }
 
   private fun getCompilerLevel(level: String, config: Element): String? {
@@ -1104,6 +1110,7 @@ class MavenProject(val file: VirtualFile) {
       state: MavenProjectState,
       incLastReadStamp: Boolean,
       model: MavenModel,
+      managedDependencies: List<MavenId>,
       readingProblems: Collection<MavenProjectProblem>,
       activatedProfiles: MavenExplicitProfiles,
       unresolvedArtifactIds: Set<MavenId>,
@@ -1126,6 +1133,7 @@ class MavenProject(val file: VirtualFile) {
       val newPluginInfos = LinkedHashSet<MavenPluginInfo>()
       val newExtensions = LinkedHashSet<MavenArtifact>()
       val newAnnotationProcessors = LinkedHashSet<MavenArtifact>()
+      val newManagedDeps = LinkedHashMap<String, MavenId>()
 
       if (keepPreviousArtifacts) {
         newUnresolvedArtifacts.addAll(state.unresolvedArtifactIds)
@@ -1135,6 +1143,7 @@ class MavenProject(val file: VirtualFile) {
         newDependencyTree.addAll(state.dependencyTree)
         newExtensions.addAll(state.extensions)
         newAnnotationProcessors.addAll(state.annotationProcessors)
+        newManagedDeps.putAll(state.managedDependencies)
       }
 
       // either keep all previous plugins or only those that are present in the new list
@@ -1154,6 +1163,7 @@ class MavenProject(val file: VirtualFile) {
       newDependencyTree.addAll(model.dependencyTree)
       newDependencies.addAll(model.dependencies)
       newExtensions.addAll(model.extensions)
+      managedDependencies.forEach { md -> newManagedDeps.put("${md.groupId}:${md.artifactId}", md) }
 
       val remoteRepositories = ArrayList(newRepositories)
       val remotePluginRepositories = ArrayList(newPluginRepositories)
@@ -1162,6 +1172,7 @@ class MavenProject(val file: VirtualFile) {
       val pluginInfos = ArrayList(newPluginInfos)
       val extensions = ArrayList(newExtensions)
       val annotationProcessors = ArrayList(newAnnotationProcessors)
+      val managedDependenciesMap = LinkedHashMap(newManagedDeps)
 
       val newDependencyHash = dependencyHash ?: state.dependencyHash
       val lastReadStamp = state.lastReadStamp + if (incLastReadStamp) 1 else 0
@@ -1199,6 +1210,7 @@ class MavenProject(val file: VirtualFile) {
         pluginInfos = pluginInfos,
         extensions = extensions,
         annotationProcessors = annotationProcessors,
+        managedDependencies = managedDependenciesMap,
         dependencyHash = newDependencyHash,
       )
     }
