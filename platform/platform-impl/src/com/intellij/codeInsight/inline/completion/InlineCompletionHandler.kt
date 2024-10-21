@@ -251,6 +251,9 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
         LOG.warn("$provider gave too many variants: ${variants.size} > ${InlineCompletionSuggestion.MAX_VARIANTS_NUMBER}.")
         variants = variants.take(InlineCompletionSuggestion.MAX_VARIANTS_NUMBER)
       }
+      withContext(Dispatchers.EDT) {
+        trace(InlineCompletionEventType.SuggestionInitialized(variants.size))
+      }
       if (variants.isEmpty()) {
         withContext(Dispatchers.EDT) {
           coroutineToIndicator {
