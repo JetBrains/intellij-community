@@ -355,7 +355,7 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     @NotNull ThrowableComputable<? extends T, ? extends EvaluateException> valueComputable,
     @NotNull Function<? super T, ? extends R> processor,
     @NotNull EvaluationContext evaluationContext) throws EvaluateException {
-    int retries = 1;
+    int retries = 3;
     while (true) {
       T result = valueComputable.compute();
       try {
@@ -363,6 +363,7 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
       }
       catch (ObjectCollectedException oce) {
         if (--retries < 0) {
+          LOG.error("Retries exhausted, apply suspend-all evaluation");
           if (evaluationContext.getSuspendContext() instanceof SuspendContextImpl suspendContextImpl) {
             VirtualMachineProxyImpl virtualMachineProxy = suspendContextImpl.getVirtualMachineProxy();
             virtualMachineProxy.suspend();
