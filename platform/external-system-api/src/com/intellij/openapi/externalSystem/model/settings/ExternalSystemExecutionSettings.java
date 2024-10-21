@@ -6,6 +6,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,9 +29,12 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
   private long myRemoteProcessIdleTtlInMs;
   private boolean myVerboseProcessing;
   private final @NotNull List<String> myJvmArguments;
+  private @NotNull List<String> myTasks;
   private final @NotNull List<String> myArguments;
   private final @NotNull Map<String, String> myEnv;
   private boolean myPassParentEnvs;
+
+  private @Nullable String myJvmParameters;
 
   private final transient @NotNull UserDataHolderBase myUserData = new UserDataHolderBase();
 
@@ -40,9 +44,12 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
     myVerboseProcessing = false;
 
     myJvmArguments = new ArrayList<>();
+    myTasks = new ArrayList<>();
     myArguments = new ArrayList<>();
     myEnv = new LinkedHashMap<>();
     myPassParentEnvs = true;
+
+    myJvmParameters = null;
   }
 
   public ExternalSystemExecutionSettings(@NotNull ExternalSystemExecutionSettings settings) {
@@ -51,9 +58,12 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
     myVerboseProcessing = settings.myVerboseProcessing;
 
     myJvmArguments = new ArrayList<>(settings.myJvmArguments);
+    myTasks = new ArrayList<>(settings.myTasks);
     myArguments = new ArrayList<>(settings.myArguments);
     myEnv = new LinkedHashMap<>(settings.myEnv);
     myPassParentEnvs = settings.myPassParentEnvs;
+
+    myJvmParameters = settings.myJvmParameters;
 
     settings.myUserData.copyUserDataTo(myUserData);
   }
@@ -80,6 +90,14 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
   @NotNull
   public List<String> getJvmArguments() {
     return Collections.unmodifiableList(myJvmArguments);
+  }
+
+  public @NotNull List<String> getTasks() {
+    return Collections.unmodifiableList(myTasks);
+  }
+
+  public void setTasks(List<String> tasks) {
+    myTasks = new ArrayList<>(tasks);
   }
 
   @NotNull
@@ -143,6 +161,16 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
   public ExternalSystemExecutionSettings passParentEnvs(boolean passParentEnvs) {
     myPassParentEnvs = passParentEnvs;
     return this;
+  }
+
+  @ApiStatus.Internal
+  public @Nullable String getJvmParameters() {
+    return myJvmParameters;
+  }
+
+  @ApiStatus.Internal
+  public void setJvmParameters(@Nullable String jvmParameters) {
+    myJvmParameters = jvmParameters;
   }
 
   @Nullable

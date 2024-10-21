@@ -748,6 +748,7 @@ c:com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSett
 - getEnv():java.util.Map
 - getJvmArguments():java.util.List
 - getRemoteProcessIdleTtlInMs():J
+- getTasks():java.util.List
 - getUserData(com.intellij.openapi.util.Key):java.lang.Object
 - hashCode():I
 - isDebugServerProcess():Z
@@ -757,6 +758,7 @@ c:com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSett
 - prependArguments(java.lang.String[]):V
 - putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
 - setRemoteProcessIdleTtlInMs(J):V
+- setTasks(java.util.List):V
 - setVerboseProcessing(Z):V
 - withArgument(java.lang.String):com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings
 - withArguments(java.util.Collection):com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings
@@ -1255,6 +1257,7 @@ com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager
 - a:cancelTask(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):Z
 - executeTasks(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.util.List,java.lang.String,com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings,java.lang.String,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):V
 - executeTasks(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.util.List,java.lang.String,com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings,java.util.List,java.util.List,java.lang.String,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):V
+- executeTasks(java.lang.String,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):V
 com.intellij.openapi.externalSystem.task.TaskCallback
 - a:onFailure():V
 - a:onSuccess():V

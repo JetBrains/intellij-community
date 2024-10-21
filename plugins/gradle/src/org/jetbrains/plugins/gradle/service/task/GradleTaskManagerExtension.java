@@ -23,13 +23,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
  * This extension point allows overriding default Gradle task execution.
- * <br>
- * When IDEA needs to execute some Gradle tasks, implementing extension can intercept execution logic
+ * <p>
+ * When an IDEA needs to execute some Gradle tasks, implementing extension can intercept execution logic
  * and perform these tasks in its own manner
  */
 public interface GradleTaskManagerExtension {
@@ -37,9 +36,9 @@ public interface GradleTaskManagerExtension {
   ExtensionPointName<GradleTaskManagerExtension> EP_NAME = ExtensionPointName.create("org.jetbrains.plugins.gradle.taskManager");
 
   /**
-   * @deprecated use {@link #executeTasks(ExternalSystemTaskId, List, String, GradleExecutionSettings, String, ExternalSystemTaskNotificationListener)}
+   * @deprecated use {@link #executeTasks(String, ExternalSystemTaskId, GradleExecutionSettings, ExternalSystemTaskNotificationListener)}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   default boolean executeTasks(
     @NotNull ExternalSystemTaskId id,
     @NotNull List<String> taskNames,
@@ -54,17 +53,9 @@ public interface GradleTaskManagerExtension {
   }
 
   /**
-   * Try executing tasks.
-   *
-   * @param id                 id of operation in IDEA terms
-   * @param taskNames          names of tasks
-   * @param projectPath        path to project, where tasks are executed
-   * @param settings           gradle execution settings
-   * @param jvmParametersSetup jvm parameters string
-   * @param listener           should be called to notify IDEA on tasks' progress and status
-   * @return false if tasks were not executed and IDEA should proceed with default logic, true - if tasks are executed and no
-   * more actions are required
+   * @deprecated use {@link #executeTasks(String, ExternalSystemTaskId, GradleExecutionSettings, ExternalSystemTaskNotificationListener)}
    */
+  @Deprecated
   default boolean executeTasks(
     @NotNull ExternalSystemTaskId id,
     @NotNull List<String> taskNames,
@@ -73,13 +64,47 @@ public interface GradleTaskManagerExtension {
     @Nullable String jvmParametersSetup,
     @NotNull ExternalSystemTaskNotificationListener listener
   ) throws ExternalSystemException {
-    List<String> vmOptions = settings != null ? settings.getJvmArguments() : Collections.emptyList();
-    List<String> arguments = settings != null ? settings.getArguments() : Collections.emptyList();
+    assert settings != null;
+    settings.setTasks(taskNames);
+    settings.setJvmParameters(jvmParametersSetup);
+    return executeTasks(projectPath, id, settings, listener);
+  }
+
+  /**
+   * Overrides Gradle task execution process.
+   *
+   * @param projectPath path to project, where tasks are executed
+   * @param id          id of operation in IDEA terms
+   * @param settings    gradle execution settings
+   * @param listener    should be called to notify IDEA on tasks' progress and status
+   * @return false - if tasks were not executed and IDEA should proceed with default logic,
+   * true - if tasks are executed and no more actions are required
+   */
+  default boolean executeTasks(
+    @NotNull String projectPath,
+    @NotNull ExternalSystemTaskId id,
+    @NotNull GradleExecutionSettings settings,
+    @NotNull ExternalSystemTaskNotificationListener listener
+  ) throws ExternalSystemException {
+    var taskNames = settings.getTasks();
+    var arguments = settings.getArguments();
+    var vmOptions = settings.getJvmArguments();
+    var jvmParametersSetup = settings.getJvmParameters();
     return executeTasks(id, taskNames, projectPath, settings, vmOptions, arguments, jvmParametersSetup, listener);
   }
 
-  boolean cancelTask(
+  /**
+   * Overrides Gradle task cancellation process.
+   *
+   * @param id       id of operation in IDEA terms
+   * @param listener should be called to notify IDEA on tasks' progress and status
+   * @return false - if tasks were not canceled and IDEA should proceed with default logic,
+   * true - if tasks are canceled and no more actions are required
+   */
+  default boolean cancelTask(
     @NotNull ExternalSystemTaskId id,
     @NotNull ExternalSystemTaskNotificationListener listener
-  ) throws ExternalSystemException;
+  ) throws ExternalSystemException {
+    return false;
+  }
 }

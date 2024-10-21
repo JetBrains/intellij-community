@@ -7,9 +7,13 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.service.execution.GradleCommandLineUtil;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
+import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
@@ -233,6 +237,17 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   public void setParallelModelFetch(boolean parallelModelFetch) {
     isParallelModelFetch = parallelModelFetch;
+  }
+
+  @Override
+  public @NotNull List<String> getTasks() {
+    return super.getTasks().stream()
+      .flatMap(s -> ParametersListUtil.parse(s, false, true).stream())
+      .collect(Collectors.toList());
+  }
+
+  public @NotNull GradleCommandLine getCommandLine() {
+    return GradleCommandLineUtil.parseCommandLine(getTasks(), getArguments());
   }
 
   @Override

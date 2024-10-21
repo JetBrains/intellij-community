@@ -19,7 +19,6 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +31,7 @@ import java.util.List;
 public interface ExternalSystemTaskManager<S extends ExternalSystemExecutionSettings> {
 
   /**
-   * @deprecated use {@link ExternalSystemTaskManager#executeTasks(ExternalSystemTaskId, List, String, ExternalSystemExecutionSettings, String, ExternalSystemTaskNotificationListener)} instead
+   * @deprecated use {@link ExternalSystemTaskManager#executeTasks(String, ExternalSystemTaskId, ExternalSystemExecutionSettings, ExternalSystemTaskNotificationListener)} instead
    */
   @Deprecated
   default void executeTasks(
@@ -46,6 +45,10 @@ public interface ExternalSystemTaskManager<S extends ExternalSystemExecutionSett
     @NotNull ExternalSystemTaskNotificationListener listener
   ) throws ExternalSystemException { }
 
+  /**
+   * @deprecated use {@link ExternalSystemTaskManager#executeTasks(String, ExternalSystemTaskId, ExternalSystemExecutionSettings, ExternalSystemTaskNotificationListener)} instead
+   */
+  @Deprecated
   default void executeTasks(
     @NotNull ExternalSystemTaskId id,
     @NotNull List<String> taskNames,
@@ -54,8 +57,22 @@ public interface ExternalSystemTaskManager<S extends ExternalSystemExecutionSett
     @Nullable String jvmParametersSetup,
     @NotNull ExternalSystemTaskNotificationListener listener
   ) throws ExternalSystemException {
-    List<String> vmOptions = settings == null ? ContainerUtil.emptyList() : settings.getJvmArguments();
-    List<String> arguments = settings == null ? ContainerUtil.emptyList() : settings.getArguments();
+    assert settings != null;
+    settings.setTasks(taskNames);
+    settings.setJvmParameters(jvmParametersSetup);
+    executeTasks(projectPath, id, settings, listener);
+  }
+
+  default void executeTasks(
+    @NotNull String projectPath,
+    @NotNull ExternalSystemTaskId id,
+    @NotNull S settings,
+    @NotNull ExternalSystemTaskNotificationListener listener
+  ) throws ExternalSystemException {
+    var taskNames = settings.getTasks();
+    var arguments = settings.getArguments();
+    var vmOptions = settings.getJvmArguments();
+    var jvmParametersSetup = settings.getJvmParameters();
     executeTasks(id, taskNames, projectPath, settings, vmOptions, arguments, jvmParametersSetup, listener);
   }
 
@@ -69,7 +86,7 @@ public interface ExternalSystemTaskManager<S extends ExternalSystemExecutionSett
   class NoOp implements ExternalSystemTaskManager {
     //@formatter:off
     @Override public boolean cancelTask(@NotNull ExternalSystemTaskId id, @NotNull ExternalSystemTaskNotificationListener listener) { return false; }
-    @Override public void executeTasks(@NotNull ExternalSystemTaskId id, @NotNull List taskNames, @NotNull String projectPath, @Nullable ExternalSystemExecutionSettings settings, @Nullable String jvmParametersSetup, @NotNull ExternalSystemTaskNotificationListener listener) { }
+    @Override public void executeTasks(@NotNull String projectPath, @NotNull ExternalSystemTaskId id, @Nullable ExternalSystemExecutionSettings settings, @NotNull ExternalSystemTaskNotificationListener listener) { }
     //@formatter:on
   }
 }

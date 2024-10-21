@@ -17,6 +17,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
@@ -35,11 +36,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass;
 import com.intellij.task.RunConfigurationTaskState;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.execution.ParametersListUtil;
 import org.gradle.api.Task;
 import org.gradle.tooling.*;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +64,6 @@ import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DISPATCH_ADDR_SYS_PROP;
 import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DISPATCH_PORT_SYS_PROP;
@@ -85,6 +85,10 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   public GradleTaskManager() {
   }
 
+  /**
+   * @deprecated use {@link GradleTaskManager#executeTasks(String, ExternalSystemTaskId, GradleExecutionSettings, ExternalSystemTaskNotificationListener)} instead
+   */
+  @Deprecated
   @Override
   public void executeTasks(
     @NotNull ExternalSystemTaskId id,
@@ -94,30 +98,35 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     @Nullable String jvmParametersSetup,
     @NotNull ExternalSystemTaskNotificationListener listener
   ) throws ExternalSystemException {
-    final List<String> tasks = taskNames.stream()
-      .flatMap(s -> ParametersListUtil.parse(s, false, true).stream())
-      .collect(Collectors.toList());
+    ExternalSystemTaskManager.super.executeTasks(id, taskNames, projectPath, settings, jvmParametersSetup, listener);
+  }
+
+  @Override
+  public void executeTasks(
+    @NotNull String projectPath,
+    @NotNull ExternalSystemTaskId id,
+    @NotNull GradleExecutionSettings settings,
+    @NotNull ExternalSystemTaskNotificationListener listener
+  ) throws ExternalSystemException {
 
     if (ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {
-      for (GradleTaskManagerExtension gradleTaskManagerExtension : GradleTaskManagerExtension.EP_NAME.getExtensions()) {
-        if (gradleTaskManagerExtension.executeTasks(id, tasks, projectPath, settings, jvmParametersSetup, listener)) {
+      for (GradleTaskManagerExtension gradleTaskManagerExtension : GradleTaskManagerExtension.EP_NAME.getExtensionList()) {
+        if (gradleTaskManagerExtension.executeTasks(projectPath, id, settings, listener)) {
           return;
         }
       }
     }
 
-    GradleExecutionSettings effectiveSettings = settings == null ? new GradleExecutionSettings() : settings;
-
     CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
     CancellationToken cancellationToken = cancellationTokenSource.token();
     myCancellationMap.put(id, cancellationTokenSource);
     try {
-      if (effectiveSettings.getDistributionType() == DistributionType.WRAPPED) {
+      if (settings.getDistributionType() == DistributionType.WRAPPED) {
         String rootProjectPath = determineRootProject(projectPath);
-        GradleWrapperHelper.ensureInstalledWrapper(id, rootProjectPath, effectiveSettings, listener, cancellationToken);
+        GradleWrapperHelper.ensureInstalledWrapper(id, rootProjectPath, settings, listener, cancellationToken);
       }
-      myHelper.execute(projectPath, effectiveSettings, id, listener, cancellationToken, connection -> {
-        executeTasks(id, tasks, projectPath, effectiveSettings, jvmParametersSetup, listener, connection, cancellationToken);
+      myHelper.execute(projectPath, settings, id, listener, cancellationToken, connection -> {
+        executeTasks(id, projectPath, settings, listener, connection, cancellationToken);
         return null;
       });
     }
@@ -128,10 +137,8 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
 
   private static void executeTasks(
     @NotNull ExternalSystemTaskId id,
-    @NotNull List<String> tasks,
     @NotNull String projectPath,
     @NotNull GradleExecutionSettings settings,
-    @Nullable String jvmParametersSetup,
     @NotNull ExternalSystemTaskNotificationListener listener,
     @NotNull ProjectConnection connection,
     @NotNull CancellationToken cancellationToken
@@ -145,7 +152,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       setupDebuggerDispatchPort(settings);
       setupBuiltInTestEvents(settings, gradleVersion);
 
-      appendInitScriptArgument(id.findProject(), tasks, jvmParametersSetup, settings, gradleVersion);
+      appendInitScriptArgument(id, settings, gradleVersion);
 
       for (GradleBuildParticipant buildParticipant : settings.getExecutionWorkspace().getBuildParticipants()) {
         settings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
@@ -158,10 +165,10 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
           .notifyConnectionAboutChangedPaths(connection);
       }
 
-      var operation = isApplicableTestLauncher(id, projectPath, tasks, settings, gradleVersion)
+      var operation = isApplicableTestLauncher(id, projectPath, settings, gradleVersion)
                       ? connection.newTestLauncher()
                       : connection.newBuild();
-      GradleExecutionHelper.prepareForExecution(connection, operation, cancellationToken, id, tasks, settings, listener);
+      GradleExecutionHelper.prepareForExecution(connection, operation, cancellationToken, id, settings, listener);
       if (operation instanceof BuildLauncher) {
         ((BuildLauncher)operation).run();
       }
@@ -187,7 +194,6 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   private static boolean isApplicableTestLauncher(
     @NotNull ExternalSystemTaskId id,
     @NotNull String projectPath,
-    @NotNull List<String> tasksAndArguments,
     @NotNull GradleExecutionSettings settings,
     @Nullable GradleVersion gradleVersion
   ) {
@@ -220,7 +226,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       LOG.debug("TestLauncher isn't applicable: Project has included build. " + gradleVersion);
       return false;
     }
-    var commandLine = GradleCommandLineUtil.parseCommandLine(tasksAndArguments, settings.getArguments());
+    var commandLine = settings.getCommandLine();
     if (!hasJvmTestTasks(commandLine, project, projectPath)) {
       LOG.debug("TestLauncher isn't applicable: RC hasn't JVM test tasks");
       return false;
@@ -331,18 +337,24 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     return false;
   }
 
+  /**
+   * @deprecated Use {@link ExternalSystemUtil#runTask} instead
+   */
+  @Deprecated
   public static void appendInitScriptArgument(
     @NotNull List<String> taskNames,
     @Nullable String jvmParametersSetup,
     @NotNull GradleExecutionSettings settings
   ) {
-    appendInitScriptArgument(null, taskNames, jvmParametersSetup, settings, null);
+    var id = ExternalSystemTaskId.create(GradleConstants.SYSTEM_ID, ExternalSystemTaskType.EXECUTE_TASK, "");
+    settings.setTasks(taskNames);
+    settings.setJvmParameters(jvmParametersSetup);
+    appendInitScriptArgument(id, settings, null);
   }
 
-  private static void appendInitScriptArgument(
-    @Nullable Project project,
-    @NotNull List<String> taskNames,
-    @Nullable String jvmParametersSetup,
+  @ApiStatus.Internal
+  public static void appendInitScriptArgument(
+    @NotNull ExternalSystemTaskId id,
     @NotNull GradleExecutionSettings settings,
     @Nullable GradleVersion gradleVersion
   ) {
@@ -353,7 +365,11 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       final String resolverClassName = resolverExtension.getClass().getName();
 
       Map<String, String> enhancementParameters = new HashMap<>();
-      enhancementParameters.put(GradleProjectResolverExtension.JVM_PARAMETERS_SETUP_KEY, jvmParametersSetup);
+
+      var jvmParameters = settings.getJvmParameters();
+      if (jvmParameters != null) {
+        enhancementParameters.put(GradleProjectResolverExtension.JVM_PARAMETERS_SETUP_KEY, jvmParameters);
+      }
 
       var isRunAsTest = settings.isRunAsTest();
       enhancementParameters.put(GradleProjectResolverExtension.IS_RUN_AS_TEST_KEY, String.valueOf(isRunAsTest));
@@ -363,7 +379,9 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       Integer debugDispatchPort = settings.getUserData(DEBUGGER_DISPATCH_PORT_KEY);
       if (debugDispatchPort != null) {
         enhancementParameters.put(GradleProjectResolverExtension.DEBUG_DISPATCH_PORT_KEY, String.valueOf(debugDispatchPort));
-        String debugOptions = settings.getUserData(DEBUGGER_PARAMETERS_KEY);
+      }
+      String debugOptions = settings.getUserData(DEBUGGER_PARAMETERS_KEY);
+      if (debugOptions != null) {
         enhancementParameters.put(GradleProjectResolverExtension.DEBUG_OPTIONS_KEY, debugOptions);
       }
       String debugDispatchAddr = settings.getUserData(DEBUGGER_DISPATCH_ADDR_KEY);
@@ -375,6 +393,8 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
         enhancementParameters.put(GradleProjectResolverExtension.GRADLE_VERSION, gradleVersion.getVersion());
       }
 
+      var project = id.findProject();
+      var taskNames = settings.getTasks();
       Map<String, String> taskProcessingEnvironmentVariables = resolverExtension.enhanceTaskProcessing(project, taskNames, script -> {
         if (StringUtil.isNotEmpty(script)) {
           addAllNotNull(

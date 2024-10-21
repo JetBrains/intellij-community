@@ -21,9 +21,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 @ApiStatus.Internal
 public class RemoteExternalSystemTaskManagerImpl<S extends ExternalSystemExecutionSettings>
@@ -37,14 +34,12 @@ public class RemoteExternalSystemTaskManagerImpl<S extends ExternalSystemExecuti
 
   @Override
   public void executeTasks(
-    @NotNull ExternalSystemTaskId id,
-    @NotNull List<String> taskNames,
     @NotNull String projectPath,
-    @Nullable S settings,
-    @Nullable String jvmParametersSetup
+    @NotNull ExternalSystemTaskId id,
+    @NotNull S settings
   ) throws ExternalSystemException {
     execute(id, () -> {
-      myDelegate.executeTasks(id, taskNames, projectPath, settings, jvmParametersSetup, getNotificationListener());
+      myDelegate.executeTasks(projectPath, id, settings, getNotificationListener());
       return null;
     });
   }

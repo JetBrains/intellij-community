@@ -168,18 +168,16 @@ public class ExternalSystemTaskActivatorTest extends HeavyPlatformTestCase {
 
     @Override
     public void executeTasks(
-      @NotNull ExternalSystemTaskId id,
-      @NotNull List<String> taskNames,
       @NotNull String projectPath,
-      @Nullable TestExternalSystemExecutionSettings settings,
-      @Nullable String jvmParametersSetup,
+      @NotNull ExternalSystemTaskId id,
+      @NotNull TestExternalSystemExecutionSettings settings,
       @NotNull ExternalSystemTaskNotificationListener listener
     ) throws ExternalSystemException {
       StringBuilder builder = TASKS_TRACE.get(id.findProject());
       if (!builder.isEmpty()) {
         builder.append(",");
       }
-      builder.append(StringUtil.join(taskNames, ","));
+      builder.append(StringUtil.join(settings.getTasks(), ","));
     }
 
     @Override

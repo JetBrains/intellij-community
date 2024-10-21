@@ -134,7 +134,10 @@ object GradleWrapperHelper {
   ) {
     SystemPropertiesAdjuster.executeAdjusted(projectPath) {
       val launcher = connection.newBuild()
-      GradleExecutionHelper.prepareForExecution(connection, launcher, cancellationToken, id, listOf("wrapper"), settings, listener)
+      val wrapperSettings = GradleExecutionSettings(settings).apply {
+        tasks = listOf("wrapper")
+      }
+      GradleExecutionHelper.prepareForExecution(connection, launcher, cancellationToken, id, wrapperSettings, listener)
       ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
         .spanBuilder("ExecuteWrapperTask")
         .use { launcher.run() }

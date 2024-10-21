@@ -96,7 +96,6 @@ class GradleModelFetchActionRunner private constructor(
       this,
       resolverContext.cancellationToken,
       resolverContext.externalSystemTaskId,
-      mutableListOf(),
       settings,
       resolverContext.listener
     )

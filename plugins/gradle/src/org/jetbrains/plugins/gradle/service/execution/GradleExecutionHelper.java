@@ -109,7 +109,6 @@ public class GradleExecutionHelper {
     @NotNull LongRunningOperation operation,
     @NotNull CancellationToken cancellationToken,
     @NotNull ExternalSystemTaskId id,
-    @NotNull List<String> tasksAndArguments,
     @NotNull GradleExecutionSettings settings,
     @NotNull ExternalSystemTaskNotificationListener listener
   ) {
@@ -123,7 +122,7 @@ public class GradleExecutionHelper {
 
     setupLogging(settings, buildEnvironment);
 
-    setupArguments(operation, tasksAndArguments, settings);
+    setupArguments(operation, settings);
 
     setupEnvironment(operation, settings);
 
@@ -235,14 +234,9 @@ public class GradleExecutionHelper {
 
   private static void setupArguments(
     @NotNull LongRunningOperation operation,
-    @NotNull List<String> tasksAndArguments,
     @NotNull GradleExecutionSettings settings
   ) {
-    var commandLine = GradleCommandLineUtil.parseCommandLine(
-      tasksAndArguments,
-      settings.getArguments()
-    );
-    commandLine = fixUpGradleCommandLine(commandLine);
+    var commandLine = fixUpGradleCommandLine(settings.getCommandLine());
 
     LOG.info("Passing command-line to Gradle Tooling API: " +
              StringUtil.join(obfuscatePasswordParameters(commandLine.getTokens()), " "));
