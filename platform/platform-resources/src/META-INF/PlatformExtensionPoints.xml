@@ -598,5 +598,6 @@
                     interface="com.intellij.auth.GenericAuthProviderExtension" dynamic="true"/>
     <extensionPoint name="findInDirectoryScopeProvider" interface="com.intellij.find.impl.FindInDirectoryScopeProvider" dynamic="true"/>
 
+    <extensionPoint name="iconSerializer" interface="com.intellij.ide.ui.icons.IconSerializer" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
