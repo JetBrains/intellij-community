@@ -106,16 +106,6 @@
       <version>${bootstrap.intellij.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.jetbrains.intellij.groovy</groupId>
-      <artifactId>groovy-jps</artifactId>
-      <version>${bootstrap.intellij.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.jetbrains.intellij.groovy</groupId>
-      <artifactId>groovy-rt</artifactId>
-      <version>${bootstrap.intellij.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.jetbrains.teamcity</groupId>
       <artifactId>serviceMessages</artifactId>
       <version>2024.07</version>
