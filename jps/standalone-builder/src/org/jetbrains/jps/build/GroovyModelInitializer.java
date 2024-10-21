@@ -11,6 +11,11 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @deprecated the build scripts don't use Groovy anymore, so a path to the config directory must be passed instead of using groovy scripts
+ */
+@SuppressWarnings("DeprecatedIsStillUsed")
+@Deprecated(forRemoval = true)
 public final class GroovyModelInitializer implements ParameterizedRunnable<JpsModel> {
   private final File myScriptFile;
 
