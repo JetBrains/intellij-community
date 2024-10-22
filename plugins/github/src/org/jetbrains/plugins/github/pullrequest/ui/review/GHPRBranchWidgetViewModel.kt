@@ -42,7 +42,7 @@ internal class GHPRBranchWidgetViewModelImpl(
   override val updateRequired: StateFlow<Boolean> = sharedBranchVm.updateRequired
 
   override val dataLoadingState: StateFlow<ComputedResult<Any>> =
-    dataProvider.changesData.changesComputationState.stateInNow(cs, ComputedResult.loading())
+    dataProvider.changesData.changesComputationState().stateInNow(cs, ComputedResult.loading())
 
   override val editorReviewEnabled: StateFlow<Boolean> = settings.editorReviewEnabledState
 
