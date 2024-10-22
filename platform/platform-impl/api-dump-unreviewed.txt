@@ -1428,7 +1428,7 @@ c:com.intellij.diagnostic.WindowsDefenderChecker
 - f:isRealTimeProtectionEnabled():java.lang.Boolean
 - f:isStatusCheckIgnored(com.intellij.openapi.project.Project):Z
 com.intellij.diagnostic.WindowsDefenderChecker$Extension
-- a:getPaths(com.intellij.openapi.project.Project):java.util.Collection
+- a:getPaths(com.intellij.openapi.project.Project,java.nio.file.Path):java.util.Collection
 f:com.intellij.diagnostic.WindowsDefenderChecker$FILE_FS_PERSISTENT_VOLUME_INFORMATION
 - com.sun.jna.Structure
 - java.lang.AutoCloseable
