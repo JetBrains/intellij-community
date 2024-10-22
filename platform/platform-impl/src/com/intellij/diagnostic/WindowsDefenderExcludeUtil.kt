@@ -15,7 +15,7 @@ import java.nio.file.Path
 
 internal object WindowsDefenderExcludeUtil {
 
-  fun updateDefenderConfig(checker: WindowsDefenderChecker, project: Project, paths: List<Path>) {
+  fun updateDefenderConfig(checker: WindowsDefenderChecker, project: Project, paths: List<Path>, onSuccess: () -> Unit = {}) {
     service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
       @Suppress("DialogTitleCapitalization")
       withBackgroundProgress(project, DiagnosticBundle.message("defender.config.progress"), false) {
@@ -23,6 +23,7 @@ internal object WindowsDefenderExcludeUtil {
         if (success) {
           notification(DiagnosticBundle.message("defender.config.success"), NotificationType.INFORMATION)
             .notify(project)
+          onSuccess()
         }
         else {
           notification(DiagnosticBundle.message("defender.config.failed"), NotificationType.WARNING)
