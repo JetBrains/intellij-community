@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -38,7 +39,7 @@ public final class FileStatusMap implements Disposable {
                                                                        "during the highlighting, you can pass `canChangeDocument=true` to the CodeInsightTestFixtureImpl#instantiateAndRun() " +
                                                                        "and accept the daemon unresponsiveness/blinking/slowdowns.";
   private final Project myProject;
-  private final Map<@NotNull Document, FileStatus> myDocumentToStatusMap = new WeakHashMap<>(); // all dirty if absent
+  private final Map<@NotNull Document, @NotNull FileStatus> myDocumentToStatusMap = new WeakHashMap<>(); // all dirty if absent; guarded by myDocumentToStatusMap
   // the ranges of last DocumentEvents united; used for "should I really remove invalid PSI highlighters from this range" heuristic
   private final /*non-static*/Key<RangeMarker> COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY = Key.create("COMPOSITE_DOCUMENT_CHANGE_KEY");
   private volatile boolean myAllowDirt = true;
@@ -215,8 +216,9 @@ public final class FileStatusMap implements Disposable {
 
       for (RangeMarker marker : status.dirtyScopes.values()) {
         if (marker != null && marker != WHOLE_FILE_DIRTY_MARKER && marker.isValid()) {
-          start = Math.min(start, marker.getStartOffset());
-          end = Math.max(end, marker.getEndOffset());
+          TextRange markerRange = marker.getTextRange();
+          start = Math.min(start, markerRange.getStartOffset());
+          end = Math.max(end, markerRange.getEndOffset());
         }
       }
       return start == Integer.MAX_VALUE ? null : new TextRange(start, end);
@@ -270,14 +272,18 @@ public final class FileStatusMap implements Disposable {
   }
 
   void markWholeFileScopeDirty(@NotNull Document document, @NotNull @NonNls Object reason) {
-    markFileScopeDirty(document, FileStatus.WHOLE_FILE_TEXT_RANGE, reason);
+    combineDirtyScopes(document, FileStatus.WHOLE_FILE_TEXT_RANGE, reason);
   }
-  void markFileScopeDirty(@NotNull Document document, @NotNull TextRange scope, @NotNull @NonNls Object reason) {
+  void markScopeDirty(@NotNull Document document, @NotNull TextRange scope, @NotNull @NonNls Object reason) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread(); // assert dirty scope updates happen in BGT only, see IJPL-163033
+    combineDirtyScopes(document, scope, reason);
+  }
+  private void combineDirtyScopes(@NotNull Document document, @NotNull TextRange scope, @NonNls @NotNull Object reason) {
     assertAllowModifications();
-    log("Mark scope dirty: ",scope,reason);
+    log("Mark scope dirty: ", scope, reason);
     synchronized(myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
-      if (status == null) return; // all dirty already
+      if (status == null) return;
       if (status.defensivelyMarked) {
         status.defensivelyMarked = false;
       }

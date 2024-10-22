@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.application.ApplicationManager;
@@ -993,7 +994,9 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     RangeMarker m3 = document.createRangeMarker(2, 5);
     assertEquals(2, ((DocumentImpl)document).getRangeMarkersNodeSize());
     deleteString(document, 4, 5);
-    DaemonCodeAnalyzerImpl.getInstanceEx(getProject()).getFileStatusMap().disposeDirtyDocumentRangeStorage(document);
+    DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzerImpl.getInstanceEx(getProject());
+    myDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests();
+    myDaemonCodeAnalyzer.getFileStatusMap().disposeDirtyDocumentRangeStorage(document);
     assertTrue(m1.isValid());
     assertTrue(m2.isValid());
     assertTrue(m3.isValid());
@@ -1549,6 +1552,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     Reference<RangeMarker> persistentMarkerRef = new WeakReference<>(persistentMarker[0]);
     marker[0] = null;
     persistentMarker[0] = null;
+    ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).waitForUpdateFileStatusBackgroundQueueInTests();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     while (markerRef.get() != null || persistentMarkerRef.get() != null) {
       GCUtil.tryGcSoftlyReachableObjects();

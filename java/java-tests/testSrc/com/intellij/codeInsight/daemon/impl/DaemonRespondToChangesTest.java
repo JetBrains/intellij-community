@@ -245,13 +245,14 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   public void testRenameClass() {
     configureByText(JavaFileType.INSTANCE, """
       class AClass<caret> {
-          
+    
       }
     """);
     Document document = getDocument(getFile());
     assertEmpty(highlightErrors());
     PsiClass psiClass = ((PsiJavaFile)getFile()).getClasses()[0];
     new RenameProcessor(myProject, psiClass, "Class2", false, false).run();
+    myDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests();
     TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, getFile(), Pass.UPDATE_ALL);
     assertEquals(getFile().getTextRange(), dirty);
 
@@ -259,11 +260,10 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertTrue(myDaemonCodeAnalyzer.isErrorAnalyzingFinished(getFile()));
   }
 
-
   public void testTypingSpace() {
     configureByText(JavaFileType.INSTANCE, """
       class AClass<caret> {
-          
+    
       }
     """);
     Document document = getDocument(getFile());
@@ -273,7 +273,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     PsiElement elementAtCaret = myFile.findElementAt(myEditor.getCaretModel().getOffset());
     assertTrue(elementAtCaret instanceof PsiWhiteSpace);
-
+    myDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests();
     TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, getFile(), Pass.UPDATE_ALL);
     assertEquals(elementAtCaret.getTextRange(), dirty);
     assertEmpty(highlightErrors());
@@ -374,7 +374,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   public void testDaemonIgnoresNonPhysicalEditor() throws Exception {
     configureByText(JavaFileType.INSTANCE, """
       class AClass<caret> {
-          
+    
       }
     """);
     assertEmpty(highlightErrors());
@@ -400,7 +400,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   public void testDaemonIgnoresConsoleActivities() throws Exception {
     configureByText(JavaFileType.INSTANCE, """
       class AClass<caret> {
-          
+    
       }
     """);
 
@@ -902,7 +902,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
               <caret>
               new Runnable() {
                   public void run() {
-            
+      
                   }
               };
           }
@@ -1134,14 +1134,16 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testPasteInAnonymousCodeBlock() {
-    configureByText(JavaFileType.INSTANCE, """
+    @Language("JAVA")
+    String text = """
       class X{ void f() {     int x=0;x++;
           Runnable r = new Runnable() { public void run() {
        <caret>
           }};
           <selection>int y = x;</selection>
-      \s
-      } }""");
+      
+      } }""";
+    configureByText(JavaFileType.INSTANCE, text);
     assertEmpty(highlightErrors());
     PlatformTestUtil.invokeNamedAction(IdeActions.ACTION_EDITOR_COPY);
     assertEquals("int y = x;", getEditor().getSelectionModel().getSelectedText());

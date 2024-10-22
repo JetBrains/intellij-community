@@ -557,12 +557,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
     // previous passes can be canceled but still in flight. wait for them to avoid interference
     myPassExecutorService.cancelAll(false, "DaemonCodeAnalyzerImpl.runPasses");
-
+    waitForUpdateFileStatusBackgroundQueueInTests(); // update file status map before prohibiting its modifications
     FileStatusMap fileStatusMap = getFileStatusMap();
-
-    Boolean oldAllowDirt = null;
+    boolean oldAllowDirt = fileStatusMap.allowDirt(canChangeDocument);
     try {
-      oldAllowDirt = fileStatusMap.allowDirt(canChangeDocument);
       for (int ignoreId : passesToIgnore) {
         fileStatusMap.markFileUpToDate(document, ignoreId);
       }
@@ -570,7 +568,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
     finally {
       DaemonProgressIndicator.setDebug(false);
-      if (oldAllowDirt != null) fileStatusMap.allowDirt(oldAllowDirt);
+      fileStatusMap.allowDirt(oldAllowDirt);
     }
   }
 
@@ -1360,6 +1358,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
             stopMyProcess(progress, true, null, session + " is canceled");
             throw new ProcessCanceledException();
           }
+          myListeners.flushUpdateFileStatusQueue(); // finish updating FileStatusMap on PSI changes
           session.additionalSetupFromBackground(psiFile);
           try (AccessToken ignored = ClientId.withExplicitClientId(ClientFileEditorManager.getClientId(fileEditor))) {
             HighlightingPass[] r = backgroundEditorHighlighter.createPassesForEditor();
@@ -1578,5 +1577,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
   public boolean isRestartToCompleteEssentialHighlightingRequested() {
     return completeEssentialHighlightingRequested;
+  }
+  @TestOnly
+  public void waitForUpdateFileStatusBackgroundQueueInTests() {
+    myListeners.waitForUpdateFileStatusQueue();
   }
 }
