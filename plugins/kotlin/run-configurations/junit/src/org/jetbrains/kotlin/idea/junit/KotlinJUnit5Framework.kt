@@ -77,8 +77,8 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
             }
 
         private fun checkIsJUnit5LikeTestClass(declaration: KtClassOrObject, isPotential: Boolean): ThreeState =
-            if (isPotential && isUnderTestSources(declaration)) {
-                UNSURE
+            if (isPotential) {
+                if (isUnderTestSources(declaration)) UNSURE else NO
             } else if (!isFrameworkAvailable(declaration)) {
                 NO
             } else if (declaration is KtClass && declaration.isInner()) {

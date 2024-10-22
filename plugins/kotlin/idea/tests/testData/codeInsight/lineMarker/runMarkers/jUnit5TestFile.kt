@@ -55,3 +55,7 @@ private class <lineMarker descr="Run Test">Simple</lineMarker> {
     @Test
     fun <lineMarker descr="Run Test">foo</lineMarker>() {}
 }
+
+class NoTestInside {
+    fun foo() {}
+}
