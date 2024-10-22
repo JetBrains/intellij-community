@@ -45,7 +45,7 @@ final class StubSerializationHelper extends StubTreeSerializerBase<IntEnumerator
     return myEnumerator.getClassById((id1, name, externalId) -> {
       myEnumerator.tryDiagnose();
       var root = ourRootStubSerializer.get();
-      return (root != null ? StubSerializationUtil.brokenStubFormat(root) : "") +
+      return (root != null ? StubSerializationUtil.brokenStubFormat(root, null) : "") +
              "No serializer is registered for stub ID: " +
              id1 + ", externalId: " + externalId + ", name: " + name +
              "; parent stub class: " + (parentStub != null ? parentStub.getClass().getName() + ", parent stub type: " + parentStub.getStubType() : "null");

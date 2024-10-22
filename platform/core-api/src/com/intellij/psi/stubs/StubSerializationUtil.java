@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 final class StubSerializationUtil {
   private StubSerializationUtil() {}
@@ -22,7 +24,8 @@ final class StubSerializationUtil {
    * @param root - serializer which couldn't deserialize stub
    * @return message for broken stub format
    */
-  static @NotNull @NonNls String brokenStubFormat(@NotNull ObjectStubSerializer<?, ?> root) {
-    return "Broken stub format, most likely version of " + root + " (" + root.getExternalId() + ") was not updated after serialization changes\n";
+  static @NotNull @NonNls String brokenStubFormat(@NotNull ObjectStubSerializer<?, ?> root, @Nullable PsiFile file) {
+    String fileInfo = file == null ? "" : " in file " + file.getName();
+    return "Broken stub format" + fileInfo + ", most likely version of " + root + " (" + root.getExternalId() + ") was not updated after serialization changes\n";
   }
 }

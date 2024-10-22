@@ -2,6 +2,7 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.AbstractStringEnumerator;
@@ -91,7 +92,9 @@ final class LazyStubList extends StubList {
       throw e;
     }
     catch (Exception | Error e) {
-      throw new RuntimeException(StubSerializationUtil.brokenStubFormat(myRootSerializer), e);
+      PsiFileStub<?> fileStub = myStubs.get(0).getContainingFileStub();
+      PsiFile file = fileStub == null ? null : fileStub.getPsi();
+      throw new RuntimeException(StubSerializationUtil.brokenStubFormat(myRootSerializer, file), e);
     }
   }
 
