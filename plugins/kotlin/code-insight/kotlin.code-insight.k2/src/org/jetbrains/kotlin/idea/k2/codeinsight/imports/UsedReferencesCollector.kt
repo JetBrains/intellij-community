@@ -77,7 +77,7 @@ internal class UsedReferencesCollector(private val file: KtFile) {
                 continue
             }
 
-            val symbols = usedReference.run { resolveToImportableSymbols() }
+            val symbols = usedReference.run { resolveToReferencedSymbols() }
 
             for (symbol in symbols) {
                 if (!symbol.run { isResolvedWithImport() }) continue
