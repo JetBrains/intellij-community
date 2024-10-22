@@ -22,6 +22,14 @@ internal class UsedReference private constructor(val reference: KtReference) {
     }
 
     fun KaSession.isResolved(): Boolean {
+        if (isEmptyInvokeReference(reference)) {
+            // we consider "empty" invoke references to be resolved,
+            // but they will yield no symbols from `resolveToReferencedSymbols()`
+            return true
+        }
+
+        val resolvedSymbols = reference.resolveToSymbols()
+
         if (reference is KtInvokeFunctionReference) {
             // invoke references on Kotlin builtin functional types (like `() -> Unit`)
             // always have empty `resolveToSymbols`, so we have to do the check another way
@@ -29,8 +37,6 @@ internal class UsedReference private constructor(val reference: KtReference) {
 
             return callInfo.calls.isNotEmpty()
         }
-
-        val resolvedSymbols = reference.resolveToSymbols()
 
         return resolvedSymbols.isNotEmpty()
     }
@@ -45,7 +51,6 @@ internal class UsedReference private constructor(val reference: KtReference) {
             return when {
                 isDefaultJavaAnnotationArgumentReference(reference) -> null
                 isUnaryOperatorOnIntLiteralReference(reference) -> null
-                isEmptyInvokeReference(reference) -> null
                 else -> UsedReference(reference)
             }
         }
