@@ -31,5 +31,7 @@
     <orderEntry type="library" name="jackson-module-kotlin" level="project" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
   </component>
 </module>

@@ -20,7 +20,7 @@ import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 @ApiStatus.Internal
 public final class UpdateRequestParameters {
   private static final NullableLazyValue<String> ourMachineId =
-    lazyNullable(() -> MachineIdManager.INSTANCE.getAnonymizedMachineId("JetBrainsUpdates", ""));
+    lazyNullable(() -> MachineIdManager.INSTANCE.getAnonymizedMachineId("JetBrainsUpdates"));
 
   public static @NotNull Url amendUpdateRequest(@NotNull Url url) {
     var parameters = new LinkedHashMap<String, String>();
