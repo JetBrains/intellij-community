@@ -142,15 +142,12 @@ class GradleTaskManagerTest: UsefulTestCase() {
 
     gradleExecSettings.javaHome = GradleImportingTestCase.requireJdkHome(gradleVersion)
 
+    val settings = GradleExecutionSettings(gradleExecSettings).apply {
+      tasks = listOf("help")
+    }
+
     val listener = TaskExecutionOutput()
-    tm.executeTasks(
-      taskId,
-      listOf("help"),
-      myProject.basePath!!,
-      gradleExecSettings,
-      null,
-      listener
-    )
+    tm.executeTasks(myProject.basePath!!, taskId, settings, listener)
     return listener
   }
 
