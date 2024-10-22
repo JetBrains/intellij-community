@@ -77,6 +77,11 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
     });
     @NotNull
     ToolLatencies latencies = new ToolLatencies(0,0,0);
+
+    private ToolHighlights() {
+      // to prevent reentrant execution of removeEvicted, we store evicted HighlightInfos in a (mutable) ArrayList under the (non-evictable) key PsiUtilCore.NULL_PSI_ELEMENT
+      elementHighlights.put(PsiUtilCore.NULL_PSI_ELEMENT, new ArrayList<>());
+    }
   }
   record ToolLatencies(
       long errorLatency, // latency of the first error, in nanoseconds (or 0 if none)
@@ -110,8 +115,11 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
     if (LOG.isDebugEnabled()) {
       LOG.debug("removeEvicted: " + evicted);
     }
+
     // all evicted HighlightInfos will be stored in this map[PsiUtilCore.NULL_PSI_ELEMENT], to be disposed later, in recycleInvalidPsiElements(), when the HighlightSession is available
-    map.compute(PsiUtilCore.NULL_PSI_ELEMENT, (__, old)->ContainerUtil.concat(ContainerUtil.notNullize(old), evicted));
+    // do not use map.compute() or similar because they call .put() which invokes processQueue() which might call this method recursively which could cause SOE. This computeIfAbsent() is better because we risk at most 2-level reentrancy here
+    List<HighlightInfo> storedEvicted = (List<HighlightInfo>)map.get(PsiUtilCore.NULL_PSI_ELEMENT);
+    storedEvicted.addAll(evicted);
   }
 
   @NotNull
@@ -250,8 +258,9 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
         psiElement -> psiElement == PsiUtilCore.NULL_PSI_ELEMENT/*evicted*/ || psiElement != FAKE_ELEMENT && !psiElement.isValid(), // find invalid PSI
         (info, psiElement) -> {
           if (psiElement == PsiUtilCore.NULL_PSI_ELEMENT) {
+            // the psiElement for this HighlightInfo was evicted, dispose HighlightInfo
             UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(info, session);
-            return false; // psi element was evicted
+            return false; // remove from the list
           }
           // heuristic: when the incremental reparse support is poor, and a lot of PSI is invalidated unnecessarily on each typing,
           //  that PSI has a big chance to be recreated in that exact place later, when a (major) chunk of the file is reparsed, so we do not kill that highlighter, just recycle it to avoid annoying blinking
@@ -282,8 +291,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
                                                @NotNull HighlightingSession session,
                                                @NotNull WhatTool toolPredicate,
                                                @NotNull Predicate<? super PsiElement> psiElementPredicate,
-                                               @NotNull PairProcessor<? super HighlightInfo, ? super PsiElement> rangeHighlighterProcessor
-                                               // return true if keep in the map, false if delete
+                                               @NotNull PairProcessor<? super HighlightInfo, ? super PsiElement> rangeHighlighterProcessor// return true if keep in the map, false if delete
   ) {
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.getProject());
     PsiFile hostFile = injectedLanguageManager.getTopLevelFile(psiFile);
@@ -330,14 +338,25 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
         toolHighlights.elementHighlights.entrySet().removeIf(entry -> {
           PsiElement psiElement = entry.getKey();
           ProgressManager.checkCanceled();
-          if (psiElementPredicate.test(psiElement)) { //psiElement == PsiUtilCore.NULL_PSI_ELEMENT/*evicted*/ || psiElement != FAKE_ELEMENT && !psiElement.isValid()) {
+          if (psiElementPredicate.test(psiElement)) {
             List<? extends HighlightInfo> oldInfos = entry.getValue();
-            List<? extends HighlightInfo> newInfos = ContainerUtil.filter(oldInfos, info -> rangeHighlighterProcessor.process(info, psiElement));
-            if (newInfos.isEmpty()) {
+            List<HighlightInfo> newInfos = new ArrayList<>(oldInfos.size());
+            for (HighlightInfo oldInfo : oldInfos) {
+              if (rangeHighlighterProcessor.process(oldInfo, psiElement)) {
+                newInfos.add(oldInfo);
+              }
+            }
+            if (psiElement == PsiUtilCore.NULL_PSI_ELEMENT) {
+              // for evicted infos list - after we disposed all infos, save the (empty) mutable list back, we'll need it for future evictions
+              entry.setValue(newInfos);
+              return false;
+            }
+            else if (newInfos.isEmpty()) {
+              // the list is empty, remove the key (except for evicted info list)
               return true;
             }
             if (newInfos.size() != oldInfos.size()) {
-              entry.setValue(newInfos);
+              entry.setValue(List.copyOf(newInfos));
             }
           }
           return false;
@@ -368,7 +387,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
    * Tool {@code toolId} has generated (maybe empty) {@code newInfos} highlights during visiting PsiElement {@code visitedPsiElement}.
    * Remove all highlights that this tool had generated earlier during visiting this psi element, and replace them with {@code newInfos}
    * Do not read below, it's very private and just for me.
-   *
+   * --
    * - retrieve {@code List<HighlightInfo> oldInfos} from {@code data[toolId, psiElement]}
    * - match the oldInfos with newInfos, obtaining 3 lists:
    *  1) a list of infos from {@code oldInfos} removed from newInfos - their RHs need to be disposed
@@ -578,10 +597,11 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
                 List<? extends HighlightInfo> infos = elementEntry.getValue();
                 int i = infos.indexOf(info);
                 if (i != -1) {
-                  recycler.recycleHighlighter(elementEntry.getKey(), info);
+                  PsiElement psiElement = elementEntry.getKey();
+                  recycler.recycleHighlighter(psiElement, info);
                   List<HighlightInfo> listMinusInfo = ContainerUtil.concat(infos.subList(0, i), infos.subList(i + 1, infos.size()));
                   if (listMinusInfo.isEmpty()) {
-                    elementHighlights.elementHighlights.remove(elementEntry.getKey());
+                    elementHighlights.elementHighlights.remove(psiElement);
                   }
                   else {
                     elementEntry.setValue(listMinusInfo);
