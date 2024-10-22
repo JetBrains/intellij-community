@@ -171,9 +171,10 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
   fun scanningWaitsForNonDumbMode(): Boolean = scanningWaitsForNonDumbMode(scanningWaitsForNonDumbModeOverride.value)
 
   private suspend fun waitUntilNextTaskExecutionAllowed() {
-    // wait until scanning is enabled
-    var flow: Flow<Boolean> = scanningEnabled.combine(scanningTask) { enabled, scanningTask ->
-      enabled && scanningTask != null
+    data class ExecutorState(val enabled: Boolean, val hasTask: Boolean, val isDumb: Boolean, val shouldWaitForNonDumb: Boolean)
+
+    var flow: Flow<ExecutorState> = scanningEnabled.combine(scanningTask) { enabled, scanningTask ->
+      ExecutorState(enabled, scanningTask != null, false, false)
     }
 
     // Delay scanning tasks until all the scheduled dumb tasks are finished.
@@ -181,17 +182,14 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
     // We want scanning to start after all these "extra" dumb tasks are finished.
     // Note that a project may become dumb immediately after the check. This is not a problem - we schedule scanning anyway.
     if (scanningWaitsForNonDumbMode()) {
-      flow = flow.combine(
-        // nested flow is needed because of negation (!shouldWaitForNonDumb)
-        DumbServiceImpl.getInstance(project).isDumbAsFlow.combine(scanningWaitsForNonDumbModeOverride) { isDumb, scanningWaitsCurrentValue ->
-          isDumb && scanningWaitsForNonDumbMode(scanningWaitsCurrentValue)
-        }
-      ) { shouldRun, shouldWaitForNonDumb ->
-        shouldRun && !shouldWaitForNonDumb
+      flow = flow.combine(DumbServiceImpl.getInstance(project).isDumbAsFlow) { state, isDumb ->
+        state.copy(isDumb = isDumb)
+      }.combine(scanningWaitsForNonDumbModeOverride) { state, scanningWaitsOverride ->
+        state.copy(shouldWaitForNonDumb = scanningWaitsForNonDumbMode(scanningWaitsOverride))
       }
     }
 
-    flow.first { it }
+    flow.first { it.enabled && it.hasTask && !(it.isDumb && it.shouldWaitForNonDumb) }
   }
 
   @TestOnly
