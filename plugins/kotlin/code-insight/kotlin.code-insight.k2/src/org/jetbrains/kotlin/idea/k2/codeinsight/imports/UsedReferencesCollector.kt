@@ -15,13 +15,13 @@ internal class UsedReferencesCollector(private val file: KtFile) {
     data class Result(
         val usedDeclarations: Map<FqName, Set<Name>>,
         val unresolvedNames: Set<Name>,
-        val usedSymbols: Set<ImportableKaSymbolPointer>,
+        val usedSymbols: Set<SymbolInfoPointer>,
         val references: Collection<KtReference>,
     )
 
     private val unresolvedNames: HashSet<Name> = hashSetOf()
     private val usedDeclarations: HashMap<FqName, MutableSet<Name>> = hashMapOf()
-    private val importableSymbols: HashSet<ImportableKaSymbol> = hashSetOf()
+    private val importableSymbols: HashSet<SymbolInfo> = hashSetOf()
     private val references: HashSet<KtReference> = hashSetOf()
 
     private val aliases: Map<FqName, List<Name>> = collectImportAliases(file)
@@ -82,7 +82,7 @@ internal class UsedReferencesCollector(private val file: KtFile) {
             for (symbol in symbols) {
                 if (!symbol.run { isResolvedWithImport() }) continue
 
-                val importableName = symbol.run { computeImportableFqName() }
+                val importableName = symbol.run { computeImportableFqName() } ?: continue
 
                 // Do not save symbols from the current package unless they are aliased
                 if (importableName.parent() == file.packageFqName && importableName !in aliases) continue
@@ -92,7 +92,7 @@ internal class UsedReferencesCollector(private val file: KtFile) {
                 val newNames = (aliases[importableName].orEmpty() + importableName.shortName()).intersect(names)
                 usedDeclarations.getOrPut(importableName) { hashSetOf() } += newNames
 
-                importableSymbols += symbol.run { toImportableKaSymbol() }
+                importableSymbols += symbol.run { toSymbolInfo() }
             }
         }
     }

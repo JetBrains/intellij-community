@@ -10,79 +10,77 @@ import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.withClassId
 
-internal sealed interface ImportableKaSymbol {
-    fun KaSession.computeImportableName(): FqName
+internal sealed interface SymbolInfo {
+    fun KaSession.computeImportableName(): FqName?
     fun KaSession.containingClassSymbol(): KaClassLikeSymbol?
 
-    fun KaSession.createPointer(): ImportableKaSymbolPointer
+    fun KaSession.createPointer(): SymbolInfoPointer
 
     companion object {
         @OptIn(KaExperimentalApi::class)
-        fun KaSession.create(symbol: KaClassLikeSymbol): ImportableKaSymbol {
-            val classImportableName = computeImportableName(symbol, containingClass = null) ?:
-                error("Cannot compute importable name for class symbol ${symbol.render()}")
+        fun KaSession.create(symbol: KaClassLikeSymbol): SymbolInfo {
+            val classImportableName = computeImportableName(symbol, containingClass = null)
 
-            return ImportableKaClassLikeSymbol(symbol, classImportableName)
+            return ClassLikeSymbolInfo(symbol, classImportableName)
         }
 
         @OptIn(KaExperimentalApi::class)
-        fun KaSession.create(symbol: KaCallableSymbol, containingClassSymbol: KaClassLikeSymbol?): ImportableKaSymbol {
-            val symbolImportableName = computeImportableName(symbol, containingClassSymbol) ?:
-                error("Cannot compute importable name for callable symbol ${symbol.render()}")
+        fun KaSession.create(symbol: KaCallableSymbol, containingClassSymbol: KaClassLikeSymbol?): SymbolInfo {
+            val symbolImportableName = computeImportableName(symbol, containingClassSymbol)
 
-            return ImportableKaCallableSymbol(symbol, containingClassSymbol, symbolImportableName)
+            return CallableSymbolInfo(symbol, containingClassSymbol, symbolImportableName)
         }
     }
 }
 
-internal sealed interface ImportableKaSymbolPointer {
-    fun KaSession.restore(): ImportableKaSymbol?
+internal sealed interface SymbolInfoPointer {
+    fun KaSession.restore(): SymbolInfo?
 }
 
-internal data class ImportableKaClassLikeSymbol(
+internal data class ClassLikeSymbolInfo(
     private val symbol: KaClassLikeSymbol,
-    private val importableFqName: FqName,
-): ImportableKaSymbol {
-    override fun KaSession.computeImportableName(): FqName = importableFqName
+    private val importableFqName: FqName?,
+): SymbolInfo {
+    override fun KaSession.computeImportableName(): FqName? = importableFqName
 
     override fun KaSession.containingClassSymbol(): KaClassLikeSymbol? {
         return containingDeclarationPatched(symbol) as? KaClassLikeSymbol
     }
 
-    override fun KaSession.createPointer(): ImportableKaSymbolPointer {
+    override fun KaSession.createPointer(): SymbolInfoPointer {
         return Pointer(symbol.createPointer(), importableFqName)
     }
 
-    private class Pointer(private val symbolPointer: KaSymbolPointer<KaClassLikeSymbol>, private val importableFqName: FqName) : ImportableKaSymbolPointer {
-        override fun KaSession.restore(): ImportableKaClassLikeSymbol? {
+    private class Pointer(private val symbolPointer: KaSymbolPointer<KaClassLikeSymbol>, private val importableFqName: FqName?) : SymbolInfoPointer {
+        override fun KaSession.restore(): ClassLikeSymbolInfo? {
             val symbol = symbolPointer.restoreSymbol() ?: return null
-            return ImportableKaClassLikeSymbol(symbol, importableFqName)
+            return ClassLikeSymbolInfo(symbol, importableFqName)
         }
     }
 }
 
 
-internal data class ImportableKaCallableSymbol(
+internal data class CallableSymbolInfo(
     private val symbol: KaCallableSymbol,
     private val containingClassSymbol: KaClassLikeSymbol?,
-    private val importableFqName: FqName,
-) : ImportableKaSymbol {
-    override fun KaSession.computeImportableName(): FqName = importableFqName
+    private val importableFqName: FqName?,
+) : SymbolInfo {
+    override fun KaSession.computeImportableName(): FqName? = importableFqName
 
     override fun KaSession.containingClassSymbol(): KaClassLikeSymbol? {
         return containingClassSymbol ?: (containingDeclarationPatched(symbol) as? KaClassLikeSymbol)
     }
 
-    override fun KaSession.createPointer(): ImportableKaSymbolPointer {
+    override fun KaSession.createPointer(): SymbolInfoPointer {
         return Pointer(symbol.createPointer(), containingClassSymbol?.createPointer(), importableFqName)
     }
 
     private class Pointer(
         private val symbolPointer: KaSymbolPointer<KaCallableSymbol>,
         private val containingClassPointer: KaSymbolPointer<KaClassLikeSymbol>?,
-        private val importableFqName: FqName,
-    ) : ImportableKaSymbolPointer {
-        override fun KaSession.restore(): ImportableKaCallableSymbol? {
+        private val importableFqName: FqName?,
+    ) : SymbolInfoPointer {
+        override fun KaSession.restore(): CallableSymbolInfo? {
             val symbol = symbolPointer.restoreSymbol() ?: return null
 
             val containingClass = if (containingClassPointer != null) {
@@ -91,7 +89,7 @@ internal data class ImportableKaCallableSymbol(
                 null
             }
 
-            return ImportableKaCallableSymbol(symbol, containingClass, importableFqName)
+            return CallableSymbolInfo(symbol, containingClass, importableFqName)
         }
     }
 }

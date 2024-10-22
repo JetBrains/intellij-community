@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 
 internal class ReferencedSymbol(val reference: KtReference, val symbol: KaSymbol) {
-    fun KaSession.computeImportableFqName(): FqName {
-        return toImportableKaSymbol().run { computeImportableName() }
+    fun KaSession.computeImportableFqName(): FqName? {
+        return toSymbolInfo().run { computeImportableName() }
     }
 
     fun KaSession.isResolvedWithImport(): Boolean {
@@ -38,16 +38,16 @@ internal class ReferencedSymbol(val reference: KtReference, val symbol: KaSymbol
         else -> false
     }
 
-    fun KaSession.toImportableKaSymbol(): ImportableKaSymbol {
+    fun KaSession.toSymbolInfo(): SymbolInfo {
         return when (symbol) {
             is KaCallableSymbol -> {
                 val dispatcherReceiver = resolveDispatchReceiver(reference.element) as? KaImplicitReceiverValue
                 val containingClassSymbol = dispatcherReceiver?.symbol as? KaClassLikeSymbol
 
-                ImportableKaSymbol.run { create(symbol, containingClassSymbol) }
+                SymbolInfo.run { create(symbol, containingClassSymbol) }
             }
 
-            is KaClassLikeSymbol -> ImportableKaSymbol.run { create(symbol) }
+            is KaClassLikeSymbol -> SymbolInfo.run { create(symbol) }
 
             else -> error("Unexpected symbol type ${symbol::class}")
         }
