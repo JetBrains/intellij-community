@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
@@ -256,10 +257,20 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : I
             ?: error("Cannot find library entity for ${libraryModule.libraryInfo.library.name}")
     }
 
-    override fun getOpenapiLibrary(module: KaLibraryModule): Library {
-        require(module is KtLibraryModuleByModuleInfo)
-        return module.libraryInfo.library
+    override fun getOpenapiLibrary(module: KaLibraryModule): Library? {
+        if (module is KtLibraryModuleByModuleInfo) {
+            return module.libraryInfo.library
+        }
+        return null
     }
+
+    override fun getOpenapiSdk(module: KaLibraryModule): Sdk? {
+        if (module is KtSdkLibraryModuleByModuleInfo) {
+            return module.moduleInfo.sdk
+        }
+        return null
+    }
+
 
     override fun getContainingKaModules(virtualFile: VirtualFile): List<KaModule> {
         return ModuleInfoProvider.getInstance(project)

@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk as OpenapiSdk
+import com.intellij.openapi.roots.libraries.Library as OpenapiLibrary
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.jps.entities.LibraryId
@@ -132,9 +134,23 @@ val KaSourceModule.sourceModuleKind: KaSourceModuleKind?
 val KaSourceModule.openapiModule: Module
     get() = project.ideProjectStructureProvider.getOpenapiModule(this)
 
-val KaLibraryModule.openapiLibrary: Library
+/**
+ * Gets the [com.intellij.openapi.roots.libraries.Library] represented by this [KaLibraryModule].
+ *
+ * @return the [com.intellij.openapi.roots.libraries.Library] that represents the current [KaLibraryModule],
+ * or `null` if the current [KaLibraryModule] is an SDK.
+ */
+val KaLibraryModule.openapiLibrary: OpenapiLibrary?
     get() = project.ideProjectStructureProvider.getOpenapiLibrary(this)
 
+/**
+ * Gets the [com.intellij.openapi.projectRoots.Sdk] represented by this [KaLibraryModule].
+ *
+ * @return the [com.intellij.openapi.projectRoots.Sdk] that represents the current [KaLibraryModule],
+ * or `null` if the current [KaLibraryModule] is a library.
+ */
+val KaLibraryModule.openapiSdk: OpenapiSdk?
+    get() = project.ideProjectStructureProvider.getOpenapiSdk(this)
 
 /**
  * Converts the [Library] to a list of [KaLibraryModule] in the specified [project].

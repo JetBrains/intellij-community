@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.projectStructure
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.roots.libraries.Library as OpenapiLibrary
+import com.intellij.openapi.projectRoots.Sdk as OpenapiSdk
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import org.jetbrains.annotations.ApiStatus
@@ -32,7 +33,9 @@ abstract class IDEProjectStructureProvider : KotlinProjectStructureProviderBase(
 
     abstract fun getKaLibraryModuleSymbolicId(libraryModule: KaLibraryModule): LibraryId
 
-    abstract fun getOpenapiLibrary(module: KaLibraryModule): OpenapiLibrary
+    abstract fun getOpenapiLibrary(module: KaLibraryModule): OpenapiLibrary?
+
+    abstract fun getOpenapiSdk(module: KaLibraryModule): OpenapiSdk?
 
     abstract fun getContainingKaModules(virtualFile: VirtualFile): List<KaModule>
 }

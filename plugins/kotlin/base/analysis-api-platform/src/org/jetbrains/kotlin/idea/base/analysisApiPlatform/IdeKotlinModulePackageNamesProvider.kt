@@ -13,21 +13,24 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndex.ValueProcessor
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModuleStateModificationListener
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationKind
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationListener
 import org.jetbrains.kotlin.analysis.api.platform.utils.NullableConcurrentCache
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaBuiltinsModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.analysis.api.utils.errors.withKaModuleEntry
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinBinaryRootToPackageIndex
 import org.jetbrains.kotlin.idea.base.indices.names.isSupportedByBinaryRootToPackageIndex
-import org.jetbrains.kotlin.idea.base.projectStructure.KtLibraryModuleByModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.KtSdkLibraryModuleByModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.KtSourceModuleByModuleInfo
-import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
+import org.jetbrains.kotlin.idea.base.projectStructure.openapiLibrary
+import org.jetbrains.kotlin.idea.base.projectStructure.openapiSdk
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.utils.addToStdlib.flattenTo
+import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 
 /**
  * [IdeKotlinModulePackageNamesProvider] caches the results of [computePackageNames][org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProvider.computePackageNames]
@@ -69,11 +72,10 @@ internal class IdeKotlinModulePackageNamesProvider(private val project: Project)
     }
 
     fun computePackageNames(module: KaModule): Set<String>? =
-        @OptIn(K1ModeProjectStructureApi::class)
         when (module) {
-            is KtSourceModuleByModuleInfo -> computeSourceModulePackageSet(module)
+            is KaSourceModule -> computeSourceModulePackageSet(module)
 
-            is KtSdkLibraryModuleByModuleInfo, is KtLibraryModuleByModuleInfo ->
+            is KaLibraryModule ->
                 cache.getOrPut(module) { module ->
                     module.binaryRootFiles?.let { computePackageSetFromBinaryRoots(it) }
                 }
@@ -84,8 +86,7 @@ internal class IdeKotlinModulePackageNamesProvider(private val project: Project)
             else -> null
         }
 
-    @OptIn(K1ModeProjectStructureApi::class)
-    private fun computeSourceModulePackageSet(module: KtSourceModuleByModuleInfo): Set<String>? = null // KTIJ-27450
+    private fun computeSourceModulePackageSet(module: KaSourceModule): Set<String>? = null // KTIJ-27450
 
     private fun computePackageSetFromBinaryRoots(binaryRoots: Array<VirtualFile>): Set<String>? {
         if (binaryRoots.any { !it.isSupportedByBinaryRootToPackageIndex }) {
@@ -142,11 +143,18 @@ internal class IdeKotlinModulePackageNamesProvider(private val project: Project)
         binaryRootsCache.map.clear()
     }
 
-    @OptIn(K1ModeProjectStructureApi::class)
+    @OptIn(KaImplementationDetail::class)
     private val KaModule.binaryRootFiles: Array<VirtualFile>?
         get() = when (this) {
-            is KtSdkLibraryModuleByModuleInfo -> moduleInfo.sdk.rootProvider.getFiles(OrderRootType.CLASSES)
-            is KtLibraryModuleByModuleInfo -> libraryInfo.library.getFiles(OrderRootType.CLASSES)
+            is KaLibraryModule -> {
+                val rootProvider =
+                    openapiLibrary?.rootProvider
+                        ?: openapiSdk?.rootProvider
+                        ?: errorWithAttachment("${KaLibraryModule::class} should be either sdk or library") {
+                            withKaModuleEntry("kaModule", this@binaryRootFiles)
+                        }
+                rootProvider.getFiles(OrderRootType.CLASSES)
+            }
             else -> null
         }
 

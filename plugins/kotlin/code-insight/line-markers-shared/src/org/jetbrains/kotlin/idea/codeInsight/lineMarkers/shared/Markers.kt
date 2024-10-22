@@ -148,8 +148,8 @@ fun KaModule.nameForTooltip(): String {
         is KaSourceModule -> takeIf { openapiModule.isHMPPEnabled }?.openapiModule?.name?.let { return it }
 
         /* For libraries, we're trying to show artifact variant name */
-        is KaLibrarySourceModule -> binaryLibrary.openapiLibrary.extractVariantName(binaryLibrary)?.let { return it }
-        is KaLibraryModule -> openapiLibrary.extractVariantName(this)?.let { return it }
+        is KaLibrarySourceModule -> binaryLibrary.openapiLibrary?.extractVariantName(binaryLibrary)?.let { return it }
+        is KaLibraryModule -> openapiLibrary?.extractVariantName(this)?.let { return it }
     }
 
     (this as? KaSourceModule)?.stableModuleName?.let { Name.guessByFirstCharacter(it) }?.asStringStripSpecialMarkers()?.let { return it }
