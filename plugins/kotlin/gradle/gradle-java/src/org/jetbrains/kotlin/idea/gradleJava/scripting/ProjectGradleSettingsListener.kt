@@ -8,6 +8,7 @@ import com.intellij.platform.backend.observation.launchTracked
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.core.script.scriptDefinitionsSourceOfType
 import org.jetbrains.kotlin.idea.gradleJava.loadGradleDefinitions
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.Imported
@@ -84,7 +85,7 @@ class ProjectGradleSettingsListener(
             }
         }.toSet()
 
-        GradleScriptDefinitionsSource.getInstance(project)?.updateDefinitions(definitions)
-        GradleScriptDependenciesSource.getInstance(project)?.updateDependenciesAndCreateModules(gradleScripts)
+        project.scriptDefinitionsSourceOfType<GradleScriptDefinitionsSource>()?.updateDefinitions(definitions)
+        GradleScriptConfigurationsSource.getInstance(project)?.updateDependenciesAndCreateModules(gradleScripts)
     }
 }

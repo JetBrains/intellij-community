@@ -12,11 +12,13 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.NonClasspathDirectoriesScope.compose
-import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEPENDENCIES_SOURCES
+import org.jetbrains.kotlin.idea.core.script.SCRIPT_CONFIGURATIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
 import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import java.nio.file.Path
@@ -24,75 +26,89 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.valueOrNull
 
-class ScriptDependenciesData(
-    val configurations: Map<VirtualFile, ResultWithDiagnostics<ScriptCompilationConfigurationWrapper>> = mapOf(),
+private class ScriptDependenciesData(
     val classes: Set<VirtualFile> = mutableSetOf(),
     val sources: Set<VirtualFile> = mutableSetOf(),
     val sdks: Map<Path, Sdk> = mutableMapOf(),
-) {
-    fun compose(other: ScriptDependenciesData): ScriptDependenciesData = ScriptDependenciesData(
-        configurations + other.configurations,
-        classes + other.classes,
-        sources + other.sources,
-        sdks + other.sdks
-    )
-}
+)
 
 class ScriptConfigurationsProviderImpl(project: Project) : ScriptConfigurationsProvider(project), ScriptDependencyAware {
-    private val scriptDependenciesData = AtomicReference(ScriptDependenciesData())
+    private val allDependencies = AtomicReference(ScriptDependenciesData())
+    private val dependenciesSourceByDefinition = AtomicReference(mapOf<ScriptDefinition, ScriptConfigurationsSource<*>>())
 
     fun notifySourceUpdated() {
-        val newData = SCRIPT_DEPENDENCIES_SOURCES.getExtensions(project)
-            .map { it.currentConfigurationsData }
-            .fold(ScriptDependenciesData()) { acc, reference ->
-                acc.compose(reference.get())
+        val sources = SCRIPT_CONFIGURATIONS_SOURCES.getExtensions(project)
+
+        val allSources = mutableSetOf<VirtualFile>()
+        val allClasses = mutableSetOf<VirtualFile>()
+        val allSdks = mutableMapOf<Path, Sdk>()
+
+        val sourceByDefinition = mutableMapOf<ScriptDefinition, ScriptConfigurationsSource<*>>()
+
+        sources.forEach { source ->
+            val data = source.data.get()
+            val configurations = data.configurations.values.mapNotNull { it.valueOrNull() }
+
+            configurations.forEach {
+                allSources.addAll(toVfsRoots(it.dependenciesClassPath))
+                allClasses.addAll(toVfsRoots(it.dependenciesSources))
             }
 
-        this.scriptDependenciesData.set(newData)
+            allSdks.putAll(data.sdks)
+
+            val definitions = source.getScriptDefinitionsSource()?.definitions
+            definitions?.forEach { t -> sourceByDefinition.put(t, source) }
+        }
+
+        dependenciesSourceByDefinition.set(sourceByDefinition)
+        allDependencies.set(ScriptDependenciesData(allClasses, allSources))
     }
 
     override fun getAllScriptDependenciesSources(): Collection<VirtualFile> =
-        scriptDependenciesData.get()?.sources ?: emptyList()
+        allDependencies.get()?.sources ?: emptyList()
 
     override fun getAllScriptsDependenciesClassFiles(): Collection<VirtualFile> =
-        scriptDependenciesData.get().classes
+        allDependencies.get().classes
 
     override fun getAllScriptsDependenciesClassFilesScope(): GlobalSearchScope =
-        with(scriptDependenciesData.get()) {
+        with(allDependencies.get()) {
             compose(classes.toList() + getSdkClasses())
         }
 
     override fun getAllScriptDependenciesSourcesScope(): GlobalSearchScope =
-        with(scriptDependenciesData.get()) {
+        with(allDependencies.get()) {
             compose(sources.toList() + getSdkSources())
         }
 
-    override fun getScriptDependenciesClassFilesScope(virtualFile: VirtualFile): GlobalSearchScope =
-        with(scriptDependenciesData.get()) {
-            val configurationWrapper = configurations[virtualFile]?.valueOrNull()
-                ?: return@with GlobalSearchScope.EMPTY_SCOPE
+    override fun getScriptDependenciesClassFilesScope(virtualFile: VirtualFile): GlobalSearchScope {
+        val data = getScriptDependencies(virtualFile) ?: return GlobalSearchScope.EMPTY_SCOPE
 
-            val roots = toVfsRoots(configurationWrapper.dependenciesClassPath)
+        val configurationWrapper = data.configurations[virtualFile]?.valueOrNull()
+            ?: return GlobalSearchScope.EMPTY_SCOPE
 
-            val sdk = configurationWrapper.javaHome?.let { sdks[it.toPath()] }
-            val sdkClasses = sdk?.rootProvider?.getFiles(OrderRootType.CLASSES)?.toList() ?: emptyList<VirtualFile>()
+        val roots = toVfsRoots(configurationWrapper.dependenciesClassPath)
 
-            compose(roots + sdkClasses)
-        }
+        val sdk = configurationWrapper.javaHome?.let { data.sdks[it.toPath()] }
+        val sdkClasses = sdk?.rootProvider?.getFiles(OrderRootType.CLASSES)?.toList() ?: emptyList<VirtualFile>()
+
+        return compose(roots + sdkClasses)
+    }
 
     override fun getScriptDependenciesClassFiles(virtualFile: VirtualFile): Collection<VirtualFile> {
         val dependencies =
-            scriptDependenciesData.get().configurations[virtualFile]?.valueOrNull()?.dependenciesClassPath ?: return emptyList()
+            getScriptDependencies(virtualFile)?.configurations[virtualFile]?.valueOrNull()?.dependenciesClassPath ?: return emptyList()
         return toVfsRoots(dependencies)
     }
 
     override fun getFirstScriptsSdk(): Sdk? =
-        getProjectSdk() ?: scriptDependenciesData.get().sdks.values.firstOrNull()
+        getProjectSdk() ?: allDependencies.get().sdks.values.firstOrNull()
 
-    override fun getScriptSdk(virtualFile: VirtualFile): Sdk? = with(scriptDependenciesData.get()) {
-        getProjectSdk()?.let { return it }
-        val configurationWrapper = scriptDependenciesData.get().configurations[virtualFile]?.valueOrNull()
-        return configurationWrapper?.javaHome?.let { sdks[it.toPath()] } ?: ProjectJdkTable.getInstance().allJdks.find { it.canBeUsedForScript() }
+    override fun getScriptSdk(virtualFile: VirtualFile): Sdk? {
+        val data = getScriptDependencies(virtualFile)
+
+        val configurationWrapper = data?.configurations[virtualFile]?.valueOrNull()
+        return configurationWrapper?.javaHome?.let { data.sdks[it.toPath()] }
+            ?: ProjectJdkTable.getInstance().allJdks.find { it.canBeUsedForScript() }
     }
 
     private fun getProjectSdk(): Sdk? {
@@ -110,7 +126,13 @@ class ScriptConfigurationsProviderImpl(project: Project) : ScriptConfigurationsP
         getConfiguration(file.alwaysVirtualFile)
 
     fun getConfiguration(virtualFile: VirtualFile): ResultWithDiagnostics<ScriptCompilationConfigurationWrapper>? =
-        scriptDependenciesData.get().configurations[virtualFile]
+        getScriptDependencies(virtualFile)?.configurations[virtualFile]
+
+    private fun getScriptDependencies(file: VirtualFile): ScriptConfigurations? {
+        val definition = file.findScriptDefinition(project)
+        val source = dependenciesSourceByDefinition.get()[definition]
+        return source?.getScriptDependencies(file)
+    }
 
     private fun ScriptDependenciesData.getSdkSources(): List<VirtualFile> =
         sdks.flatMap { it.value.rootProvider.getFiles(OrderRootType.SOURCES).toList() }

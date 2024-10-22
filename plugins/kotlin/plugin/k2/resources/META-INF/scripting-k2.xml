@@ -18,8 +18,8 @@
             dynamic="true"/>
 
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scriptDependenciesSource"
-            interface="org.jetbrains.kotlin.idea.core.script.k2.ScriptDependenciesSource"
+            qualifiedName="org.jetbrains.kotlin.scriptConfigurationsSource"
+            interface="org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationsSource"
             area="IDEA_PROJECT"
             dynamic="true"/>
 
@@ -133,7 +133,7 @@
             implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingModuleInfoProviderExtension"/>
 
     <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.script.k2.MainKtsScriptDefinitionSource"/>
-    <scriptDependenciesSource implementation="org.jetbrains.kotlin.idea.script.k2.CustomScriptDependenciesSource"/>
+    <scriptConfigurationsSource implementation="org.jetbrains.kotlin.idea.core.script.k2.CommonScriptConfigurationsSource"/>
 
     <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.core.script.BundledScriptDefinitionSource"/>
 

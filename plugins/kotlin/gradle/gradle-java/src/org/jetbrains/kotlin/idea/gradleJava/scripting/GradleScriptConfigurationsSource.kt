@@ -13,12 +13,14 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
-import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEPENDENCIES_SOURCES
+import org.jetbrains.kotlin.idea.core.script.SCRIPT_CONFIGURATIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
 import org.jetbrains.kotlin.idea.core.script.getUpdatedStorage
 import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
-import org.jetbrains.kotlin.idea.core.script.k2.ScriptDependenciesData
-import org.jetbrains.kotlin.idea.core.script.k2.ScriptDependenciesSource
+import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurations
+import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationsSource
+import org.jetbrains.kotlin.idea.core.script.scriptDefinitionsSourceOfType
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
@@ -42,11 +44,11 @@ class GradleScriptModel(
     val javaHome: String? = null
 ) : BaseScriptModel(virtualFile)
 
-open class GradleScriptDependenciesSource(override val project: Project) : ScriptDependenciesSource<GradleScriptModel>(project) {
+open class GradleScriptConfigurationsSource(override val project: Project) : ScriptConfigurationsSource<GradleScriptModel>(project) {
     private val gradleEntitySourceFilter: (EntitySource) -> Boolean =
         { entitySource -> entitySource is KotlinGradleScriptModuleEntitySource }
 
-    override suspend fun updateModules(dependencies: ScriptDependenciesData, storage: MutableEntityStorage?) {
+    override suspend fun updateModules(dependencies: ScriptConfigurations, storage: MutableEntityStorage?) {
         val storageWithGradleScriptModules = getUpdatedStorage(
             project, dependencies
         ) { KotlinGradleScriptModuleEntitySource(it) }
@@ -61,7 +63,10 @@ open class GradleScriptDependenciesSource(override val project: Project) : Scrip
         }
     }
 
-    override fun resolveDependencies(scripts: Iterable<GradleScriptModel>): ScriptDependenciesData {
+    override fun getScriptDefinitionsSource(): ScriptDefinitionsSource? =
+        project.scriptDefinitionsSourceOfType<GradleScriptDefinitionsSource>()
+
+    override fun resolveDependencies(scripts: Iterable<GradleScriptModel>): ScriptConfigurations {
         val newClasses = mutableSetOf<VirtualFile>()
         val newSources = mutableSetOf<VirtualFile>()
         val sdks = mutableMapOf<Path, Sdk>()
@@ -107,15 +112,13 @@ open class GradleScriptDependenciesSource(override val project: Project) : Scrip
             }
         }
 
-        return ScriptDependenciesData(
-            newConfigurations, newClasses, newSources, sdks
-        )
+        return ScriptConfigurations(newConfigurations, sdks)
     }
 
     companion object {
-        fun getInstance(project: Project): GradleScriptDependenciesSource? =
-            SCRIPT_DEPENDENCIES_SOURCES.getExtensions(project).filterIsInstance<GradleScriptDependenciesSource>().firstOrNull()
-                .safeAs<GradleScriptDependenciesSource>()
+        fun getInstance(project: Project): GradleScriptConfigurationsSource? =
+            SCRIPT_CONFIGURATIONS_SOURCES.getExtensions(project).filterIsInstance<GradleScriptConfigurationsSource>().firstOrNull()
+                .safeAs<GradleScriptConfigurationsSource>()
     }
 
     data class KotlinGradleScriptModuleEntitySource(override val virtualFileUrl: VirtualFileUrl) : KotlinScriptEntitySource(virtualFileUrl)

@@ -36,7 +36,7 @@ internal class ReloadDependenciesScriptAction : AnAction() {
             project,
             KotlinBaseScriptingBundle.message("progress.title.loading.script.dependencies")
         ) {
-            CustomScriptDependenciesSource.getInstance(project)?.updateDependenciesAndCreateModules(
+            MainKtsScriptConfigurationsSource.getInstance(project)?.updateDependenciesAndCreateModules(
                 listOf(BaseScriptModel(file))
             )
 

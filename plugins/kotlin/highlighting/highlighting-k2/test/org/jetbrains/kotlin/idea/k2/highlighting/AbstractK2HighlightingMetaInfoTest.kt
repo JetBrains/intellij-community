@@ -6,12 +6,15 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.registerExtension
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEPENDENCIES_SOURCES
-import org.jetbrains.kotlin.idea.core.script.k2.ScriptDependenciesData
-import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDependenciesSource
-import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptModel
+import org.jetbrains.kotlin.idea.core.script.SCRIPT_CONFIGURATIONS_SOURCES
+import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
+import org.jetbrains.kotlin.idea.core.script.k2.CommonScriptConfigurationsSource
+import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurations
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
@@ -32,17 +35,17 @@ abstract class AbstractK2HighlightingMetaInfoTest : AbstractHighlightingMetaInfo
     override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
         val psiFile = files.first()
         if (psiFile is KtFile && psiFile.isScript()) {
-            val dependenciesSource = object : GradleScriptDependenciesSource(project) {
+            val dependenciesSource = object : CommonScriptConfigurationsSource(project, CoroutineScope(Dispatchers.IO + SupervisorJob())) {
                 override suspend fun updateModules(
-                    dependencies: ScriptDependenciesData,
+                    dependencies: ScriptConfigurations,
                     storage: MutableEntityStorage?) {
                     //do nothing because adding modules is not permitted in light tests
                 }
             }
 
-            project.registerExtension(SCRIPT_DEPENDENCIES_SOURCES, dependenciesSource, testRootDisposable)
+            project.registerExtension(SCRIPT_CONFIGURATIONS_SOURCES, dependenciesSource, testRootDisposable)
 
-            val script = GradleScriptModel(psiFile.virtualFile)
+            val script = BaseScriptModel(psiFile.virtualFile)
             runWithModalProgressBlocking(project, "Testing") {
                 dependenciesSource.updateDependenciesAndCreateModules(setOf(script))
             }

@@ -36,7 +36,7 @@ val Project.defaultScratchDefinition: ScriptDefinition
                 jvm.jdkHome(it)
             }
             dependencies(JvmDependency(scriptClassPath + scriptCompilationClasspathFromContextOrStdlib(wholeClasspath = true)))
-            displayName("Bundled Script Definition")
+            displayName("Bundled Scratch Definition")
             hostConfiguration(defaultJvmScriptingHostConfiguration)
         }
 

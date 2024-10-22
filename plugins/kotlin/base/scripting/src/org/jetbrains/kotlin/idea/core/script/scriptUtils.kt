@@ -11,18 +11,25 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.core.script.configuration.cache.ScriptConfigurationSnapshot
 import org.jetbrains.kotlin.idea.core.script.k2.K2ScriptDefinitionProvider
-import org.jetbrains.kotlin.idea.core.script.k2.ScriptDependenciesSource
+import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationsSource
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import kotlin.script.experimental.api.ScriptDiagnostic
+
+inline fun <reified T : ScriptDefinitionsSource> Project.scriptDefinitionsSourceOfType(): T? =
+    SCRIPT_DEFINITIONS_SOURCES.getExtensions(this)
+        .filterIsInstance<T>()
+        .firstOrNull()
+        .safeAs<T>()
 
 val SCRIPT_DEFINITIONS_SOURCES: ProjectExtensionPointName<ScriptDefinitionsSource> =
     ProjectExtensionPointName("org.jetbrains.kotlin.scriptDefinitionsSource")
 
-val SCRIPT_DEPENDENCIES_SOURCES: ProjectExtensionPointName<ScriptDependenciesSource<*>> =
-    ProjectExtensionPointName("org.jetbrains.kotlin.scriptDependenciesSource")
+val SCRIPT_CONFIGURATIONS_SOURCES: ProjectExtensionPointName<ScriptConfigurationsSource<*>> =
+    ProjectExtensionPointName("org.jetbrains.kotlin.scriptConfigurationsSource")
 
 @set: org.jetbrains.annotations.TestOnly
 var Application.isScriptChangesNotifierDisabled by NotNullableUserDataProperty(
