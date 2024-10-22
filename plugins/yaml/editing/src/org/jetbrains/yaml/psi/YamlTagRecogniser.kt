@@ -14,6 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 interface YamlTagRecogniser {
   companion object {
     @JvmField
+    @ApiStatus.Internal
     val EP_NAME = ExtensionPointName.create<YamlTagRecogniser>("com.intellij.yaml.tagRecogniser")
   }
 
