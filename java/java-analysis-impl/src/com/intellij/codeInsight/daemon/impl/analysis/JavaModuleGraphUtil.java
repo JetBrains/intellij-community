@@ -289,8 +289,6 @@ public final class JavaModuleGraphUtil {
                                      (isStaticModule(to, scope) ? PsiKeyword.STATIC + " " : "") +
                                      (isExported ? PsiKeyword.TRANSITIVE + " " : "") +
                                      to);
-    PsiJavaModule toModule = findDependencyByName(from, to);
-    if (toModule != null) optimizeDependencies(from, toModule);
     return true;
   }
 
@@ -328,7 +326,6 @@ public final class JavaModuleGraphUtil {
                                      (isStaticModule(to.getName(), scope) ? PsiKeyword.STATIC + " " : "") +
                                      (isExported(from, to) ? PsiKeyword.TRANSITIVE + " " : "") +
                                      to.getName());
-    optimizeDependencies(from, to);
     return true;
   }
 
