@@ -36,7 +36,7 @@ envs {
   testHelpers("py310_64", if (isWindows) "3.10.11" else "3.10.14")
   testHelpers("py311_64", "3.11.9")
   testHelpers("py312_64", "3.12.4")
-  testHelpers("py313_64", "3.13.0b4")
+  testHelpers("py313_64", "3.13.0")
 }
 
 tasks.register("all_tests") {
