@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
+import com.intellij.diagnostic.WindowsDefenderExcludeUtil.NOTIFICATION_GROUP
 import com.intellij.ide.BrowserUtil
-import com.intellij.idea.ActionsBundle
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction.createSimple
 import com.intellij.notification.NotificationAction.createSimpleExpiring
@@ -66,7 +66,7 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
     val pathList = paths.joinToString(separator = "<br>&nbsp;&nbsp;", prefix = "<br>&nbsp;&nbsp;") { it.toString() }
     val auto = DiagnosticBundle.message("exclude.folders")
     val manual = DiagnosticBundle.message("defender.config.manual")
-    WindowsDefenderExcludeUtil.notification(DiagnosticBundle.message("defender.config.prompt", pathList, auto, manual), NotificationType.INFORMATION)
+    Notification(NOTIFICATION_GROUP, DiagnosticBundle.message("notification.group.defender.config"), DiagnosticBundle.message("defender.config.prompt", pathList, auto, manual), NotificationType.INFORMATION)
       .addAction(createSimpleExpiring(auto) { WindowsDefenderExcludeUtil.updateDefenderConfig(checker, project, paths) })
       .addAction(createSimpleExpiring(DiagnosticBundle.message("defender.config.suppress1")) { suppressCheck(checker, project, globally = false) })
       .addAction(createSimpleExpiring(DiagnosticBundle.message("defender.config.suppress2")) { suppressCheck(checker, project, globally = true) })
@@ -85,9 +85,6 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
 
   private fun suppressCheck(checker: WindowsDefenderChecker, project: Project, globally: Boolean) {
     checker.ignoreStatusCheck(if (globally) null else project, true)
-    val action = ActionsBundle.message("action.ResetWindowsDefenderNotification.text")
-    WindowsDefenderExcludeUtil.notification(DiagnosticBundle.message("defender.config.restore", action), NotificationType.INFORMATION)
-      .notify(project)
     WindowsDefenderStatisticsCollector.suppressed(project, globally)
   }
 }
