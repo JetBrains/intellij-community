@@ -3,6 +3,7 @@ package com.intellij.openapi.ide;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.ui.Gray;
 import org.jetbrains.annotations.ApiStatus;
@@ -16,6 +17,7 @@ import java.awt.datatransfer.Transferable;
 import java.util.EventListener;
 
 public abstract class CopyPasteManager {
+  private static final Logger LOG = Logger.getInstance(CopyPasteManager.class);
 
   /**
    * @deprecated use {@link #getCutColor()} instead
@@ -95,7 +97,16 @@ public abstract class CopyPasteManager {
 
   public static void copyTextToClipboard(@NotNull String text) {
     try {
-      getInstance().setContents(new StringSelection(text));
-    } catch (Exception ignore) { }
+      StringSelection transferable = new StringSelection(text);
+      if (ApplicationManager.getApplication() == null) {
+        //noinspection SSBasedInspection
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, null);
+      }
+      else {
+        getInstance().setContents(transferable);
+      }
+    } catch (Exception e) {
+      LOG.debug(e);
+    }
   }
 }
