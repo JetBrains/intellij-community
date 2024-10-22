@@ -180,6 +180,11 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
             runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinInjection.kt");
         }
 
+        @TestMetadata("KotlinOperatorFunctionInjection.kt")
+        public void testKotlinOperatorFunctionInjection() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinOperatorFunctionInjection.kt");
+        }
+
         @TestMetadata("KotlinSimpleInjection.kt")
         public void testKotlinSimpleInjection() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinSimpleInjection.kt");

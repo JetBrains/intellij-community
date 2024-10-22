@@ -8,11 +8,13 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider
 import com.intellij.testFramework.EditorTestUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.formatter.KotlinLineIndentProvider
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.formatter.KotlinLineIndentProvider
 import org.jetbrains.kotlin.idea.test.KotlinLightPlatformCodeInsightTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.junit.Assert
 import java.io.File
@@ -134,6 +136,11 @@ abstract class AbstractEnterHandlerTest : KotlinLightPlatformCodeInsightTestCase
             "${if (withoutCustomLineIndentProvider) "Remove" else "Add"} \"// WITHOUT_CUSTOM_LINE_INDENT_PROVIDER\" or fix ${customLineIndentProvider.javaClass.simpleName}",
             if (withoutCustomLineIndentProvider) condition else !condition
         )
+    }
+
+    override fun setupEditorForInjectedLanguage() {
+        (file as? KtFile)?.let { ScriptConfigurationsProvider.getInstance(project)!!.getScriptConfiguration(it) }
+        super.setupEditorForInjectedLanguage()
     }
 
     private fun typeAndCheck(

@@ -5,14 +5,17 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.TestLoggerFactory
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.runInEdtAndWait
 import org.jdom.Document
 import org.jdom.input.SAXBuilder
 import org.jetbrains.kotlin.formatter.FormatSettingsUtil
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
+import org.jetbrains.kotlin.idea.caches.trackers.KotlinModuleOutOfCodeBlockModificationTracker
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -43,8 +46,16 @@ abstract class AbstractInspectionTest : KotlinLightCodeInsightFixtureTestCase() 
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { EntryPointsManagerBase.getInstance(project).ADDITIONAL_ANNOTATIONS.remove(ENTRY_POINT_ANNOTATION) },
-            ThrowableRunnable { super.tearDown() }
+            {
+                EntryPointsManagerBase.getInstance(project).ADDITIONAL_ANNOTATIONS.remove(ENTRY_POINT_ANNOTATION)
+            }, {
+                runInEdtAndWait {
+                    KotlinCodeBlockModificationListener.getInstance(project).incModificationCount()
+                    KotlinModuleOutOfCodeBlockModificationTracker.incrementModificationCountForAllModules(project)
+                    ProjectRootManager.getInstance(project).incModificationCount()
+                }
+            },
+            { super.tearDown() }
         )
     }
 
