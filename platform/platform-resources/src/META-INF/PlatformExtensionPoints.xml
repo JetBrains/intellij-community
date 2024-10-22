@@ -264,7 +264,7 @@
     </extensionPoint>
     <extensionPoint name="statistics.validation.customValidationRule" interface="com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule" dynamic="true"/>
     <extensionPoint name="statistics.validation.customValidationRuleFactory" interface="com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRuleFactory" dynamic="true"/>
-    <extensionPoint name="statistics.collectorExtension" interface="com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension"/>
+    <extensionPoint name="statistics.collectorExtension" interface="com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension" dynamic="true"/>
     <extensionPoint name="statistics.actionCustomPlaceAllowlist" beanClass="com.intellij.internal.statistic.collectors.fus.ActionCustomPlaceAllowlist" dynamic="true"/>
     <extensionPoint name="statistics.notificationIdsHolder" interface="com.intellij.notification.impl.NotificationIdsHolder" dynamic="true"/>
     <extensionPoint name="statistics.actionIdsHolder" interface="com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdsHolder" dynamic="true"/>
