@@ -1604,6 +1604,41 @@ public class Py3TypeTest extends PyTestCase {
                  pass""");
   }
 
+  // PY-76816
+  public void testEnumDefinitionUsingEnumSubclass() {
+    doTest("Color",
+           """
+             from enum import Enum
+
+             class CustomEnum(Enum):
+                 pass
+             
+             class Color(CustomEnum):
+                 RED = 1
+
+             expr = Color.RED
+             """);
+  }
+
+  // PY-76816
+  public void testEnumDefinitionUsingEnumTypeMetaclass() {
+    doTest("Color",
+           """
+             from enum import EnumType
+
+             class CustomEnumType(EnumType):
+                 pass
+
+             class CustomEnum(metaclass=CustomEnumType):
+                 pass
+
+             class Color(CustomEnum):
+                 RED = 1
+
+             expr = Color.RED
+             """);
+  }
+
   // PY-55734
   public void testEnumValueType() {
     doTest("int",

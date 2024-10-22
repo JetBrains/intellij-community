@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Ref
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
@@ -126,7 +127,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
           .asSequence()
           .filterIsInstance<PyTargetExpression>()
           .mapNotNull { ScopeUtil.getScopeOwner(it) as? PyClass }
-          .firstOrNull { owner -> owner.getAncestorTypes(context).any { it?.classQName == "enum.Enum" } }
+          .firstOrNull { owner -> PyStdlibTypeProvider.isEnum(owner, context) }
           ?.let {
             val type = context.getType(it)
             return if (type is PyInstantiableType<*>) type.toInstance() else type

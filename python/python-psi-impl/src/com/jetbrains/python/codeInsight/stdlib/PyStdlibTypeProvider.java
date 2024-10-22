@@ -12,6 +12,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.types.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,13 +84,9 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     if (referenceTarget instanceof PyTargetExpression target) {
       final ScopeOwner owner = ScopeUtil.getScopeOwner(target);
       if (owner instanceof PyClass cls) {
-        final List<PyClassLikeType> types = cls.getAncestorTypes(context);
-        for (PyClassLikeType type : types) {
-          if (type != null && PyNames.TYPE_ENUM.equals(type.getClassQName())) {
-            final PyType classType = context.getType(cls);
-            if (classType instanceof PyClassType) {
-              return Ref.create(((PyClassType)classType).toInstance());
-            }
+        if (isEnum(cls, context)) {
+          if (context.getType(cls) instanceof PyClassType classType) {
+            return Ref.create(classType.toInstance());
           }
         }
       }
@@ -132,6 +129,12 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       return Ref.create(enumAutoType);
     }
     return null;
+  }
+
+  @ApiStatus.Internal
+  public static boolean isEnum(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    return cls.getMetaClassType(true, context) instanceof PyClassType metaClassType &&
+           metaClassType.getPyClass().isSubclass(PyNames.TYPE_ENUM_META, context);
   }
 
   @Nullable
