@@ -30,7 +30,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass;
@@ -68,7 +67,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DISPATCH_ADDR_SYS_PROP;
 import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DISPATCH_PORT_SYS_PROP;
 import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.*;
-import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.util.containers.ContainerUtil.addAllNotNull;
 import static org.jetbrains.plugins.gradle.util.GradleUtil.determineRootProject;
 
@@ -311,7 +309,8 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       LocalTargetEnvironment environment = request.prepareEnvironment(progressIndicator);
       String taskStateInitScript = taskState.handleCreatedTargetEnvironment(environment, progressIndicator);
       if (taskStateInitScript != null) {
-        writeAndAppendScript(settings, taskStateInitScript, "ijtgttaskstate");
+        var initScriptPath = GradleInitScriptUtil.createInitScript("ijtgttaskstate", taskStateInitScript);
+        settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptPath.toString());
       }
     }
     catch (ExecutionException e) {
@@ -408,34 +407,33 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     }
 
     if (!initScripts.isEmpty()) {
-      writeAndAppendScript(settings, StringUtil.join(initScripts, System.lineSeparator()), "ijresolvers");
+      var initScript = StringUtil.join(initScripts, System.lineSeparator());
+      var initScriptPath = GradleInitScriptUtil.createInitScript("ijresolvers", initScript);
+      settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptPath.toString());
     }
 
     final String initScript = settings.getUserData(INIT_SCRIPT_KEY);
     if (StringUtil.isNotEmpty(initScript)) {
-      writeAndAppendScript(settings, initScript, notNullize(settings.getUserData(INIT_SCRIPT_PREFIX_KEY), "ijmiscinit"));
+      var initScriptPrefix = StringUtil.notNullize(settings.getUserData(INIT_SCRIPT_PREFIX_KEY), "ijmiscinit");
+      var initScriptPath = GradleInitScriptUtil.createInitScript(initScriptPrefix, initScript);
+      settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptPath.toString());
     }
 
     final Collection<VersionSpecificInitScript> scripts = settings.getUserData(VERSION_SPECIFIC_SCRIPTS_KEY);
-    if (gradleVersion != null && scripts != null && !scripts.isEmpty()) {
-        scripts.stream()
-          .filter(script -> script.isApplicableTo(gradleVersion))
-          .filter(script -> StringUtil.isNotEmpty(script.getScript()))
-          .forEach(script -> writeAndAppendScript(settings, script.getScript(), notNullize(script.getFilePrefix(), "ijverspecinit")));
+    if (gradleVersion != null && scripts != null) {
+      for (var script : scripts) {
+        if (script.isApplicableTo(gradleVersion) && StringUtil.isNotEmpty(script.getScript())) {
+          var initScriptPrefix = StringUtil.notNullize(script.getFilePrefix(), "ijverspecinit");
+          var initScriptPath = GradleInitScriptUtil.createInitScript(initScriptPrefix, script.getScript());
+          settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptPath.toString());
+        }
+      }
     }
 
     if (settings.getArguments().contains(GradleConstants.INIT_SCRIPT_CMD_OPTION)) {
       GradleInitScriptUtil.attachTargetPathMapperInitScript(settings);
     }
     settings.withEnvironmentVariables(executionEnvironmentVariables);
-  }
-
-  private static void writeAndAppendScript(@NotNull GradleExecutionSettings effectiveSettings,
-                                           @NotNull String initScript,
-                                           @NotNull String initScriptPrefix) {
-    var initScriptPrefixName = FileUtil.sanitizeFileName(initScriptPrefix);
-    var initScriptPath = GradleInitScriptUtil.createInitScript(initScriptPrefixName, initScript);
-    effectiveSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptPath.toString());
   }
 
   public static void setupGradleScriptDebugging(@NotNull GradleExecutionSettings effectiveSettings) {

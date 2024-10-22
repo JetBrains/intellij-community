@@ -250,13 +250,14 @@ private fun loadInitScript(aClass: Class<*>, resourcePath: String): String {
 }
 
 fun createInitScript(prefix: String, content: String): Path {
+  val sanitizedPrefix = FileUtil.sanitizeFileName(prefix)
   val contentBytes = content.encodeToByteArray()
   val tempDirectory = Path.of(FileUtil.getTempDirectory())
   tempDirectory.createDirectories()
   var suffix = 0
   while (true) {
     suffix++
-    val candidateName = prefix + suffix + "." + GradleConstants.EXTENSION
+    val candidateName = sanitizedPrefix + suffix + "." + GradleConstants.EXTENSION
     val candidate = tempDirectory.resolve(candidateName)
     try {
       candidate.createFile()
