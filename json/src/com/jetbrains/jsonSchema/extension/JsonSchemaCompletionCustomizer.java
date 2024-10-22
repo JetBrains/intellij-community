@@ -28,6 +28,17 @@ public interface JsonSchemaCompletionCustomizer {
   }
 
   /**
+   * Allows customizing insertion handler for enum values (e.g., to turn a value into a more complicated structure).
+   * If it returns null, the default handler will be invoked.
+   */
+  default @Nullable InsertHandler<LookupElement> createHandlerForEnumValue(
+    JsonSchemaObject schema,
+    String value,
+    @NotNull PsiElement completionElement) {
+    return createHandlerForEnumValue(schema, value);
+  }
+
+  /**
    * Whether to accept the completion item for a property
    */
   default boolean acceptsPropertyCompletionItem(JsonSchemaObject propertySchema, @NotNull PsiElement completionElement) { return true; }
