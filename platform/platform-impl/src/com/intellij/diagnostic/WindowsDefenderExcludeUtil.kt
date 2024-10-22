@@ -17,6 +17,7 @@ import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
 internal object WindowsDefenderExcludeUtil {
+  const val NOTIFICATION_GROUP = "WindowsDefender"
   private val defenderExclusions = ConcurrentHashMap<Path, Boolean>()
 
   fun markPathAsShownDefender(path: Path) {
@@ -28,17 +29,17 @@ internal object WindowsDefenderExcludeUtil {
   }
 
   fun addPathsToExclude(paths: List<Path>) {
-    paths.forEach {  defenderExclusions.put(it, true) }
+    paths.forEach { defenderExclusions.put(it, true) }
   }
 
   fun getPathsToExclude(): List<Path> {
-    return defenderExclusions.filterValues{it}.keys.toImmutableList()
+    return defenderExclusions.filterValues { it }.keys.toImmutableList()
   }
 
   fun clearPathsToExclude() {
     defenderExclusions.replaceAll { _, _ -> false }
   }
-  const val NOTIFICATION_GROUP = "WindowsDefender"
+
   fun updateDefenderConfig(checker: WindowsDefenderChecker, project: Project, paths: List<Path>, onSuccess: () -> Unit = {}) {
     service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
       @Suppress("DialogTitleCapitalization")
