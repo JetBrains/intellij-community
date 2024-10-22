@@ -28,7 +28,9 @@ import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.childrenOfType
 import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.config.ApiVersion
@@ -37,6 +39,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.*
+import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleConstants.GRADLE_PLUGIN_ID
 import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleConstants.GROUP_ID
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
@@ -52,6 +55,9 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinGradleCompatibilityStore
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.toml.lang.psi.TomlFile
+import org.toml.lang.psi.TomlInlineTable
+import org.toml.lang.psi.TomlTable
 
 abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
 
@@ -645,6 +651,8 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         @NonNls
         const val CLASSPATH = "classpath \"$GROUP_ID:$GRADLE_PLUGIN_ID:\$kotlin_version\""
 
+        private const val KOTLIN_GRADLE_PLUGIN_ID = "org.jetbrains.kotlin:kotlin-gradle-plugin"
+
         private fun getAllConfigurableKotlinVersions(): List<IdeKotlinVersion> {
             return KotlinGradleCompatibilityStore.allKotlinVersions()
         }
@@ -681,12 +689,28 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         }
 
         /**
-         * Returns if there is a Kotlin Gradle Plugin version defined in the Gradle version catalog.
+         * Returns if there is a Kotlin Gradle Plugin version defined in the Gradle version catalog
+         * and that version is used in the build script of the buildSrc folder.
          */
-        fun hasVersionCatalogVersion(module: Module): Boolean {
-            val gradleFolder = module.getBuildScriptSettingsPsiFile()?.parent?.findSubdirectory("gradle") ?: return false
-            val tomlFile = gradleFolder.findFile("libs.versions.toml") ?: return false
-            return tomlFile.text.contains("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        @ApiStatus.Internal
+        fun usesVersionCatalogVersionInBuildSrc(project: Project): Boolean {
+            val buildSrcModule = project.modules.firstOrNull { it.name.endsWith("buildSrc") } ?: return false
+            val buildSrcBuildFile = buildSrcModule.getBuildScriptPsiFile() ?: return false
+
+            val gradleFolder = project.guessProjectDir()?.findChild("gradle") ?: return false
+            val tomlFile = gradleFolder.findChild("libs.versions.toml")?.toPsiFile(project) as? TomlFile ?: return false
+
+            val libraryTable = tomlFile.childrenOfType<TomlTable>().firstOrNull {
+                it.header.key?.text == "libraries"
+            } ?: return false
+
+            val gradlePluginKey = libraryTable.entries.firstOrNull { entry ->
+                val entryValue = entry.value as? TomlInlineTable ?: return@firstOrNull false
+                val moduleEntry = entryValue.entries.firstOrNull { it.key.text == "module" } ?: return@firstOrNull false
+                moduleEntry.value?.text?.contains(KOTLIN_GRADLE_PLUGIN_ID) == true
+            }?.key?.text ?: return false
+
+            return buildSrcBuildFile.text.contains(gradlePluginKey)
         }
 
         /**

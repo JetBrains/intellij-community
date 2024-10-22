@@ -295,15 +295,9 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             return KotlinWithGradleConfigurator.getPluginManagementVersion(parentModule)?.parsedVersion
         }
 
-        private fun hasVersionCatalogVersion(project: Project): Boolean {
+        private fun usesVersionCatalogVersion(project: Project): Boolean {
             if (isCreatingNewRootModule()) return false
-            val parentModule = project.findParentModule()?.baseModule ?: return false
-
-            return KotlinWithGradleConfigurator.hasVersionCatalogVersion(parentModule)
-        }
-
-        private fun hasBuildSrcFolder(project: Project): Boolean {
-            return project.modules.any { it.name.contains("buildSrc") }
+            return KotlinWithGradleConfigurator.usesVersionCatalogVersionInBuildSrc(project)
         }
 
         override fun setupProject(project: Project) {
@@ -321,15 +315,12 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
                 it.kotlinGradlePluginVersion?.versionString
             }
             val pluginManagementVersion = getPluginManagementKotlinVersion(project)
-            val hasVersionCatalogVersion = hasVersionCatalogVersion(project)
-            val hasBuildSrcFolder = hasBuildSrcFolder(project)
-
             setupBuilder(moduleBuilder)
             setupBuildScript(moduleBuilder) {
                 withKotlinJvmPlugin(kotlinVersionToUse.takeUnless {
                     pluginManagementVersion != null || // uses the version from pluginManagement
                             parentKotlinVersion != null || // uses the version from parent
-                            (hasVersionCatalogVersion && hasBuildSrcFolder) // uses the version from the version catalog
+                            usesVersionCatalogVersion(project) // uses the version from the version catalog
                 })
                 withKotlinTest()
 
