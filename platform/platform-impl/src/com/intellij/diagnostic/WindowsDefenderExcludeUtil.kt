@@ -1,10 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
+import com.intellij.diagnostic.WindowsDefenderChecker.Extension
 import com.intellij.ide.actions.ShowLogAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -23,15 +26,15 @@ internal object WindowsDefenderExcludeUtil {
   fun isDefenderShown(path: Path): Boolean {
     return defenderExclusions.containsKey(path)
   }
-  
+
   fun addPathsToExclude(paths: List<Path>) {
     paths.forEach {  defenderExclusions.put(it, true) }
   }
-  
+
   fun getPathsToExclude(): List<Path> {
     return defenderExclusions.filterValues{it}.keys.toImmutableList()
   }
-  
+
   fun clearPathsToExclude() {
     defenderExclusions.replaceAll { _, _ -> false }
   }
@@ -55,5 +58,15 @@ internal object WindowsDefenderExcludeUtil {
       }
     }
     WindowsDefenderStatisticsCollector.auto(project)
+  }
+
+  fun getPathsToExclude(project: Project?, projectPath: Path?): List<Path> {
+    val paths = mutableListOf<Path>()
+    paths.add(PathManager.getSystemDir())
+    val epName: ExtensionPointName<Extension> = ExtensionPointName.create("com.intellij.defender.config")
+    epName.forEachExtensionSafe { ext ->
+      paths.addAll(ext.getPaths(project, projectPath));
+    }
+    return paths
   }
 }

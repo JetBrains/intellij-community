@@ -53,7 +53,7 @@ public class WindowsDefenderChecker {
    * Use the extension to propose technology-specific paths (e.g., {@code $GRADLE_USER_HOME}) to be added to the Defender's exclusion list.
    */
   public interface Extension {
-    @NotNull Collection<Path> getPaths(@NotNull Project project);
+    @NotNull Collection<Path> getPaths(@Nullable Project project, @Nullable Path projectPath);
   }
 
   public static WindowsDefenderChecker getInstance() {
@@ -141,11 +141,7 @@ public class WindowsDefenderChecker {
       paths.add(projectDir.toNioPath());
     }
 
-    paths.add(PathManager.getSystemDir());
-
-    EP_NAME.forEachExtensionSafe(ext -> {
-      paths.addAll(ext.getPaths(project));
-    });
+    paths.addAll(WindowsDefenderExcludeUtil.INSTANCE.getPathsToExclude(project, projectDir != null ? projectDir.toNioPath() : null));
 
     return new ArrayList<>(paths);
   }

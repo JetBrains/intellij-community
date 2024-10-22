@@ -1,12 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.trustedProjects
 
+import com.intellij.diagnostic.WindowsDefenderExcludeUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.OpenUntrustedProjectChoice
 import com.intellij.ide.impl.TRUSTED_PROJECTS_HELP_TOPIC
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
@@ -33,7 +33,6 @@ import java.nio.file.Path
 import javax.swing.*
 import javax.swing.border.Border
 import javax.swing.text.View
-import kotlin.io.path.Path
 import kotlin.io.path.name
 import kotlin.io.path.pathString
 
@@ -159,7 +158,7 @@ internal class TrustedProjectStartupDialog(
               .bindSelected(windowsDefender)
               .apply {
                 component.toolTipText = null
-                component.addMouseMotionListener(TooltipMouseAdapter { listOf(getIdePath(), getTrustFolder(trustAll.get()).pathString) })
+                component.addMouseMotionListener(TooltipMouseAdapter { listOf(getIdePaths().joinToString(separator = "<br>"), getTrustFolder(trustAll.get()).pathString) })
                 comment(IdeBundle.message("untrusted.project.location.comment"))
                 visible(isWinDefenderEnabled)
               }
@@ -209,7 +208,7 @@ internal class TrustedProjectStartupDialog(
   private fun getParentFolder(): Path = projectPath.parent
 
   @NlsSafe
-  private fun getIdePath(): String = PathManager.getHomePath()
+  private fun getIdePaths(): List<Path> = WindowsDefenderExcludeUtil.getPathsToExclude(project, projectPath)
 
   override fun createActions(): Array<out Action?> {
     val actions: MutableList<Action> = mutableListOf()
@@ -263,7 +262,7 @@ internal class TrustedProjectStartupDialog(
   }
 
   fun getWidowsDefenderPathsToExclude(): List<Path> {
-    return if (windowsDefender.get()) listOf(Path(getIdePath()), getTrustFolder(trustAll.get())) else emptyList()
+    return if (windowsDefender.get()) getIdePaths().plus(getTrustFolder(trustAll.get())) else emptyList()
   }
 
   fun getOpenChoice(): OpenUntrustedProjectChoice = userChoice
