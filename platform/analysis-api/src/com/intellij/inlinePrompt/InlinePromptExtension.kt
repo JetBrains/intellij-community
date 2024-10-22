@@ -3,28 +3,28 @@
 
 package com.intellij.inlinePrompt
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.Icon
 
 /**
- * Manages the inline prompts shown in editors.
+ * Handles the inline prompts shown in editors.
  * An inline prompt is a piece of natural language text written right in the editor itself.
  * When we detect it, we start an inline prompt editing mode.
  * When we edit inline prompt, programming language features should not interfere with the prompt
  */
 @Internal
-interface InlinePromptManager {
+interface InlinePromptExtension {
   /**
    * Checks if the inline prompt is currently shown in the specified editor.
    *
    * @param editor the editor in which the inline prompt visibility is to be checked
    * @return true if the inline prompt is shown, false otherwise
    */
-  fun isInlinePromptShown(editor: Editor, line: Int?): Boolean
+  fun isInlinePromptShown(project: Project, editor: Editor, line: Int?): Boolean
 
   /**
    * Checks if inline prompt code is currently being generated in the specified editor.
@@ -32,9 +32,9 @@ interface InlinePromptManager {
    * @param editor the editor in which the code generation status of the inline prompt is to be checked
    * @return true if inline prompt code is being generated, false otherwise
    */
-  fun isInlinePromptCodeGenerating(editor: Editor, line: Int?): Boolean
+  fun isInlinePromptCodeGenerating(project: Project, editor: Editor, line: Int?): Boolean
 
-  fun getBulbIcon(): Icon?
+  fun getBulbIcon(project: Project): Icon?
 }
 
 /**
@@ -49,7 +49,8 @@ interface InlinePromptManager {
 @JvmOverloads
 fun isInlinePromptShown(editor: Editor, line: Int? = null, project: Project? = editor.project): Boolean {
   if (project == null) return false
-  return project.service<InlinePromptManager>().isInlinePromptShown(editor, line)
+  val extension = getExtension() ?: return false
+  return extension.isInlinePromptShown(project, editor, line) == true
 }
 
 /**
@@ -64,7 +65,8 @@ fun isInlinePromptShown(editor: Editor, line: Int? = null, project: Project? = e
 @JvmOverloads
 fun isInlinePromptGenerating(editor: Editor, line: Int? = null, project: Project? = editor.project): Boolean {
   if (project == null) return false
-  return project.service<InlinePromptManager>().isInlinePromptCodeGenerating(editor, line)
+  val extension = getExtension() ?: return false
+  return extension.isInlinePromptCodeGenerating(project, editor, line)
 }
 
 /**
@@ -72,7 +74,10 @@ fun isInlinePromptGenerating(editor: Editor, line: Int? = null, project: Project
  */
 @Internal
 fun getInlinePromptBulbIcon(project: Project, editor: Editor): Icon? {
-  val inlinePromptManager = project.service<InlinePromptManager>()
-  val isInlinePrompt = inlinePromptManager.isInlinePromptShown(editor, null) || inlinePromptManager.isInlinePromptCodeGenerating(editor, null)
-  return if (isInlinePrompt) inlinePromptManager.getBulbIcon() else null
+  val inlinePromptExtension = getExtension() ?: return null
+  val isInlinePrompt = inlinePromptExtension.isInlinePromptShown(project, editor, null) || inlinePromptExtension.isInlinePromptCodeGenerating(project, editor, null)
+  return if (isInlinePrompt) inlinePromptExtension.getBulbIcon(project) else null
 }
+
+private val ep_name = ExtensionPointName<InlinePromptExtension>("com.intellij.inlinePrompt")
+private fun getExtension(): InlinePromptExtension? = ep_name.extensionList.firstOrNull()
