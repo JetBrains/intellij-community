@@ -2071,12 +2071,15 @@ c:com.intellij.ide.CopyPasteManagerEx
 - getContents():java.awt.datatransfer.Transferable
 - getContents(java.awt.datatransfer.DataFlavor):java.lang.Object
 - s:getInstanceEx():com.intellij.ide.CopyPasteManagerEx
+- getSystemSelectionContents():java.awt.datatransfer.Transferable
 - isCutElement(java.lang.Object):Z
+- isSystemSelectionSupported():Z
 - lostOwnership(java.awt.datatransfer.Clipboard,java.awt.datatransfer.Transferable):V
 - moveContentToStackTop(java.awt.datatransfer.Transferable):V
 - removeContent(java.awt.datatransfer.Transferable):V
 - removeContentChangedListener(com.intellij.openapi.ide.CopyPasteManager$ContentChangedListener):V
 - setContents(java.awt.datatransfer.Transferable):V
+- setSystemSelectionContents(java.awt.datatransfer.Transferable):V
 - stopKillRings():V
 - stopKillRings(com.intellij.openapi.editor.Document):V
 com.intellij.ide.FeedbackDescriptionProvider
