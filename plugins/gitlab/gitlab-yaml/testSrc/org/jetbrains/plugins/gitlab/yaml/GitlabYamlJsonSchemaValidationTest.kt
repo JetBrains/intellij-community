@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gitlab.yaml
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase
 import org.jetbrains.yaml.schema.YamlJsonSchemaHighlightingInspection
-import java.util.function.Predicate
 
 internal class GitlabYamlJsonSchemaValidationTest : BasePlatformTestCase() {
   override fun setUp() {
@@ -41,7 +40,7 @@ internal class GitlabYamlJsonSchemaValidationTest : BasePlatformTestCase() {
           }
         }
       }
-    """.trimIndent(), ".json", Predicate { true })
+    """.trimIndent(), ".json") { true }
   }
 
   fun `test custom gitlab ci yaml tags does not produce warnings`() {
