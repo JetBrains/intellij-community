@@ -2295,7 +2295,7 @@ f:com.intellij.ide.ProtocolHandler$Companion
 c:com.intellij.ide.RecentProjectListActionProvider
 - sf:Companion:com.intellij.ide.RecentProjectListActionProvider$Companion
 - <init>():V
-- p:createOpenAction(java.lang.String,java.util.Set):com.intellij.ide.ReopenProjectAction
+- p:createOpenAction(java.lang.String,java.util.Set,com.intellij.ide.RecentProjectsManagerBase):com.intellij.ide.ReopenProjectAction
 - f:getActions():java.util.List
 - f:getActions(Z):java.util.List
 - getActions(Z,Z):java.util.List

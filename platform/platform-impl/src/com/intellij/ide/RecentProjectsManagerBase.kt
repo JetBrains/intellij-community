@@ -456,7 +456,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
     check(nameResolveRequests.tryEmit(Unit))
 
-    return getProjectNameOnlyByPath(path).nameOnlyByProjectPath
+    return getProjectNameOnlyByPath(path)
   }
 
   fun forceReopenProjects() {
@@ -917,11 +917,11 @@ private fun validateRecentProjects(modCounter: LongAdder, map: MutableMap<String
   }
 }
 
-internal fun getProjectNameOnlyByPath(path: String): ProjectNameOnlyByPath {
+internal fun getProjectNameOnlyByPath(path: String): String {
   val name = PathUtilRt.getFileName(path)
-  return ProjectNameOnlyByPath(if (path.endsWith(".ipr")) FileUtilRt.getNameWithoutExtension(name) else name)
+  return if (path.endsWith(".ipr")) FileUtilRt.getNameWithoutExtension(name) else name
 }
 
 @JvmInline
 @Internal
-value class ProjectNameOnlyByPath(val nameOnlyByProjectPath: String)
+value class ProjectNameOrPathIfNotYetComputed(val nameOnlyByProjectPath: String)
