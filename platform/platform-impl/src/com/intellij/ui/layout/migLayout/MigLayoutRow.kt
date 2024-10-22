@@ -2,7 +2,6 @@
 package com.intellij.ui.layout.migLayout
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
@@ -397,12 +396,6 @@ private class CellBuilderImpl<T : JComponent>(
   override val component: T,
   private val viewComponent: JComponent = component
 ) : CellBuilder<T> {
-  private var property: GraphProperty<*>? = null
-
-  override fun withGraphProperty(property: GraphProperty<*>): CellBuilder<T> {
-    this.property = property
-    return this
-  }
 
   override fun comment(text: String, maxLineLength: Int, forComponent: Boolean): CellBuilder<T> {
     row.addCommentRow(text, maxLineLength, forComponent, viewComponent)
@@ -421,7 +414,6 @@ private class CellBuilderImpl<T : JComponent>(
 
   override fun withValidationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T> {
     builder.componentValidateCallbacks[component.origin] = { callback(ValidationInfoBuilder(component.origin), component) }
-    property?.let { builder.customValidationRequestors.getOrPut(component.origin, { SmartList() }).add(it::afterPropagation) }
     return this
   }
 

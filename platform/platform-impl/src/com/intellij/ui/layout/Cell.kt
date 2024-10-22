@@ -4,14 +4,11 @@
 package com.intellij.ui.layout
 
 import com.intellij.BundleBase
-import com.intellij.openapi.observable.properties.GraphProperty
-import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts.*
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.*
 import com.intellij.util.ui.JBFont
@@ -164,10 +161,6 @@ interface CellBuilder<out T : JComponent> {
   }
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun withGraphProperty(property: GraphProperty<*>): CellBuilder<T>
-
-  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun enableIf(predicate: ComponentPredicate): CellBuilder<T>
 }
@@ -289,15 +282,6 @@ abstract class Cell : BaseBuilder {
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun checkBox(text: @Checkbox String,
-               property: GraphProperty<Boolean>,
-               comment: @DetailedDescription String? = null): CellBuilder<JBCheckBox> {
-    val component = JBCheckBox(text, property.get())
-    return component.intInvoke(comment = comment).withGraphProperty(property).intApplyToComponent { component.bind(property) }
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun <T> comboBox(model: ComboBoxModel<T>,
                    getter: () -> T?,
                    setter: (T?) -> Unit,
@@ -333,18 +317,6 @@ abstract class Cell : BaseBuilder {
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun <T> comboBox(
-    model: ComboBoxModel<T>,
-    property: GraphProperty<T>,
-    renderer: ListCellRenderer<T?>? = null
-  ): CellBuilder<ComboBox<T>> {
-    return comboBoxInt(model, PropertyBinding(property::get, property::set).intToNullable(), renderer)
-      .withGraphProperty(property)
-      .intApplyToComponent { bind(property) }
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun textField(prop: KMutableProperty0<String>, columns: Int? = null): CellBuilder<JBTextField> = textFieldInt(prop.intToBinding(), columns)
 
   @ApiStatus.ScheduledForRemoval
@@ -360,13 +332,6 @@ abstract class Cell : BaseBuilder {
   private fun textFieldInt(binding: PropertyBinding<@Nls String>, columns: Int? = null): CellBuilder<JBTextField> {
     return component(JBTextField(binding.get(), columns ?: 0))
       .withBindingInt(JTextComponent::getText, JTextComponent::setText, binding)
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun spinner(getter: () -> Int, setter: (Int) -> Unit, minValue: Int, maxValue: Int, step: Int = 1): CellBuilder<JBIntSpinner> {
-    val spinner = JBIntSpinner(getter(), minValue, maxValue, step)
-    return component(spinner).withBindingInt(JBIntSpinner::getNumber, JBIntSpinner::setNumber, PropertyBinding(getter, setter))
   }
 
   @ApiStatus.ScheduledForRemoval
