@@ -63,11 +63,11 @@ def is_interactive_backend(backend):
     )
 
     if installed_version >= required_version:
-        interactive_bk = matplotlib.backends.backend_registry.list_builtin(matplotlib.backends.BackendFilter.INTERACTIVE)
-        non_interactive_bk = matplotlib.backends.backend_registry.list_builtin(matplotlib.backends.BackendFilter.NON_INTERACTIVE)
-        if backend in interactive_bk:
+        interactive_bk = [bk.lower() for bk in matplotlib.backends.backend_registry.list_builtin(matplotlib.backends.BackendFilter.INTERACTIVE)]
+        non_interactive_bk = [bk.lower() for bk in matplotlib.backends.backend_registry.list_builtin(matplotlib.backends.BackendFilter.NON_INTERACTIVE)]
+        if backend.lower() in interactive_bk:
             return True
-        elif backend in non_interactive_bk:
+        elif backend.lower() in non_interactive_bk:
             return False
         else:
             return matplotlib.is_interactive()
