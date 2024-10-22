@@ -20,15 +20,12 @@ class AntiFlickeringPanel(private val content: JComponent) : JPanel(BorderLayout
   private var savedPreferredSize: Dimension? = null
   private var isChildOpaque = false
 
-  private var childWasAdded = false
-  
   init {
     add(content)
-    childWasAdded = true
   }
 
   override fun addImpl(comp: Component?, constraints: Any?, index: Int) {
-    require(!childWasAdded) { "${this.javaClass} is now working only with one child" }
+    require(componentCount == 0) { "${this.javaClass} is now working only with one child" }
     super.addImpl(comp, constraints, index)
   }
 
@@ -44,8 +41,9 @@ class AntiFlickeringPanel(private val content: JComponent) : JPanel(BorderLayout
 
     isChildOpaque = content.isOpaque
     content.isOpaque = false
+    // Need to remove the child, so it will not be repainted by Swing during its update.
+    // The child painting is performing above this panel.
     remove(content)
-    childWasAdded = false
 
     EdtExecutorService.getScheduledExecutorInstance().schedule(
       {
