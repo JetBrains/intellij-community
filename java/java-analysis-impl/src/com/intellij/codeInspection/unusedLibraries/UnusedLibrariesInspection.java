@@ -8,7 +8,7 @@ import com.intellij.codeInspection.reference.RefGraphAnnotator;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.java.analysis.impl.bytecode.AbstractDependencyVisitor;
+import com.intellij.java.analysis.bytecode.*;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -169,20 +169,29 @@ public final class UnusedLibrariesInspection extends GlobalInspectionTool {
     for (VirtualFile root : givenRoots) {
       Set<String> fromClassNames = new HashSet<>();
       Set<String> toClassNames = new HashSet<>();
-
-      VfsUtilCore.iterateChildrenRecursively(root, null, fileOrDir -> {
-        if (!fileOrDir.isDirectory() && fileOrDir.getName().endsWith(".class")) {
-          AbstractDependencyVisitor visitor = new AbstractDependencyVisitor() {
+      ClassFileAnalyzer analyzer =
+        JvmBytecodeAnalysis.getInstance().createDeclarationAndReferencesAnalyzer(
+          new JvmBytecodeDeclarationProcessor() {
             @Override
-            protected void addClassName(String name) {
+            public void processClass(@NotNull JvmClassBytecodeDeclaration jvmClass) {
+              fromClassNames.add(jvmClass.getTopLevelSourceClassName());
+            }
+          },
+          new JvmBytecodeReferenceProcessor() {
+            @Override
+            public void processClassReference(@NotNull JvmClassBytecodeDeclaration targetClass,
+                                              @NotNull JvmClassBytecodeDeclaration sourceClass) {
+              String name = targetClass.getTopLevelSourceClassName();
               if (!name.startsWith("java.") && !name.startsWith("javax.")) { //ignore jdk classes
                 toClassNames.add(name);
               }
             }
-          };
+          });
+
+      VfsUtilCore.iterateChildrenRecursively(root, null, fileOrDir -> {
+        if (!fileOrDir.isDirectory() && fileOrDir.getName().endsWith(".class")) {
           try {
-            visitor.processStream(fileOrDir.getInputStream());
-            fromClassNames.add(visitor.getCurrentClassName());
+            analyzer.processInputStream(fileOrDir.getInputStream());
           }
           catch (IOException e) {
             LOG.error(e);

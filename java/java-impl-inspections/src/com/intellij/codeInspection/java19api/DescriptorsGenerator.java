@@ -6,6 +6,8 @@ import com.intellij.codeInspection.java19api.ModuleNode.DependencyType;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.java.analysis.bytecode.ClassFileAnalyzer;
+import com.intellij.java.analysis.bytecode.JvmBytecodeAnalysis;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
@@ -100,12 +102,13 @@ class DescriptorsGenerator {
 
     for (ModuleFiles moduleFiles : modulesFiles) {
       ModuleVisitor visitor = new ModuleVisitor(packageNamesCache::getPackageName);
+      ClassFileAnalyzer analyzer = JvmBytecodeAnalysis.getInstance().createDeclarationAndReferencesAnalyzer(visitor, visitor);
       if (moduleFiles.files().isEmpty()) {
         myLogger.info("Output directory for module " + moduleFiles.module().getName() + " doesn't contain .class files");
         continue;
       }
       for (Path file : moduleFiles.files) {
-        visitor.processFile(file.toFile());
+        analyzer.processFile(file);
         myProgressTracker.increment();
       }
       Set<String> declaredPackages = visitor.getDeclaredPackages();

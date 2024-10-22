@@ -1,17 +1,24 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.analysis.impl.bytecode;
 
+import com.intellij.java.analysis.bytecode.ClassFileAnalyzer;
+import com.intellij.java.analysis.bytecode.JvmBytecodeDeclarationProcessor;
+import com.intellij.java.analysis.bytecode.JvmBytecodeReferenceProcessor;
+import com.intellij.java.analysis.bytecode.JvmClassBytecodeDeclaration;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.signature.SignatureReader;
 import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class AbstractDependencyVisitor extends ClassVisitor {
+class AbstractDependencyVisitor extends ClassVisitor implements ClassFileAnalyzer {
 
   private static final Logger LOG = Logger.getInstance(AbstractDependencyVisitor.class);
   private static final Label LABEL = new Label();
@@ -19,26 +26,31 @@ public abstract class AbstractDependencyVisitor extends ClassVisitor {
   private final AnnotationDependencyVisitor myAnnotationVisitor = new AnnotationDependencyVisitor();
   private final DependencySignatureVisitor mySignatureVisitor = new DependencySignatureVisitor();
   private final DependencyFieldVisitor myFieldVisitor = new DependencyFieldVisitor();
+  @Nullable private final JvmBytecodeDeclarationProcessor myDeclarationProcessor;
+  @Nullable private final JvmBytecodeReferenceProcessor myReferenceProcessor;
 
-  private String myCurrentClassName;
+  private JvmClassBytecodeDeclaration myCurrentClass;
 
-  protected AbstractDependencyVisitor() {
+  protected AbstractDependencyVisitor(@Nullable JvmBytecodeDeclarationProcessor declarationProcessor, 
+                                      @Nullable JvmBytecodeReferenceProcessor referenceProcessor) {
     super(Opcodes.API_VERSION);
+    myDeclarationProcessor = declarationProcessor;
+    myReferenceProcessor = referenceProcessor;
   }
 
-  protected abstract void addClassName(String name);
-
-  public void processFile(final File file) {
-    try (InputStream is = new BufferedInputStream(new FileInputStream(file))) {
-      processStream(is);
+  @Override
+  public void processFile(@NotNull Path path) {
+    try (InputStream is = new BufferedInputStream(Files.newInputStream(path))) {
+      processInputStream(is);
     }
     catch (IOException e) {
       LOG.warn(e);
     }
   }
 
-  public void processStream(InputStream is) throws IOException {
-    ClassReader cr = new ClassReader(is) {
+  @Override
+  public void processInputStream(@NotNull InputStream inputStream) throws IOException {
+    ClassReader cr = new ClassReader(inputStream) {
       @Override
       protected Label readLabel(int offset, Label[] labels) {
         if (offset >= labels.length) {
@@ -56,8 +68,11 @@ public abstract class AbstractDependencyVisitor extends ClassVisitor {
 
   @Override
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-    myCurrentClassName = getSlotName(name);
-
+    myCurrentClass = getOrCreateClassDeclaration(name);
+    if (myDeclarationProcessor != null) {
+      myDeclarationProcessor.processClass(myCurrentClass);
+    }
+    
     if (signature == null) {
       addName(superName);
       addNames(interfaces);
@@ -68,18 +83,13 @@ public abstract class AbstractDependencyVisitor extends ClassVisitor {
   }
 
 
-  private final Map<String, String> mySlotNames = new HashMap<>();
+  private final Map<String, JvmClassBytecodeDeclaration> myClassDeclarations = new HashMap<>();
 
-  private String getSlotName(String name) {
-    String result = mySlotNames.get(name);
+  private @NotNull JvmClassBytecodeDeclaration getOrCreateClassDeclaration(@NotNull String name) {
+    JvmClassBytecodeDeclaration result = myClassDeclarations.get(name);
     if (result == null) {
-      result = name.replace("/", ".");
-      final int idx = result.indexOf("$");
-      if (idx >= 0) {
-        result = result.substring(0, idx);
-      }
-
-      mySlotNames.put(name, result);
+      result = new JvmClassBytecodeDeclarationImpl(name);
+      myClassDeclarations.put(name, result);
     }
 
     return result;
@@ -312,14 +322,14 @@ public abstract class AbstractDependencyVisitor extends ClassVisitor {
     }
   }
 
-  private void addName(String name) {
+  private void addName(@Nullable String name) {
     if (name == null) return;
 
-    name = getSlotName(name);
+    JvmClassBytecodeDeclaration declaration = getOrCreateClassDeclaration(name);
 
-    if (name.equals(myCurrentClassName)) return;
-
-    addClassName(name);
+    if (myReferenceProcessor != null && !declaration.equals(myCurrentClass)) {
+      myReferenceProcessor.processClassReference(declaration, myCurrentClass);
+    }
   }
 
   private void addNames(String[] names) {
@@ -370,10 +380,5 @@ public abstract class AbstractDependencyVisitor extends ClassVisitor {
 
   private void addTypeSignature(String signature) {
     if (signature != null) new SignatureReader(signature).acceptType(mySignatureVisitor);
-  }
-
-  @NlsSafe
-  public String getCurrentClassName() {
-    return myCurrentClassName;
   }
 }

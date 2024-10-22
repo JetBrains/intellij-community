@@ -1,15 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19api;
 
-import com.intellij.java.analysis.impl.bytecode.AbstractDependencyVisitor;
+import com.intellij.java.analysis.bytecode.JvmBytecodeDeclarationProcessor;
+import com.intellij.java.analysis.bytecode.JvmBytecodeReferenceProcessor;
+import com.intellij.java.analysis.bytecode.JvmClassBytecodeDeclaration;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 
-class ModuleVisitor extends AbstractDependencyVisitor {
+class ModuleVisitor implements JvmBytecodeDeclarationProcessor, JvmBytecodeReferenceProcessor {
   private final Set<String> myRequiredPackages = new HashSet<>();
   private final Set<String> myDeclaredPackages = new HashSet<>();
   private final Function<String, String> myCheckPackage;
@@ -19,7 +20,8 @@ class ModuleVisitor extends AbstractDependencyVisitor {
   }
 
   @Override
-  protected void addClassName(String className) {
+  public void processClassReference(@NotNull JvmClassBytecodeDeclaration targetClass, @NotNull JvmClassBytecodeDeclaration sourceClass) {
+    String className = targetClass.getTopLevelSourceClassName();
     final String packageName = myCheckPackage.apply(className);
     if (packageName != null) {
       myRequiredPackages.add(packageName);
@@ -27,15 +29,8 @@ class ModuleVisitor extends AbstractDependencyVisitor {
   }
 
   @Override
-  public void visit(int version,
-                    int access,
-                    @NotNull String name,
-                    @Nullable String signature,
-                    @Nullable String superName,
-                    String @NotNull [] interfaces) {
-    super.visit(version, access, name, signature, superName, interfaces);
-
-    String packageName = myCheckPackage.apply(getCurrentClassName());
+  public void processClass(@NotNull JvmClassBytecodeDeclaration jvmClass) {
+    String packageName = myCheckPackage.apply(jvmClass.getTopLevelSourceClassName());
     if (packageName != null) {
       myDeclaredPackages.add(packageName);
     }
