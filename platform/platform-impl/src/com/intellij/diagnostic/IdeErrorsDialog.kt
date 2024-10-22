@@ -311,7 +311,6 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
 
   override fun createLeftSideActions(): Array<Action> {
     if (myProject != null && !myProject.isDefault && PluginManagerCore.isPluginInstalled(PluginId.getId(ITNProxy.EA_PLUGIN_ID))) {
-      @Suppress("UnresolvedPluginConfigReference")
       ActionManager.getInstance().getAction("Unscramble")?.let {
         return arrayOf(AnalyzeAction(it))
       }
