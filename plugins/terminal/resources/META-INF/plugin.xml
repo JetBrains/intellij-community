@@ -150,6 +150,12 @@
       <keyboard-shortcut first-keystroke="control R" keymap="Mac OS X 10.5+" replace-all="true"/>
     </action>
 
+    <action id="Terminal.EnableNewUi" class="org.jetbrains.plugins.terminal.action.EnableBlockTerminalUiAction"/>
+
+    <group id="Terminal.ToolWindowActions">
+      <reference id="Terminal.EnableNewUi"/>
+    </group>
+
     <group id="Terminal.PromptStyle" popup="true">
       <action id="Terminal.UseSingleLinePrompt" class="org.jetbrains.plugins.terminal.block.prompt.TerminalUseSingleLinePromptAction"/>
       <action id="Terminal.UseDoubleLinePrompt" class="org.jetbrains.plugins.terminal.block.prompt.TerminalUseDoubleLinePromptAction"/>
