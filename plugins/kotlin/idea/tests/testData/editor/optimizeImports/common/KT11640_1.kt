@@ -1,4 +1,3 @@
-// IGNORE_K2
 // NAME_COUNT_TO_USE_STAR_IMPORT: 10
 package bug.b
 

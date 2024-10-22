@@ -1,5 +1,4 @@
 // NAME_COUNT_TO_USE_STAR_IMPORT: 3
-// IGNORE_K2
 
 import pack1.*
 import pack1.foo

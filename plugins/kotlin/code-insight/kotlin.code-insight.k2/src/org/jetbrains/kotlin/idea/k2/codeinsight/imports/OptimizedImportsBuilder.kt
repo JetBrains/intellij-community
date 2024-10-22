@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.imports.ImportMapper
 import org.jetbrains.kotlin.idea.imports.KotlinIdeDefaultImportProvider
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -30,6 +31,10 @@ internal class OptimizedImportsBuilder(
     private val codeStyleSettings: KotlinCodeStyleSettings,
 ) {
     private val apiVersion: ApiVersion = file.languageVersionSettings.apiVersion
+
+    private val importPaths: Set<ImportPath> by lazy {
+        file.importDirectives.mapNotNull { it.importPath }.toSet()
+    }
 
     private sealed class ImportRule {
         // force presence of this import
@@ -156,7 +161,83 @@ internal class OptimizedImportsBuilder(
         val oldImports = file.importDirectives
         if (oldImports.size == sortedImportsToGenerate.size && oldImports.map { it.importPath } == sortedImportsToGenerate) return null
 
+        detectConflictsAndUpdateRules(sortedImportsToGenerate)
+
         return sortedImportsToGenerate
+    }
+
+    private fun detectConflictsAndUpdateRules(newImports: List<ImportPath>) {
+        val fileWithReplacedImports = KtFileWithReplacedImports.createFrom(file)
+        val referencesMap = KtReferencesInCopyMap.createFor(file, fileWithReplacedImports.ktFile)
+
+        fileWithReplacedImports.setImports(newImports)
+
+        for ((names, references) in usedReferencesData.references.groupBy { it.resolvesByNames }) {
+            // TODO check if new and old scopes contain different symbols for names set
+            fileWithReplacedImports.analyze {
+                for (originalReference in references) {
+                    val alternativeReference = referencesMap.findReferenceInCopy(originalReference)
+
+                    val originalUsedReference = UsedReference.run { createFrom(originalReference) }
+                    val alternativeUsedReference = UsedReference.run { createFrom(alternativeReference) }
+
+                    val originalSymbols = originalUsedReference?.run { resolveToReferencedSymbols() }
+                    val alternativeSymbols = alternativeUsedReference?.run { resolveToReferencedSymbols() }
+
+                    if (!areTargetsEqual(originalSymbols, alternativeSymbols)) {
+                        val conflictingSymbols = originalSymbols.orEmpty() + alternativeSymbols.orEmpty()
+
+                        for (conflictingSymbol in conflictingSymbols) {
+                            lockImportForSymbol(conflictingSymbol.run { toSymbolInfo() }, names)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun KaSession.areTargetsEqual(
+        originalSymbols: Collection<ReferencedSymbol>?,
+        alternativeSymbols: Collection<ReferencedSymbol>?
+    ): Boolean {
+        if (originalSymbols == null || alternativeSymbols == null) {
+            return originalSymbols == alternativeSymbols
+        }
+
+        if (originalSymbols.size != alternativeSymbols.size) return false
+
+        return originalSymbols.zip(alternativeSymbols).all { (originalSymbol, newSymbol) -> areTargetsEqual(originalSymbol, newSymbol) }
+    }
+
+    private fun KaSession.areTargetsEqual(
+        originalSymbol: ReferencedSymbol,
+        alternativeSymbol: ReferencedSymbol,
+    ): Boolean {
+        val originalSymbol = originalSymbol.run { toSymbolInfo() }
+        val newSymbol = alternativeSymbol.run { toSymbolInfo() }
+
+        return originalSymbol == newSymbol ||
+                importSymbolWithMapping(originalSymbol) == importSymbolWithMapping(newSymbol)
+    }
+
+    private fun KaSession.lockImportForSymbol(symbol: SymbolInfo, existingNames: Collection<Name>) {
+        val name = symbol.run { computeImportableName() }?.shortName() ?: return
+        val fqName = importSymbolWithMapping(symbol) ?: return
+        val names = usedReferencesData.usedDeclarations.getOrElse(fqName) { listOf(name) }.intersect(existingNames.toSet())
+
+        val starImportPath = ImportPath(fqName.parent(), true)
+        for (name in names) {
+            val alias = if (name != fqName.shortName()) name else null
+            val explicitImportPath = ImportPath(fqName, false, alias)
+            when {
+                explicitImportPath in importPaths ->
+                    importRules.add(ImportRule.Add(explicitImportPath))
+                alias == null && starImportPath in importPaths ->
+                    importRules.add(ImportRule.Add(starImportPath))
+                else -> // there is no import for this descriptor in the original import list, so do not allow to import it by star-import
+                    importRules.add(ImportRule.DoNotAdd(starImportPath))
+            }
+        }
     }
 
     private fun KtImportDirective.mayReferToSomeUnresolvedName() =
