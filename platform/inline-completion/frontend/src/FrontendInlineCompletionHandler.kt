@@ -18,7 +18,7 @@ internal class FrontendInlineCompletionHandler(
 ) : InlineCompletionHandler(scope, editor, parentDisposable) {
 
   override fun startSessionOrNull(request: InlineCompletionRequest, provider: InlineCompletionProvider): InlineCompletionSession? {
-    return sessionManager.createSession(provider, request, parentDisposable)
+    return sessionManager.createSession(provider, request, parentDisposable, specificId = null)
   }
 
   override fun doHide(context: InlineCompletionContext, finishType: FinishType) {
