@@ -68,9 +68,9 @@ internal class OptimizedImportsBuilder(
 
         val importableSymbols = usedReferencesData.usedSymbols.mapNotNull { it.run { restore() } }
 
-        val symbolsByParentFqName = HashMap<FqName, MutableSet<ImportableKaSymbol>>()
+        val symbolsByParentFqName = HashMap<FqName, MutableSet<SymbolInfo>>()
         for (importableSymbol in importableSymbols) {
-            val fqName = importableSymbol.run { computeImportableName() }
+            val fqName = importableSymbol.run { computeImportableName() } ?: continue
             for (name in usedReferencesData.usedDeclarations.getValue(fqName)) {
                 val alias = if (name != fqName.shortName()) name else null
 
@@ -98,7 +98,7 @@ internal class OptimizedImportsBuilder(
             val starImportPath = ImportPath(parentFqName, isAllUnder = true)
             if (starImportPath in importsToGenerate) continue
 
-            val fqNames = symbols.map { importSymbolWithMapping(it) }.toSet()
+            val fqNames = symbols.mapNotNull { importSymbolWithMapping(it) }.toSet()
 
             val nameCountToUseStar = nameCountToUseStar(symbols.first())
             val useExplicitImports = !starImportPath.isAllowedByRules() || (fqNames.size < nameCountToUseStar && !parentFqName.isInPackagesToUseStarImport())
@@ -107,8 +107,8 @@ internal class OptimizedImportsBuilder(
                 fqNames.filter { fqName -> needExplicitImport(fqName) }.mapTo(importsToGenerate) { ImportPath(it, isAllUnder = false) }
             } else {
                 symbols.asSequence()
-                    .filter { it is ImportableKaClassLikeSymbol }
-                    .map { importSymbolWithMapping(it) }
+                    .filter { it is ClassLikeSymbolInfo }
+                    .mapNotNull { importSymbolWithMapping(it) }
                     .filterTo(classNamesToCheck) {
                         // TODO reconsider this after KTIJ-30991 is fixed
                         //needExplicitImport(it)
@@ -168,8 +168,8 @@ internal class OptimizedImportsBuilder(
         return ImportMapper.findCorrespondingKotlinFqName(fqName, apiVersion)
     }
 
-    private fun KaSession.importSymbolWithMapping(symbol: ImportableKaSymbol): FqName {
-        val importableName = symbol.run { computeImportableName() }
+    private fun KaSession.importSymbolWithMapping(symbol: SymbolInfo): FqName? {
+        val importableName = symbol.run { computeImportableName() } ?: return null
 
         return findCorrespondingKotlinFqName(importableName) ?: importableName
     }
@@ -180,14 +180,14 @@ internal class OptimizedImportsBuilder(
         return findCorrespondingKotlinFqName(importableName) ?: importableName
     }
 
-    private fun KaSession.canUseStarImport(importableSymbol: ImportableKaSymbol, fqName: FqName): Boolean = when {
+    private fun KaSession.canUseStarImport(importableSymbol: SymbolInfo, fqName: FqName): Boolean = when {
         fqName.parent().isRoot -> false
         // star import from objects is not allowed
         (importableSymbol.run { containingClassSymbol() } as? KaClassSymbol)?.classKind?.isObject == true -> false
         else -> true
     }
 
-    private fun KaSession.nameCountToUseStar(symbol: ImportableKaSymbol): Int {
+    private fun KaSession.nameCountToUseStar(symbol: SymbolInfo): Int {
         if (symbol.run { containingClassSymbol() } == null) {
             return codeStyleSettings.NAME_COUNT_TO_USE_STAR_IMPORT
         } else {
