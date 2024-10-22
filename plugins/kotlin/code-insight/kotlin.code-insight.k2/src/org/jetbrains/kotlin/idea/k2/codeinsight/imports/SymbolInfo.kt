@@ -30,6 +30,13 @@ internal sealed interface SymbolInfo {
 
             return CallableSymbolInfo(symbol, containingClassSymbol, symbolImportableName)
         }
+
+        @OptIn(KaExperimentalApi::class)
+        fun KaSession.create(symbol: KaSymbol): SymbolInfo {
+            require(symbol !is KaClassLikeSymbol && symbol !is KaCallableSymbol)
+
+            return UnsupportedSymbolInfo(symbol)
+        }
     }
 }
 
@@ -90,6 +97,27 @@ internal data class CallableSymbolInfo(
             }
 
             return CallableSymbolInfo(symbol, containingClass, importableFqName)
+        }
+    }
+}
+
+/**
+ * Default implementation of [SymbolInfo] for any [KaSymbol] which was not handled
+ * by more specialized implementations of [SymbolInfo].
+ */
+internal data class UnsupportedSymbolInfo(private val symbol: KaSymbol) : SymbolInfo {
+    override fun KaSession.computeImportableName(): FqName? = null
+
+    override fun KaSession.containingClassSymbol(): KaClassLikeSymbol? = null
+
+    override fun KaSession.createPointer(): SymbolInfoPointer {
+        return Pointer(symbol.createPointer())
+    }
+
+    private class Pointer(private val symbolPointer: KaSymbolPointer<KaSymbol>) : SymbolInfoPointer {
+        override fun KaSession.restore(): UnsupportedSymbolInfo? {
+            val symbol = symbolPointer.restoreSymbol() ?: return null
+            return UnsupportedSymbolInfo(symbol)
         }
     }
 }
