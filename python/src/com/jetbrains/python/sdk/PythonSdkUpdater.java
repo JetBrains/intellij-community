@@ -38,8 +38,8 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.Processor;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.PythonPluginDisposable;
+import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
@@ -503,18 +503,8 @@ public final class PythonSdkUpdater {
       .addAll(getSkeletonsPaths(sdk))
       .addAll(userAddedRoots)
       .addAll(PyTypeShed.INSTANCE.findRootsForSdk(sdk))
-      .addAll(getBundledStubs())
+      .addAll(PyBundledStubs.INSTANCE.getRoots())
       .build();
-  }
-
-  private static @NotNull List<VirtualFile> getBundledStubs() {
-    var helpersPath = PythonHelpersLocator.findPathStringInHelpers("bundled_stubs");
-    if (helpersPath.isEmpty()) {
-      return Collections.emptyList();
-    }
-    VirtualFile bundledStubRoot = StandardFileSystems.local().findFileByPath(helpersPath);
-    if (bundledStubRoot == null) return Collections.emptyList();
-    return List.of(bundledStubRoot);
   }
 
   /**
