@@ -231,7 +231,7 @@ public class JavaHomeFinderBasic {
   protected @Nullable Path getPathInEnvironmentVariable(String variable, String path) {
     String dir = mySystemInfo.getEnvironmentVariable(variable);
     if (dir != null) {
-      Path primaryDir = mySystemInfo.getPath(path);
+      Path primaryDir = mySystemInfo.getPath(dir, path);
       if (safeIsDirectory(primaryDir)) return primaryDir;
     }
     return null;
