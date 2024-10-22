@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.DataOutput;
 
+/** Save is prohibited, for in-memory-only caching */
 final class TransientChangeTrackingValueContainer<Value> extends ChangeTrackingValueContainer<Value> {
   TransientChangeTrackingValueContainer(@NotNull Computable<? extends UpdatableValueContainer<Value>> initializer) {
     super(initializer);
