@@ -57,7 +57,10 @@ def is_interactive_backend(backend):
     """ Check if backend is interactive """
     matplotlib = sys.modules['matplotlib']
     required_version = (3, 9)
-    installed_version = tuple(map(int, matplotlib.__version__.split(".")))
+    installed_version = (
+        _get_major_version(matplotlib),
+        _get_minor_version(matplotlib)
+    )
 
     if installed_version >= required_version:
         interactive_bk = matplotlib.backends.backend_registry.list_builtin(matplotlib.backends.BackendFilter.INTERACTIVE)
@@ -102,6 +105,10 @@ def patch_is_interactive():
 
 def _get_major_version(module):
     return int(module.__version__.split('.')[0])
+
+
+def _get_minor_version(module):
+    return int(module.__version__.split('.')[1])
 
 
 def activate_matplotlib(enable_gui_function):
