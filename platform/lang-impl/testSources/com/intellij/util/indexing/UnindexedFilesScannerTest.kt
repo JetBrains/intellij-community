@@ -2,6 +2,7 @@
 package com.intellij.util.indexing
 
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
 import com.intellij.openapi.fileTypes.FileType
@@ -30,12 +31,15 @@ import com.intellij.util.indexing.events.FileIndexingRequest
 import com.intellij.util.indexing.mocks.*
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import org.junit.*
 import org.junit.Assert.assertEquals
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.util.concurrent.CountDownLatch
 
 @RunWith(JUnit4::class)
 class UnindexedFilesScannerTest {
@@ -78,6 +82,42 @@ class UnindexedFilesScannerTest {
 
 
   private fun getTestDataPath() = Paths.get(PlatformTestUtil.getCommunityPath(), "platform/lang-impl/testData/indexing")
+
+  @Test
+  fun `test scanning scheduled immediately when writeAccessAllowed=true`() {
+    runInEdtAndWait {
+      assertThat(application.isWriteIntentLockAcquired).isTrue
+      application.runWriteAction {
+        // WA is to avoid race: UnindexedFilesScannerExecutorImpl needs WA to change running
+        assertThat(UnindexedFilesScannerExecutorImpl.getInstance(project).isRunning.value).isFalse
+        UnindexedFilesScanner(project).queue()
+        assertThat(UnindexedFilesScannerExecutorImpl.getInstance(project).isRunning.value).isTrue
+      }
+    }
+  }
+
+  @Test
+  fun `test scanning scheduled asynchronously when writeAccessAllowed=false`() {
+    runBlocking {
+      assertThat(application.isWriteIntentLockAcquired).isFalse
+
+      val latch = CountDownLatch(1)
+      async {
+        writeAction {
+          latch.await()
+        }
+      }
+
+      try {
+        assertThat(UnindexedFilesScannerExecutorImpl.getInstance(project).isRunning.value).isFalse
+        UnindexedFilesScanner(project).queue()
+        assertThat(UnindexedFilesScannerExecutorImpl.getInstance(project).isRunning.value).isFalse
+      }
+      finally {
+        latch.countDown()
+      }
+    }
+  }
 
   @Test
   fun `test new files scheduled for indexing`() {
