@@ -37,12 +37,16 @@ abstract class InlineCompletionSessionManager(private val editor: Editor) {
     provider: InlineCompletionProvider,
     request: InlineCompletionRequest,
     disposable: Disposable,
+    specificId: InlineCompletionSessionId?
   ): InlineCompletionSession {
     ThreadingAssertions.assertEventDispatchThread()
 
     check(currentSession == null) { "Session already exists." }
     val newSession = InlineCompletionSession.init(editor, provider, request, disposable)
     currentSession = newSession
+    
+    if (specificId != null) newSession.putId(specificId) else newSession.putId()
+
     onCreated()
     return newSession
   }
