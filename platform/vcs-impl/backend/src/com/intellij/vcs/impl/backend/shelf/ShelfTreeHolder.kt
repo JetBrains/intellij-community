@@ -8,6 +8,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction
+import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor
 import com.intellij.openapi.vcs.changes.shelf.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.GroupingPolicyFactoryHolder
@@ -109,7 +111,7 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
                          ?: return emptyList()
     val selectedChanges = changeListNode.traverse().filter(ShelvedChangeNode::class.java).filter {
       val changeRef = it.getUserData(ENTITY_ID_KEY) as? SharedRef<*> ?: return@filter false
-      return@filter changeListDto.changes.contains(changeRef)
+      return@filter changeListDto.changes.isEmpty() || changeListDto.changes.contains(changeRef)
     }
     return selectedChanges.toList()
   }
@@ -181,6 +183,22 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
 
   fun changeGrouping(groupingKeys: Set<String>) {
     tree.groupingSupport.setGroupingKeys(groupingKeys)
+  }
+
+  fun createPatchForShelvedChanges(changeListsDto: List<ChangeListDto>, silentClipboard: Boolean) {
+    cs.launch(Dispatchers.EDT) {
+      val patchBuilder: CreatePatchCommitExecutor.PatchBuilder
+      val changeNodes = changeListsDto.flatMap { findChangesInTree(it) }
+      val changeList = changeNodes.first().shelvedChange.changeList
+      if (changeListsDto.size == 1) {
+        patchBuilder = CreatePatchCommitExecutor.ShelfPatchBuilder(project, changeList, changeNodes.map { it.shelvedChange.path })
+      }
+      else {
+        patchBuilder = CreatePatchCommitExecutor.DefaultPatchBuilder(project)
+      }
+      val changes = changeNodes.map { it.shelvedChange.getChangeWithLocal(project) }
+      CreatePatchFromChangesAction.createPatch(project, changeList.description, changes, silentClipboard, patchBuilder)
+    }
   }
 
   override fun dispose() {

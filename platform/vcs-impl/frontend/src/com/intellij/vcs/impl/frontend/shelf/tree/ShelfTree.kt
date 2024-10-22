@@ -6,7 +6,10 @@ import com.intellij.openapi.actionSystem.DataKey.Companion.create
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.vcs.impl.frontend.changes.CHANGE_LISTS_KEY
+import com.intellij.vcs.impl.frontend.changes.ChangeList
 import com.intellij.vcs.impl.frontend.changes.ChangesTree
+import com.intellij.vcs.impl.frontend.changes.ExactlySelectedData
 import com.intellij.vcs.impl.frontend.changes.SelectedData
 import com.intellij.vcs.impl.shared.changes.GroupingUpdatePlaces
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
@@ -29,9 +32,11 @@ class ShelfTree(project: Project, private val treeRoot: ChangesBrowserRootNode, 
     val groupedChanges = SelectedData(this).iterateRawNodes()
       .filter { it.userObject is ShelvedChangeEntity }
       .groupBy { it.findParentOfType(ShelvedChangeListNode::class.java) }
-    sink[GROUPED_CHANGES_KEY] = groupedChanges.map { entry ->
-      entry.key?.userObject as ShelvedChangeListEntity to entry.value.map { it.userObject as ShelvedChangeEntity }
-    }.toMap()
+      .map { entry ->
+        entry.key?.userObject as ShelvedChangeListEntity to entry.value.map { it.userObject as ShelvedChangeEntity }
+      }
+    sink[GROUPED_CHANGES_KEY] = groupedChanges.toMap()
+    sink[CHANGE_LISTS_KEY] = groupedChanges.map { ChangeList(it.first, it.second) }
   }
 
   fun rebuildTree() {
@@ -52,6 +57,10 @@ class ShelfTree(project: Project, private val treeRoot: ChangesBrowserRootNode, 
 
   fun getSelectedChanges(): Set<ShelvedChangeEntity> {
     return SelectedData(this).iterateUserObjects(ShelvedChangeEntity::class.java).toSet()
+  }
+
+  fun getExactlySelectedLists(): Set<ShelvedChangeListEntity> {
+    return ExactlySelectedData(this).iterateUserObjects(ShelvedChangeListEntity::class.java).toSet();
   }
 
   companion object {

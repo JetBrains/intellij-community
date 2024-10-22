@@ -54,6 +54,13 @@ class BackendShelfApi : RemoteShelfApi {
     shelfTreeHolder.unshelveSilently(changeListDto)
   }
 
+  override suspend fun createPatchForShelvedChanges(projectRef: SharedRef<ProjectEntity>, changeListDto: List<ChangeListDto>, silentClipboard: Boolean) {
+    val project = getProject(projectRef)
+
+    val shelfTreeHolder = ShelfTreeHolder.getInstance(project)
+    shelfTreeHolder.createPatchForShelvedChanges(changeListDto, silentClipboard)
+  }
+
   override suspend fun notifyNodeSelected(projectRef: SharedRef<ProjectEntity>, changeListDto: ChangeListDto) {
     val project = getProject(projectRef)
     ShelfTreeHolder.getInstance(project).updateSelection(changeListDto)

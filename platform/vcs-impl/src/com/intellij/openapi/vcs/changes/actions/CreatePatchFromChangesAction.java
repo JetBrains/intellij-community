@@ -142,7 +142,7 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
     createPatch(project, commitMessage, changes, silentClipboard, patchBuilder);
   }
 
-  private static void createPatch(@NotNull Project project,
+  public static void createPatch(@NotNull Project project,
                                   @Nullable String commitMessage,
                                   @NotNull List<? extends Change> changes,
                                   boolean silentClipboard,

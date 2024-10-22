@@ -33,5 +33,12 @@
       <reference ref="ExpandAll"/>
       <reference ref="CollapseAll"/>
     </group>
+
+    <group id="ShelvedChangesPopupMenuFrontend" popup="true">
+      <action id="Frontend.ChangesView.Shelf.CreatePatchFromChanges" class="com.intellij.vcs.impl.frontend.changes.actions.CreatePatchForShelvedChangeActionDialog"
+              icon="AllIcons.Vcs.Patch"/>
+      <action id="Frontend.ChangesView.Shelf.CreatePatchFromChanges.Clipboard" class="com.intellij.vcs.impl.frontend.changes.actions.CreatePatchForShelvedChangeActionClipboard"
+              icon="AllIcons.Vcs.Patch"/>
+    </group>
   </actions>
 </idea-plugin>

@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asEntity
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.vcs.impl.frontend.changes.ChangeList
 import com.intellij.vcs.impl.shared.rhizome.SelectShelveChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
@@ -29,6 +30,20 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
         } ?: return@withKernel
         val projectRef = project.asEntity().sharedRef()
         RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).unshelveSilently(projectRef, changeLists)
+      }
+    }
+  }
+
+  fun createPatch(changeLists: List<ChangeList>, silentClipboard: Boolean) {
+    cs.launch {
+      withKernel {
+        val projectRef = project.asEntity().sharedRef()
+        val changeLists = changeLists.map {
+          val changeListNode = it.changeListNode as ShelvedChangeListEntity
+          val changes = it.changes.map { (it as ShelvedChangeEntity).sharedRef() }
+          ChangeListDto(changeListNode.sharedRef(), changes)
+        }
+        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).createPatchForShelvedChanges(projectRef, changeLists, silentClipboard)
       }
     }
   }
