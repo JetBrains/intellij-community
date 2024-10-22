@@ -72,7 +72,7 @@ public final class CommonRefactoringUtil {
                                    @NotNull @DialogMessage String message,
                                    @NotNull @DialogTitle String title,
                                    @Nullable String helpId) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RefactoringErrorHintException(message);
     }
 
