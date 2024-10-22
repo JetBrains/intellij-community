@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 class MachineIdManagerTest {
   @Test fun smoke() {
     assertThat(MachineIdManager.getAnonymizedMachineId("test"))
-      .isNotNull
+      .isNotBlank
   }
 
   @Test fun contract() {
