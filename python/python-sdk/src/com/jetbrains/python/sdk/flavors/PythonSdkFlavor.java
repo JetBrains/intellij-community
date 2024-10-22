@@ -381,6 +381,10 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     return getLanguageLevelFromVersionString(getVersionString(sdkHome));
   }
 
+  /**
+   * Returns wrong language level when argument is null which isn't probably what you except.
+   * Be sure to check argument for null
+   */
   @NotNull
   public LanguageLevel getLanguageLevelFromVersionString(@Nullable String version) {
     final String prefix = getName() + " ";
