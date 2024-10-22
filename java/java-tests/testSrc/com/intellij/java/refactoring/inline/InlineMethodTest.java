@@ -593,6 +593,8 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testRenameLocalClassDoubleConflict() { doTest(); }
 
   public void testBooleanResultInIfChain() { doTest(); }
+  
+  public void testLambdaIfAnd() { doTest(); }
 
   public void testInlineSingleImplementation() {
     TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());

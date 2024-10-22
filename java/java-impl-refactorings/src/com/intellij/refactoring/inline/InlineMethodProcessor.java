@@ -748,6 +748,13 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     CommentTracker tracker = new CommentTracker();
     PsiElement anchor = CommonJavaRefactoringUtil.getParentStatement(methodCall, true);
     assert anchor != null;
+    if (anchor instanceof PsiReturnStatement oldReturn &&
+        PsiTreeUtil.skipWhitespacesAndCommentsBackward(anchor) instanceof PsiReturnStatement newReturn &&
+        newReturn.getReturnValue() != null) {
+      // Remove new return instead of old return to preserve surrounder anchors
+      tracker.replace(Objects.requireNonNull(oldReturn.getReturnValue()), newReturn.getReturnValue());
+      anchor = newReturn;
+    }
     if (firstAdded != null) {
       tracker.delete(anchor);
       tracker.insertCommentsBefore(firstAdded);

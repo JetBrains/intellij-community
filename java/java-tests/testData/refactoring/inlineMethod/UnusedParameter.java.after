@@ -4,9 +4,9 @@ class Temp {
   }
   
   public Object foo(Set bar) {
-    if (bar.size() < 2) {// Inline this
+    if (bar.size() < 2) {
         bar.size(); // or online this
-        return null;
+        return null; // Inline this
     }
 
     return bar;

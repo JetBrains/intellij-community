@@ -1,0 +1,8 @@
+import java.util.function.*;
+
+class InlineTest {
+  Predicate<String> getPredicate(int value) {
+    return str -> str.length() > value && str.startsWith("prefix") && str.endsWith("suffix");
+  }
+
+}
