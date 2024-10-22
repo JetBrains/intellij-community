@@ -6,7 +6,6 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import kotlinx.collections.immutable.toImmutableList
@@ -36,19 +35,19 @@ internal object WindowsDefenderExcludeUtil {
   fun clearPathsToExclude() {
     defenderExclusions.replaceAll { _, _ -> false }
   }
-
+  const val NOTIFICATION_GROUP = "WindowsDefender"
   fun updateDefenderConfig(checker: WindowsDefenderChecker, project: Project, paths: List<Path>, onSuccess: () -> Unit = {}) {
     service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
       @Suppress("DialogTitleCapitalization")
       withBackgroundProgress(project, DiagnosticBundle.message("defender.config.progress"), false) {
         val success = checker.excludeProjectPaths(project, paths)
         if (success) {
-          notification(DiagnosticBundle.message("defender.config.success"), NotificationType.INFORMATION)
+          Notification(NOTIFICATION_GROUP, DiagnosticBundle.message("defender.config.success"), NotificationType.INFORMATION)
             .notify(project)
           onSuccess()
         }
         else {
-          notification(DiagnosticBundle.message("defender.config.failed"), NotificationType.WARNING)
+          Notification(NOTIFICATION_GROUP, DiagnosticBundle.message("defender.config.failed"), NotificationType.ERROR)
             .addAction(ShowLogAction.notificationAction())
             .notify(project)
         }
@@ -57,7 +56,4 @@ internal object WindowsDefenderExcludeUtil {
     }
     WindowsDefenderStatisticsCollector.auto(project)
   }
-
-  internal fun notification(@NlsContexts.NotificationContent content: String, type: NotificationType): Notification =
-    Notification("WindowsDefender", DiagnosticBundle.message("notification.group.defender.config"), content, type)
 }
