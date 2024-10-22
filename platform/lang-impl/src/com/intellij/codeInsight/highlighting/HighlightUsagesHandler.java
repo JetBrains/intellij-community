@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
@@ -105,9 +106,13 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
     DumbService dumbService = DumbService.getInstance(file.getProject());
     for (HighlightUsagesHandlerFactory factory : HighlightUsagesHandlerFactory.EP_NAME.getExtensionList()) {
       if (!dumbService.isUsableInCurrentContext(factory)) continue;
-      HighlightUsagesHandlerBase<T> handler = factory.createHighlightUsagesHandler(editor, file, visibleRange);
-      if (handler != null && dumbService.isUsableInCurrentContext(handler)) {
-        return handler;
+      try {
+        HighlightUsagesHandlerBase<T> handler = factory.createHighlightUsagesHandler(editor, file, visibleRange);
+        if (handler != null && dumbService.isUsableInCurrentContext(handler)) {
+          return handler;
+        }
+      }
+      catch (IndexNotReadyException ignore) {
       }
     }
     return null;

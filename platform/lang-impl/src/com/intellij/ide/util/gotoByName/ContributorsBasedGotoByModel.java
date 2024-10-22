@@ -228,7 +228,9 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
         LOG.debug(TimeoutUtil.getDurationMillis(start) + "," + contributor + "," + count[0]);
       }
     }
-    catch (ProcessCanceledException ex) {
+    catch (IndexNotReadyException ignore) {
+    }
+    catch (ProcessCanceledException ignore) {
       // index corruption detected, ignore
     }
     catch (Throwable ex) {

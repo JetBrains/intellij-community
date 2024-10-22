@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.CeProcessCanceledException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
@@ -310,6 +311,10 @@ internal class ActionUpdater @JvmOverloads constructor(
         }
       }
     }
+    catch (_: IndexNotReadyException) {
+      event.presentation.isEnabledAndVisible = false
+      emptyList()
+    }
     catch (ex: Throwable) {
       handleException(opElement, updatedPresentations[group] ?: group.templatePresentation, actionManager, ex)
       result
@@ -335,6 +340,10 @@ internal class ActionUpdater @JvmOverloads constructor(
           }
         }
       }.asList()
+    }
+    catch (_: IndexNotReadyException) {
+      event.presentation.isEnabledAndVisible = false
+      return emptyList()
     }
     catch (ex: Throwable) {
       handleException(opElement, event.presentation, actionManager, ex)
@@ -502,6 +511,10 @@ internal class ActionUpdater @JvmOverloads constructor(
           }
         }
       }
+    }
+    catch (_: IndexNotReadyException) {
+      presentation.isEnabledAndVisible = false
+      true
     }
     catch (ex: Throwable) {
       handleException(opElement, event.presentation, actionManager, ex)

@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -133,6 +134,8 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
         try {
           collectedInfo = editor == null ? annotator.collectInformation(psiRoot) : annotator.collectInformation(psiRoot, editor, errorFound);
         }
+        catch (IndexNotReadyException ignore) {
+        }
         catch (Throwable t) {
           processError(t, annotator, psiRoot);
         }
@@ -224,6 +227,8 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
         data.annotationResult = data.annotator.doAnnotate(data.collectedInfo);
         return null;
       });
+    }
+    catch (IndexNotReadyException ignore) {
     }
     catch (Throwable t) {
       processError(t, data.annotator, data.psiRoot);

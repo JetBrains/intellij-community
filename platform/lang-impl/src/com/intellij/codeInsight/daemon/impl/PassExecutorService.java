@@ -32,6 +32,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -425,6 +426,9 @@ final class PassExecutorService implements Disposable {
                   boolean cancelled = false;
                   try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(myFileEditor))) {
                     myPass.collectInformation(myUpdateProgress);
+                  }
+                  catch (IndexNotReadyException e) {
+                    cancelled = true;
                   }
                   catch (CancellationException e) {
                     cancelled = true;

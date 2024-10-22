@@ -33,6 +33,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.*
@@ -406,7 +407,13 @@ private fun submitIdentifierHighlighterPass(
         HighlightingSessionImpl.runInsideHighlightingSession(hostPsiFile,
                                                              hostEditor.colorsScheme,
                                                              ProperTextRange.create(hostPsiFile.textRange),
-                                                             false) { pass?.doCollectInformation(it) }
+                                                             false) {
+          try {
+            pass?.doCollectInformation(it)
+          }
+          catch (_: IndexNotReadyException) {
+          }
+        }
       },
       indicator,
     )

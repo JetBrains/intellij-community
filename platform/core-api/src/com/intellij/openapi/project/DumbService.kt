@@ -11,7 +11,11 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbService.Companion.DUMB_MODE
+import com.intellij.openapi.project.DumbService.Companion.isDumb
+import com.intellij.openapi.project.DumbService.Companion.isDumbAware
 import com.intellij.openapi.util.*
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.messages.Topic
@@ -219,7 +223,7 @@ abstract class DumbService {
    */
   @Contract(pure = true)
   fun <T> filterByDumbAwareness(collection: Collection<T>): @Unmodifiable List<T> {
-    if (isDumb) {
+    if (isDumb && Registry.`is`("ide.dumb.mode.check.awareness")) {
       val result = ArrayList<T>(collection.size)
       for (element in collection) {
         if (isDumbAware(element)) {
@@ -507,6 +511,7 @@ abstract class DumbService {
     @JvmStatic
     @Contract("null -> false", pure = true)
     fun isDumbAware(o: Any?): Boolean {
+      if (!Registry.`is`("ide.dumb.mode.check.awareness")) return true
       return if (o is PossiblyDumbAware) o.isDumbAware else o is DumbAware
     }
 

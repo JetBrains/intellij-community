@@ -127,6 +127,11 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
   }
 
   @Override
+  protected boolean requiresSmartMode() {
+    return true;
+  }
+
+  @Override
   protected boolean requiresReadAccess() {
     return true;
   }

@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -494,10 +495,13 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
       if (!myDumbService.isUsableInCurrentContext(injector)) {
         continue;
       }
-
-      injector.getLanguagesToInject(hostRegistrar, element);
-      InjectionResult result = hostRegistrar.getInjectedResult();
-      if (result != null) return result;
+      try {
+        injector.getLanguagesToInject(hostRegistrar, element);
+        InjectionResult result = hostRegistrar.getInjectedResult();
+        if (result != null) return result;
+      }
+      catch (IndexNotReadyException ignore) {
+      }
     }
     return null;
   }
