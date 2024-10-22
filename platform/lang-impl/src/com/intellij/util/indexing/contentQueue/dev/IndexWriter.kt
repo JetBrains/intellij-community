@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.psi.impl.cache.impl.id.IdIndex
+import com.intellij.psi.impl.cache.impl.id.IdIndexImpl
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.util.ConcurrencyUtil.newNamedThreadFactory
 import com.intellij.util.SystemProperties.*
@@ -212,12 +213,12 @@ object SameThreadIndexWriter : IndexWriter() {
 
 /* ================ parallelized IndexWriter implementations: ====================================================*/
 
-/** Dedicated writers are for: IdIndex, Stubs and Trigrams  */
+/** Dedicated writers are for: IdIndex, Stubs and Trigrams. It could be >1 writer per index, if index is sharded */
 private val INDEXES_WITH_DEDICATED_WORKERS: List<IndexId<*, *>> = listOf(
-  IdIndex.NAME,
-  TrigramIndex.INDEX_ID,
-  StubUpdatingIndex.INDEX_ID
-)
+  (1..IdIndexImpl.SHARDS).map { IdIndex.NAME },
+  (1..TrigramIndex.SHARDS).map { TrigramIndex.INDEX_ID },
+  listOf(StubUpdatingIndex.INDEX_ID)
+).flatten()
 
 private val DEDICATED_WRITERS_NUMBER = INDEXES_WITH_DEDICATED_WORKERS.size
 
@@ -235,14 +236,15 @@ private fun workerIndexFor(
 ): Int {
   when {
     indexId === IdIndex.NAME -> {
-      return 0
-    }
-    indexId === StubUpdatingIndex.INDEX_ID -> {
-      return 1
+      return shardNo
     }
     indexId === TrigramIndex.INDEX_ID -> {
-      return 2
+      return IdIndexImpl.SHARDS + shardNo
     }
+    indexId === StubUpdatingIndex.INDEX_ID -> {
+      return (IdIndexImpl.SHARDS + TrigramIndex.SHARDS) + shardNo
+    }
+
     else -> return if (AUX_WRITERS_NUMBER == 1)
       DEDICATED_WRITERS_NUMBER
     else
@@ -864,7 +866,7 @@ class ApplyViaCoroutinesWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) : Paral
   }
 
   init {
-    for (workerIndex in 0..< workersCount) {
+    for (workerIndex in 0..<workersCount) {
       val channel = channels[workerIndex]
 
       val name = if (workerIndex < DEDICATED_WRITERS_NUMBER) {
