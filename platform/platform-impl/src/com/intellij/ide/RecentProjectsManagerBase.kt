@@ -553,7 +553,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     return withContext(Dispatchers.IO) { ProjectUtilCore.isValidProjectPath(file) }
   }
 
-  // toOpen -  no non-existent project paths and every info has a frame
+  // toOpen - no non-existent project paths and every info has a frame
   private suspend fun openMultiple(toOpen: List<Pair<Path, RecentProjectMetaInfo>>): Boolean {
     val activeInfo = (toOpen.maxByOrNull { it.second.activationTimestamp } ?: return false).second
     val taskList = ArrayList<Pair<Path, OpenProjectTask>>(toOpen.size)
@@ -813,7 +813,7 @@ int32 "extendedState"
 
       val projectManager = ProjectManager.getInstanceIfCreated() ?: return
       val openProjects = projectManager.openProjects
-      // do not delete info file if ProjectManager not created - it means that it was simply not loaded, so, unlikely something is changed
+      // do not delete an info file if ProjectManager not created - it means that it was simply not loaded, so, unlikely something is changed
       if (openProjects.isEmpty()) {
         if (!isUseProjectFrameAsSplash()) {
           Files.deleteIfExists(getLastProjectFrameInfoFile())
@@ -839,7 +839,7 @@ int32 "extendedState"
   }
 
   @Internal
-  fun hasCustomIcon(project: Project) = projectIconHelper.hasCustomIcon(project)
+  fun hasCustomIcon(project: Project): Boolean = projectIconHelper.hasCustomIcon(project)
 }
 
 private fun fireChangeEvent() {
@@ -862,7 +862,7 @@ private fun readProjectName(path: String): String {
   val file = try {
     Path.of(path)
   }
-  catch (e: InvalidPathException) {
+  catch (_: InvalidPathException) {
     return path
   }
 
