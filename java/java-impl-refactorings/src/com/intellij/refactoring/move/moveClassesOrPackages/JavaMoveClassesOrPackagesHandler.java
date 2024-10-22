@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.CommonBundle;
@@ -219,8 +219,8 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
         new MoveClassesOrPackagesToNewDirectoryDialog(directories[0], directories, false, callback) {
           @Override
           protected BaseRefactoringProcessor createRefactoringProcessor(Project project,
-                                                                        final PsiDirectory targetDirectory,
-                                                                        PsiPackage aPackage,
+                                                                        @NotNull final PsiDirectory targetDirectory,
+                                                                        @NotNull PsiPackage aPackage,
                                                                         boolean searchInComments,
                                                                         boolean searchForTextOccurences) {
             final MoveDestination destination = createDestination(aPackage, targetDirectory);
