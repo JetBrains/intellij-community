@@ -3,5 +3,8 @@ class NestedTextBlock {
     String s = \"<caret>""
         test
     \""";
+        // \"""
+        // "\""
+        // \"""
 """;
 }
