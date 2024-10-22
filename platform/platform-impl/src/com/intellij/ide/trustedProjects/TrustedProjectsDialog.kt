@@ -14,6 +14,7 @@ import com.intellij.ide.impl.TrustedProjectsStatistics
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
@@ -55,7 +56,20 @@ object TrustedProjectsDialog {
     }
     val isWinDefenderEnabled = isWinDefenderEnabled(project, projectRoot)
     val dialog = withContext(Dispatchers.EDT) {
-      TrustedProjectStartupDialog(project, projectRoot, isWinDefenderEnabled, title, message, trustButtonText, distrustButtonText, cancelButtonText).apply { show() }
+      val dialog = TrustedProjectStartupDialog(
+        project = project,
+        projectPath = projectRoot,
+        isWinDefenderEnabled = isWinDefenderEnabled,
+        myTitle = title,
+        message = message,
+        trustButtonText = trustButtonText,
+        distrustButtonText = distrustButtonText,
+        cancelButtonText = cancelButtonText,
+      )
+      writeIntentReadAction {
+        dialog.show()
+      }
+      dialog
     }
     val openChoice = dialog.getOpenChoice()
     val windowDefenderPathsToExclude = dialog.getWidowsDefenderPathsToExclude()
