@@ -51,7 +51,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public final class ImportHelper{
+public final class ImportHelper {
   private static final Logger LOG = Logger.getInstance(ImportHelper.class);
 
   private final JavaCodeStyleSettings mySettings;
@@ -124,7 +124,9 @@ public final class ImportHelper{
     classesToUseSingle.addAll(toReimport);
 
     try {
-      StringBuilder text = buildImportListText(resultList, classesOrPackagesToImportOnDemand.keySet(), classesToUseSingle, checker);
+      boolean onDemandFirst = mySettings.isLayoutOnDemandImportFromSamePackageFirst();
+      StringBuilder text =
+        buildImportListText(resultList, classesOrPackagesToImportOnDemand.keySet(), classesToUseSingle, checker, onDemandFirst);
       for (PsiElement nonImport : nonImports) {
         text.append("\n").append(nonImport.getText());
       }
@@ -378,41 +380,38 @@ public final class ImportHelper{
   private static @NotNull StringBuilder buildImportListText(@NotNull List<Import> imports,
                                                             @NotNull Set<String> packagesOrClassesToImportOnDemand,
                                                             @NotNull Set<String> namesToUseSingle,
-                                                            @NotNull ImportUtils.ImplicitImportChecker implicitImportContext) {
-    Set<Import> importedPackagesOrClasses = new HashSet<>();
+                                                            @NotNull ImportUtils.ImplicitImportChecker implicitImportContext,
+                                                            boolean onDemandImportsFirst) {
+    Set<String> importedPackagesOrClasses = new HashSet<>();
     @NonNls StringBuilder buffer = new StringBuilder();
     for (Import importedName : imports) {
       String name = importedName.name();
       boolean isStatic = importedName.isStatic();
       String packageOrClassName = StringUtil.getPackageName(name);
       boolean implicitlyImported = implicitImportContext.isImplicitlyImported(name, isStatic);
-      boolean useOnDemand = implicitlyImported || packagesOrClassesToImportOnDemand.contains(packageOrClassName);
-      Import current = new Import(packageOrClassName, isStatic);
-      if (namesToUseSingle.remove(name)) {
-        if (useOnDemand && importedPackagesOrClasses.contains(current)) {
+      if (!implicitlyImported && packagesOrClassesToImportOnDemand.remove(packageOrClassName)) {
+        appendImportStatement(packageOrClassName + ".*", isStatic, buffer);
+        importedPackagesOrClasses.add(packageOrClassName);
+      }
+      if (namesToUseSingle.contains(name)) {
+        if (!implicitlyImported && !onDemandImportsFirst && importedPackagesOrClasses.contains(packageOrClassName)) {
           buffer.insert(buffer.lastIndexOf("import "), "import " + (isStatic ? "static " : "") + name + ";\n");
-          continue;
         }
-        useOnDemand = false;
+        else {
+          appendImportStatement(name, isStatic, buffer);
+        }
       }
-      if (useOnDemand && (importedPackagesOrClasses.contains(current) || implicitlyImported)) continue;
-      buffer.append("import ");
-      if (isStatic) buffer.append("static ");
-      if (useOnDemand) {
-        importedPackagesOrClasses.add(current);
-        buffer.append(packageOrClassName).append(".*");
+      else if (!implicitlyImported && !importedPackagesOrClasses.contains(packageOrClassName)) {
+        appendImportStatement(name, isStatic, buffer);
       }
-      else {
-        buffer.append(name);
-      }
-      buffer.append(";\n");
     }
-
-    for (String remainingSingle : namesToUseSingle) {
-      buffer.append("import ").append(remainingSingle).append(";\n");
-    }
-
     return buffer;
+  }
+
+  private static void appendImportStatement(String name, boolean isStatic, StringBuilder buffer) {
+    buffer.append("import ");
+    if (isStatic) buffer.append("static ");
+    buffer.append(name).append(";\n");
   }
 
   /**

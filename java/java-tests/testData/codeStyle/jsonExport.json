@@ -135,6 +135,7 @@
       "label_indent_absolute": false,
       "label_indent_size": 0,
       "lambda_brace_style": "end_of_line",
+      "layout_on_demand_import_from_same_package_first": true,
       "layout_static_imports_separately": true,
       "line_comment_add_space": false,
       "line_comment_add_space_on_reformat": false,
