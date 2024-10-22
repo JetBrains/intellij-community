@@ -60,7 +60,7 @@ object EelPathUtils {
         stat.isRegularFile -> {
           Files.newInputStream(source, READ).use { reader ->
             Files.newOutputStream(target, CREATE, TRUNCATE_EXISTING, WRITE).use { writer ->
-              reader.copyTo(writer)
+              reader.copyTo(writer, bufferSize = 4 * 1024 * 1024)
             }
           }
           if (removeSource) {
