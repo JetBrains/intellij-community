@@ -16,13 +16,13 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.EmptyClipboardOwner;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import org.jetbrains.annotations.NotNull;
@@ -30,8 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
-import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
 import java.util.List;
 import java.util.*;
 
@@ -525,12 +525,14 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   }
 
   void updateSystemSelection() {
-    if (GraphicsEnvironment.isHeadless() || !Registry.is("editor.caret.update.primary.selection")) return;
-
-    final Clipboard clip = myEditor.getComponent().getToolkit().getSystemSelection();
-    if (clip != null) {
-      clip.setContents(new StringSelection(myEditor.getSelectionModel().getSelectedText(true)), EmptyClipboardOwner.INSTANCE);
+    if (GraphicsEnvironment.isHeadless() ||
+        !Registry.is("editor.caret.update.primary.selection") ||
+        !CopyPasteManager.getInstance().isSystemSelectionSupported()) {
+      return;
     }
+
+    Transferable selection = new StringSelection(myEditor.getSelectionModel().getSelectedText(true));
+    CopyPasteManager.getInstance().setSystemSelectionContents(selection);
   }
 
   void fireCaretPositionChanged(@NotNull CaretEvent caretEvent) {
