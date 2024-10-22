@@ -5,7 +5,6 @@ package com.intellij.ide.trustedProjects
 
 import com.intellij.diagnostic.WindowsDefenderChecker
 import com.intellij.diagnostic.WindowsDefenderExcludeUtil
-import com.intellij.diagnostic.pathsToExclude
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.OpenUntrustedProjectChoice
 import com.intellij.ide.impl.TRUSTED_PROJECTS_HELP_TOPIC
@@ -88,12 +87,16 @@ object TrustedProjectsDialog {
 
     TrustedProjectsStatistics.NEW_PROJECT_OPEN_OR_IMPORT_CHOICE.log(openChoice)
 
-    if (isWinDefenderEnabled && windowDefenderPathsToExclude.isNotEmpty()) {
-      if (project != null) {
-        val checker = serviceAsync<WindowsDefenderChecker>()
-        WindowsDefenderExcludeUtil.updateDefenderConfig(checker, project, windowDefenderPathsToExclude)
-      } else {
-        pathsToExclude.addAll(windowDefenderPathsToExclude)
+    if (isWinDefenderEnabled) {
+      WindowsDefenderExcludeUtil.markPathAsShownDefender(projectRoot)
+      if (windowDefenderPathsToExclude.isNotEmpty()) {
+        if (project != null) {
+          val checker = serviceAsync<WindowsDefenderChecker>()
+          WindowsDefenderExcludeUtil.updateDefenderConfig(checker, project, windowDefenderPathsToExclude)
+        }
+        else {
+          WindowsDefenderExcludeUtil.addPathsToExclude(windowDefenderPathsToExclude)
+        }
       }
     }
     return openChoice != OpenUntrustedProjectChoice.CANCEL

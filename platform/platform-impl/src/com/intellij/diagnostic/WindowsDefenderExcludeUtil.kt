@@ -9,11 +9,33 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.jetbrains.rd.util.collections.SynchronizedList
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 
 internal object WindowsDefenderExcludeUtil {
+  private val defenderExclusions = ConcurrentHashMap<Path, Boolean>()
+
+  fun markPathAsShownDefender(path: Path) {
+    defenderExclusions.putIfAbsent(path, false)
+  }
+
+  fun isDefenderShown(path: Path): Boolean {
+    return defenderExclusions.containsKey(path)
+  }
+  
+  fun addPathsToExclude(paths: List<Path>) {
+    paths.forEach {  defenderExclusions.put(it, true) }
+  }
+  
+  fun getPathsToExclude(): List<Path> {
+    return defenderExclusions.filterValues{it}.keys.toImmutableList()
+  }
+  
+  fun clearPathsToExclude() {
+    defenderExclusions.replaceAll { _, _ -> false }
+  }
 
   fun updateDefenderConfig(checker: WindowsDefenderChecker, project: Project, paths: List<Path>, onSuccess: () -> Unit = {}) {
     service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
@@ -39,5 +61,3 @@ internal object WindowsDefenderExcludeUtil {
   internal fun notification(@NlsContexts.NotificationContent content: String, type: NotificationType): Notification =
     Notification("WindowsDefender", DiagnosticBundle.message("notification.group.defender.config"), content, type)
 }
-
-internal val pathsToExclude = SynchronizedList<Path>()

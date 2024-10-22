@@ -18,6 +18,7 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlin.io.path.Path
 
 private val LOG = logger<WindowsDefenderCheckerActivity>()
 
@@ -31,9 +32,11 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
 
   override suspend fun execute(project: Project) {
     val checker = serviceAsync<WindowsDefenderChecker>()
+    val pathsToExclude = WindowsDefenderExcludeUtil.getPathsToExclude()
     if (pathsToExclude.isNotEmpty()) {
-      WindowsDefenderExcludeUtil.updateDefenderConfig(checker, project, pathsToExclude) { pathsToExclude.clear() }
+      WindowsDefenderExcludeUtil.updateDefenderConfig(checker, project, pathsToExclude) { WindowsDefenderExcludeUtil.clearPathsToExclude() }
     }
+    if (project.basePath != null && WindowsDefenderExcludeUtil.isDefenderShown(Path(project.basePath!!))) return
     if (checker.isStatusCheckIgnored(project)) {
       LOG.info("status check is disabled")
       WindowsDefenderStatisticsCollector.protectionCheckSkipped(project)
