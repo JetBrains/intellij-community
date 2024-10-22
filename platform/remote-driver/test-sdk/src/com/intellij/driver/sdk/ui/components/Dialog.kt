@@ -51,6 +51,7 @@ open class DialogUiComponent(data: ComponentData) : UiComponent(data) {
   private val windowComponent by lazy {
     driver.cast(component, Window::class)
   }
+  val okButton = x { byAccessibleName("OK") }
 
   fun setBounds(bounds: Rectangle) = windowComponent.setBounds(bounds.x, bounds.y, bounds.width, bounds.height)
 
@@ -61,7 +62,6 @@ class FileChooserDialogUi(data: ComponentData) : DialogUiComponent(data) {
   val pathTextField = textField()
   val refreshActionButton = actionButton { byAccessibleName("Refresh") }
   val fileTree = tree()
-  val okButton = x { byAccessibleName("OK") }
 
   fun openPath(path: Path) {
     val absolutePath = path.toAbsolutePath().toString()
