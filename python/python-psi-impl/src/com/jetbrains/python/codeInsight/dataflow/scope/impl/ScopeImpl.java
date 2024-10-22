@@ -19,7 +19,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyVersionAwareElementVisitor;
-import com.jetbrains.python.pyi.PyiUtil;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -217,8 +217,11 @@ public class ScopeImpl implements Scope {
     final Set<String> augAssignments = new HashSet<>();
     final List<PyTargetExpression> targetExpressions = new ArrayList<>();
     final LanguageLevel languageLevel;
-    if (myFlowOwner instanceof PyFile || myFlowOwner instanceof PyClass) {
-      languageLevel = PyiUtil.getOriginalLanguageLevel(myFlowOwner);
+    if (myFlowOwner instanceof PyFile pyFile) {
+      languageLevel = PythonLanguageLevelPusher.getLanguageLevelForFile(pyFile);
+    }
+    else if (myFlowOwner instanceof PyClass pyClass) {
+      languageLevel = PythonLanguageLevelPusher.getLanguageLevelForFile(pyClass.getContainingFile());
     }
     else {
       languageLevel = null;

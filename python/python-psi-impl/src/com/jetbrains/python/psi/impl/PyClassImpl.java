@@ -735,8 +735,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   private Property processStubProperties(@Nullable Processor<? super Property> filter) {
     final PyClassStub stub = getStub();
     if (stub != null) {
-      LanguageLevel languageLevel = PyiUtil.getOriginalLanguageLevel(this);
-      for (StubElement<?> subStub : PyVersionSpecificStubBaseKt.getChildrenStubs(stub, languageLevel)) {
+      for (StubElement<?> subStub : getVersionSpecificChildrenStubs(stub)) {
         if (subStub.getStubType() == PyElementTypes.TARGET_EXPRESSION) {
           final PyTargetExpressionStub targetStub = (PyTargetExpressionStub)subStub;
           final PropertyStubStorage prop = targetStub.getCustomStub(PropertyStubStorage.class);
@@ -1027,35 +1026,35 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   public List<PyTargetExpression> getClassAttributes() {
     final List<PyTargetExpression> result = new ArrayList<>();
-    LanguageLevel languageLevel = PyiUtil.getOriginalLanguageLevel(this);
     PyClassStub stub = getStub();
     if (stub != null) {
-      for (StubElement<?> element : PyVersionSpecificStubBaseKt.getChildrenStubs(stub, languageLevel)) {
+      for (StubElement<?> element : getVersionSpecificChildrenStubs(stub)) {
         if (element.getStubType() == PyElementTypes.TARGET_EXPRESSION) {
           result.add((PyTargetExpression)element.getPsi());
         }
       }
     }
     else {
-      getStatementList().acceptChildren(new PyVersionAwareTopLevelElementVisitor(languageLevel) {
-        @Override
-        protected void checkAddElement(PsiElement psiElement) {
-          if (psiElement instanceof PyAssignmentStatement assignmentStatement) {
-            final PyExpression[] targets = assignmentStatement.getTargets();
-            for (PyExpression target : targets) {
+      getStatementList().acceptChildren(
+        new PyVersionAwareTopLevelElementVisitor(PythonLanguageLevelPusher.getLanguageLevelForFile(getContainingFile())) {
+          @Override
+          protected void checkAddElement(PsiElement psiElement) {
+            if (psiElement instanceof PyAssignmentStatement assignmentStatement) {
+              final PyExpression[] targets = assignmentStatement.getTargets();
+              for (PyExpression target : targets) {
+                if (target instanceof PyTargetExpression) {
+                  result.add((PyTargetExpression)target);
+                }
+              }
+            }
+            else if (psiElement instanceof PyTypeDeclarationStatement) {
+              final PyExpression target = ((PyTypeDeclarationStatement)psiElement).getTarget();
               if (target instanceof PyTargetExpression) {
                 result.add((PyTargetExpression)target);
               }
             }
           }
-          else if (psiElement instanceof PyTypeDeclarationStatement) {
-            final PyExpression target = ((PyTypeDeclarationStatement)psiElement).getTarget();
-            if (target instanceof PyTargetExpression) {
-              result.add((PyTargetExpression)target);
-            }
-          }
-        }
-      });
+        });
     }
     return result;
   }
@@ -1254,8 +1253,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   public boolean processClassLevelDeclarations(@NotNull PsiScopeProcessor processor) {
     final PyClassStub stub = getStub();
     if (stub != null) {
-      LanguageLevel languageLevel = PyiUtil.getOriginalLanguageLevel(this);
-      for (StubElement<?> child : PyVersionSpecificStubBaseKt.getChildrenStubs(stub, languageLevel)) {
+      for (StubElement<?> child : getVersionSpecificChildrenStubs(stub)) {
         if (!processor.execute(child.getPsi(), ResolveState.initial())) {
           return false;
         }
@@ -1265,6 +1263,10 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       PyResolveUtil.scopeCrawlUp(processor, this, null, this);
     }
     return true;
+  }
+
+  private @NotNull Iterable<@NotNull StubElement<?>> getVersionSpecificChildrenStubs(@NotNull PyClassStub stub) {
+    return PyVersionSpecificStubBaseKt.getChildrenStubs(stub, PythonLanguageLevelPusher.getLanguageLevelForFile(getContainingFile()));
   }
 
   @Override
