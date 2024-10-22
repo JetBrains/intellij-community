@@ -9,8 +9,10 @@ import org.jetbrains.annotations.ApiStatus
  * Implement to add additional tab after invoking "Analyze Stacktrace and Thread Dumps" action
  */
 @ApiStatus.Experimental
+@ApiStatus.OverrideOnly
 interface StacktraceTabContentProvider {
   /**
+   * The method is called under modal progress dialog.
    * @param text text of thread dump or stacktrace
    */
   suspend fun createRunTabDescriptor(project: Project, text: String): RunContentDescriptor?

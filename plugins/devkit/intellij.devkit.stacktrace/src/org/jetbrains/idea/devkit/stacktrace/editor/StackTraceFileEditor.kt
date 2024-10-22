@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.threadDumpParser.ThreadDumpParser.parse
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory.getInstance
@@ -100,22 +99,20 @@ class StackTraceFileEditor(private val project: Project, private val file: Virtu
   }
 
   private suspend fun addThreadContent(contentManager: ContentManager): Unit? = withContext(Dispatchers.Default) {
-    withBackgroundProgress(project, DevKitStackTraceBundle.message("progress.title.parsing.thread.dump")) {
-      val threadStates = parse(document.text)
-      withContext(Dispatchers.EDT) {
-        addConsole(project, threadStates, document.text, false)
+    val threadStates = parse(document.text)
+    withContext(Dispatchers.EDT) {
+      addConsole(project, threadStates, document.text, false)?.let { descriptor ->
+        contentManager.addContent(createNewContent(descriptor).apply {
+          executionId = descriptor.executionId
+          component = descriptor.component
+          setPreferredFocusedComponent(descriptor.preferredFocusComputable)
+          putUserData(RunContentDescriptor.DESCRIPTOR_KEY, descriptor)
+          displayName = descriptor.displayName
+          descriptor.setAttachedContent(this)
+        })
+        Disposer.register(contentManager, descriptor)
       }
     }
-  }?.let { descriptor ->
-    contentManager.addContent(createNewContent(descriptor).apply {
-      executionId = descriptor.executionId
-      component = descriptor.component
-      setPreferredFocusedComponent(descriptor.preferredFocusComputable)
-      putUserData(RunContentDescriptor.DESCRIPTOR_KEY, descriptor)
-      displayName = descriptor.displayName
-      descriptor.setAttachedContent(this)
-    })
-    Disposer.register(contentManager, descriptor)
   }
 
   private suspend fun addFreezeAnalysisContent(contentManager: ContentManager) {
