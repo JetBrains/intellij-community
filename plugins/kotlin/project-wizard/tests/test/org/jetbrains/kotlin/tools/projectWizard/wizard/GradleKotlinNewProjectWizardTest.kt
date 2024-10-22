@@ -498,11 +498,13 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
         }
     }
 
-    private fun simpleBuildSrcProjectWithVersionCatalog(useKotlinDsl: Boolean) = projectInfo("project", useKotlinDsl) {
+    private fun simpleBuildSrcProjectWithVersionCatalog(useDependency: Boolean) = projectInfo("project") {
         moduleInfo("project.buildSrc", "buildSrc") {
             withBuildFile {
-                withDependency {
-                    addElement(code("libs.kotlinGradlePlugin"))
+                if (useDependency) {
+                    withDependency {
+                        addElement(code("libs.kotlinGradlePlugin"))
+                    }
                 }
             }
             withSettingsFile {
@@ -563,6 +565,28 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
         ) { project ->
             // It should not specify an explicit version because it is defined in the version catalog
             Assertions.assertNull(project.findKotlinVersion(true, "module"))
+        }
+    }
+
+    @Test
+    fun testNewModuleWithUnusedVersionCatalog() {
+        runNewModuleTestCase(
+            useKotlinDsl = false,
+            expectedNewModules = listOf("project.module.main", "project.module.test", "project.module"),
+            projectInfo = simpleBuildSrcProjectWithVersionCatalog(false)
+        ) { project ->
+            Assertions.assertNotNull(project.findKotlinVersion(false, "module"))
+        }
+    }
+
+    @Test
+    fun testNewModuleWithUnusedVersionCatalogKts() {
+        runNewModuleTestCase(
+            useKotlinDsl = true,
+            expectedNewModules = listOf("project.module.main", "project.module.test", "project.module"),
+            projectInfo = simpleBuildSrcProjectWithVersionCatalog(false)
+        ) { project ->
+            Assertions.assertNotNull(project.findKotlinVersion(true, "module"))
         }
     }
 }
