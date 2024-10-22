@@ -19,14 +19,11 @@ import com.intellij.debugger.ui.tree.render.ClassRenderer
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
 import com.intellij.openapi.project.Project
 import com.sun.jdi.*
-import org.jetbrains.kotlin.idea.debugger.base.util.safeFields
-import org.jetbrains.kotlin.idea.debugger.base.util.safeType
-import org.jetbrains.kotlin.idea.debugger.base.util.isLateinitVariableGetter
-import org.jetbrains.kotlin.idea.debugger.base.util.isSimpleGetter
-import org.jetbrains.kotlin.idea.debugger.core.GetterDescriptor
-import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
-import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSources
-import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSourcesAsync
+import kotlinx.metadata.isNotDefault
+import kotlinx.metadata.jvm.KotlinClassMetadata
+import org.jetbrains.kotlin.idea.debugger.base.util.*
+import org.jetbrains.kotlin.idea.debugger.core.*
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
 
@@ -52,7 +49,10 @@ class KotlinClassRenderer : ClassRenderer() {
         val nodeDescriptorFactory = builder.descriptorManager
         val refType = value.referenceType()
         val gettersFuture = DebuggerUtilsAsync.allMethods(refType)
-            .thenApply { methods -> methods.getters().createNodes(value, parentDescriptor.project, evaluationContext, nodeManager) }
+            .thenApply { methods ->
+                val getters = fetchGettersUsingMetadata(evaluationContext, methods) ?: methods.getters()
+                getters.createNodes(value, parentDescriptor.project, evaluationContext, nodeManager)
+            }
         DebuggerUtilsAsync.allFields(refType).thenCombine(gettersFuture) { fields, getterNodes ->
             if (fields.isEmpty() && getterNodes.isEmpty()) {
                 builder.setChildren(listOf(nodeManager.createMessageNode(KotlinDebuggerCoreBundle.message("message.class.has.no.properties"))))
@@ -75,6 +75,40 @@ class KotlinClassRenderer : ClassRenderer() {
                     builder.setChildren(mergeNodesLists(nodesToShow, getterNodes))
                 }
         }
+    }
+
+    private fun fetchGettersUsingMetadata(
+        context: EvaluationContext,
+        methods: List<Method>
+    ): List<Method>? {
+        val gettersToShow = methods
+            .map { it.declaringType() }
+            .toSet()
+            .calculateGettersToShow(context)
+            ?: return null
+        return methods
+            .filter { it.name() in gettersToShow }
+            .distinctBy { it.name() }
+    }
+
+    private fun Collection<ReferenceType>.calculateGettersToShow(context: EvaluationContext): Set<String>? {
+        val metadataCache = KotlinMetadataDebuggerCacheService.getInstance(context.project)
+        val gettersToShow = mutableSetOf<String>()
+        for (type in this) {
+            if (!type.isInKotlinSources()) {
+                continue
+            }
+            val metadata = metadataCache.getKotlinMetadata(type, context)
+            if (metadata !is KotlinClassMetadata.Class) {
+                return null
+            }
+            for (property in metadata.kmClass.properties) {
+                if (property.getter.isNotDefault) {
+                    gettersToShow.add("get${property.name.capitalizeAsciiOnly()}")
+                }
+            }
+        }
+        return gettersToShow
     }
 
     override fun calcLabel(
