@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.jetbrains.python.codeInsight.typing.PyBundledStubs
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.codeInsight.typing.isInInlinePackage
 import com.jetbrains.python.codeInsight.typing.isInStubPackage
@@ -278,6 +279,9 @@ private fun resultsFromRoots(name: QualifiedName, context: PyQualifiedNameResolv
     if (!root.isValid ||
         root == PyUserSkeletonsUtil.getUserSkeletonsDirectory() ||
         effectiveSdk != null && PyTypeShed.isInside(root) && !PyTypeShed.maySearchForStubInRoot(name, root, effectiveSdk)) {
+      return@RootVisitor true
+    }
+    if (effectiveSdk != null && PyBundledStubs.isBundledStubsDirectory(root) && !PyBundledStubs.maySearchForStubInRoot(name, root, effectiveSdk)) {
       return@RootVisitor true
     }
     if (withoutStubs && (PyTypeShed.isInside(root) ||
