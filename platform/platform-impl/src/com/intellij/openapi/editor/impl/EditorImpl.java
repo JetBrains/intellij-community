@@ -2553,6 +2553,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         && myMousePressedEvent.getClickCount() == 1
         && !myMousePressedEvent.isShiftDown()
         && !myMousePressedEvent.isPopupTrigger()
+        && !e.isPopupTrigger()
         && !isToggleCaretEvent(myMousePressedEvent)
         && !isCreateRectangularSelectionEvent(myMousePressedEvent)) {
       getSelectionModel().removeSelection();
