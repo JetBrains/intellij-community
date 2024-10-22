@@ -716,5 +716,8 @@
 
     <extensionPoint qualifiedName="com.intellij.newFileActionCategoryHandler" dynamic="true"
                     interface="com.intellij.ide.actions.NewFileActionCategoryHandler"/>
+
+    <extensionPoint qualifiedName="com.intellij.inlinePrompt" dynamic="true"
+                    interface="com.intellij.inlinePrompt.InlinePromptExtension"/>
   </extensionPoints>
 </idea-plugin>
