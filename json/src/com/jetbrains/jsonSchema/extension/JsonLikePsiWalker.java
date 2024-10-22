@@ -34,6 +34,9 @@ public interface JsonLikePsiWalker {
   @Nullable
   JsonPointerPosition findPosition(final @NotNull PsiElement element, boolean forceLastTransition);
 
+  // for languages where objects and arrays are syntactically indistinguishable
+  default boolean hasObjectArrayAmbivalence() { return false; }
+
   boolean requiresNameQuotes();
   default boolean requiresValueQuotes() { return true; }
   boolean allowsSingleQuotes();

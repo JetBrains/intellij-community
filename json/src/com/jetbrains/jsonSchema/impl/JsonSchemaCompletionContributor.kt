@@ -243,6 +243,11 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
           }
         }
       }
+      else if (psiWalker?.hasObjectArrayAmbivalence() == true) {
+        schema.itemsSchema?.let { itemsSchema ->
+          suggestValues(itemsSchema, false, completionPath)
+        }
+      }
     }
 
     private fun getEnumItemsToSkip(): Set<String> {
