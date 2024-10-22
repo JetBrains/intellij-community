@@ -261,6 +261,12 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : I
         return module.libraryInfo.library
     }
 
+    override fun getContainingKaModules(virtualFile: VirtualFile): List<KaModule> {
+        return ModuleInfoProvider.getInstance(project)
+            .collectLibraryBinariesModuleInfos(virtualFile)
+            .mapTo(mutableListOf()) { getKtModuleByModuleInfo(it) }
+    }
+
     companion object {
         // TODO maybe introduce some cache?
         fun getKtModuleByModuleInfo(moduleInfo: ModuleInfo): KaModule {

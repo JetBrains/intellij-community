@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.base.projectStructure
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.psi.PsiElement
@@ -175,3 +176,17 @@ inline fun <reified M : KaModule> PsiElement.getKaModuleOfTypeSafe(project: Proj
  */
 inline fun <reified M : KaModule> PsiElement.getKaModuleOfType(project: Project, useSiteModule: KaModule?): M =
     getKaModule(project, useSiteModule) as M
+
+
+/**
+ * Returns a list of [KaModule] instances that correspond to a specific [VirtualFile].
+ *
+ * In some cases, a virtual file may be contained in multiple [KaModule]s. For example,
+ * the same JAR or a class file from that JAR may be reused across different libraries.
+ *
+ * @return a list of [KaModule]s that use the current [VirtualFile].
+ * If a virtual file is not part of a project, an empty list is returned.
+ * Thus, it never returns [org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule] as a result.
+*/
+fun VirtualFile.getContainingKaModules(project: Project): List<KaModule> =
+project.ideProjectStructureProvider.getContainingKaModules(this)

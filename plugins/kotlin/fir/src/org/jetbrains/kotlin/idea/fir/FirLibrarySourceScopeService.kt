@@ -6,31 +6,31 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptDependencyModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.directRegularDependenciesOfType
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache
-import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
-import org.jetbrains.kotlin.idea.base.projectStructure.collectLibraryBinariesModuleInfos
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.BinaryModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
-import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService
+import org.jetbrains.kotlin.idea.base.projectStructure.getContainingKaModules
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.utils.SmartList
 
 @ApiStatus.Internal
-@OptIn(K1ModeProjectStructureApi::class)
-class FirLibrarySourceScopeService: LibrarySourceScopeService {
+class FirLibrarySourceScopeService(private val project: Project): LibrarySourceScopeService {
     override fun targetClassFilesToSourcesScopes(virtualFile: VirtualFile, project: Project): List<GlobalSearchScope> {
-        val binaryModuleInfos = ModuleInfoProvider.getInstance(project)
-            .collectLibraryBinariesModuleInfos(virtualFile)
-            .toList()
+        val binaryModuleInfos = virtualFile.getContainingKaModules(project).filterIsInstance<KaLibraryModule>()
 
-        val primaryScope = binaryModuleInfos.mapNotNull { it.sourcesModuleInfo?.sourceScope() }.union()
+        val primaryScope = binaryModuleInfos.mapNotNull { it.librarySources?.contentScope }.union()
         val additionalScope = binaryModuleInfos.flatMap {
             it.associatedCommonLibraries() + it.sourcesOnlyDependencies()
-        }.mapNotNull { it.sourcesModuleInfo?.sourceScope() }.union()
+        }.mapNotNull { it.librarySources?.contentScope }.union()
 
-        return if (binaryModuleInfos.any { it is ScriptDependenciesInfo }) {
+        return if (binaryModuleInfos.any { it is KaScriptDependencyModule }) {
             // NOTE: this is a workaround for https://github.com/gradle/gradle/issues/13783:
             // script configuration for *.gradle.kts files doesn't include sources for included plugins
             primaryScope + additionalScope + ProjectScope.getContentScope(project)
@@ -39,26 +39,24 @@ class FirLibrarySourceScopeService: LibrarySourceScopeService {
         }
     }
 
-    private fun BinaryModuleInfo.associatedCommonLibraries(): List<BinaryModuleInfo> {
-        if (platform.isCommon()) return emptyList()
+    private fun KaLibraryModule.associatedCommonLibraries(): List<KaLibraryModule> {
+        if (targetPlatform.isCommon()) return emptyList()
 
-        val result = SmartList<BinaryModuleInfo>()
-        val dependencies = dependencies()
-        for (ideaModuleInfo in dependencies) {
-            if (ideaModuleInfo is BinaryModuleInfo && ideaModuleInfo.platform.isCommon()) {
-                result += ideaModuleInfo
+        val result = SmartList<KaLibraryModule>()
+        for (libraryDependency in directRegularDependenciesOfType<KaLibraryModule>()) {
+            if (libraryDependency.targetPlatform.isCommon()) {
+                result += libraryDependency
             }
         }
         return result
     }
 
-    private fun BinaryModuleInfo.sourcesOnlyDependencies(): List<BinaryModuleInfo> {
-        if (this !is LibraryInfo) return emptyList()
-
-        return LibraryDependenciesCache.getInstance(project).getLibraryDependencies(this).sourcesOnlyDependencies
+    @OptIn(K1ModeProjectStructureApi::class)
+    private fun KaLibraryModule.sourcesOnlyDependencies(): List<KaLibraryModule> {
+        return LibraryDependenciesCache.getInstance(project).getLibraryDependencies(moduleInfo as LibraryInfo).sourcesOnlyDependencies
+            .mapNotNull { it.toKaModule() as? KaLibraryModule }
     }
 
     private fun Collection<GlobalSearchScope>.union(): List<GlobalSearchScope> =
-        if (this.isNotEmpty()) listOf(GlobalSearchScope.union(this)) else emptyList()
-
+        listOf(KotlinGlobalSearchScopeMerger.getInstance(project).union(this))
 }
