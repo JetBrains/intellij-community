@@ -165,7 +165,7 @@ internal class ShellCommandExecutionManagerImpl(
   override fun sendCommandToExecute(shellCommand: String) {
     metricCommandSubmitToVisuallyStarted.started(shellCommand, TimeSource.Monotonic.markNow())
     metricCommandSubmitToActuallyStarted.started(shellCommand, TimeSource.Monotonic.markNow())
-    lock.withLock {
+    lock.withLock { afterLock ->
       if (isCommandSent || isCommandRunning) {
         LOG.info("Command '$shellCommand' is postponed until currently running command is finished")
       }
@@ -173,6 +173,7 @@ internal class ShellCommandExecutionManagerImpl(
         LOG.info("Command '$shellCommand' is postponed until `initialized` event is received")
       }
       scheduledCommands.offer(shellCommand)
+      afterLock.afterLock { fireUserCommandSubmitted(shellCommand) }
     }
     processQueueIfReady()
   }
@@ -311,6 +312,11 @@ internal class ShellCommandExecutionManagerImpl(
   private fun fireUserCommandSent(userCommand: String) {
     listeners.multicaster.userCommandSent(userCommand)
     debug { "User command sent: $userCommand" }
+  }
+
+  private fun fireUserCommandSubmitted(userCommand: String) {
+    listeners.multicaster.userCommandSubmitted(userCommand)
+    debug { "User command submitted: $userCommand" }
   }
 
   private fun fireGeneratorCommandSent(generatorCommand: String) {
