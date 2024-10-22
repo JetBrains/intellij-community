@@ -10,7 +10,9 @@ import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -107,7 +109,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
   public void testFindString() throws InterruptedException, ExecutionException {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
-    @Language("JAVA")
+    @Language("JAVA") @SuppressWarnings("ALL")
     String text = "public static class MyClass{\n/*done*/\npublic static void main(){}}";
     FindResult findResult = myFindManager.findString(text, 0, findModel);
     assertTrue(findResult.isStringFound());
@@ -155,7 +157,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setProjectScope(true);
 
     final FindResult[] findResultArr = new FindResult[1];
-    Future<?> thread = findInNewThread(findModel, myFindManager, text, 0, findResultArr);
+    Future<?> thread = findInNewThread(findModel, myFindManager, text, findResultArr);
     new WaitFor(30 *1000){
       @Override
       protected boolean condition() {
@@ -167,14 +169,10 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     thread.get();
   }
 
-  private static Future<?> findInNewThread(final FindModel model,
-                                           final FindManager findManager,
-                                           final CharSequence text,
-                                           final int offset,
-                                           final FindResult[] op_result){
+  private static Future<?> findInNewThread(FindModel model, FindManager findManager, CharSequence text, FindResult[] op_result){
     op_result[0] = null;
     return ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        op_result[0] = findManager.findString(text, offset, model);
+        op_result[0] = findManager.findString(text, 0, model);
       }
     );
   }
@@ -513,7 +511,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     final FindModel findModel = new FindModel();
     String toFind = "xxx";
     findModel.setStringToFind(toFind);
-    @SuppressWarnings("SpellCheckingInspection") String toReplace = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+    String toReplace = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
     findModel.setStringToReplace(toReplace);
     findModel.setWholeWordsOnly(true);
     findModel.setFromCursor(false);
@@ -1110,12 +1108,19 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     checkContext(model, myProject, null, null, false, dirName, moduleName, true);//prev module and dir state
   }
 
-  private static void checkContext(FindModel model, Project project, VirtualFile directory, Module module,
-                                   boolean shouldBeProjectScope, String expectedDirectoryName, String expectedModuleName, boolean shouldBeCustomScope) {
-    MapDataContext dataContext = new MapDataContext();
-    dataContext.put(CommonDataKeys.PROJECT, project);
-    dataContext.put(CommonDataKeys.VIRTUAL_FILE, directory);
-    dataContext.put(LangDataKeys.MODULE_CONTEXT, module);
+  private static void checkContext(FindModel model,
+                                   Project project,
+                                   VirtualFile directory,
+                                   Module module,
+                                   boolean shouldBeProjectScope,
+                                   String expectedDirectoryName,
+                                   String expectedModuleName,
+                                   boolean shouldBeCustomScope) {
+    DataContext dataContext = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .add(CommonDataKeys.VIRTUAL_FILE, directory)
+      .add(LangDataKeys.MODULE_CONTEXT, module)
+      .build();
     FindInProjectUtil.setDirectoryName(model, dataContext);
     assertEquals(shouldBeProjectScope, model.isProjectScope());
     assertEquals(expectedDirectoryName, model.getDirectoryName());
