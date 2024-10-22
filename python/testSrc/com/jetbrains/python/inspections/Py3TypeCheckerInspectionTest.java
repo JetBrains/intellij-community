@@ -2183,8 +2183,8 @@ def foo(param: str | int) -> TypeGuard[str]:
                    
                    t = Test()
                    t.member = "str"
-                   t.member = <warning descr="Assigned type 'int' do not match expected type 'str' of value from __set__ descriptor of class 'MyDescriptor'">123</warning>
-                   t.member = <warning descr="Assigned type 'Type[list]' do not match expected type 'str' of value from __set__ descriptor of class 'MyDescriptor'">list</warning>
+                   t.member = <warning descr="Expected type 'int' (from '__set__'), got 'str' instead">123</warning>
+                   t.member = <warning descr="Expected type 'Type[list]' (from '__set__'), got 'str' instead">list</warning>
                    """);
   }
 
@@ -2201,8 +2201,8 @@ def foo(param: str | int) -> TypeGuard[str]:
                    
                    t = Test()
                    t.member = "str"
-                   t.member = <warning descr="Assigned type 'int' do not match expected type 'str' of value from __set__ descriptor of class 'MyDescriptor'">123</warning>
-                   t.member = <warning descr="Assigned type 'Type[list]' do not match expected type 'str' of value from __set__ descriptor of class 'MyDescriptor'">list</warning>
+                   t.member = <warning descr="Expected type 'int' (from '__set__'), got 'str' instead">123</warning>
+                   t.member = <warning descr="Expected type 'Type[list]' (from '__set__'), got 'str' instead">list</warning>
                    """);
   }
 
@@ -2234,11 +2234,10 @@ def foo(param: str | int) -> TypeGuard[str]:
                    
                    t = Test()
                    t.member = "abc"
-                   t.member = <warning descr="Assigned type 'int' do not match expected type 'str' of value from __set__ descriptor of class 'MyDescriptor'">42</warning>
+                   t.member = <warning descr="Expected type 'int' (from '__set__'), got 'str' instead">42</warning>
                    p = Prod()
-                   p.member = <warning descr="Assigned type 'str' do not match expected type 'LocalizedString' of value from __set__ descriptor of class 'MyDescriptor'">"abc"</warning>
-                   p.member = <warning descr="Assigned type 'int' do not match expected type 'LocalizedString' of value from __set__ descriptor of class 'MyDescriptor'">42</warning>
-                   p.member = LocalizedString("abc")
+                   p.member = <warning descr="Expected type 'str' (from '__set__'), got 'LocalizedString' instead">"abc"</warning>
+                   p.member = <warning descr="Expected type 'int' (from '__set__'), got 'LocalizedString' instead">42</warning>
                    """);
   }
 
@@ -2257,8 +2256,8 @@ def foo(param: str | int) -> TypeGuard[str]:
                    
                    t = Test()
                    t.member = 42
-                   t.member = <warning descr="Assigned type 'Literal[43]' do not match expected type 'Literal[42]' of value from __set__ descriptor of class 'MyDescriptor'">43</warning>
-                   t.member = <warning descr="Assigned type 'Literal[\\"42\\"]' do not match expected type 'Literal[42]' of value from __set__ descriptor of class 'MyDescriptor'">"42"</warning>
+                   t.member = <warning descr="Expected type 'Literal[43]' (from '__set__'), got 'Literal[42]' instead">43</warning>
+                   t.member = <warning descr="Expected type 'Literal[\\"42\\"]' (from '__set__'), got 'Literal[42]' instead">"42"</warning>
                    """);
   }
 
