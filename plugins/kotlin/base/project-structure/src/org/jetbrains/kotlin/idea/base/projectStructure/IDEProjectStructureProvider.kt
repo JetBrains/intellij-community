@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.libraries.Library as OpenapiLibrary
 import com.intellij.openapi.projectRoots.Sdk as OpenapiSdk
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProviderBase
@@ -38,6 +39,10 @@ abstract class IDEProjectStructureProvider : KotlinProjectStructureProviderBase(
     abstract fun getOpenapiSdk(module: KaLibraryModule): OpenapiSdk?
 
     abstract fun getContainingKaModules(virtualFile: VirtualFile): List<KaModule>
+
+    abstract fun getForcedKaModule(file: PsiFile): KaModule?
+
+    abstract fun setForcedKaModule(file: PsiFile, kaModule: KaModule?)
 }
 
 

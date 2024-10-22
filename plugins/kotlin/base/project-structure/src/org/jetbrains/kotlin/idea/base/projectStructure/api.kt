@@ -4,17 +4,19 @@ package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk as OpenapiSdk
-import com.intellij.openapi.roots.libraries.Library as OpenapiLibrary
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import com.intellij.openapi.projectRoots.Sdk as OpenapiSdk
+import com.intellij.openapi.roots.libraries.Library as OpenapiLibrary
 
 /**
  * Represents kind of [KaSourceModule]
@@ -206,3 +208,18 @@ inline fun <reified M : KaModule> PsiElement.getKaModuleOfType(project: Project,
 */
 fun VirtualFile.getContainingKaModules(project: Project): List<KaModule> =
 project.ideProjectStructureProvider.getContainingKaModules(this)
+
+
+/**
+ * [forcedKaModule] provides a [KaModule] instance for a dummy file. It must not be changed after the first assignment because
+ * [IDEProjectStructureProvider] might cache the module info.
+ */
+var PsiFile.forcedKaModule: KaModule?
+    @ApiStatus.Internal
+    get() {
+        return project.ideProjectStructureProvider.getForcedKaModule(this)
+    }
+    @ApiStatus.Internal
+    set(value) {
+        project.ideProjectStructureProvider.setForcedKaModule(this, value)
+    }

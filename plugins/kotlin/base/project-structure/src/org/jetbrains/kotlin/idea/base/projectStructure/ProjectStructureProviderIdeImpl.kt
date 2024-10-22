@@ -278,6 +278,21 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : I
             .mapTo(mutableListOf()) { getKtModuleByModuleInfo(it) }
     }
 
+    override fun getForcedKaModule(file: PsiFile): KaModule? {
+        return file.forcedModuleInfo?.let { getKtModuleByModuleInfo(it) }
+    }
+
+    override fun setForcedKaModule(file: PsiFile, kaModule: KaModule?) {
+        when (kaModule) {
+          null -> {
+              file.forcedModuleInfo = null
+          }
+          is KtModuleByModuleInfoBase -> {
+              file.forcedModuleInfo = kaModule.moduleInfo
+          }
+        }
+    }
+
     companion object {
         // TODO maybe introduce some cache?
         fun getKtModuleByModuleInfo(moduleInfo: ModuleInfo): KaModule {

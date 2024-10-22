@@ -21,9 +21,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.idea.base.projectStructure.forcedModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
+import org.jetbrains.kotlin.idea.base.projectStructure.forcedKaModule
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.idea.refactoring.suggested.KotlinSignatureAdditionalData
 import org.jetbrains.kotlin.idea.refactoring.suggested.KotlinSuggestedRefactoringSupportBase
@@ -92,8 +91,7 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
     override fun refineSignaturesWithResolve(state: SuggestedRefactoringState): SuggestedRefactoringState {
         val newDeclaration = state.declaration as? KtCallableDeclaration ?: return state
         val oldDeclaration = state.restoredDeclarationCopy() as? KtCallableDeclaration ?: return state
-        @OptIn(K1ModeProjectStructureApi::class)
-        oldDeclaration.containingKtFile.forcedModuleInfo = newDeclaration.moduleInfo
+        oldDeclaration.containingKtFile.forcedKaModule = newDeclaration.getKaModule(newDeclaration.project, useSiteModule = null)
 
         val descriptorWithOldSignature = allowAnalysisOnEdt { analyzeCopy(oldDeclaration, KaDanglingFileResolutionMode.PREFER_SELF) { signatureTypes(oldDeclaration) } } ?: return state
         val descriptorWithNewSignature = allowAnalysisOnEdt { analyze(newDeclaration) { signatureTypes(newDeclaration) }  } ?: return state
