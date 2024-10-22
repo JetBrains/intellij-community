@@ -745,21 +745,30 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
 
       override fun update(e: AnActionEvent) {
         super.update(e)
-        val newRange = rangesSource.findRange(range)
+        val newRange = findRange(range)
         e.presentation.setEnabled(newRange != null && !editor.isDisposed() && newRange is LocalRange)
       }
 
       override fun isSelected(e: AnActionEvent): Boolean {
-        val newRange = rangesSource.findRange(range)
+        val newRange = findRange(range)
         return (newRange as LocalRange).changelistId == changelist.id
       }
 
       override fun setSelected(e: AnActionEvent, state: Boolean) {
-        val newRange = rangesSource.findRange(range) ?: return
-        tracker.moveToChangelist(newRange, changelist)
-        reopenRange(editor, newRange, mousePosition)
+        val newRange = findRange(range) ?: return
+        moveToChangeList(newRange, changelist, editor, mousePosition)
       }
     }
+
+    private fun findRange(range: Range): Range? {
+      return rangesSource.findRange(range)
+    }
+
+    private fun moveToChangeList(range: Range, changeList: LocalChangeList, editor: Editor, mousePosition: Point?) {
+      tracker.moveToChangelist(range, changeList)
+      reopenRange(editor, range, mousePosition)
+    }
+
 
     override fun toString(): String = "MyLineStatusMarkerRenderer(tracker=$tracker)"
   }
