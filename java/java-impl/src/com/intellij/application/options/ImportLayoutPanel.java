@@ -37,6 +37,8 @@ import java.awt.*;
 public abstract class ImportLayoutPanel extends JPanel {
   private final JBCheckBox myCbLayoutStaticImportsSeparately =
     new JBCheckBox(JavaBundle.message("import.layout.static.imports.separately"));
+  private final JBCheckBox myCbLayoutOnDemandImportsFromSamePackageFirst =
+    new JBCheckBox(JavaBundle.message("import.layout.on.demand.import.from.same.package.first"));
   private final JBTable myImportLayoutTable;
 
   private final PackageEntryTable myImportLayoutList = new PackageEntryTable();
@@ -51,6 +53,10 @@ public abstract class ImportLayoutPanel extends JPanel {
 
   public JBCheckBox getCbLayoutStaticImportsSeparately() {
     return myCbLayoutStaticImportsSeparately;
+  }
+
+  public JBCheckBox getCbLayoutOnDemandImportsFromSamePackageFirst() {
+    return myCbLayoutOnDemandImportsFromSamePackageFirst;
   }
 
   public ImportLayoutPanel() {
@@ -108,7 +114,9 @@ public abstract class ImportLayoutPanel extends JPanel {
       .setPreferredSize(new Dimension(-1, JBUI.scale(180)))
       .createPanel();
 
-    final ImportLayoutPanelUI UI = new ImportLayoutPanelUI(myCbLayoutStaticImportsSeparately, importLayoutPanel);
+    final ImportLayoutPanelUI UI = new ImportLayoutPanelUI(myCbLayoutStaticImportsSeparately,
+                                                           myCbLayoutOnDemandImportsFromSamePackageFirst,
+                                                           importLayoutPanel);
     add(UI.getPanel(), BorderLayout.CENTER);
   }
 
@@ -213,6 +221,10 @@ public abstract class ImportLayoutPanel extends JPanel {
 
   public boolean areStaticImportsEnabled() {
     return myCbLayoutStaticImportsSeparately.isSelected();
+  }
+
+  public boolean isLayoutOnDemandImportsFromSamePackageFirst() {
+    return myCbLayoutOnDemandImportsFromSamePackageFirst.isSelected();
   }
 
   public static JBTable createTableForPackageEntries(final PackageEntryTable packageTable, final ImportLayoutPanel panel) {

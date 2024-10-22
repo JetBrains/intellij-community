@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -57,7 +57,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public boolean GENERATE_FINAL_PARAMETERS;
 
   @PsiModifier.ModifierConstant
-  public String VISIBILITY = "public";
+  public String VISIBILITY = PsiModifier.PUBLIC;
 
   public boolean USE_EXTERNAL_ANNOTATIONS;
   public boolean GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = true;
@@ -170,6 +170,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
 
   // Imports
   public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
+  public boolean LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST = true;
   public boolean USE_FQ_CLASS_NAMES;
   public boolean USE_SINGLE_CLASS_IMPORTS = true;
   public boolean INSERT_INNER_CLASS_IMPORTS;
@@ -288,7 +289,16 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   @Override
   public void setLayoutStaticImportsSeparately(boolean value) {
     LAYOUT_STATIC_IMPORTS_SEPARATELY = value;
+  }
 
+  @Override
+  public boolean isLayoutOnDemandImportFromSamePackageFirst() {
+    return LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST;
+  }
+
+  @Override
+  public void setLayoutOnDemandImportFromSamePackageFirst(boolean value) {
+    this.LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST = value;
   }
 
   @Override

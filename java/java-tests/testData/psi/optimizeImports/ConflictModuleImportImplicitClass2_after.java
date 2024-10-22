@@ -1,7 +1,7 @@
 package p2;
 
-import p1.List;
 import p1.*;
+import p1.List;
 
 
 A1 a1;
