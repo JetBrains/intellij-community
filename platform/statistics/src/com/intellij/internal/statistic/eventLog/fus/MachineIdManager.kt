@@ -1,88 +1,77 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.fus
 
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.util.ExecUtil
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.text.StringUtil
+import com.sun.jna.platform.mac.IOKitUtil
 import com.sun.jna.platform.win32.Advapi32Util
+import com.sun.jna.platform.win32.COM.WbemcliUtil
+import com.sun.jna.platform.win32.Ole32
 import com.sun.jna.platform.win32.WinReg
-import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.util.regex.Pattern
+import java.nio.file.Path
+import kotlin.io.path.readText
 
 object MachineIdManager {
-  private const val IOREG_COMMAND_TIMEOUT_MS = 2000
-  private val macMachineIdPattern = Pattern.compile("\"IOPlatformUUID\"\\s*=\\s*\"(?<machineId>.*)\"")
-  private val linuxMachineIdPaths = listOf("/etc/machine-id", "/var/lib/dbus/machine-id")
+  private val LOG = logger<MachineIdManager>()
+
+  @Deprecated("Use `getAnonymizedMachineId(String)`", level = DeprecationLevel.ERROR)
+  fun getAnonymizedMachineId(purpose: String, salt: String): String? = getAnonymizedMachineId(purpose + salt)
 
   /**
-   * @param purpose What id will be used for, shouldn't be empty.
-   * @return Anonymized machine id or null If getting machine id was failed.
+   * @param purpose what the ID will be used for; must not be empty.
+   * @return anonymized machine ID, or `null` if getting a machine ID has failed.
    */
-  fun getAnonymizedMachineId(purpose: String, salt: String): String? {
-    if (purpose.isEmpty()) {
-      throw IllegalArgumentException("Argument [purpose] should not be empty.")
+  fun getAnonymizedMachineId(purpose: String): String? {
+    require (purpose.isNotEmpty()) { "`purpose` should not be empty" }
+    return machineId.value?.let { machineId ->
+      EventLogConfiguration.hashSha256((System.getProperty("user.name") + purpose).toByteArray(), machineId)
     }
-    val machineId = getMachineId() ?: return null
-    return EventLogConfiguration.hashSha256((System.getProperty("user.name") + purpose + salt).toByteArray(), machineId)
   }
 
-  private fun getMachineId(): String? {
-    return try {
+  private val machineId: Lazy<String?> = lazy {
+    runCatching {
       when {
-        SystemInfo.isWindows -> {
-          Advapi32Util.registryGetStringValue(WinReg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Cryptography", "MachineGuid")
-        }
-        SystemInfo.isMac -> {
-          getMacOsMachineId()
-        }
-        SystemInfo.isLinux -> {
-          getLinuxMachineId()
-        }
+        SystemInfo.isWindows -> getWindowsMachineId()
+        SystemInfo.isMac -> getMacOsMachineId()
+        SystemInfo.isLinux -> getLinuxMachineId()
         else -> null
       }
-    }
-    catch (e: Throwable) {
-      null
-    }
+    }.onFailure { LOG.debug(it) }.getOrNull()
   }
 
-
-  /**
-   * Reads machineId from /etc/machine-id or if not found from /var/lib/dbus/machine-id
-   *
-   * See https://manpages.debian.org/testing/systemd/machine-id.5.en.html for more details
-   */
-  private fun getLinuxMachineId(): String? {
-    for (machineIdPath in linuxMachineIdPaths) {
-      try {
-        val machineId = Files.readString(Paths.get(machineIdPath))
-        if (!machineId.isNullOrEmpty()) {
-          return machineId.trim()
+  /** See [Win32_ComputerSystemProduct](https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-computersystemproduct). */
+  private fun getWindowsMachineId(): String? =
+    runCatching {
+      Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_APARTMENTTHREADED)
+      WbemcliUtil.WmiQuery("Win32_ComputerSystemProduct", ComputerSystemProductProperty::class.java)
+        .execute(2000)
+        .let { result ->
+          if (result.resultCount > 0) result.getValue(ComputerSystemProductProperty.UUID, 0).toString()
+          else null
         }
-      }
-      catch (ignore: IOException) {
-      }
-    }
-    return null
-  }
+    }.recover {
+      LOG.debug(it)
+      Advapi32Util.registryGetStringValue(WinReg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Cryptography", "MachineGuid")
+    }.getOrThrow()
 
+  enum class ComputerSystemProductProperty { UUID }
 
-  /**
-   * Invokes `ioreg -rd1 -c IOPlatformExpertDevice` to get IOPlatformUUID
-   */
-  private fun getMacOsMachineId(): String? {
-    val commandLine = GeneralCommandLine("ioreg", "-rd1", "-c", "IOPlatformExpertDevice")
-    val processOutput = ExecUtil.execAndGetOutput(commandLine, IOREG_COMMAND_TIMEOUT_MS)
-    if (processOutput.exitCode == 0) {
-      val matcher = macMachineIdPattern.matcher(StringUtil.newBombedCharSequence(processOutput.stdout, 1000))
-      if (matcher.find()) {
-        return matcher.group("machineId")
-      }
+  /** See [IOPlatformExpertDevice](https://developer.apple.com/documentation/kernel/ioplatformexpertdevice). */
+  private fun getMacOsMachineId(): String? =
+    IOKitUtil.getMatchingService("IOPlatformExpertDevice")?.let { device ->
+      val property = device.getStringProperty("IOPlatformUUID")
+      device.release()
+      property
     }
-    return null
-  }
+
+  /** See [MACHINE-ID(5)](https://manpages.debian.org/testing/systemd/machine-id.5.en.html). */
+  private fun getLinuxMachineId(): String? =
+    sequenceOf("/etc/machine-id", "/var/lib/dbus/machine-id")
+      .map {
+        runCatching { Path.of(it).readText().trim().takeIf(String::isNotEmpty) }
+          .onFailure { LOG.debug(it) }
+          .getOrNull()
+      }
+      .firstOrNull()
 }

@@ -189,7 +189,7 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
       return MachineId.DISABLED
     }
     val revision = if (value >= 0) value else DEFAULT_ID_REVISION
-    val machineId = MachineIdManager.getAnonymizedMachineId("JetBrains$recorderId", salt) ?: return MachineId.UNKNOWN
+    val machineId = MachineIdManager.getAnonymizedMachineId("JetBrains${recorderId}${salt}") ?: return MachineId.UNKNOWN
     return MachineId(machineId, revision)
   }
 

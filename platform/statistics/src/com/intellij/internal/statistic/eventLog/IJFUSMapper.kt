@@ -27,8 +27,8 @@ class IJFUSMapper: ApplicationUsagesCollector() {
     val mlConfig = EventLogConfigOptionsService.getInstance().getOptions(ML_RECORDER)
     val fusConfig = EventLogConfigOptionsService.getInstance().getOptions(FUS_RECORDER)
     return setOf(report.metric(
-      MachineIdManager.getAnonymizedMachineId("JetBrains$ML_RECORDER", mlConfig.machineIdSalt ?: ""),
-      MachineIdManager.getAnonymizedMachineId("JetBrains$FUS_RECORDER", fusConfig.machineIdSalt ?: ""),
+      MachineIdManager.getAnonymizedMachineId("JetBrains${ML_RECORDER}${mlConfig.machineIdSalt}" ?: ""),
+      MachineIdManager.getAnonymizedMachineId("JetBrains${FUS_RECORDER}${fusConfig.machineIdSalt}" ?: ""),
     ))
   }
 }
