@@ -233,26 +233,23 @@ private fun loadInitScript(resourcePath: String, parameters: Map<String, String>
   return loadInitScript(Init::class.java, resourcePath, parameters)
 }
 
-private fun loadInitScript(aClass: Class<*>, resourcePath: String, parameters: Map<String, String>): String {
-  var script = loadInitScript(aClass, resourcePath)
+@ApiStatus.Experimental
+fun loadInitScript(aClass: Class<*>, resourcePath: String, parameters: Map<String, String> = emptyMap()): String {
+  val resource = aClass.getResource(resourcePath)
+  if (resource == null) {
+    throw IllegalArgumentException("Cannot find init file $resourcePath")
+  }
+  var script = try {
+    resource.readText()
+  }
+  catch (e: IOException) {
+    throw IllegalStateException("Cannot read init file $resourcePath", e)
+  }
   for ((key, value) in parameters) {
     val replacement = Matcher.quoteReplacement(value)
     script = script.replaceFirst(key.toRegex(), replacement)
   }
   return script
-}
-
-private fun loadInitScript(aClass: Class<*>, resourcePath: String): String {
-  val resource = aClass.getResource(resourcePath)
-  if (resource == null) {
-    throw IllegalArgumentException("Cannot find init file $resourcePath")
-  }
-  try {
-    return resource.readText()
-  }
-  catch (e: IOException) {
-    throw IllegalStateException("Cannot read init file $resourcePath", e)
-  }
 }
 
 fun createInitScript(prefix: String, content: String): Path {
