@@ -129,8 +129,7 @@
 
     <json.jsonStandardComplianceProvider implementation="com.intellij.json.jsonc.JsoncComplianceProvider"/>
 
-    <lang.floatingToolbarCustomizer language="JSON"
-                                    implementationClass="com.intellij.ui.codeFloatingToolbar.FloatingToolbarCustomizer$MinimalGroup"/>
+    <lang.floatingToolbar language="JSON" minimal="true"/>
 
     <pluginSuggestionProvider implementation="com.jetbrains.jsonSchema.wiremock.WireMockSuggestionProvider"/>
   </extensions>

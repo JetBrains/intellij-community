@@ -371,13 +371,11 @@ c:com.intellij.openapi.wm.impl.welcomeScreen.TabbedWelcomeScreen
 - com.intellij.ui.components.JBLayeredPane
 - <init>(javax.swing.JComponent,java.lang.String,Z,Z,java.lang.Runnable):V
 - getPreferredSize():java.awt.Dimension
+*:com.intellij.ui.codeFloatingToolbar.FloatingToolbarCustomization
+- a:isToolbarAvailable():Z
 *:com.intellij.ui.codeFloatingToolbar.FloatingToolbarCustomizer
 - a:getActionGroup():java.lang.String
 *f:com.intellij.ui.codeFloatingToolbar.FloatingToolbarCustomizer$DefaultGroup
-- com.intellij.ui.codeFloatingToolbar.FloatingToolbarCustomizer
-- <init>():V
-- getActionGroup():java.lang.String
-*c:com.intellij.ui.codeFloatingToolbar.FloatingToolbarCustomizer$MinimalGroup
 - com.intellij.ui.codeFloatingToolbar.FloatingToolbarCustomizer
 - <init>():V
 - getActionGroup():java.lang.String

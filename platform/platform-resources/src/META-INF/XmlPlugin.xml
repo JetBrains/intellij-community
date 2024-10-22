@@ -384,8 +384,7 @@
 
     <inspection.basicVisitor class="com.intellij.psi.XmlElementVisitor"/>
 
-    <lang.floatingToolbarCustomizer language="XML"
-                                    implementationClass="com.intellij.ui.codeFloatingToolbar.FloatingToolbarCustomizer$MinimalGroup"/>
+    <lang.floatingToolbar language="XML" minimal="true"/>
 
     <localInspection language="XML" shortName="CheckTagEmptyBody" enabledByDefault="true" level="WARNING"
                      bundle="messages.XmlBundle" key="xml.inspections.check.tag.empty.body"
