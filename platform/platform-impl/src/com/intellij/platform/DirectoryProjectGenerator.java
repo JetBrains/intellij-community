@@ -61,7 +61,7 @@ public interface DirectoryProjectGenerator<T> {
   @Nullable
   Icon getLogo();
 
-  @RequiresEdt(generateAssertion = false)
+  @RequiresEdt
   void generateProject(@NotNull Project project,
                        @NotNull VirtualFile baseDir,
                        @NotNull T settings,
