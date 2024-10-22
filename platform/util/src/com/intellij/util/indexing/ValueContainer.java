@@ -21,6 +21,7 @@ import java.util.function.IntPredicate;
  * with values: that is called 'Value' in ValueContainer definition is 'Key' when ValueContainer is utilized in
  * the inverted index -- which is it's primary role)
  * </p>
+ *
  * @author Eugene Zhuravlev
  */
 public abstract class ValueContainer<Value> {
@@ -54,10 +55,14 @@ public abstract class ValueContainer<Value> {
 
   //TODO RC: .forEach() is synchronized, but .process() is not -- and they are otherwise identical. Why the difference?
 
+  /**
+   * @return true if all the container data was processed, false if processing was stopped early because the action
+   * returns false
+   */
   public synchronized final boolean forEach(@NotNull ContainerAction<? super Value> action) {
-    for (ValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
+    for (ValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext(); ) {
       Value value = valueIterator.next();
-      for (IntIterator intIterator = valueIterator.getInputIdsIterator(); intIterator.hasNext();) {
+      for (IntIterator intIterator = valueIterator.getInputIdsIterator(); intIterator.hasNext(); ) {
         if (!action.perform(intIterator.next(), value)) {
           return false;
         }
@@ -66,10 +71,14 @@ public abstract class ValueContainer<Value> {
     return true;
   }
 
+  /**
+   * @return true if all the container data was processed, false if processing was stopped early because the action
+   * returns false
+   */
   public final <T extends Throwable> boolean process(@NotNull ThrowableContainerProcessor<? super Value, T> action) throws T {
-    for (ValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
+    for (ValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext(); ) {
       Value value = valueIterator.next();
-      for (IntIterator intIterator = valueIterator.getInputIdsIterator(); intIterator.hasNext();) {
+      for (IntIterator intIterator = valueIterator.getInputIdsIterator(); intIterator.hasNext(); ) {
         if (!action.process(intIterator.next(), value)) {
           return false;
         }

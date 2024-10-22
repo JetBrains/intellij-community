@@ -33,6 +33,7 @@ import java.util.*;
 public class StringIndex {
   private final MapReduceIndex<String, String, PathContentPair> myIndex;
   private volatile Throwable myRebuildThrowable;
+
   public StringIndex(String testName,
                      IndexStorage<String, String> storage,
                      File forwardIndexFile,
@@ -115,9 +116,14 @@ public class StringIndex {
 
   @Unmodifiable
   public List<String> getFilesByWord(@NotNull String word) throws StorageException {
-    return myIndex.withData(word, container -> ContainerUtil.collect(container.getValueIterator()));
+    var paths = new ArrayList<String>();
+    myIndex.withData(word, container -> {
+      ContainerUtil.addAll(paths, container.getValueIterator());
+      return true;
+    });
+    return paths;
   }
-  
+
   public boolean update(@NotNull String path, @Nullable String content) {
     int inputId = MathUtil.nonNegativeAbs(path.hashCode());
     PathContentPair contentPair = toInput(path, content);
@@ -148,8 +154,8 @@ public class StringIndex {
   private static class Indexer implements DataIndexer<String, String, PathContentPair> {
     @Override
     @NotNull
-    public Map<String,String> map(@NotNull final PathContentPair inputData) {
-      final Map<String,String> _map = new HashMap<>();
+    public Map<String, String> map(@NotNull final PathContentPair inputData) {
+      final Map<String, String> _map = new HashMap<>();
       final StringBuilder builder = new StringBuilder();
       final String content = inputData.content;
       for (int idx = 0; idx < content.length(); idx++) {
@@ -172,7 +178,7 @@ public class StringIndex {
       return _map;
     }
   }
-  
+
   private static final class PathContentPair {
     final String path;
     final String content;

@@ -3,7 +3,6 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorage;
-import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.MocksBuildingBlocks.*;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
@@ -13,6 +12,7 @@ import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider;
+import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -37,7 +37,8 @@ import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 /**
@@ -52,6 +53,7 @@ import static org.junit.jupiter.api.Assumptions.assumeFalse;
 public abstract class IndexStorageLayoutProviderTestBase {
   private static boolean wasInStressTest;
   protected final int inputsCountToTestWith;
+
   protected final @NotNull FileBasedIndexLayoutProvider storageLayoutProviderToTest;
 
   protected IndexStorageLayoutProviderTestBase(@NotNull FileBasedIndexLayoutProvider providerToTest,
@@ -228,6 +230,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
     }
   }
 
+
   @ParameterizedTest
   @ArgumentsSource(Setups.SetupsToTestProvider.class)
   public <K, V> void inputs_Added_IntoForwardIndex_couldBeReadBackAsIs(
@@ -392,6 +395,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
     return sb.toString();
   }
 
+
   /**
    * Generates inputs to test index on.
    * <p>
@@ -431,7 +435,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
   }
 
   /** Copied from IdIndex, simplified for testing */
-  public static final class ManyKeysIntegerToIntegerIndexExtension extends FileBasedIndexExtension<Integer, Integer> {
+  public static class ManyKeysIntegerToIntegerIndexExtension extends FileBasedIndexExtension<Integer, Integer> {
     public static final @NonNls ID<Integer, Integer> INDEX_ID = ID.create("ManyKeysIntegerToIntegerIndexExtension");
 
     public static final int VERSION = 42;
@@ -501,6 +505,82 @@ public abstract class IndexStorageLayoutProviderTestBase {
     }
   }
 
+  /** Copied from IdIndex, simplified for testing */
+  public static class ShardableManyKeysIntegerToIntegerIndexExtension extends FileBasedIndexExtension<Integer, Integer>
+    implements ShardableIndexExtension {
+    public static final @NonNls ID<Integer, Integer> INDEX_ID = ID.create("ShardableManyKeysIntegerToIntegerIndexExtension");
+
+    public static final int VERSION = 42;
+
+    private final int cacheSize;
+
+    public ShardableManyKeysIntegerToIntegerIndexExtension() { this(-1); }
+
+    public ShardableManyKeysIntegerToIntegerIndexExtension(int size) { cacheSize = size; }
+
+    @Override
+    public int getVersion() {
+      return VERSION;
+    }
+
+    @Override
+    public int shardsCount() {
+      return 3;
+    }
+
+    @Override
+    public int getCacheSize() {
+      if (cacheSize > 0) {
+        return cacheSize;
+      }
+      return super.getCacheSize();
+    }
+
+    @Override
+    public boolean dependsOnFileContent() {
+      return true;
+    }
+
+    @Override
+    public @NotNull ID<Integer, Integer> getName() {
+      return INDEX_ID;
+    }
+
+    @Override
+    public @NotNull DataExternalizer<Integer> getValueExternalizer() {
+      return EnumeratorIntegerDescriptor.INSTANCE;
+    }
+
+    @Override
+    public @NotNull KeyDescriptor<Integer> getKeyDescriptor() {
+      return EnumeratorIntegerDescriptor.INSTANCE;
+    }
+
+    @Override
+    public @NotNull DataIndexer<Integer, Integer, FileContent> getIndexer() {
+      throw new UnsupportedOperationException("Method not implemented: indexation is not tested by this test");
+    }
+
+    @Override
+    public @NotNull FileBasedIndex.InputFilter getInputFilter() {
+      throw new UnsupportedOperationException("Method not implemented: indexation is not tested by this test");
+    }
+
+    @Override
+    public boolean hasSnapshotMapping() {
+      return true;
+    }
+
+    @Override
+    public boolean needsForwardIndexWhenSharing() {
+      return false;
+    }
+
+    @Override
+    public String toString() {
+      return "ShardableManyKeysIntegerToIntegerIndexExtension";
+    }
+  }
 
   /** Generates input data with >=1 key per file */
   public static class ManyEntriesPerFileInputGenerator implements InputDataGenerator<Integer, Integer> {
@@ -579,6 +659,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
              ']';
     }
   }
+
 
 
   public static class SingleEntryIntegerValueIndexExtension extends SingleEntryFileBasedIndexExtension<Integer> {
@@ -732,7 +813,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
     }
   }
 
-  static final class Setups {
+  public static final class Setups {
     private Setups() {
       throw new AssertionError("Not for instantiation, just a namespace");
     }
@@ -741,7 +822,8 @@ public abstract class IndexStorageLayoutProviderTestBase {
     private static Stream<SetupToTest<?, ?>> defaultSetupsToTest() {
       return Stream.of(
         new SetupToTest<>(new ManyKeysIntegerToIntegerIndexExtension(), new ManyEntriesPerFileInputGenerator()),
-        new SetupToTest<>(new SingleEntryIntegerValueIndexExtension(), new SingleEntryPerFileInputGenerator())
+        new SetupToTest<>(new SingleEntryIntegerValueIndexExtension(), new SingleEntryPerFileInputGenerator()),
+        new SetupToTest<>(new ShardableManyKeysIntegerToIntegerIndexExtension(), new ManyEntriesPerFileInputGenerator())
       );
     }
 

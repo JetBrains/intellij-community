@@ -372,6 +372,40 @@ public final class IOUtil {
     }
   }
 
+  /**
+   * Close all the non-null closeables, catch the exceptions along the way, and re-throw them at the end.
+   * I.e. method closes as many closeables as possible -- single failed .close() doesn't prevent closing of
+   * the remaining closeables.
+   */
+  @ApiStatus.Internal
+  public static void closeAllSafely(@Nullable Closeable ... closeables) throws IOException {
+    Throwable closeEx = null;
+    for (Closeable closeable : closeables) {
+      if (closeable != null) {
+        try {
+          closeable.close();
+        }
+        catch (Throwable t) {
+          if (closeEx == null) {
+            closeEx = t;
+          }
+          else {
+            closeEx.addSuppressed(t);
+          }
+        }
+      }
+    }
+
+    if (closeEx != null) {
+      if (closeEx instanceof IOException) {
+        throw (IOException)closeEx;
+      }
+      else {
+        throw new IOException(closeEx);
+      }
+    }
+  }
+
 
   private static final byte[] ZEROES = new byte[64 * 1024];
 

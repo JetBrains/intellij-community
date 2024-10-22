@@ -1,12 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.UpdateData;
+import com.intellij.util.indexing.impl.ValueContainerProcessor;
 import com.intellij.util.indexing.snapshot.EmptyValueContainer;
 import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.NotNull;
@@ -98,9 +98,11 @@ final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, 
   }
 
   @Override
-  public <R, E extends Exception> R withData(@NotNull Key key,
-                                             @NotNull ThrowableNotNullFunction<ValueContainer<Value>, R, E> processor) throws E {
-    return processor.fun((ValueContainer<Value>)EmptyValueContainer.INSTANCE);
+  public <E extends Exception> boolean withData(@NotNull Key key,
+                                                @NotNull ValueContainerProcessor<Value, E> processor) throws E {
+    //FIXME RC: this cast is not redundant, but current inspection insists on it -- remove after inspection will be fixed
+    //noinspection RedundantCast,unchecked
+    return processor.process((ValueContainer<Value>)EmptyValueContainer.INSTANCE);
   }
 
   @Override

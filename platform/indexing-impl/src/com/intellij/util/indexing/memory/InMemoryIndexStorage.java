@@ -13,6 +13,7 @@ import com.intellij.util.indexing.VfsAwareIndexStorage;
 import com.intellij.util.indexing.impl.IndexStorageLock;
 import com.intellij.util.indexing.impl.IndexStorageUtil;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
+import com.intellij.util.indexing.impl.ValueContainerProcessor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -81,6 +82,19 @@ public final class InMemoryIndexStorage<K, V> implements VfsAwareIndexStorage<K,
   @Override
   public @NotNull ValueContainer<V> read(K k) throws StorageException {
     return ObjectUtils.notNull(inMemoryStorage.get(k), ValueContainerImpl.createNewValueContainer());
+  }
+
+  @Override
+  public <E extends Exception> boolean read(K key, @NotNull ValueContainerProcessor<V, E> processor) throws StorageException, E {
+    try (LockStamp stamp = lockForRead()) {
+      ValueContainerImpl<V> container = inMemoryStorage.get(key);
+      if (container == null) {
+        //TODO RC: EmptyValueContainer.INSTANCE
+        return processor.process(ValueContainerImpl.createNewValueContainer());
+      }
+
+      return processor.process(container);
+    }
   }
 
   @Override

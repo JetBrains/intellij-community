@@ -7,14 +7,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.impl.InputData;
-import com.intellij.util.indexing.impl.InputDataDiffBuilder;
-import com.intellij.util.indexing.impl.UpdateData;
-import com.intellij.util.indexing.impl.ValueContainerImpl;
+import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.MeasurableIndexStore;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -218,8 +214,8 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
   }
 
   @Override
-  public <R, E extends Exception> R withData(@NotNull FileType type,
-                                             @NotNull ThrowableNotNullFunction<ValueContainer<Void>, R, E> processor) throws StorageException, E {
+  public <E extends Exception> boolean withData(@NotNull FileType type,
+                                                @NotNull ValueContainerProcessor<Void, E> processor) throws StorageException, E {
     int fileTypeId = getFileTypeId(type);
 
     ValueContainerImpl<Void> container = ValueContainerImpl.createNewValueContainer();
@@ -227,7 +223,7 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
     readLock.lock();
     try {
       processFileIdsForFileTypeId(fileTypeId, id -> container.addValue(id, null));
-      return processor.fun(container);
+      return processor.process(container);
     }
     finally {
       readLock.unlock();

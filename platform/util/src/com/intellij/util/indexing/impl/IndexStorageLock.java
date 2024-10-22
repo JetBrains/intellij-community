@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * ({@link com.intellij.util.indexing.impl.forward.ForwardIndex}) indexes -- even though it is
  * {@link IndexStorage} who is responsible for the actual locking strategy implementation. This
  * is because there is no obvious object to put this 'shared' responsibility into.
- *
+ * <p>
  * TODO RC: this interface is not for use outside of IndexStorage: it is public for transition period, to be able to
  * quickly replace multiple uses of UpdatableIndex.getLock() across the codebase -> should have fewer and fewer uses
  * with time
@@ -25,19 +25,19 @@ public interface IndexStorageLock {
   @NotNull IndexStorageLock.LockStamp lockForWrite();
 
   default <R, E extends Exception> R withReadLock(@NotNull ThrowableComputable<R, E> computation) throws E {
-    try (LockStamp stamp = lockForRead()) {
+    try (LockStamp ignored = lockForRead()) {
       return computation.compute();
     }
   }
 
   default <E extends Exception> void withReadLock(@NotNull ThrowableRunnable<E> computation) throws E {
-    try (LockStamp stamp = lockForRead()) {
+    try (LockStamp ignored = lockForRead()) {
       computation.run();
     }
   }
 
   default <E extends Exception> void withWriteLock(@NotNull ThrowableRunnable<E> computation) throws E {
-    try (LockStamp stamp = lockForWrite()) {
+    try (LockStamp ignored = lockForWrite()) {
       computation.run();
     }
   }

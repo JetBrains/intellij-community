@@ -867,7 +867,7 @@ class ApplyViaCoroutinesWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) : Paral
     for (workerIndex in 0..< workersCount) {
       val channel = channels[workerIndex]
 
-      val name = if (workerIndex < INDEXES_WITH_DEDICATED_WORKERS.size) {
+      val name = if (workerIndex < DEDICATED_WRITERS_NUMBER) {
         val id = INDEXES_WITH_DEDICATED_WORKERS[workerIndex]
         "IndexWriter($id #$workerIndex)"
       }

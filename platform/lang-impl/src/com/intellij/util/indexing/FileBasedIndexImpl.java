@@ -154,6 +154,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private final DirtyFiles myDirtyFiles = new DirtyFiles(); // project dirty files from last session and new orphan files not in collectors
   private final Map<Project, Ref<Long>> myLastSeenIndexesInOrphanQueue = new ConcurrentHashMap<>();
 
+
+  //TODO RC: this lock is used _only in SingleValueApplier/Remover to update unindexedStateForFile()
   final Lock myReadLock;
   public final Lock myWriteLock;
 
@@ -172,6 +174,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @Internal
   public FileBasedIndexImpl(@NotNull CoroutineScope coroutineScope) {
     this.coroutineScope = coroutineScope;
+    //TODO RC: better hold a reference to the RRWLock in a field
     ReadWriteLock lock = new ReentrantReadWriteLock();
     myReadLock = lock.readLock();
     myWriteLock = lock.writeLock();

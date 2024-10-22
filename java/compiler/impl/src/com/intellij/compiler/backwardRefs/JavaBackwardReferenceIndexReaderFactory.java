@@ -93,6 +93,8 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
     @Override
     public @Nullable Set<VirtualFile> findFileIdsWithImplicitToString(@NotNull CompilerRef ref) throws StorageException {
       Set<VirtualFile> result = VfsUtilCore.createCompactVirtualFileSet();
+      //MAYBE RC: collect fileIds first (under .withData lock), then resolve them into a VirtualFile
+      //          outside the lock?
       myIndex.get(JavaCompilerIndices.IMPLICIT_TO_STRING).withData(
         ref,
         container -> container.forEach(

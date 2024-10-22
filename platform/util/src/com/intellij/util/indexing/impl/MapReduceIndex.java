@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
@@ -164,15 +163,14 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
 
   @Override
   public void clear() {
-    myStorage.withWriteLock(() -> {
-      try {
-        incrementModificationStamp();
-        doClear();
-      }
-      catch (StorageException | IOException e) {
-        LOG.info(e);
-      }
-    });
+    //TODO RC: do we need a lock around here?
+    try {
+      incrementModificationStamp();
+      doClear();
+    }
+    catch (StorageException | IOException e) {
+      LOG.info(e);
+    }
   }
 
   //@GuardedWith(myStorage.writeLock)
@@ -183,6 +181,31 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
 
   @Override
   public void flush() throws StorageException {
+    try {
+      doFlush();
+    }
+    catch (IOException e) {
+      throw new StorageException(e);
+    }
+    catch (RuntimeException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof StorageException || cause instanceof IOException) {
+        throw new StorageException(cause);
+      }
+      else {
+        throw e;
+      }
+    }
+  }
+
+  public boolean isDirty() {
+    if (myForwardIndex != null && myForwardIndex.isDirty()) {
+      return true;
+    }
+    return myStorage.isDirty();
+  }
+
+  protected void doFlush() throws IOException, StorageException {
     //A subtle thing about flush operation in general is that it is _logically_ a read-op, just a copy of in-memory
     // state onto a disk -- so it looks quite natural to protect it with readLock only. It is also very _desirable_
     // to go with readLock, since flush involves an IO, and holding an exclusive writeLock while doing potentially
@@ -196,49 +219,24 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
     //And also it seems only partially correct, because it is not clear are all the accesses properly synchronized
     // (ordered) from concurrency PoV -- I really believe they are not properly synchronized, but can't point specific
     // violation now, and also don't have a solution at hand for how to fix it.
-    myStorage.withReadLock(() -> {
-      try {
-        doFlush();
-      }
-      catch (IOException e) {
-        throw new StorageException(e);
-      }
-      catch (RuntimeException e) {
-        final Throwable cause = e.getCause();
-        if (cause instanceof StorageException || cause instanceof IOException) {
-          throw new StorageException(cause);
-        }
-        else {
-          throw e;
-        }
-      }
-    });
-  }
-
-  public boolean isDirty() {
-    if (myForwardIndex != null && myForwardIndex.isDirty()) {
-      return true;
+    //TODO RC: do we need a lock around here?
+    if (myForwardIndex != null) {
+      myForwardIndex.force();
     }
-    return myStorage.isDirty();
-  }
-
-  protected void doFlush() throws IOException, StorageException {
-    if (myForwardIndex != null) myForwardIndex.force();
     myStorage.flush();
   }
 
   @Override
   public void dispose() {
     myLowMemoryFlusher.stop();
-    myStorage.withWriteLock(() -> {
-      try {
-        myDisposed = true;
-        doDispose();
-      }
-      catch (StorageException e) {
-        LOG.error(e);
-      }
-    });
+    //TODO RC: do we need a lock around here?
+    try {
+      myDisposed = true;
+      doDispose();
+    }
+    catch (StorageException e) {
+      LOG.error(e);
+    }
   }
 
   @Override
@@ -268,8 +266,8 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
   }
 
   @Override
-  public <R, E extends Exception> R withData(@NotNull Key key,
-                                             @NotNull ThrowableNotNullFunction<ValueContainer<Value>, R, E> processor) throws StorageException, E {
+  public <E extends Exception> boolean withData(@NotNull Key key,
+                                                @NotNull ValueContainerProcessor<Value, E> processor) throws StorageException, E {
     return myStorage.read(key, processor);
   }
 
@@ -392,32 +390,39 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
   }
 
   public void updateWith(@NotNull UpdateData<Key, Value> updateData) throws StorageException {
-    myStorage.withWriteLock(() -> {
-      IndexId<?, ?> oldIndexId = IndexDebugProperties.DEBUG_INDEX_ID.get();
-      try {
-        IndexDebugProperties.DEBUG_INDEX_ID.set(myIndexId);
-        boolean hasDifference = updateData.iterateChanges(changedEntriesProcessor);
+    IndexId<?, ?> oldIndexId = IndexDebugProperties.DEBUG_INDEX_ID.get();
+    try {
+      IndexDebugProperties.DEBUG_INDEX_ID.set(myIndexId);
 
-        //MAYBE RC: separate lock for forwardIndex? -- it seems it is used only in updates (?), i.e. only in one place,
-        //          so if it is out-of-sync with inverted index it is not a big deal since nobody able to see it?
-        //          ...but it is important to not allow same fileId data to be applied by different threads, because
-        //          we need previous forwardIndex.get(fileId) to calculate diff! I.e. for each fileId forwardIndex[fileId]
-        //          updates must be serialized, even though for different fileIds there is no serialization required
-        if (hasDifference) {
-          updateData.updateForwardIndex();
-        }
+      //Notes about forward/inverted storage data consistency: ideally, both forward and inverted index storages should
+      // be updated under the same (write)lock -- to prevent their content becoming out-of-sync. This is undesirable since
+      // to implement that we need to _expose_ the lock encapsulated in a forward/inverted storage to use it to protect both
+      // storages.
+      // We solve that issue here by relying on the pipelining nature of index update: forward index data is used _only_ to
+      // calculate an old/new state diff during an inverted index update -- i.e. down the .iterateChanges() callstack below.
+      // So if all the updates on a single index are applied by a single thread -- this ensures the current update won't
+      // start until the thread finishes previous update, i.e. until both inverted and forward index are updated with previous
+      // updateData. Hence, current update on the same thread always sees forward/inverted storage state being consistent,
+      // because the previous update was already completely applied -- even though during the previous update application
+      // there _was_ a timeframe when they are/were not consistent, but that intermediate state is (it seems to me) unobservable
+      // if all the updates are rolled on from the same thread.
+
+      boolean hasDifference = updateData.iterateChanges(changedEntriesProcessor);
+
+      if (hasDifference) {
+        updateData.updateForwardIndex();
       }
-      catch (CancellationException e) {
-        LOG.error("CancellationException is not expected here! (" + e + ")");
-        throw e;
-      }
-      catch (Throwable e) { // e.g. IOException, AssertionError
-        throw new StorageException(e);
-      }
-      finally {
-        IndexDebugProperties.DEBUG_INDEX_ID.set(oldIndexId);
-      }
-    });
+    }
+    catch (CancellationException e) {
+      LOG.error("CancellationException is not expected here! (" + e + ")");
+      throw e;
+    }
+    catch (Throwable e) { // e.g. IOException, AssertionError
+      throw new StorageException(e);
+    }
+    finally {
+      IndexDebugProperties.DEBUG_INDEX_ID.set(oldIndexId);
+    }
   }
 
   @Internal

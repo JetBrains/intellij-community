@@ -10,6 +10,7 @@ import com.intellij.util.indexing.VfsAwareIndexStorage
 import com.intellij.util.indexing.impl.IndexStorage
 import com.intellij.util.indexing.impl.IndexStorageLock
 import com.intellij.util.indexing.impl.ValueContainerImpl
+import com.intellij.util.indexing.impl.ValueContainerProcessor
 import com.intellij.util.indexing.impl.forward.EmptyForwardIndex
 import com.intellij.util.indexing.impl.forward.ForwardIndex
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor
@@ -65,6 +66,10 @@ internal class FakeIndexStorage<K, V> : VfsAwareIndexStorage<K, V> {
 
   override fun read(key: K): ValueContainer<V> = ValueContainerImpl.createNewValueContainer()
 
+  override fun <E : Exception?> read(key: K?, processor: ValueContainerProcessor<V?, E?>): Boolean {
+    //TODO RC: EmptyValueContainer.INSTANCE
+    return processor.process(ValueContainerImpl.createNewValueContainer())
+  }
 
   override fun lockForRead(): IndexStorageLock.LockStamp {
     return IndexStorageLock.LockStamp { /*nothing*/ }

@@ -4234,7 +4234,7 @@ com.intellij.util.indexing.InvertedIndex
 - getData(java.lang.Object):com.intellij.util.indexing.ValueContainer
 - a:mapInputAndPrepareUpdate(I,java.lang.Object):com.intellij.util.indexing.StorageUpdate
 - a:prepareUpdate(I,com.intellij.util.indexing.impl.InputData):com.intellij.util.indexing.StorageUpdate
-- a:withData(java.lang.Object,com.intellij.openapi.util.ThrowableNotNullFunction):java.lang.Object
+- a:withData(java.lang.Object,com.intellij.util.indexing.impl.ValueContainerProcessor):Z
 f:com.intellij.util.indexing.InvertedIndexUtil
 - <init>():V
 - s:collectInputIdsContainingAllKeys(com.intellij.util.indexing.InvertedIndex,java.util.Collection,com.intellij.openapi.util.Condition,java.util.function.IntPredicate):it.unimi.dsi.fastutil.ints.IntSet
@@ -4294,7 +4294,7 @@ com.intellij.util.indexing.impl.IndexStorage
 - a:flush():V
 - a:isDirty():Z
 - a:read(java.lang.Object):com.intellij.util.indexing.ValueContainer
-- read(java.lang.Object,com.intellij.openapi.util.ThrowableNotNullFunction):java.lang.Object
+- read(java.lang.Object,com.intellij.util.indexing.impl.ValueContainerProcessor):Z
 - a:removeAllValues(java.lang.Object,I):V
 - updateValue(java.lang.Object,I,java.lang.Object):V
 f:com.intellij.util.indexing.impl.IndexStorageUtil
@@ -4309,6 +4309,8 @@ f:com.intellij.util.indexing.impl.InputIndexDataExternalizer
 - <init>(com.intellij.util.io.KeyDescriptor,com.intellij.util.indexing.IndexId):V
 - read(java.io.DataInput):java.util.Collection
 - save(java.io.DataOutput,java.util.Collection):V
+com.intellij.util.indexing.impl.ValueContainerProcessor
+- a:process(com.intellij.util.indexing.ValueContainer):Z
 com.intellij.util.indexing.impl.ValueSerializationProblemReporter
 - a:reportProblem(java.lang.Exception):V
 com.intellij.util.indexing.impl.forward.ForwardIndex

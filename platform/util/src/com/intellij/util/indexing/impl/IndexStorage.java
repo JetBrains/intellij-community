@@ -2,7 +2,6 @@
 
 package com.intellij.util.indexing.impl;
 
-import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -14,6 +13,7 @@ import java.io.IOException;
 
 /**
  * Storage of inverted index data
+ * Thread-safety is up to implementation
  *
  * @author Eugene Zhuravlev
  */
@@ -39,11 +39,24 @@ public interface IndexStorage<Key, Value> extends IndexStorageLock, Flushable, C
   @Deprecated
   @NotNull ValueContainer<Value> read(Key key) throws StorageException;
 
-  default <R, E extends Exception> R read(Key key,
-                                          @NotNull ThrowableNotNullFunction<? super ValueContainer<Value>, R, E> processor)
-    throws StorageException, E {
-    try (LockStamp stamp = lockForRead()) {
-      return processor.fun(read(key));
+
+  /**
+   * The processor will be invoked on {@link ValueContainer}s corresponding to the given key.
+   * <b>NOTE</b>: it could be more than one container associated with a single key, e.g. if an
+   * actual storage is sharded, hence the processor could be invoked <b>more than once</b>
+   * so the processor code must be ready to aggregate results of >1 container passed in.
+   * <p>
+   * The processing should be as fast, as possible, because the storage may hold some locks
+   * during the processing to ensure data consistency, which may delay concurrent index update,
+   * if any
+   *
+   * @return true if all data was processed, false if processing was stopped prematurely because
+   * processor returns false at some point
+   */
+  default <E extends Exception> boolean read(Key key,
+                                             @NotNull ValueContainerProcessor<Value, E> processor) throws StorageException, E {
+    try (LockStamp ignored = lockForRead()) {
+      return processor.process(read(key));
     }
   }
 

@@ -25,8 +25,6 @@ import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.impl.IndexStorageLock.LockStamp;
-import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.indexing.impl.UpdateData;
 import com.intellij.util.indexing.impl.UpdateData.ForwardIndexUpdate;
 import com.intellij.util.io.DataExternalizer;
@@ -263,14 +261,12 @@ public abstract class StubIndexEx extends StubIndex {
           index.mapInputAndPrepareUpdate(fileId, null).update();
         }
 
-        try (LockStamp stamp = ((MapReduceIndex)getIndex(indexKey)).getStorage().lockForWrite()) {
-          for (VirtualFile file : filesWithProblems) {
-            int fileId = FileBasedIndex.getFileId(file);
-            updateIndex(indexKey,
-                        fileId,
-                        Collections.singleton(key),
-                        Collections.emptySet());
-          }
+        for (VirtualFile file : filesWithProblems) {
+          int fileId = FileBasedIndex.getFileId(file);
+          updateIndex(indexKey,
+                      fileId,
+                      Collections.singleton(key),
+                      Collections.emptySet());
         }
 
 
@@ -392,10 +388,13 @@ public abstract class StubIndexEx extends StubIndex {
       // disable up-to-date check to avoid locks on an attempt to acquire index write lock
       // while holding at the same time the readLock for this index
       FileBasedIndexEx.disableUpToDateCheckIn(
-        () -> index.withData(
-          dataKey,
-          container -> container.forEach(action)
-        )
+        () -> {
+          index.withData(
+            dataKey,
+            container -> container.forEach(action)
+          );
+          return null;//return value doesn't matter
+        }
       );
       return action.result == null ? IntSets.EMPTY_SET : action.result;
     }

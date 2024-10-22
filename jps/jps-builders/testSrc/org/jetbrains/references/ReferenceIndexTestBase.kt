@@ -1,13 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.references
 
-import com.intellij.openapi.util.ThrowableNotNullFunction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.indexing.IndexId
 import com.intellij.util.indexing.forEachValueOf
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
+import com.intellij.util.indexing.withDataOf
 import com.intellij.util.io.PersistentStringEnumerator
 import org.jetbrains.jps.backwardRefs.*
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData
@@ -100,7 +100,7 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
       val referencesText = mutableListOf<String>()
       storage(index, JavaCompilerIndices.BACK_USAGES).processKeys { usage ->
         val referents = mutableListOf<String>()
-        index[JavaCompilerIndices.BACK_USAGES].withData(usage, ThrowableNotNullFunction { valueIt ->
+        index[JavaCompilerIndices.BACK_USAGES].withDataOf(usage) { valueIt ->
           var sumOccurrences = 0
           valueIt.forEach({ fileId, occurrenceCount ->
                             referents.add(fileId.asFileName(fileEnumerator))
@@ -111,7 +111,8 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
             referents.sort()
             referencesText.add(usage.asText(nameEnumerator) + " in " + referents.joinToString(separator = " ") + " occurrences = $sumOccurrences")
           }
-        })
+          true
+        }
 
         true
       }
@@ -122,7 +123,7 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
       val classDefs = mutableListOf<String>()
       storage(index, JavaCompilerIndices.BACK_CLASS_DEF).processKeys { usage ->
         val definitionFiles = mutableListOf<String>()
-        index[JavaCompilerIndices.BACK_CLASS_DEF].withData(usage, ThrowableNotNullFunction { container ->
+        index[JavaCompilerIndices.BACK_CLASS_DEF].withDataOf(usage) { container ->
           val valueIt = container.valueIterator
           while (valueIt.hasNext()) {
             valueIt.next()
@@ -131,7 +132,8 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
               definitionFiles.add(files.next().asFileName(fileEnumerator))
             }
           }
-        })
+          true
+        }
         if (!definitionFiles.isEmpty()) {
           definitionFiles.sort()
           classDefs.add(usage.asText(nameEnumerator) + " in " + definitionFiles.joinToString(separator = " "))
@@ -145,7 +147,7 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
       val signs = mutableListOf<String>()
       storage(index, JavaCompilerIndices.BACK_MEMBER_SIGN).processKeys { sign ->
         val definedMembers = mutableListOf<String>()
-        index[JavaCompilerIndices.BACK_MEMBER_SIGN].withData(sign, ThrowableNotNullFunction { container ->
+        index[JavaCompilerIndices.BACK_MEMBER_SIGN].withDataOf(sign) { container ->
           val valueIt = container.valueIterator
           while (valueIt.hasNext()) {
             val nextRefs = valueIt.next()
@@ -155,7 +157,8 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
             definedMembers.sort()
             signs.add(sign.asText(nameEnumerator) + " <- " + definedMembers.joinToString(separator = " "))
           }
-        })
+          true
+        }
         true
       }
       signs.sort()
@@ -164,7 +167,7 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
       val typeCasts = mutableListOf<String>()
       storage(index, JavaCompilerIndices.BACK_CAST).processKeys { castType ->
         val operands = mutableListOf<String>()
-        index[JavaCompilerIndices.BACK_CAST].withData(castType, ThrowableNotNullFunction { container ->
+        index[JavaCompilerIndices.BACK_CAST].withDataOf(castType) { container ->
           val valueIt = container.valueIterator
           while (valueIt.hasNext()) {
             val nextRefs = valueIt.next()
@@ -173,7 +176,8 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
           if (!operands.isEmpty()) {
             typeCasts.add(castType.asText(nameEnumerator) + " -> " + operands.joinToString(separator = " "))
           }
-        })
+          true
+        }
         true
       }
       if (typeCasts.isNotEmpty()) {
@@ -185,7 +189,7 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
       val implicitToString = mutableListOf<String>()
       storage(index, JavaCompilerIndices.IMPLICIT_TO_STRING).processKeys { type ->
         val callPlaceFiles = mutableListOf<String>()
-        index[JavaCompilerIndices.IMPLICIT_TO_STRING].withData(type, ThrowableNotNullFunction { container ->
+        index[JavaCompilerIndices.IMPLICIT_TO_STRING].withDataOf(type) { container ->
           val valueIt = container.valueIterator
           while (valueIt.hasNext()) {
             valueIt.next()
@@ -194,7 +198,8 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
               callPlaceFiles.add(files.next().asFileName(fileEnumerator))
             }
           }
-        })
+          true
+        }
         if (!callPlaceFiles.isEmpty()) {
           callPlaceFiles.sort()
           implicitToString.add(type.asText(nameEnumerator) + " in " + callPlaceFiles.joinToString(separator = " "))

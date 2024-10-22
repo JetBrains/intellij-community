@@ -10,6 +10,7 @@ import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
 import com.intellij.util.io.PersistentHashMapValueStorage.CreationTimeOptions;
 import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -317,7 +318,22 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
       return myCache.read(key);
     }
     catch (RuntimeException e) {
-      return unwrapCauseAndRethrow(e);
+      throw unwrapCauseAndRethrow(e);
+    }
+  }
+
+  @Override
+  public <E extends Exception> boolean read(Key key,
+                                            @NotNull ValueContainerProcessor<Value, E> processor) throws StorageException, E {
+    try (LockStamp ignored = lockForRead()) {
+      try {
+        //TODO RC: do we need a separate lock inside the cache, if we have the lock outside?
+        ChangeTrackingValueContainer<Value> result = myCache.read(key);
+        return processor.process(result);
+      }
+      catch (RuntimeException e) {
+        throw unwrapCauseAndRethrow(e);
+      }
     }
   }
 
@@ -397,8 +413,9 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
     myCache.invalidateAll();
   }
 
-  protected static <T> T unwrapCauseAndRethrow(RuntimeException e) throws StorageException {
-    final Throwable cause = e.getCause();
+  @Contract("_ -> fail")
+  protected static StorageException unwrapCauseAndRethrow(RuntimeException e) throws StorageException {
+    Throwable cause = e.getCause();
     if (cause instanceof IOException) {
       throw new StorageException(cause);
     }

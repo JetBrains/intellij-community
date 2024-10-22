@@ -74,17 +74,18 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
       // (it _must_ be <=1 entry there, with Key=(Integer)fileId)
       @SuppressWarnings("unchecked")
       Key key = (Key)(Object)fileId;
-      return withData(key, container -> {
-        Ref<Map<Key, Value>> result = new Ref<>(Collections.emptyMap());
+      Ref<Map<Key, Value>> result = new Ref<>(Collections.emptyMap());
+      boolean acceptNullValues = ((SingleEntryIndexer<?>)indexer()).isAcceptNullValues();
+      withData(key, container -> {
         container.forEach((id, value) -> {
-          boolean acceptNullValues = ((SingleEntryIndexer<?>)indexer()).isAcceptNullValues();
           if (value != null || acceptNullValues) {
             result.set(Collections.singletonMap(key, value));
           }
           return false;
         });
-        return result.get();
+        return !result.get().isEmpty();
       });
+      return result.get();
     }
     if (getForwardIndexAccessor() instanceof AbstractMapForwardIndexAccessor<Key, Value, ?> forwardIndexAccessor) {
       ByteArraySequence serializedInputData = getForwardIndex().get(fileId);

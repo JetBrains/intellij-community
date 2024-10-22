@@ -9,9 +9,9 @@ import com.intellij.util.indexing.impl.storage.IndexStorageLayoutLocator.getLayo
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider.STORAGE_LAYOUT_EP_NAME
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout
+import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
-import kotlin.Throws
 
 
 /**
@@ -51,7 +51,8 @@ object IndexStorageLayoutLocator {
     }
 
     log.info("Layout '${providerBeanForExtension.id}' will be used to for '${indexExtension.name}' index " +
-             "(applicable providers: [${applicableLayoutProviders.joinToString { it.id }}]) ")
+             "(applicable providers: [${applicableLayoutProviders.joinToString { it.id }}])" +
+             ((indexExtension as? ShardableIndexExtension)?.let {", shards = ${it.shardsCount()}"} ?: ""))
     return providerBeanForExtension.layoutProvider.getLayout(indexExtension)
   }
 

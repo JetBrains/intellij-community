@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -15,6 +14,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.UpdateData;
+import com.intellij.util.indexing.impl.ValueContainerProcessor;
 import com.intellij.util.indexing.snapshot.EmptyValueContainer;
 import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.NotNull;
@@ -277,9 +277,11 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
     }
 
     @Override
-    public <R, E extends Exception> R withData(@NotNull Key key,
-                                               @NotNull ThrowableNotNullFunction<ValueContainer<Value>, R, E> processor) throws E {
-      return processor.fun((ValueContainer<Value>)EmptyValueContainer.INSTANCE);
+    public <E extends Exception> boolean withData(@NotNull Key key,
+                                                  @NotNull ValueContainerProcessor<Value, E> processor) throws E {
+      //FIXME RC: this cast is not redundant, but current inspection insists on it -- remove after inspection will be fixed
+      //noinspection RedundantCast,unchecked
+      return processor.process((ValueContainer<Value>)EmptyValueContainer.INSTANCE);
     }
 
     @Override

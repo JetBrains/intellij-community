@@ -121,7 +121,7 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
         throw new StorageException(e);
       }
       catch (RuntimeException e) {
-        return unwrapCauseAndRethrow(e);
+        throw unwrapCauseAndRethrow(e);
       }
     });
   }

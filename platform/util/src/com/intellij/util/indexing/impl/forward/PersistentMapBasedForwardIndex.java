@@ -10,6 +10,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 
+/**
+ * The implementation thread-safety relies on {@link PersistentMap} implementation used to be a thread-safe
+ * (Which is true for the currently existing impls)
+ */
 @Internal
 public final class PersistentMapBasedForwardIndex implements ForwardIndex, MeasurableIndexStore {
   private volatile @NotNull PersistentMap<Integer, ByteArraySequence> myPersistentMap;

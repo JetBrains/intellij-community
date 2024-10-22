@@ -71,6 +71,9 @@ public final class SingleIndexValueApplier<FileIndexMetaData> {
         FileBasedIndexImpl.LOG.info("index " + indexId + " update finished for " + fileInfo);
       }
       if (!isMock) {
+        //TODO RC: this is the global lock, one-per-app-service -- why do we need it here?
+        //         what exactly it protects: .getIndex() or setIndexedState...()? If 2nd, then why it is a read lock,
+        //         not write lock?
         ConcurrencyUtil.withLock(indexImpl.myReadLock, () -> {
           //noinspection unchecked
           UpdatableIndex<?, ?, FileContent, FileIndexMetaData> index =
