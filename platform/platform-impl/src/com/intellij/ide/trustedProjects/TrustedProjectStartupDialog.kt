@@ -246,6 +246,10 @@ internal class TrustedProjectStartupDialog(
     return actions.toTypedArray()
   }
 
+  override fun sortActionsOnMac(actions: MutableList<Action>) {
+    actions.reverse()
+  }
+
   override fun getHelpId(): @NonNls String? {
     return TRUSTED_PROJECTS_HELP_TOPIC
   }
