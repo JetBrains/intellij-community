@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 
 internal class ReferencedSymbol(val reference: KtReference, val symbol: KaSymbol) {
-    fun KaSession.computeImportableFqName(): FqName? {
+    fun KaSession.computeImportableName(): FqName? {
         return toSymbolInfo().run { computeImportableName() }
     }
 
