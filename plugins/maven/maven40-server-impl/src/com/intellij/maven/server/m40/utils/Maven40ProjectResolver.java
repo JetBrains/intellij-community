@@ -311,7 +311,7 @@ public class Maven40ProjectResolver {
                                                            MavenProject mavenProject,
                                                            DependencyResolutionResult dependencyResolutionResult,
                                                            String dependencyHash) {
-    return createExecutionResult(null, exceptions, modelProblems, mavenProject, dependencyResolutionResult, dependencyHash, false);
+    return createExecutionResult(mavenProject.getFile(), exceptions, modelProblems, mavenProject, dependencyResolutionResult, dependencyHash, false);
   }
 
   @NotNull
@@ -340,7 +340,7 @@ public class Maven40ProjectResolver {
     Collection<MavenProjectProblem> unresolvedProblems = new HashSet<>();
     collectUnresolvedArtifactProblems(file, dependencyResolutionResult, unresolvedProblems);
 
-    if (mavenProject == null) return new MavenServerExecutionResult(null, problems, Collections.emptySet());
+    if (mavenProject == null) return new MavenServerExecutionResult(file, null, problems, Collections.emptySet());
 
     MavenModel model = new MavenModel();
     try {
@@ -366,7 +366,7 @@ public class Maven40ProjectResolver {
     if (null == model.getBuild() || null == model.getBuild().getDirectory()) {
       data = null;
     }
-    return new MavenServerExecutionResult(data, problems, Collections.emptySet(), unresolvedProblems);
+    return new MavenServerExecutionResult(file, data, problems, Collections.emptySet(), unresolvedProblems);
   }
 
   @NotNull

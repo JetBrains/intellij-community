@@ -99,6 +99,7 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
     return myBaseVersion;
   }
 
+  @NotNull
   public MavenId getMavenId() {
     return new MavenId(myGroupId, myArtifactId, myVersion);
   }

@@ -21,29 +21,34 @@ import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.*;
 
 public class MavenServerExecutionResult implements Serializable {
 
   public static final MavenServerExecutionResult EMPTY =
-    new MavenServerExecutionResult(null, Collections.emptyList(), Collections.emptySet());
+    new MavenServerExecutionResult(null, null, Collections.emptyList(), Collections.emptySet());
 
+  @Nullable public final File file;
   @Nullable public final ProjectData projectData;
   @NotNull public final Collection<MavenProjectProblem> problems;
   @NotNull public final Set<MavenId> unresolvedArtifacts;
   @NotNull public final Collection<MavenProjectProblem> unresolvedProblems;
 
-  public MavenServerExecutionResult(@Nullable ProjectData projectData,
+  public MavenServerExecutionResult(@Nullable File file,
+                                    @Nullable ProjectData projectData,
                                     @NotNull Collection<MavenProjectProblem> problems,
                                     @NotNull Set<MavenId> unresolvedArtifacts) {
-    this(projectData, problems, unresolvedArtifacts, Collections.emptyList());
+    this(file, projectData, problems, unresolvedArtifacts, Collections.emptyList());
   }
 
-  public MavenServerExecutionResult(@Nullable ProjectData projectData,
+  public MavenServerExecutionResult(@Nullable File file,
+                                    @Nullable ProjectData projectData,
                                     @NotNull Collection<MavenProjectProblem> problems,
                                     @NotNull Set<MavenId> unresolvedArtifacts,
                                     @NotNull Collection<MavenProjectProblem> unresolvedProblems) {
+    this.file = file;
     this.projectData = projectData;
     this.problems = problems;
     this.unresolvedArtifacts = unresolvedArtifacts;

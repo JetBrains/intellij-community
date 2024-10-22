@@ -323,7 +323,7 @@ public class Maven3XProjectResolver {
 
     Collection<MavenProjectProblem> problems = myEmbedder.collectProblems(file, exceptions, modelProblems);
 
-    if (mavenProject == null) return new MavenServerExecutionResult(null, problems, Collections.emptySet());
+    if (mavenProject == null) return new MavenServerExecutionResult(file, null, problems, Collections.emptySet());
 
     MavenModel model = new MavenModel();
     try {
@@ -353,7 +353,7 @@ public class Maven3XProjectResolver {
                                                  mavenModelMap, activatedProfiles);
     Collection<MavenProjectProblem> unresolvedProblems = new HashSet<>();
     collectUnresolvedArtifactProblems(file, dependencyResolutionResult, unresolvedProblems);
-    return new MavenServerExecutionResult(data, problems, Collections.emptySet(), unresolvedProblems);
+    return new MavenServerExecutionResult(file, data, problems, Collections.emptySet(), unresolvedProblems);
   }
 
   @NotNull
