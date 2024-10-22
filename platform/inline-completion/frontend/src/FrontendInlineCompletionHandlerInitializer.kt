@@ -4,14 +4,15 @@ package com.intellij.codeInsight.inline.completion.frontend
 import com.intellij.codeInsight.inline.completion.InlineCompletionHandler
 import com.intellij.codeInsight.inline.completion.InlineCompletionHandlerInitializer
 import com.intellij.codeInsight.inline.completion.InlineCompletionRemDevUtils
-import com.intellij.idea.AppMode
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import kotlinx.coroutines.CoroutineScope
 
 internal class FrontendInlineCompletionHandlerInitializer : InlineCompletionHandlerInitializer {
   override fun initialize(editor: Editor, scope: CoroutineScope, disposable: Disposable): InlineCompletionHandler? {
-    if (AppMode.isRemoteDevHost() && InlineCompletionRemDevUtils.isRhizomeUsed()) {
+    if (!ClientId.currentOrNull.isLocal && InlineCompletionRemDevUtils.isRhizomeUsed()) {
       return null
     }
     return FrontendInlineCompletionHandler(scope, editor, disposable)
