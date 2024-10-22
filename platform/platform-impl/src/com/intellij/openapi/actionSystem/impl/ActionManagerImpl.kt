@@ -1770,7 +1770,7 @@ private fun addToMap(actionId: String,
     }
     existing != null -> {
       // we need to create ChameleonAction even if 'projectType==null', in case 'ActionStub.getProjectType() != null'
-      val chameleonAction = ChameleonAction(actionId, existing, null) { registrar.getAction(it) }
+      val chameleonAction = ChameleonAction(actionId, existing, null, actionSupplier)
       if (chameleonAction.addAction(action, projectType, actionSupplier)) {
         registrar.putAction(actionId, chameleonAction)
         return true
