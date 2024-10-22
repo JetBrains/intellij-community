@@ -32,8 +32,7 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     val checker = serviceAsync<WindowsDefenderChecker>()
     if (pathsToExclude.isNotEmpty()) {
-      WindowsDefenderExcludeUtil.updateDefenderConfig(checker, project, pathsToExclude)
-      pathsToExclude.clear()
+      WindowsDefenderExcludeUtil.updateDefenderConfig(checker, project, pathsToExclude) { pathsToExclude.clear() }
     }
     if (checker.isStatusCheckIgnored(project)) {
       LOG.info("status check is disabled")
