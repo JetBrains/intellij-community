@@ -28,6 +28,7 @@ import java.util.List;
 /**
  * Abstraction layer for executing external system tasks.
  */
+@ApiStatus.OverrideOnly
 public interface ExternalSystemTaskManager<S extends ExternalSystemExecutionSettings> {
 
   /**
