@@ -21,6 +21,7 @@ a:com.intellij.xdebugger.frame.XExecutionStack
 *:com.intellij.xdebugger.frame.XStringValueModifier
 - a:stringToXExpression(java.lang.String):com.intellij.xdebugger.XExpression
 *:com.intellij.xdebugger.ui.TextValueVisualizer
+- detectFileType(java.lang.String):com.intellij.openapi.fileTypes.FileType
 - a:visualize(java.lang.String):java.util.List
 *:com.intellij.xdebugger.ui.VisualizedContentTab
 - a:createComponent(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):javax.swing.JComponent

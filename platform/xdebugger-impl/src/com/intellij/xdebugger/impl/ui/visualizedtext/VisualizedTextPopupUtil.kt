@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -184,7 +185,7 @@ object VisualizedTextPopupUtil {
     fun tryEditText(): Boolean {
       val initText = (state as? Showing)?.text ?: return false
 
-      val fileType = FileTypes.PLAIN_TEXT
+      val fileType = guessTextFileType(initText)
       val parentDisposable = this
       val editor = DebuggerUIUtil.createFormattedTextEditor(initText, fileType, project, parentDisposable, false)
         .apply { component.border = JBUI.Borders.empty() }
@@ -271,6 +272,15 @@ object VisualizedTextPopupUtil {
     // text with line breaks would be nicely rendered by the raw visualizer
     StringUtil.containsLineBreak(fullValue) ||
       calcNonTrivialVisualizedTabs(fullValue).isNotEmpty()
+
+  private fun guessTextFileType(fullValue: String): FileType =
+    extensionPoint.extensionList
+      .firstNotNullOfOrNull { viz ->
+        safeVisualize(fullValue, "detect file type of value ($viz)") {
+          viz.detectFileType(fullValue)
+        }
+      }
+    ?: FileTypes.PLAIN_TEXT
 
   private fun calcNonTrivialVisualizedTabs(fullValue: String): List<VisualizedContentTab> =
     extensionPoint.extensionList

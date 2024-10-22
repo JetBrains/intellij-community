@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
@@ -20,6 +21,12 @@ interface TextValueVisualizer {
    * Returns an empty list, if [value] cannot be visualized.
    */
   fun visualize(value: @NlsSafe String): List<VisualizedContentTab>
+
+  /**
+   * Try to detect the file type of given [value] visualizable by this visualizer.
+   * It might be used to view/edit raw [value] without any visualization/formatting.
+   */
+  fun detectFileType(value: @NlsSafe String): FileType? = null
 }
 
 @ApiStatus.Experimental // until we consider collection visualizers

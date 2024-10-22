@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.visualizedtext.common
 
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.xdebugger.XDebuggerBundle
@@ -33,12 +34,12 @@ internal class XmlTextVisualizer : TextValueVisualizer {
       override fun formatText() =
         prettified
       override val fileType
-        get() =
-          // Right now we don't want to have an explicit static dependency here.
-          // In an ideal world this class would be part of the optional module of the debugger plugin with a dependency on intellij.xml.psi.impl.
-          FileTypeManager.getInstance().getStdFileType("XML") // Right now we don't want to have explicit static dependency hier.
+        get() = xmlFileType
     })
   }
+
+  override fun detectFileType(value: @NlsSafe String): FileType? =
+    if (tryParseAndPrettify(value) != null) xmlFileType else null
 
   private fun tryParseAndPrettify(value: String): String? =
     try {
@@ -59,5 +60,11 @@ internal class XmlTextVisualizer : TextValueVisualizer {
     } catch (_: Exception) {
       null
     }
+
+  private val xmlFileType
+    get() =
+      // Right now we don't want to have an explicit static dependency here.
+      // In an ideal world this class would be part of the optional module of the debugger plugin with a dependency on intellij.xml.psi.impl.
+      FileTypeManager.getInstance().getStdFileType("XML")
 
 }
