@@ -149,7 +149,7 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
     return styles
   }
 
-  private fun getMonospaceFontSizeCorrection(inlineCode: Boolean): Int =
+  private fun getMonospaceFontSizeCorrection(inlineCode: Boolean) =
     @Suppress("DEPRECATION", "removal")
     // TODO: When removing `getMonospaceFontSizeCorrection` copy it's code here
     DocumentationSettings.getMonospaceFontSizeCorrection(inlineCode)
@@ -215,7 +215,7 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
 
   companion object {
 
-    internal fun buildCodeBlock(childNodes: List<Node>): Element =
+    internal fun buildCodeBlock(childNodes: List<Node>) =
       Element("div").addClass(CODE_BLOCK_CLASS).appendChild(
         Element("pre")
           .attr("style", "padding: 0px; margin: 0px")
