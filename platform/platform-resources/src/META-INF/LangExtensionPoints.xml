@@ -432,6 +432,11 @@
       <with attribute="implementationClass" implements="com.intellij.ui.codeFloatingToolbar.FloatingToolbarCustomizer"/>
     </extensionPoint>
 
+    <extensionPoint name="lang.floatingToolbar" beanClass="com.intellij.ui.codeFloatingToolbar.FloatingToolbarLanguageBean"
+                    dynamic="true">
+      <with attribute="customizationClass" implements="com.intellij.ui.codeFloatingToolbar.FloatingToolbarCustomization"/>
+    </extensionPoint>
+
     <extensionPoint name="codeInsight.typeInfo" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.ExpressionTypeProvider"/>
     </extensionPoint>
