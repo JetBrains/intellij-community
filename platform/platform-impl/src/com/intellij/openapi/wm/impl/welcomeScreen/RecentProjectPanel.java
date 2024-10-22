@@ -507,7 +507,8 @@ public class RecentProjectPanel extends JPanel {
         if (maxWidth > 0 && fm.stringWidth(fullText) > maxWidth) {
           return truncateDescription(fullText, fm, maxWidth, isTutorial(action));
         }
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         LOG.error("Path label font: " + pathLabel.getFont());
         LOG.error("Panel width: " + RecentProjectPanel.this.getWidth());
         LOG.error(e);
@@ -524,8 +525,9 @@ public class RecentProjectPanel extends JPanel {
         }
 
         for (String project : group.getProjects()) {
-          if(project.contains(action.getProjectPath()))
+          if (project.contains(action.getProjectPath())) {
             return true;
+          }
         }
       }
 
@@ -539,7 +541,6 @@ public class RecentProjectPanel extends JPanel {
           tutorialTruncated = tutorialTruncated.substring(0, tutorialTruncated.length() - 1);
         }
         return tutorialTruncated + "...";
-
       }
 
       int left = 1;
@@ -573,35 +574,35 @@ public class RecentProjectPanel extends JPanel {
     }
   }
 
-  public static final class FilePathChecker implements Disposable, ApplicationActivationListener, PowerSaveMode.Listener {
+  public static final class FilePathChecker implements Disposable, PowerSaveMode.Listener {
     private static final int MIN_AUTO_UPDATE_MILLIS = 2500;
-    private ScheduledExecutorService myService;
-    private final Set<String> myInvalidPaths = Collections.synchronizedSet(new HashSet<>());
+    private ScheduledExecutorService service;
+    private final Set<String> invalidPaths = Collections.synchronizedSet(new HashSet<>());
 
-    private final Runnable myCallback;
-    private final Collection<String> myPaths;
+    private final Runnable callback;
+    private final Collection<String> paths;
 
     public FilePathChecker(Runnable callback, Collection<String> paths) {
-      myCallback = callback;
-      myPaths = paths;
+      this.callback = callback;
+      this.paths = paths;
       MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
-      connection.subscribe(ApplicationActivationListener.TOPIC, this);
+      connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
+        @Override
+        public void applicationActivated(@NotNull IdeFrame ideFrame) {
+          onAppStateChanged();
+        }
+
+        @Override
+        public void delayedApplicationDeactivated(@NotNull Window ideFrame) {
+          onAppStateChanged();
+        }
+      });
       connection.subscribe(PowerSaveMode.TOPIC, this);
       onAppStateChanged();
     }
 
     public boolean isValid(String path) {
-      return !myInvalidPaths.contains(path);
-    }
-
-    @Override
-    public void applicationActivated(@NotNull IdeFrame ideFrame) {
-      onAppStateChanged();
-    }
-
-    @Override
-    public void delayedApplicationDeactivated(@NotNull Window ideFrame) {
-      onAppStateChanged();
+      return !invalidPaths.contains(path);
     }
 
     @Override
@@ -613,35 +614,34 @@ public class RecentProjectPanel extends JPanel {
       boolean settingsAreOK = Registry.is("autocheck.availability.welcome.screen.projects") && !PowerSaveMode.isEnabled();
       boolean everythingIsOK = settingsAreOK && ApplicationManager.getApplication().isActive();
       synchronized (this) {
-        if (myService == null && everythingIsOK) {
-          myService = AppExecutorUtil.createBoundedScheduledExecutorService("CheckRecentProjectPaths Service", 2);
-          for (String path : myPaths) {
+        if (service == null && everythingIsOK) {
+          service = AppExecutorUtil.createBoundedScheduledExecutorService("CheckRecentProjectPaths Service", 2);
+          for (String path : paths) {
             scheduleCheck(path, 0);
           }
-          ApplicationManager.getApplication().invokeLater(myCallback);
+          ApplicationManager.getApplication().invokeLater(callback);
         }
-        if (myService != null && !everythingIsOK) {
+        if (service != null && !everythingIsOK) {
           if (!settingsAreOK) {
-            myInvalidPaths.clear();
+            invalidPaths.clear();
           }
           shutdown(false);
-          ApplicationManager.getApplication().invokeLater(myCallback);
+          ApplicationManager.getApplication().invokeLater(callback);
         }
       }
     }
 
     private synchronized void shutdown(boolean now) {
-      if (myService != null) {
+      if (service != null) {
         if (now) {
-          myService.shutdownNow();
+          service.shutdownNow();
         }
         else {
-          myService.shutdown();
+          service.shutdown();
         }
-        myService = null;
+        service = null;
       }
     }
-
 
     @Override
     public void dispose() {
@@ -649,28 +649,30 @@ public class RecentProjectPanel extends JPanel {
     }
 
     private synchronized void scheduleCheck(String path, long delay) {
-      if (myService != null && !myService.isShutdown()) {
-        myService.schedule(() -> {
-          final long startTime = System.currentTimeMillis();
-          boolean pathIsValid;
-          try {
-            pathIsValid = !RecentProjectsManagerBase.Companion.isFileSystemPath(path) || isPathAvailable(path);
-          }
-          catch (Exception e) {
-            pathIsValid = false;
-          }
-          if (myInvalidPaths.contains(path) == pathIsValid) {
-            if (pathIsValid) {
-              myInvalidPaths.remove(path);
-            }
-            else {
-              myInvalidPaths.add(path);
-            }
-            ApplicationManager.getApplication().invokeLater(myCallback);
-          }
-          scheduleCheck(path, Math.max(MIN_AUTO_UPDATE_MILLIS, 10 * (System.currentTimeMillis() - startTime)));
-        }, delay, TimeUnit.MILLISECONDS);
+      if (service == null || service.isShutdown()) {
+        return;
       }
+
+      service.schedule(() -> {
+        final long startTime = System.currentTimeMillis();
+        boolean pathIsValid;
+        try {
+          pathIsValid = !RecentProjectsManagerBase.Companion.isFileSystemPath(path) || isPathAvailable(path);
+        }
+        catch (Exception e) {
+          pathIsValid = false;
+        }
+        if (invalidPaths.contains(path) == pathIsValid) {
+          if (pathIsValid) {
+            invalidPaths.remove(path);
+          }
+          else {
+            invalidPaths.add(path);
+          }
+          ApplicationManager.getApplication().invokeLater(callback);
+        }
+        scheduleCheck(path, Math.max(MIN_AUTO_UPDATE_MILLIS, 10 * (System.currentTimeMillis() - startTime)));
+      }, delay, TimeUnit.MILLISECONDS);
     }
   }
 

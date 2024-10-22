@@ -45,7 +45,7 @@ open class RecentProjectListActionProvider {
     }
 
     val projectsWithoutGroups = allRecentProjectPaths.asSequence().map { recentProject ->
-      createRecentProject(recentProject, duplicates, null)
+      createRecentProject(path = recentProject, duplicates = duplicates, projectGroup = null)
     }
     return (projectGroups + projectsWithoutGroups).toList()
   }
@@ -81,7 +81,7 @@ open class RecentProjectListActionProvider {
     }
 
     if (useGroups) {
-      addGroups(groups, duplicates, addClearListItem, actions, true)
+      addGroups(groups = groups, duplicates = duplicates, addClearListItem = addClearListItem, actions = actions, bottom = true)
     }
     return actions
   }

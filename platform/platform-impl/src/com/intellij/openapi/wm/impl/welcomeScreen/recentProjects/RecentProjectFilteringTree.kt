@@ -150,7 +150,7 @@ internal class RecentProjectFilteringTree(
   override fun useIdentityHashing(): Boolean = false
 
   private fun createFilePathChecker(): RecentProjectPanel.FilePathChecker {
-    val recentProjectTreeItems: List<RecentProjectTreeItem> = RecentProjectListActionProvider.getInstance().collectProjects()
+    val recentProjectTreeItems = RecentProjectListActionProvider.getInstance().collectProjects()
     val recentProjects = mutableListOf<RecentProjectItem>()
     for (item in recentProjectTreeItems) {
       when (item) {
