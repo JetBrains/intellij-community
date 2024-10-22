@@ -3,7 +3,7 @@ package com.intellij.internal.statistic.eventLog.fus
 
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.system.OS
 import com.sun.jna.platform.mac.IOKitUtil
 import com.sun.jna.platform.win32.Advapi32Util
 import com.sun.jna.platform.win32.COM.WbemcliUtil
@@ -31,10 +31,10 @@ object MachineIdManager {
 
   private val machineId: Lazy<String?> = lazy {
     runCatching {
-      when {
-        SystemInfo.isWindows -> getWindowsMachineId()
-        SystemInfo.isMac -> getMacOsMachineId()
-        SystemInfo.isLinux -> getLinuxMachineId()
+      when (OS.CURRENT) {
+        OS.Windows -> getWindowsMachineId()
+        OS.macOS -> getMacOsMachineId()
+        OS.Linux -> getLinuxMachineId()
         else -> null
       }
     }.onFailure { LOG.debug(it) }.getOrNull()
@@ -67,7 +67,7 @@ object MachineIdManager {
 
   /** See [MACHINE-ID(5)](https://manpages.debian.org/testing/systemd/machine-id.5.en.html). */
   private fun getLinuxMachineId(): String? =
-    sequenceOf("/etc/machine-id", "/var/lib/dbus/machine-id")
+    sequenceOf("/etc/machine-id", "/var/lib/dbus/machine-id", "/sys/devices/virtual/dmi/id/product_uuid")
       .map {
         runCatching { Path.of(it).readText().trim().takeIf(String::isNotEmpty) }
           .onFailure { LOG.debug(it) }
