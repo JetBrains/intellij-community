@@ -8,7 +8,9 @@ import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.GradleCommandLineUtil;
+import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
 
 import java.util.List;
@@ -201,6 +203,9 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     return ObjectUtils.chooseNotNull(value, false);
   }
 
+  /**
+   * Flag that shows if tasks are treated as tests invocation by the IDE (e.g., test events are expected)
+   */
   public boolean isRunAsTest() {
     var value = getUserData(GradleRunConfiguration.RUN_AS_TEST_KEY);
     return ObjectUtils.chooseNotNull(value, false);
@@ -215,6 +220,9 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     return ObjectUtils.chooseNotNull(value, false);
   }
 
+  /**
+   * Test events will be produces by TAPI, and there is no need for console reporting.
+   */
   public boolean isBuiltInTestEventsUsed() {
     return myBuiltInTestEventsUsed;
   }
@@ -248,6 +256,11 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   public @NotNull GradleCommandLine getCommandLine() {
     return GradleCommandLineUtil.parseCommandLine(getTasks(), getArguments());
+  }
+
+  public void addInitScript(@NotNull String namePrefix, @NotNull String content) {
+    var initScriptPath = GradleInitScriptUtil.createInitScript(namePrefix, content);
+    withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptPath.toString());
   }
 
   @Override

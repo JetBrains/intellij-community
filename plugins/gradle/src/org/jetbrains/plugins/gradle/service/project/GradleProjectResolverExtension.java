@@ -7,19 +7,25 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.GradleManager;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
+import org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension;
+import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
 import java.util.*;
 
@@ -132,50 +138,71 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   void preImportCheck();
 
   /**
-   * Allows extension to contribute to init script
-   * @param taskNames gradle task names to be executed
-   * @param jvmParametersSetup jvm configuration that will be applied to Gradle jvm
-   * @param initScriptConsumer consumer of init script text. Must be called to add script txt
+   * @deprecated use {@link GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)} instead
    */
-  void enhanceTaskProcessing(
+  @Deprecated
+  default void enhanceTaskProcessing(
     @NotNull List<String> taskNames,
     @Nullable String jvmParametersSetup,
     @NotNull Consumer<String> initScriptConsumer
-  );
+  ) { }
 
-  // jvm configuration that will be applied to Gradle jvm
+  /**
+   * @see GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)
+   * @deprecated use {@link ExternalSystemExecutionSettings#getJvmParameters} instead
+   */
+  @Deprecated
   String JVM_PARAMETERS_SETUP_KEY = "JVM_PARAMETERS_SETUP";
 
-  // flag that shows if tasks will be treated as tests invocation by the IDE (e.g., test events are expected)
+  /**
+   * @see GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)
+   * @deprecated use {@link GradleExecutionSettings#isRunAsTest} instead
+   */
+  @Deprecated
   String IS_RUN_AS_TEST_KEY = "IS_RUN_AS_TEST";
 
-  // Test events will be produces by TAPI and there is no need for console reporting
+  /**
+   * @see GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)
+   * @deprecated use {@link GradleExecutionSettings#isBuiltInTestEventsUsed} instead
+   */
+  @Deprecated
   String IS_BUILT_IN_TEST_EVENTS_USED_KEY = "IS_BUILT_IN_TEST_EVENTS_USED";
 
-  // port for callbacks which Gradle tasks communicate to IDE
+  /**
+   * @see GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)
+   * @deprecated use {@link ExternalSystemRunnableState#DEBUGGER_DISPATCH_PORT_KEY} instead
+   */
+  @Deprecated
   String DEBUG_DISPATCH_PORT_KEY = "DEBUG_DISPATCH_PORT";
 
-  // address for callbacks which Gradle tasks communicate to IDE
+  /**
+   * @see GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)
+   * @deprecated use {@link ExternalSystemRunnableState#DEBUGGER_DISPATCH_ADDR_KEY} instead
+   */
+  @Deprecated
   String DEBUG_DISPATCH_ADDR_KEY = "DEBUG_DISPATCH_ADDR";
 
-  // options passed from project to Gradle
+  /**
+   * @see GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)
+   * @deprecated use {@link ExternalSystemRunnableState#DEBUGGER_PARAMETERS_KEY} instead
+   */
+  @Deprecated
   String DEBUG_OPTIONS_KEY = "DEBUG_OPTIONS";
 
-  // for Gradle version specific init scripts
+  /**
+   * @see GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)
+   * @deprecated use GradleVersion argument instead
+   */
+  @Deprecated
   String GRADLE_VERSION = "GRADLE_VERSION";
 
   // debug flag that will always be passed at runtime if debugging is enabled
   String DEBUGGER_ENABLED = "DEBUGGER_ENABLED";
 
   /**
-   * Allows an extension to contribute an init script that would be passed into the Gradle execution
-   *
-   * @param project            project (if available)
-   * @param taskNames          gradle task names to be executed
-   * @param initScriptConsumer consumer of init script text. Must be called to add script txt
-   * @param parameters         storage for passing optional named parameters
-   * @return map with environment variables to be passed into the execution
+   * @deprecated use {@link GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)} instead
    */
+  @Deprecated
   @ApiStatus.Experimental
   default @NotNull Map<String, String> enhanceTaskProcessing(
     @Nullable Project project,

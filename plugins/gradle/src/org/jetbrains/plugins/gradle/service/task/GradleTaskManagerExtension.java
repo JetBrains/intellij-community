@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +37,20 @@ import java.util.List;
 public interface GradleTaskManagerExtension {
 
   ExtensionPointName<GradleTaskManagerExtension> EP_NAME = ExtensionPointName.create("org.jetbrains.plugins.gradle.taskManager");
+
+  /**
+   * Configures Gradle task execution settings.
+   *
+   * @param projectPath path to project, where tasks are executed
+   * @param id          id of operation in IDEA terms
+   * @param settings    gradle execution settings
+   */
+  default void configureTasks(
+    @NotNull String projectPath,
+    @NotNull ExternalSystemTaskId id,
+    @NotNull GradleExecutionSettings settings,
+    @Nullable GradleVersion gradleVersion
+  ) { }
 
   /**
    * @deprecated use {@link #executeTasks(String, ExternalSystemTaskId, GradleExecutionSettings, ExternalSystemTaskNotificationListener)}

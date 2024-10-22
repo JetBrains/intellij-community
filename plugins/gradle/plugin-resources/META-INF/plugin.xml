@@ -57,6 +57,8 @@
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
 
+    <taskManager implementation="org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtensionResolverBridge"/>
+
     <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncContributor.GradleProjectRootSyncContributor"/>
     <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncContributor.GradleContentRootSyncContributor"/>
 

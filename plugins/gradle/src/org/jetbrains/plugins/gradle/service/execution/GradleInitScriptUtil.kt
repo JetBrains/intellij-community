@@ -219,7 +219,13 @@ private fun loadEnhanceGradleDaemonClasspathInit(classesNames: List<List<String>
   ))
 }
 
-private fun joinInitScripts(vararg initScripts: String): String {
+@ApiStatus.Experimental
+fun joinInitScripts(vararg initScripts: String): String {
+  return joinInitScripts(initScripts.asList())
+}
+
+@ApiStatus.Experimental
+fun joinInitScripts(initScripts: List<String>): String {
   return initScripts.joinToString(System.lineSeparator())
 }
 

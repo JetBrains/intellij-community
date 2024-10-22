@@ -52,7 +52,6 @@ import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.service.execution.GradleWrapperHelper;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.project.GradleTasksIndices;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
@@ -67,7 +66,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DISPATCH_ADDR_SYS_PROP;
 import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DISPATCH_PORT_SYS_PROP;
 import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.*;
-import static com.intellij.util.containers.ContainerUtil.addAllNotNull;
 import static org.jetbrains.plugins.gradle.util.GradleUtil.determineRootProject;
 
 public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecutionSettings> {
@@ -124,7 +122,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
         GradleWrapperHelper.ensureInstalledWrapper(id, rootProjectPath, settings, listener, cancellationToken);
       }
       myHelper.execute(projectPath, settings, id, listener, cancellationToken, connection -> {
-        executeTasks(id, projectPath, settings, listener, connection, cancellationToken);
+        executeTasks(projectPath, id, settings, listener, connection, cancellationToken);
         return null;
       });
     }
@@ -134,8 +132,8 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   }
 
   private static void executeTasks(
-    @NotNull ExternalSystemTaskId id,
     @NotNull String projectPath,
+    @NotNull ExternalSystemTaskId id,
     @NotNull GradleExecutionSettings settings,
     @NotNull ExternalSystemTaskNotificationListener listener,
     @NotNull ProjectConnection connection,
@@ -150,7 +148,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       setupDebuggerDispatchPort(settings);
       setupBuiltInTestEvents(settings, gradleVersion);
 
-      appendInitScriptArgument(id, settings, gradleVersion);
+      configureTasks(projectPath, id, settings, gradleVersion);
 
       for (GradleBuildParticipant buildParticipant : settings.getExecutionWorkspace().getBuildParticipants()) {
         settings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
@@ -348,69 +346,19 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     var id = ExternalSystemTaskId.create(GradleConstants.SYSTEM_ID, ExternalSystemTaskType.EXECUTE_TASK, "");
     settings.setTasks(taskNames);
     settings.setJvmParameters(jvmParametersSetup);
-    appendInitScriptArgument(id, settings, null);
+    configureTasks("", id, settings, null);
   }
 
   @ApiStatus.Internal
-  public static void appendInitScriptArgument(
+  public static void configureTasks(
+    @NotNull String projectPath,
     @NotNull ExternalSystemTaskId id,
     @NotNull GradleExecutionSettings settings,
     @Nullable GradleVersion gradleVersion
   ) {
-    final List<String> initScripts = new ArrayList<>();
-    List<GradleProjectResolverExtension> extensions = GradleProjectResolverUtil.createProjectResolvers(null).toList();
-    Map<String, String> executionEnvironmentVariables = new HashMap<>();
-    for (GradleProjectResolverExtension resolverExtension : extensions) {
-      final String resolverClassName = resolverExtension.getClass().getName();
-
-      Map<String, String> enhancementParameters = new HashMap<>();
-
-      var jvmParameters = settings.getJvmParameters();
-      if (jvmParameters != null) {
-        enhancementParameters.put(GradleProjectResolverExtension.JVM_PARAMETERS_SETUP_KEY, jvmParameters);
-      }
-
-      var isRunAsTest = settings.isRunAsTest();
-      enhancementParameters.put(GradleProjectResolverExtension.IS_RUN_AS_TEST_KEY, String.valueOf(isRunAsTest));
-      var isBuiltInTestEventsUsed = settings.isBuiltInTestEventsUsed();
-      enhancementParameters.put(GradleProjectResolverExtension.IS_BUILT_IN_TEST_EVENTS_USED_KEY, String.valueOf(isBuiltInTestEventsUsed));
-
-      Integer debugDispatchPort = settings.getUserData(DEBUGGER_DISPATCH_PORT_KEY);
-      if (debugDispatchPort != null) {
-        enhancementParameters.put(GradleProjectResolverExtension.DEBUG_DISPATCH_PORT_KEY, String.valueOf(debugDispatchPort));
-      }
-      String debugOptions = settings.getUserData(DEBUGGER_PARAMETERS_KEY);
-      if (debugOptions != null) {
-        enhancementParameters.put(GradleProjectResolverExtension.DEBUG_OPTIONS_KEY, debugOptions);
-      }
-      String debugDispatchAddr = settings.getUserData(DEBUGGER_DISPATCH_ADDR_KEY);
-      if (debugDispatchAddr != null) {
-        enhancementParameters.put(GradleProjectResolverExtension.DEBUG_DISPATCH_ADDR_KEY, debugDispatchAddr);
-      }
-
-      if (gradleVersion != null) {
-        enhancementParameters.put(GradleProjectResolverExtension.GRADLE_VERSION, gradleVersion.getVersion());
-      }
-
-      var project = id.findProject();
-      var taskNames = settings.getTasks();
-      Map<String, String> taskProcessingEnvironmentVariables = resolverExtension.enhanceTaskProcessing(project, taskNames, script -> {
-        if (StringUtil.isNotEmpty(script)) {
-          addAllNotNull(
-            initScripts,
-            "//-- Generated by " + resolverClassName,
-            script,
-            "//");
-        }
-      }, enhancementParameters);
-      executionEnvironmentVariables.putAll(taskProcessingEnvironmentVariables);
-    }
-
-    if (!initScripts.isEmpty()) {
-      var initScript = StringUtil.join(initScripts, System.lineSeparator());
-      var initScriptPath = GradleInitScriptUtil.createInitScript("ijresolvers", initScript);
-      settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptPath.toString());
-    }
+    GradleTaskManagerExtension.EP_NAME.forEachExtensionSafe(it -> {
+      it.configureTasks(projectPath, id, settings, gradleVersion);
+    });
 
     final String initScript = settings.getUserData(INIT_SCRIPT_KEY);
     if (StringUtil.isNotEmpty(initScript)) {
@@ -433,7 +381,6 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     if (settings.getArguments().contains(GradleConstants.INIT_SCRIPT_CMD_OPTION)) {
       GradleInitScriptUtil.attachTargetPathMapperInitScript(settings);
     }
-    settings.withEnvironmentVariables(executionEnvironmentVariables);
   }
 
   public static void setupGradleScriptDebugging(@NotNull GradleExecutionSettings effectiveSettings) {
