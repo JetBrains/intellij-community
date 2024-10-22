@@ -578,6 +578,7 @@
     <projectService serviceInterface="com.intellij.debugger.DebuggerManager"
                     serviceImplementation="com.intellij.debugger.impl.DebuggerManagerImpl"/>
     <debugger.additionalContextProvider implementation="com.intellij.debugger.engine.evaluation.MarkedObjectAdditionalContextProvider"/>
+    <iconProvider implementation="com.intellij.debugger.engine.evaluation.AdditionalContextIconProvider"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.find.findUsages.JavaFindUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.extractMethod.JavaExtractMethodCollector"/>

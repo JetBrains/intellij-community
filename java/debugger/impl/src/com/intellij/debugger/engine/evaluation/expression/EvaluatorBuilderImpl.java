@@ -819,12 +819,12 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       PsiElement element = resolveResult.getElement();
 
       if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
-        var computeSyntheticValue = element.getUserData(JavaEvaluationContextWrapper.SYNTHETIC_VARIABLE_VALUE_KEY);
-        if (computeSyntheticValue != null) {
+        var contextElement = element.getUserData(AdditionalContextProvider.getADDITIONAL_CONTEXT_ELEMENT_KEY());
+        if (contextElement != null) {
           myResult = new Evaluator() {
             @Override
             public Object evaluate(EvaluationContextImpl context) {
-              return computeSyntheticValue.invoke(context);
+              return contextElement.getValue().invoke(context);
             }
           };
           return;

@@ -3,20 +3,13 @@ package com.intellij.debugger.engine.evaluation
 
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.JavaRecursiveElementVisitor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLocalVariable
-import com.sun.jdi.Value
 import java.util.regex.Pattern
 
 internal class JavaEvaluationContextWrapper : EvaluationContextWrapper {
-  companion object {
-    @JvmField
-    val SYNTHETIC_VARIABLE_VALUE_KEY = Key.create<(EvaluationContext) -> Value>("SYNTHETIC_VARIABLE_VALUE_KEY")
-  }
-
   override fun wrapContext(project: Project, context: PsiElement?, additionalElements: List<AdditionalContextElement>): PsiElement? {
     if (additionalElements.isEmpty()) return context
     val elementsByName = additionalElements.groupBy { it.name }.mapValues { (_, v) -> v[0] }
@@ -28,10 +21,8 @@ internal class JavaEvaluationContextWrapper : EvaluationContextWrapper {
     fragment.accept(object : JavaRecursiveElementVisitor() {
       override fun visitLocalVariable(variable: PsiLocalVariable) {
         val name = variable.name
-        val computeValue = elementsByName[name]?.value
-        if (computeValue != null) {
-          variable.putUserData(SYNTHETIC_VARIABLE_VALUE_KEY, computeValue)
-        }
+        val element = elementsByName[name] ?: return
+        variable.putUserData(AdditionalContextProvider.ADDITIONAL_CONTEXT_ELEMENT_KEY, element)
       }
     })
     return fragment
