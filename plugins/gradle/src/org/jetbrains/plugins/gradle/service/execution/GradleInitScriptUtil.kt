@@ -198,7 +198,10 @@ fun loadApplicationInitScript(
   useClasspathFile: Boolean
 ): String {
   return joinInitScripts(
-    loadToolingExtensionProvidingInitScript(),
+    loadToolingExtensionProvidingInitScript(
+      GradleToolingExtensionImplClass::class.java,
+      GradleToolingExtensionClass::class.java
+    ),
     loadInitScript(
       "/org/jetbrains/plugins/gradle/tooling/internal/init/ApplicationTaskInitScript.gradle",
       mapOf(
@@ -287,9 +290,11 @@ fun createInitScript(prefix: String, content: String): Path {
   }
 }
 
-fun loadToolingExtensionProvidingInitScript(
-  toolingExtensionClasses: Set<Class<*>> = setOf(GradleToolingExtensionImplClass::class.java, GradleToolingExtensionClass::class.java),
-): String {
+fun loadToolingExtensionProvidingInitScript(vararg toolingExtensionClasses: Class<*>): String {
+  return loadToolingExtensionProvidingInitScript(toolingExtensionClasses.toSet())
+}
+
+fun loadToolingExtensionProvidingInitScript(toolingExtensionClasses: Set<Class<*>>): String {
   val tapiClasspath = getToolingExtensionsJarPaths(toolingExtensionClasses)
     .toGroovyListLiteral { "mapPath(" + toGroovyStringLiteral() + ")" }
   return loadInitScript(

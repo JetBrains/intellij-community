@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.GradleManager;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
+import org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtensionDebuggerBridge;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
@@ -196,8 +197,11 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   @Deprecated
   String GRADLE_VERSION = "GRADLE_VERSION";
 
-  // debug flag that will always be passed at runtime if debugging is enabled
-  String DEBUGGER_ENABLED = "DEBUGGER_ENABLED";
+  /**
+   * @deprecated use {@link GradleTaskManagerExtensionDebuggerBridge#DEBUGGER_ENABLED} instead
+   */
+  @Deprecated
+  String DEBUGGER_ENABLED = GradleTaskManagerExtensionDebuggerBridge.DEBUGGER_ENABLED;
 
   /**
    * @deprecated use {@link GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)} instead
