@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +61,7 @@ public interface DirectoryProjectGenerator<T> {
   @Nullable
   Icon getLogo();
 
+  @RequiresEdt(generateAssertion = false)
   void generateProject(@NotNull Project project,
                        @NotNull VirtualFile baseDir,
                        @NotNull T settings,
