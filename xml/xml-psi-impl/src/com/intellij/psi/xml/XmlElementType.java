@@ -61,10 +61,10 @@ public interface XmlElementType extends XmlTokenType {
   };
 
   final class XmlTagElementType extends IXmlElementType implements IXmlTagElementType {
-    public XmlTagElementType(String debugName) {super(debugName);}
+    public XmlTagElementType(String debugName) { super(debugName); }
   }
 
   final class XmlAttributeElementType extends IXmlElementType implements IXmlAttributeElementType {
-    public XmlAttributeElementType() {super("XML_ATTRIBUTE");}
+    public XmlAttributeElementType() { super("XML_ATTRIBUTE"); }
   }
 }
