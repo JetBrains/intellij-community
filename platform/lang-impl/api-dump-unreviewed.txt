@@ -7413,10 +7413,12 @@ com.intellij.find.actions.ShowUsagesActionHandler
 - a:getSelectedScope():com.intellij.psi.search.SearchScope
 - a:getTargetClass():java.lang.Class
 - a:getTargetLanguage():com.intellij.lang.Language
+- isSaveScope():Z
 - a:isValid():Z
 - a:moreUsages(com.intellij.find.actions.ShowUsagesParameters):com.intellij.find.actions.ShowUsagesParameters
 - a:navigateToSingleUsageImmediately():Z
 - a:showDialog():com.intellij.find.actions.ShowUsagesActionHandler
+- withMaximalScope():com.intellij.find.actions.ShowUsagesActionHandler
 - a:withScope(com.intellij.psi.search.SearchScope):com.intellij.find.actions.ShowUsagesActionHandler
 c:com.intellij.find.actions.ShowUsagesManager
 - sf:Companion:com.intellij.find.actions.ShowUsagesManager$Companion

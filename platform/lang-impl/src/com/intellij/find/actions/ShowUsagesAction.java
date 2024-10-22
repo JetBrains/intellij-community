@@ -434,9 +434,24 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
       @Override
       public @NotNull ShowUsagesActionHandler withScope(@NotNull SearchScope searchScope) {
+        return withScope(searchScope, false);
+      }
+
+      @Override
+      public @NotNull ShowUsagesActionHandler withMaximalScope() {
+        return withScope(getMaximalScope(), true);
+      }
+
+      private @NotNull ShowUsagesActionHandler withScope(@NotNull SearchScope searchScope, boolean isMaximalScope) {
         FindUsagesOptions newOptions = options.clone();
         newOptions.searchScope = searchScope;
+        newOptions.isMaximalScope = isMaximalScope;
         return createActionHandler(handler, newOptions, title);
+      }
+
+      @Override
+      public boolean isSaveScope() {
+        return !options.isMaximalScope;
       }
 
       @Override
@@ -523,6 +538,9 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     ReadAction.nonBlocking(() -> actionHandler.getEventData()).submit(AppExecutorUtil.getAppExecutorService()).onSuccess(
       (eventData) -> UsageViewStatisticsCollector.logSearchStarted(project, usageView, CodeNavigateSource.ShowUsagesPopup, eventData));
     final SearchScope searchScope = actionHandler.getSelectedScope();
+    if (actionHandler.isSaveScope()) {
+      FindUsagesSettings.getInstance().setDefaultScopeName(searchScope.getDisplayName());
+    }
     final AtomicInteger outOfScopeUsages = new AtomicInteger();
     AtomicBoolean manuallyResized = new AtomicBoolean();
     Ref<UsageNode> preselectedRow = new Ref<>();
@@ -1657,7 +1675,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     if (showUsagesPopupData != null) {
       cancel(showUsagesPopupData.popupRef.get(), actionHandler, CLOSE_REASON_CHANGE_SCOPE);
     }
-    ShowUsagesActionHandler handler = actionHandler.withScope(actionHandler.getMaximalScope());
+    ShowUsagesActionHandler handler = actionHandler.withMaximalScope();
     if (handler != null) {
       showElementUsages(parameters, handler);
     }

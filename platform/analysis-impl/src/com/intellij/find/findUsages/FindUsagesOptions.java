@@ -16,6 +16,8 @@ import java.util.List;
 
 public class FindUsagesOptions implements Cloneable {
   public @NotNull SearchScope searchScope;
+  @ApiStatus.Internal
+  public boolean isMaximalScope = false;
 
   public boolean isSearchForTextOccurrences = true;
 
