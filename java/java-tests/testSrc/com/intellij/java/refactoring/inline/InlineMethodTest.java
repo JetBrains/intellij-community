@@ -595,6 +595,8 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testBooleanResultInIfChain() { doTest(); }
   
   public void testLambdaIfAnd() { doTest(); }
+  
+  public void testLambdaIfAndGenericNot() { doTest(); }
 
   public void testInlineSingleImplementation() {
     TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());

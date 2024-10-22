@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.inline.InlineTransformer;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -214,7 +215,14 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     }
     if (callParent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)callParent)) {
       PsiElement negationParent = PsiUtil.skipParenthesizedExprUp(callParent.getParent());
-      if (negationParent instanceof PsiReturnStatement || negationParent instanceof PsiLambdaExpression) {
+      if (negationParent instanceof PsiPolyadicExpression polyOp &&
+          (polyOp.getOperationTokenType().equals(JavaTokenType.ANDAND) || polyOp.getOperationTokenType().equals(JavaTokenType.OROR)) &&
+          PsiTreeUtil.isAncestor(ArrayUtil.getLastElement(polyOp.getOperands()), callParent, false)) {
+        negationParent = PsiUtil.skipParenthesizedExprUp(negationParent.getParent());
+      }
+      if (negationParent instanceof PsiReturnStatement ||
+          negationParent instanceof PsiYieldStatement || 
+          negationParent instanceof PsiLambdaExpression) {
         return TailCallType.Invert;
       }
     }
