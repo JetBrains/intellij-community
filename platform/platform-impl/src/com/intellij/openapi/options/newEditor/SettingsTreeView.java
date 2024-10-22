@@ -613,6 +613,11 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       public String getAccessibleName() {
         return myTextLabel.getCharSequence(true).toString();
       }
+
+      @Override
+      public AccessibleRole getAccessibleRole() {
+        return AccessibleRole.LABEL;
+      }
     }
 
     @Override
