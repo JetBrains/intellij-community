@@ -53,7 +53,8 @@ internal class TrustedProjectStartupDialog(
   private var windowsDefenderCheckBox: Cell<JBCheckBox>? = null
   private var userChoice: OpenUntrustedProjectChoice = OpenUntrustedProjectChoice.CANCEL
   private val myIsTitleComponent = SystemInfoRt.isMac || !Registry.`is`("ide.message.dialogs.as.swing.alert.show.title.bar", false)
-
+  private var trustAction: Action? = null
+  
   init {
     if (SystemInfoRt.isMac) {
       setInitialLocationCallback {
@@ -143,6 +144,12 @@ internal class TrustedProjectStartupDialog(
                 if (it.isSelected) {
                   windowsDefender.set(false)
                 }
+
+                if (trustAction != null) {
+                  val trustButton = getButton(trustAction!!)
+                  val text = if (it.isSelected) IdeBundle.message("untrusted.project.dialog.trust.folder.button", getTrustFolder(it.isSelected).name) else trustButtonText
+                  trustButton?.text = text
+                }
                 windowsDefenderCheckBox?.component?.text = IdeBundle.message("untrusted.project.windows.defender.trust.location.checkbox", getTrustFolder(it.isSelected).name)
               }
           }
@@ -231,6 +238,7 @@ internal class TrustedProjectStartupDialog(
           close(i, userChoice == OpenUntrustedProjectChoice.TRUST_AND_OPEN)
         }
       }
+      if (option == trustButtonText) trustAction = action
       if (i == myDefaultOptionIndex) {
         action.putValue(DEFAULT_ACTION, true)
       }
