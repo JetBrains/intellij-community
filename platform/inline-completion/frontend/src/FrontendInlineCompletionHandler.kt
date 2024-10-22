@@ -6,6 +6,7 @@ import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTrac
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessionManager
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import kotlinx.coroutines.CoroutineScope
@@ -42,6 +43,10 @@ internal class FrontendInlineCompletionHandler(
           null -> Unit
         }
         hide(context, finishType)
+      }
+
+      override fun getSuggestionUpdater(provider: InlineCompletionProvider): InlineCompletionSuggestionUpdateManager {
+        return provider.suggestionUpdateManager
       }
     }
   }

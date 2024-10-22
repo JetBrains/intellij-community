@@ -30,6 +30,8 @@ abstract class InlineCompletionSessionManager(private val editor: Editor) {
 
   protected open fun onRemoved(): Unit = Unit
 
+  protected abstract fun getSuggestionUpdater(provider: InlineCompletionProvider): InlineCompletionSuggestionUpdateManager
+
   @RequiresEdt
   fun createSession(
     provider: InlineCompletionProvider,
@@ -98,7 +100,7 @@ abstract class InlineCompletionSessionManager(private val editor: Editor) {
     if (request.event.mayMutateCaretPosition()) {
       session.context.expectedStartOffset = request.endOffset
     }
-    val updateManager = session.provider.suggestionUpdateManager
+    val updateManager = getSuggestionUpdater(session.provider)
     return updateSession(session, updateManager, request)
   }
 
