@@ -3,7 +3,6 @@ package com.intellij.codeInsight.intention.impl.preview
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.LOADING_PREVIEW
-import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.isNoPreviewPanel
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo.Html
 import com.intellij.openapi.actionSystem.IdeActions
@@ -147,9 +146,8 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
       is IntentionPreviewDiffResult -> {
         val editors = IntentionPreviewEditorsPanel.createEditors(project, result)
         if (editors.isEmpty()) {
-          IntentionPreviewComponent.createNoPreviewPanel()
-        }
-        else {
+          IntentionPreviewComponent.NO_PREVIEW_LABEL
+        } else {
           val size = component.preferredSize
           val location = popup.locationOnScreen
           val screen = ScreenUtil.getScreenRectangle(location)
@@ -183,7 +181,7 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
         }
       }
       is Html -> IntentionPreviewComponent.createHtmlPanel(result)
-      else -> IntentionPreviewComponent.createNoPreviewPanel()
+      else -> IntentionPreviewComponent.NO_PREVIEW_LABEL
     }
   }
 
@@ -215,7 +213,7 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
 
   private fun select(index: Int, previewComponent: JComponent? = null) {
     val selectedComponent = previewComponent ?: component.multiPanel.getValue(index, false)
-    popupWindow?.isVisible = !selectedComponent.isNoPreviewPanel() || justActivated
+    popupWindow?.isVisible = selectedComponent != IntentionPreviewComponent.NO_PREVIEW_LABEL || justActivated
     justActivated = false
     component.stopLoading()
     // Need to set previewComponent before select, as multiPanel.create expects previewComponent to be initialized 
