@@ -36,5 +36,13 @@ interface AdditionalContextProvider {
  }
 }
 
+/**
+ * Represents an additional context element used in the debugger engine evaluation.
+ *
+ * @property name The name of the context element.
+ * @property jvmSignature Object type signature, for example `Ljava/lang/Object;`.
+ * @property jvmTypeName Object type name, for example `java.lang.Object`.
+ * @property value A lambda function returning a [Value] used for evaluation.
+ */
 @ApiStatus.Internal
 data class AdditionalContextElement(val name: String, val jvmSignature: String, val jvmTypeName: String, val value: () -> Value)
