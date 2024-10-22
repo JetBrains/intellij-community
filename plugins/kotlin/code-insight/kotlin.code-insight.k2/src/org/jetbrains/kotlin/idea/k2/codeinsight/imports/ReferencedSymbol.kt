@@ -49,7 +49,7 @@ internal class ReferencedSymbol(val reference: KtReference, val symbol: KaSymbol
 
             is KaClassLikeSymbol -> SymbolInfo.run { create(symbol) }
 
-            else -> error("Unexpected symbol type ${symbol::class}")
+            else -> SymbolInfo.run { create(symbol) }
         }
     }
 }
