@@ -125,9 +125,8 @@ internal class TrustedProjectStartupDialog(
       row {
         icon(AllIcons.General.WarningDialog).align(AlignY.TOP)
         panel {
-          val trimmedTitle = StringUtil.shortenTextWithEllipsis(myTitle, 65, 2, true)
           row {
-            text(trimmedTitle).apply {
+            text(myTitle).apply {
               component.font = JBFont.h4()
             }
           }
@@ -151,12 +150,13 @@ internal class TrustedProjectStartupDialog(
                   val text = if (it.isSelected) IdeBundle.message("untrusted.project.dialog.trust.folder.button", getTrustFolder(it.isSelected).name) else trustButtonText
                   trustButton?.text = text
                 }
-                windowsDefenderCheckBox?.component?.text = IdeBundle.message("untrusted.project.windows.defender.trust.location.checkbox", getTrustFolder(it.isSelected).name)
+                val trimmedFolderName = StringUtil.shortenTextWithEllipsis(getTrustFolder(it.isSelected).name, 18, 0, true)
+                windowsDefenderCheckBox?.component?.text = IdeBundle.message("untrusted.project.windows.defender.trust.location.checkbox", trimmedFolderName)
               }
           }
           row {
-            val trimmedProjectName = StringUtil.shortenTextWithEllipsis(project?.name ?: projectPath.name, 18, 0, true)
-            windowsDefenderCheckBox = checkBox(IdeBundle.message("untrusted.project.windows.defender.trust.location.checkbox", trimmedProjectName))
+            val trimmedFolderName = StringUtil.shortenTextWithEllipsis(projectPath.name, 18, 0, true)
+            windowsDefenderCheckBox = checkBox(IdeBundle.message("untrusted.project.windows.defender.trust.location.checkbox", trimmedFolderName))
               .bindSelected(windowsDefender)
               .apply {
                 component.toolTipText = null
