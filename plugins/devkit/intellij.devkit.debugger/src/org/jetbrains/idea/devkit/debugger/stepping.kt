@@ -79,6 +79,7 @@ private class SessionThreadsData(val disposable: Disposable) {
       state.setNonCancellable(suspendContext, true)
     }
     catch (e: Exception) {
+      if (logIncorrectSuspendState(e)) return
       DebuggerUtilsImpl.logError(e)
     }
   }
@@ -97,6 +98,7 @@ private class SessionThreadsData(val disposable: Disposable) {
       }
     }
     catch (e: Exception) {
+      if (logIncorrectSuspendState(e)) return
       DebuggerUtilsImpl.logError(e)
     }
   }
