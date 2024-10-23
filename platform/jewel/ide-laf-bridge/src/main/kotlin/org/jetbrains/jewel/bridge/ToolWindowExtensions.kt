@@ -6,7 +6,7 @@ import com.intellij.openapi.wm.ToolWindow
 import org.jetbrains.jewel.foundation.enableNewSwingCompositing
 
 public fun ToolWindow.addComposeTab(
-    @TabTitle tabDisplayName: String,
+    @TabTitle tabDisplayName: String? = null,
     isLockable: Boolean = true,
     isCloseable: Boolean = false,
     content: @Composable ToolWindowScope.() -> Unit,
