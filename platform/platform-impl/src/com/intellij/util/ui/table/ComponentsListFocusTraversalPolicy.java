@@ -2,6 +2,7 @@
 package com.intellij.util.ui.table;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -72,6 +73,7 @@ public abstract class ComponentsListFocusTraversalPolicy extends LayoutFocusTrav
     return components.isEmpty() ? null : searchShowing(components, 0, FORWARD);
   }
 
+  @Unmodifiable
   protected abstract @NotNull List<Component> getOrderedComponents();
 
   private static Component searchShowing(@NotNull List<? extends Component> components, int start, int direction) {

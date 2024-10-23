@@ -133,7 +133,7 @@ public final class DiffUtil {
   @NotNull @NonNls public static final String DIFF_CONFIG = "diff.xml";
   public static final JBValue TITLE_GAP = new JBValue.Float(2);
 
-  public static final NotNullLazyValue<List<Image>> DIFF_FRAME_ICONS = NotNullLazyValue.createValue(() -> {
+  public static final NotNullLazyValue<@Unmodifiable List<Image>> DIFF_FRAME_ICONS = NotNullLazyValue.createValue(() -> {
     return ContainerUtil.skipNulls(
       Arrays.asList(
         iconToImage(PlatformDiffImplIcons.Diff_frame32),

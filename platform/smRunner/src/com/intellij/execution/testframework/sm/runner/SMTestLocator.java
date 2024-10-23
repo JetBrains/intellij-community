@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +24,7 @@ public interface SMTestLocator extends PossiblyDumbAware {
    * Creates the <code>Location</code> list from <code>protocol</code> and <code>path</code> in <code>scope</code>.
    */
    @NotNull
+   @Unmodifiable
   List<Location> getLocation(@NonNls @NotNull String protocol,
                              @NonNls @NotNull String path,
                              @NonNls @NotNull Project project,
@@ -36,6 +38,7 @@ public interface SMTestLocator extends PossiblyDumbAware {
    * but it changes when editing.
    */
   @NotNull
+  @Unmodifiable
   default List<Location> getLocation(@NonNls @NotNull String protocol,
                                      @NonNls @NotNull String path,
                                      @NonNls @Nullable String metainfo,
@@ -48,6 +51,7 @@ public interface SMTestLocator extends PossiblyDumbAware {
    * Parse stacktrace line and return corresponding location.
    */
   @NotNull
+  @Unmodifiable
   default List<Location> getLocation(@NotNull String stacktraceLine,
                                      @NotNull Project project, @NotNull GlobalSearchScope scope) {
     return Collections.emptyList();

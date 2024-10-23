@@ -48,7 +48,7 @@ public class Modifier {
     impl(command);
   }
 
-  public void moveChangesTo(@NotNull String name, @NotNull List<Change> changes) {
+  public void moveChangesTo(@NotNull String name, @NotNull List<? extends Change> changes) {
     MoveChanges command = new MoveChanges(name, changes);
     impl(command);
   }

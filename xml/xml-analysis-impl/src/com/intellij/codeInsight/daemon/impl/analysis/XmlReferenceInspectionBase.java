@@ -12,6 +12,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -83,6 +84,7 @@ public abstract class XmlReferenceInspectionBase extends XmlSuppressableInspecti
   }
 
   @NotNull
+  @Unmodifiable
   private Collection<PsiReference> getUnresolvedReferencesToAnnotate(PsiReference[] references) {
     Map<TextRange, PsiReference> unresolvedReferences = new HashMap<>();
     for (PsiReference reference : references) {

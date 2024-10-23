@@ -27,6 +27,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
@@ -137,6 +138,7 @@ public final class VcsFacadeImpl extends VcsFacade {
   }
 
   @NotNull
+  @Unmodifiable
   public <T extends PsiElement> List<T> getLocalChangedElements(@NotNull Project project,
                                                                 @NotNull Change change,
                                                                 @NotNull Function<? super VirtualFile, ? extends List<T>> elementExtractor) {

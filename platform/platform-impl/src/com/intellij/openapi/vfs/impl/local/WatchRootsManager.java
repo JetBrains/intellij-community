@@ -16,10 +16,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemDependent;
-import org.jetbrains.annotations.SystemIndependent;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.nio.file.InvalidPathException;
@@ -62,11 +59,12 @@ final class WatchRootsManager {
   }
 
   @NotNull Set<WatchRequest> replaceWatchedRoots(
-    @NotNull Collection<WatchRequest> requestsToRemove,
-    @NotNull Collection<String> recursiveRootsToAdd,
-    @NotNull Collection<String> flatRootsToAdd
+    @Unmodifiable @NotNull Collection<WatchRequest> requestsToRemove,
+    @Unmodifiable @NotNull Collection<String> recursiveRootsToAdd,
+    @Unmodifiable @NotNull Collection<String> flatRootsToAdd
   ) {
-    Set<WatchRequest> recursiveRequestsToRemove = new HashSet<>(), flatRequestsToRemove = new HashSet<>();
+    Set<WatchRequest> recursiveRequestsToRemove = new HashSet<>();
+    Set<WatchRequest> flatRequestsToRemove = new HashSet<>();
     requestsToRemove.forEach(req -> (req.isToWatchRecursively() ? recursiveRequestsToRemove : flatRequestsToRemove).add(req));
 
     Set<WatchRequest> result = new HashSet<>(recursiveRootsToAdd.size() + flatRootsToAdd.size());
@@ -174,7 +172,8 @@ final class WatchRootsManager {
   }
 
   private void updateWatchRoots(
-    Collection<String> rootsToAdd, Set<WatchRequest> requestsToRemove,
+    @Unmodifiable Collection<String> rootsToAdd,
+    Set<WatchRequest> requestsToRemove,
     Set<WatchRequest> result,
     Map<String, List<WatchRequest>> roots,
     boolean recursiveWatchRoots

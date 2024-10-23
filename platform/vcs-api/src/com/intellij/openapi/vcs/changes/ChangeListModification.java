@@ -23,7 +23,7 @@ public interface ChangeListModification {
 
   void moveChangesTo(@NotNull LocalChangeList list, Change @NotNull ... changes);
 
-  void moveChangesTo(@NotNull LocalChangeList list, @NotNull List<@NotNull Change> changes);
+  void moveChangesTo(@NotNull LocalChangeList list, @NotNull List<? extends @NotNull Change> changes);
 
   /**
    * Prohibit changelist deletion or rename until the project is closed

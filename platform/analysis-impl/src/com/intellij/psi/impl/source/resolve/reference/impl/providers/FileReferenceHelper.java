@@ -17,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -88,6 +89,7 @@ public abstract class FileReferenceHelper {
    * @see #processContexts(FileReferenceSetParameters, VirtualFile, boolean, Processor) for more generic processing
    * @apiNote before running this method {@link #isMine(Project, VirtualFile)} should be called
    */
+  @Unmodifiable
   public @NotNull Collection<PsiFileSystemItem> getContexts(@NotNull Project project, final @NotNull VirtualFile hostFile) {
     return emptySet();
   }
