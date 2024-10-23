@@ -1,23 +1,33 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.ide.todo.configurable;
 
 import com.intellij.application.options.colors.ColorAndFontDescription;
 import com.intellij.application.options.colors.ColorAndFontDescriptionPanel;
 import com.intellij.application.options.colors.TextAttributesDescription;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.TodoAttributes;
 import com.intellij.psi.search.TodoAttributesUtil;
 import com.intellij.psi.search.TodoPattern;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +43,7 @@ final class PatternDialog extends DialogWrapper {
 
   private final ComboBox<Icon> myIconComboBox;
   private final JBCheckBox myCaseSensitiveCheckBox;
-  private final JBTextField myPatternStringField;
+  private final EditorTextField myPatternStringField;
   private final ColorAndFontDescriptionPanel myColorAndFontDescriptionPanel;
   private final ColorAndFontDescription myColorAndFontDescription;
   private final JBCheckBox myUsedDefaultColorsCheckBox;
@@ -58,7 +68,17 @@ final class PatternDialog extends DialogWrapper {
       label.setText(" ");
     }));
     myCaseSensitiveCheckBox = new JBCheckBox(IdeBundle.message("checkbox.case.sensitive"), pattern.isCaseSensitive());
-    myPatternStringField = new JBTextField(pattern.getPatternString());
+
+    DataContext context = DataManager.getInstance().getDataContext(parent);
+    Project project = CommonDataKeys.PROJECT.getData(context);
+    assert project != null;
+    String fileName = "dummy.regexp";
+    FileType possiblyUnknownFileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
+    FileType fileType = possiblyUnknownFileType == FileTypes.UNKNOWN ? FileTypes.PLAIN_TEXT : possiblyUnknownFileType;
+    // need a psi file and a non-default project to get error highlighting
+    final PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(fileName, fileType, pattern.getPatternString(), -1, true);
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    myPatternStringField = new EditorTextField(document, project, fileType);
 
     // use default colors check box
     myUsedDefaultColorsCheckBox = new JBCheckBox(IdeBundle.message("checkbox.todo.use.default.colors"));
