@@ -10,6 +10,7 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.ArtifactUtils;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.Model;
 import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.model.building.ModelProblem;
 import org.apache.maven.plugin.LegacySupport;
@@ -343,6 +344,8 @@ public class Maven40ProjectResolver {
     if (mavenProject == null) return new MavenServerExecutionResult(file, null, problems, Collections.emptySet());
 
     MavenModel model = new MavenModel();
+    Model nativeModel = mavenProject.getModel();
+    Model interpolatedNativeModel = Maven40ProfileUtil.interpolateAndAlignModel(nativeModel, myEmbedder.getMultiModuleProjectDirectory(), mavenProject.getBasedir());
     try {
       DependencyNode dependencyGraph =
         dependencyResolutionResult != null ? dependencyResolutionResult.getDependencyGraph() : null;
@@ -350,6 +353,7 @@ public class Maven40ProjectResolver {
       List<DependencyNode> dependencyNodes = dependencyGraph != null ? dependencyGraph.getChildren() : Collections.emptyList();
       model = Maven40AetherModelConverter.convertModelWithAetherDependencyTree(
         mavenProject,
+        interpolatedNativeModel,
         dependencyNodes,
         myLocalRepositoryFile);
     }
@@ -359,7 +363,7 @@ public class Maven40ProjectResolver {
 
     Collection<String> activatedProfiles = Maven40ProfileUtil.collectActivatedProfiles(mavenProject);
 
-    Map<String, String> mavenModelMap = Maven40ModelConverter.convertToMap(mavenProject.getModel());
+    Map<String, String> mavenModelMap = Maven40ModelConverter.convertToMap(interpolatedNativeModel);
     MavenServerExecutionResult.ProjectData data =
       new MavenServerExecutionResult.ProjectData(model, getManagedDependencies(mavenProject), dependencyHash, dependencyResolutionSkipped,
                                                  mavenModelMap, activatedProfiles);

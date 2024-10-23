@@ -208,6 +208,11 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     myImporterSpy = importerSpy;
   }
 
+  public File getMultiModuleProjectDirectory() {
+    String directory = myEmbedderSettings.getMultiModuleProjectDirectory();
+    return null == directory ? null : new File(directory);
+  }
+
   @NotNull
   private static List<String> createCommandLineOptions(MavenServerSettings serverSettings) {
     List<String> commandLineOptions = new ArrayList<String>(serverSettings.getUserProperties().size());

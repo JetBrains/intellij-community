@@ -168,6 +168,12 @@ public final class Maven40ProfileUtil {
   @NotNull
   public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir, File pomDir) {
     Model nativeModel = Maven40ModelConverter.toNativeModel(model);
+    Model result = interpolateAndAlignModel(nativeModel, basedir, pomDir);
+    return Maven40ModelConverter.convertModel(result);
+  }
+
+  @NotNull
+  public static Model interpolateAndAlignModel(Model nativeModel, File basedir, File pomDir) {
     DefaultPathTranslator pathTranslator = new DefaultPathTranslator();
     DefaultUrlNormalizer urlNormalizer = new DefaultUrlNormalizer();
     DefaultRootLocator rootLocator = new DefaultRootLocator();
@@ -175,7 +181,7 @@ public final class Maven40ProfileUtil {
     Model result = doInterpolate(interpolator, nativeModel, basedir);
     MyDefaultPathTranslator myPathTranslator = new MyDefaultPathTranslator(pathTranslator);
     myPathTranslator.alignToBaseDirectory(result, pomDir);
-    return Maven40ModelConverter.convertModel(result);
+    return result;
   }
 
   private static Model doInterpolate(StringVisitorModelInterpolator interpolator, @NotNull Model result, File basedir) {
