@@ -2,6 +2,8 @@
 package com.jetbrains.rhizomedb.impl
 
 import com.jetbrains.rhizomedb.*
+import fleet.util.radixTrie.*
+import fleet.util.reducible.*
 import kotlin.jvm.JvmInline
 
 /**

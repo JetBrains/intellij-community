@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.rhizomedb.impl
+package fleet.util.radixTrie
 
-import com.jetbrains.rhizomedb.ReduceDecision
+import fleet.util.serialization.DataSerializer
+import fleet.util.reducible.ReduceDecision
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
 
 private typealias TinyInt = Int // 5 bit
 
@@ -14,22 +19,23 @@ private const val COLLISION: What = 2
 typealias BitMap = Int
 
 //TODO: specialize for Longs!
+@Serializable(with=RadixTrieSerializer::class)
 class RadixTrieNode<V : Any>(var ints: IntArray?, // [k1 k2 k3]
                              var buffer: Array<Any?>, // [v1 v2 v3 ... c3 c2 c1]
                              var dataMap: BitMap, // [0 0 1 0 0 0 1 0 0 1 .. 0]
                              var collisionsMap: BitMap,
-                             val editor: Editor) {
+                             val editor: Any) {
 
   companion object {
     val EMPTY = RadixTrieNode<Any>(ints = null,
                                    buffer = emptyArray(),
                                    dataMap = 0,
                                    collisionsMap = 0,
-                                   editor = Editor())
+                                   editor = Any())
 
     fun <V : Any> empty(): RadixTrieNode<V> = EMPTY as RadixTrieNode<V>
 
-    fun <V : Any> makeCollision(k1: Int, v1: V, k2: Int, v2: V, shift: Int, editor: Editor): RadixTrieNode<V> = run {
+    fun <V : Any> makeCollision(k1: Int, v1: V, k2: Int, v2: V, shift: Int, editor: Any): RadixTrieNode<V> = run {
       val tinyKey1 = tinyInt(k1, shift)
       val tinyKey2 = tinyInt(k2, shift)
       when {
@@ -83,7 +89,7 @@ class RadixTrieNode<V : Any>(var ints: IntArray?, // [k1 k2 k3]
     ReduceDecision.Continue
   }
 
-  private inline fun mutate(editor: Editor, body: RadixTrieNode<V>.() -> Unit): RadixTrieNode<V> =
+  private inline fun mutate(editor: Any, body: RadixTrieNode<V>.() -> Unit): RadixTrieNode<V> =
     when {
       editor === this.editor -> this.apply { body() }
       else -> RadixTrieNode<V>(ints = ints?.copyOf(),
@@ -132,7 +138,7 @@ class RadixTrieNode<V : Any>(var ints: IntArray?, // [k1 k2 k3]
   val isEmpty: Boolean
     get() = dataMap == 0 && collisionsMap == 0
 
-  fun updateIntObject(key: Int, shift: Int, value: (V?) -> V?, editor: Editor): RadixTrieNode<V> = run {
+  fun updateIntObject(key: Int, shift: Int, value: (V?) -> V?, editor: Any): RadixTrieNode<V> = run {
     val tinyKey = tinyInt(key, shift)
     when (what(tinyKey)) {
       NONE -> {
@@ -233,14 +239,29 @@ class RadixTrieNode<V : Any>(var ints: IntArray?, // [k1 k2 k3]
 typealias RadixTrie<T> = RadixTrieNode<T>
 typealias RadixTrieLong = RadixTrieNode<Long>
 
-internal inline fun <V : Any> RadixTrie<V>.forEach(crossinline f: (Int, V) -> Unit) {
+inline fun <V : Any> RadixTrie<V>.forEach(crossinline f: (Int, V) -> Unit) {
   reduce { i, v -> f(i, v); ReduceDecision.Continue }
 }
 
 operator fun <V : Any> RadixTrie<V>.get(key: Int): V? = getIntObject(key, 0)
-internal fun <V : Any> RadixTrie<V>.remove(editor: Editor, key: Int): RadixTrie<V> = update(editor, key) { null }
-fun <V : Any> RadixTrie<V>.put(editor: Editor, key: Int, v: V): RadixTrie<V> = update(editor, key) { v }
-internal fun <V : Any> RadixTrie<V>.update(editor: Editor, key: Int, value: (V?) -> V?): RadixTrie<V> = updateIntObject(key, 0, value, editor)
+fun <V : Any> RadixTrie<V>.remove(editor: Any?, key: Int): RadixTrie<V> = update(editor, key) { null }
+fun <V : Any> RadixTrie<V>.put(editor: Any?, key: Int, v: V): RadixTrie<V> = update(editor, key) { v }
+fun <V : Any> RadixTrie<V>.update(editor: Any?, key: Int, value: (V?) -> V?): RadixTrie<V> = updateIntObject(key, 0, value, editor ?: Any())
+
+class RadixTrieSerializer<V : Any>(valSer: KSerializer<V>) : DataSerializer<RadixTrie<V>, Map<Int, V>>(MapSerializer(Int.serializer(), valSer)) {
+  override fun fromData(data: Map<Int, V>): RadixTrie<V> {
+    val editor = Any()
+    return data.entries.fold(RadixTrie.empty()) { trie, (k, v) ->
+      trie.put(editor, k, v)
+    }
+  }
+
+  override fun toData(value: RadixTrie<V>): Map<Int, V> {
+    val map = mutableMapOf<Int, V>()
+    value.forEach { k, v -> map[k] = v }
+    return map
+  }
+}
 
 private fun Array<Any?>.replaceCollisionWithData(dataIndex: Int, collisionIndex: Int, data: Any?) {
   if (dataIndex < collisionIndex) {
@@ -354,7 +375,7 @@ private inline fun BitMap.bitsBefore(key: TinyInt): Int =
   (this and (mask(key) - 1)).countOneBits()
 
 private fun radix() {
-  val e = Editor()
+  val e = Any()
   var t = RadixTrie.empty<String>()
   var v: String? = null
   repeat(10000000) { i ->

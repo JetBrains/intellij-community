@@ -190,9 +190,6 @@ object CommunityLibraryLicenses {
       .apache("https://xmlgraphics.apache.org/batik/license.html")
       .suppliedByOrganizations(Suppliers.APACHE),
 
-    LibraryLicense("bifurcan", libraryName = "io.lacuna:bifurcan", url = "https://github.com/lacuna/bifurcan")
-      .mit("https://github.com/lacuna/bifurcan/blob/master/LICENSE"),
-
     LibraryLicense(libraryName = "blockmap", url = "https://github.com/JetBrains/plugin-blockmap-patches")
       .apache("https://github.com/JetBrains/plugin-blockmap-patches/blob/master/LICENSE"),
 

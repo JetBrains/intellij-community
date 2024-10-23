@@ -3,6 +3,8 @@ package com.jetbrains.rhizomedb
 
 //import kotlin.internal.OnlyInputTypes
 import com.jetbrains.rhizomedb.impl.*
+import fleet.util.reducible.Reducible
+import fleet.util.reducible.emptyReducible
 import fleet.util.singleOrNullOrThrowWithMessage
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1

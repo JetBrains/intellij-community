@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.rhizomedb.impl
 
+import fleet.util.radixTrie.*
+
 internal typealias IntIntTrie<V> = RadixTrie<RadixTrie<V>>
 
 internal fun <V : Any> IntIntTrie<V>.get(key1: Int, key2: Int): V? = get(key1)?.get(key2)

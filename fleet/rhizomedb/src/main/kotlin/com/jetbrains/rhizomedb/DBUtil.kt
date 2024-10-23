@@ -4,6 +4,7 @@ package com.jetbrains.rhizomedb
 import com.jetbrains.rhizomedb.impl.EidGen
 import com.jetbrains.rhizomedb.impl.entityTypePossibleAttributes
 import com.jetbrains.rhizomedb.impl.generateSeed
+import fleet.util.reducible.*
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet

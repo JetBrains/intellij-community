@@ -5,6 +5,8 @@ module fleet.util.core {
   exports fleet.util.bifurcan;
   exports fleet.util.channels;
   exports fleet.util.openmap;
+  exports fleet.util.radixTrie;
+  exports fleet.util.reducible;
   exports fleet.util.serialization;
   exports fleet.util.tree;
   exports com.tylerthrailkill.helpers.prettyprint;
@@ -13,7 +15,6 @@ module fleet.util.core {
   requires kotlinx.coroutines.core;
   requires kotlinx.coroutines.slf4j;
   requires transitive kotlinx.collections.immutable.jvm;
-  requires bifurcan;
   requires transitive fleet.util.logging.api;
   requires kotlinx.serialization.core;
   requires kotlinx.serialization.json;
