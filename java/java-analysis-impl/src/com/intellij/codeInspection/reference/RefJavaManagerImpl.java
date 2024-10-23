@@ -24,6 +24,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.uast.UastVisitorAdapter;
+import com.intellij.util.LazyInitializer;
 import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +51,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
   private final PsiMethod myAppMainPattern;
   private final PsiMethod myAppPremainPattern;
   private final PsiMethod myAppAgentmainPattern;
-  private final PsiClass myApplet;
+  private final LazyInitializer.LazyValue<PsiClass> myApplet;
   private volatile RefPackage myCachedDefaultPackage;  // cached value. benign race
   private Map<String, RefPackage> myPackages; // guarded by this
   private final RefManagerImpl myRefManager;
@@ -65,7 +66,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     myAppPremainPattern = factory.createMethodFromText("void premain(String[] args, java.lang.instrument.Instrumentation i);", null);
     myAppAgentmainPattern = factory.createMethodFromText("void agentmain(String[] args, java.lang.instrument.Instrumentation i);", null);
 
-    myApplet = JavaPsiFacade.getInstance(project).findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
+    myApplet = LazyInitializer.create(() -> JavaPsiFacade.getInstance(project).findClass("java.applet.Applet", GlobalSearchScope.allScope(project)));
   }
 
   @Override
@@ -182,12 +183,12 @@ public final class RefJavaManagerImpl extends RefJavaManager {
 
   @Override
   public PsiClass getApplet() {
-    return myApplet;
+    return myApplet.get();
   }
 
   @Override
   public String getAppletQName() {
-    return myApplet.getQualifiedName();
+    return myApplet.get().getQualifiedName();
   }
 
   @Override
