@@ -25,7 +25,7 @@ class PipEnvNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel)
   override fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Sdk? =
     setupPipEnvSdkUnderProgress(project, module, baseSdks, projectPath, homePath, installPackages)
 
-  override fun detectExecutable() {
+  override suspend fun detectExecutable() {
     model.detectPipEnvExecutable()
   }
 }

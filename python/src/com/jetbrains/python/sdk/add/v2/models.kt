@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
@@ -23,7 +24,7 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.pipenv.pipEnvPath
-import com.jetbrains.python.sdk.poetry.getPoetryExecutable
+import com.jetbrains.python.sdk.poetry.poetryPath
 import com.jetbrains.python.util.ErrorSink
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -170,28 +171,30 @@ abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModel
     detectPipEnvExecutable()
   }
 
-  fun detectPoetryExecutable() {
+  suspend fun detectPoetryExecutable() {
     // todo this is local case, fix for targets
-    scope.launch(Dispatchers.IO) {
-      val poetryExecutable = getPoetryExecutable()
+    val savedPath = PropertiesComponent.getInstance().poetryPath
+    if (savedPath != null) {
+      state.poetryExecutable.set(savedPath)
+    }
+    else {
+      val poetryExecutable = withContext(Dispatchers.IO) { com.jetbrains.python.sdk.poetry.detectPoetryExecutable() }
       withContext(Dispatchers.EDT) {
         poetryExecutable?.let { state.poetryExecutable.set(it.pathString) }
       }
     }
   }
 
-  fun detectPipEnvExecutable() {
+  suspend fun detectPipEnvExecutable() {
     // todo this is local case, fix for targets
     val savedPath = PropertiesComponent.getInstance().pipEnvPath
     if (savedPath != null) {
       state.pipenvExecutable.set(savedPath)
     }
     else {
-      scope.launch(Dispatchers.IO) {
-        val detectedExecutable = com.jetbrains.python.sdk.pipenv.detectPipEnvExecutable()
-        withContext(Dispatchers.EDT) {
-          detectedExecutable?.let { state.pipenvExecutable.set(it.path) }
-        }
+      val detectedExecutable = withContext(Dispatchers.IO) { com.jetbrains.python.sdk.pipenv.detectPipEnvExecutable() }
+      withContext(Dispatchers.EDT) {
+        detectedExecutable?.let { state.pipenvExecutable.set(it.path) }
       }
     }
   }
