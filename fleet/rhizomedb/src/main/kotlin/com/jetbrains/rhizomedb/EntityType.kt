@@ -193,7 +193,7 @@ internal fun <E : Entity> EntityType<E>.buildAttributes(builder: EntityBuilder<E
                 add(entityAttribute.attr to defaultValue)
             }
           }
-          entityAttribute.attr.schema.required -> error("required attribute $ident was not initialized")
+          entityAttribute.attr.schema.required -> throw TxValidationException("required attribute $ident was not initialized")
         }
       }
     }
