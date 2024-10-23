@@ -32,7 +32,9 @@ object InlineCompletionTooltipFactory {
           override fun isFocusable() = false
           override fun getIcon() = AllIcons.Actions.More
         }
-        cell(moreActionsButton)
+        if (actions.isNotEmpty()) {
+          cell(moreActionsButton)
+        }
       }
     }
   }
