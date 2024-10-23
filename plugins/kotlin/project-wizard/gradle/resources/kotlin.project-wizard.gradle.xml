@@ -5,6 +5,7 @@
     <module name="kotlin.project-wizard.idea"/>
     <module name="kotlin.gradle.code-insight-common"/>
     <module name="kotlin.gradle.gradle-java"/>
+    <module name="kotlin.gradle.gradle-tooling"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
