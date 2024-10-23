@@ -21,6 +21,7 @@ import com.intellij.ui.PopupBorder
 import com.intellij.ui.WindowRoundedCornersManager
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.util.width
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -35,6 +36,7 @@ import javax.swing.border.Border
 import javax.swing.text.View
 import kotlin.io.path.name
 import kotlin.io.path.pathString
+import kotlin.math.ceil
 
 internal class TrustedProjectStartupDialog(
   private val project: Project?, @NonNls private val projectPath: Path, val isWinDefenderEnabled: Boolean = true,
@@ -172,21 +174,22 @@ internal class TrustedProjectStartupDialog(
     override fun mouseMoved(e: MouseEvent) {
       val checkBox = e.source as? JBCheckBox ?: return
       val position = e.point
+      val textWithMarkedElements = checkBox.text.removePrefix("<html>").replace("'", "").replace("<b>", "'").replace("</b>", "'")
       val htmlDocument = (checkBox.getClientProperty("html") as? View)?.document
 
-      val text = htmlDocument?.getText(0, htmlDocument.length)?.replace("\n", "") ?: checkBox.text
+      val text = htmlDocument?.getText(0, htmlDocument.length)?.replace("\n", "") ?: textWithMarkedElements
       val fontMetrics = checkBox.getFontMetrics(checkBox.font)
       val bounds = fontMetrics.getStringBounds(text, checkBox.graphics)
-      val x = checkBox.width - bounds.width
+      val x = checkBox.width - bounds.width - checkBox.insets.width
       bounds.setRect(x + bounds.x, bounds.y, bounds.width, bounds.height)
       val mousePosition = position.x - x
       if (mousePosition < 0) {
         checkBox.toolTipText = null
         return
       }
-      val quotePositions = StringUtil.findAllIndexesOfSymbol(text, '\'')
+      val quotePositions = StringUtil.findAllIndexesOfSymbol(textWithMarkedElements, '\'')
       // Estimate the character position based on mouse x-coordinate relative to bounds
-      val positionX = (mousePosition / (bounds.width / text.length)).toInt().coerceIn(0, text.length - 1)
+      val positionX = ceil(mousePosition / (bounds.width / text.length)).toInt().coerceIn(0, text.length - 1)
 
       val paths = orderedPaths()
       for (pathInd in paths.indices) {
