@@ -95,8 +95,12 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
       }
 
       if (revision == null) {
-        Pair<FilePath, VcsRevisionNumber> pair = getPathAndRevision(file);
-        return annotate(pair.first, pair.second, file);
+        FilePath filePath = VcsUtil.getLastCommitPath(myProject, VcsUtil.getFilePath(file));
+        VcsRevisionNumber currentRevision = getCurrentRevision(file);
+        // Only get cached last revision here to avoid slowdowns, we'll compute it on annotation caching
+        VcsRevisionNumber cachedLastRevision =
+          currentRevision != null ? myCache.getLastRevision(filePath, GitVcs.getKey(), currentRevision) : null;
+        return annotate(filePath, cachedLastRevision, file);
       }
       else {
         FilePath filePath = ((VcsFileRevisionEx)revision).getPath();
@@ -132,16 +136,26 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
                                               @NotNull VirtualFile file) throws VcsException {
     VirtualFile root = GitUtil.getRootForFile(myProject, filePath);
 
-    GitFileAnnotation fileAnnotation;
+    GitFileAnnotation fileAnnotation = null;
     if (revision != null) {
       fileAnnotation = getCached(filePath, revision, file);
-      if (fileAnnotation == null) {
-        fileAnnotation = doAnnotate(root, filePath, revision, file);
+    }
+
+    if (fileAnnotation == null) {
+      fileAnnotation = doAnnotate(root, filePath, revision, file);
+
+      if (revision != null) {
         cache(filePath, revision, fileAnnotation);
       }
-    }
-    else {
-      fileAnnotation = doAnnotate(root, filePath, null, file);
+      else { // compute last revision and cache annotations in the background
+        GitFileAnnotation finalFileAnnotation = fileAnnotation;
+        BackgroundTaskUtil.executeOnPooledThread(GitDisposable.getInstance(myProject), () -> {
+          VcsRevisionNumber lastRevision = getLastRevision(filePath, getCurrentRevision(file));
+          if (lastRevision != null) {
+            cache(filePath, lastRevision, finalFileAnnotation);
+          }
+        });
+      }
     }
 
     if (fileAnnotation.getRevisions() == null) {
@@ -197,10 +211,6 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
                                                 @NotNull FilePath filePath,
                                                 @Nullable VcsRevisionNumber revision,
                                                 @NotNull VirtualFile file) throws VcsException {
-    if (revision == null) {
-      LOG.warn("Computing annotations for implicitly passed HEAD revision");
-    }
-
     setProgressIndicatorText(GitBundle.message("computing.annotation", file.getName()));
 
     return myProject.getService(GitAnnotationService.class).annotate(root, filePath, revision, file);
@@ -221,6 +231,12 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
                                                @NotNull FilePath filePath,
                                                @Nullable VcsRevisionNumber revision,
                                                @NotNull VirtualFile file) throws VcsException {
+      // parseAnnotations rely on the fact that revision should be the last file's modified revision
+      if (revision == null) {
+        GitAnnotationProvider provider = project.getService(GitAnnotationProvider.class);
+        revision = provider.getLastRevision(filePath, provider.getCurrentRevision(file));
+      }
+
       // binary handler to preserve CR symbols intact
       GitBinaryHandler h = new GitBinaryHandler(project, root, GitCommand.BLAME);
       h.setStdoutSuppressed(true);
