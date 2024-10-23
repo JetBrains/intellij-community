@@ -743,6 +743,7 @@ c:com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSett
 - sf:REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY:java.lang.String
 - <init>():V
 - <init>(com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings):V
+- addEnvironmentVariable(java.lang.String,java.lang.String):V
 - equals(java.lang.Object):Z
 - getArguments():java.util.List
 - getEnv():java.util.Map
