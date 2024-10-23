@@ -104,7 +104,7 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
     return entity
   }
 
-  private fun findChangesInTree(changeListDto: ChangeListDto): List<ShelvedChangeNode> {
+  internal fun findChangesInTree(changeListDto: ChangeListDto): List<ShelvedChangeNode> {
     val changeListNode = TreeUtil.treeTraverser(tree)
                            .bfsTraversal()
                            .find { (it as ChangesBrowserNode<*>).getUserData(ENTITY_ID_KEY) == changeListDto.changeList } as? ChangesBrowserNode<*>
@@ -156,49 +156,9 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
     }
   }
 
-  fun unshelveSilently(changeListDto: List<ChangeListDto>) {
-    cs.launch {
-      withContext(Dispatchers.EDT) {
-        FileDocumentManager.getInstance().saveAllDocuments()
-      }
-      val changeLists = mutableListOf<ShelvedChangeList>()
-      val changes = mutableListOf<ShelvedChange>()
-      val files = mutableListOf<ShelvedBinaryFile>()
-      changeListDto.forEach {
-        findChangesInTree(it).forEach { node ->
-          val change = node.shelvedChange
-          changeLists.add(change.changeList)
-          if (change.binaryFile != null) {
-            files.add(change.binaryFile!!)
-          }
-          else {
-            changes.add(change.shelvedChange!!)
-          }
-        }
-      }
-
-      ShelveChangesManager.getInstance(project).unshelveSilentlyAsynchronously(project, changeLists, changes, files, null)
-    }
-  }
 
   fun changeGrouping(groupingKeys: Set<String>) {
     tree.groupingSupport.setGroupingKeys(groupingKeys)
-  }
-
-  fun createPatchForShelvedChanges(changeListsDto: List<ChangeListDto>, silentClipboard: Boolean) {
-    cs.launch(Dispatchers.EDT) {
-      val patchBuilder: CreatePatchCommitExecutor.PatchBuilder
-      val changeNodes = changeListsDto.flatMap { findChangesInTree(it) }
-      val changeList = changeNodes.first().shelvedChange.changeList
-      if (changeListsDto.size == 1) {
-        patchBuilder = CreatePatchCommitExecutor.ShelfPatchBuilder(project, changeList, changeNodes.map { it.shelvedChange.path })
-      }
-      else {
-        patchBuilder = CreatePatchCommitExecutor.DefaultPatchBuilder(project)
-      }
-      val changes = changeNodes.map { it.shelvedChange.getChangeWithLocal(project) }
-      CreatePatchFromChangesAction.createPatch(project, changeList.description, changes, silentClipboard, patchBuilder)
-    }
   }
 
   override fun dispose() {

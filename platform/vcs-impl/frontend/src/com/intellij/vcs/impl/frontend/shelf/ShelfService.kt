@@ -11,6 +11,7 @@ import com.intellij.vcs.impl.shared.rhizome.SelectShelveChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import com.intellij.vcs.impl.shared.rpc.ChangeListDto
+import com.intellij.vcs.impl.shared.rpc.RemoteShelfActionsApi
 import com.intellij.vcs.impl.shared.rpc.RemoteShelfApi
 import fleet.kernel.rete.collectLatest
 import fleet.kernel.rete.each
@@ -29,7 +30,7 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
           ChangeListDto(it.key.sharedRef(), it.value.map { it.sharedRef() })
         } ?: return@withKernel
         val projectRef = project.asEntity().sharedRef()
-        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).unshelveSilently(projectRef, changeLists)
+        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).unshelveSilently(projectRef, changeLists)
       }
     }
   }
@@ -43,7 +44,7 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
           val changes = it.changes.map { (it as ShelvedChangeEntity).sharedRef() }
           ChangeListDto(changeListNode.sharedRef(), changes)
         }
-        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).createPatchForShelvedChanges(projectRef, changeLists, silentClipboard)
+        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).createPatchForShelvedChanges(projectRef, changeLists, silentClipboard)
       }
     }
   }
