@@ -351,7 +351,8 @@ public class JBZipEntry implements Cloneable {
         return bis;
       case ZipEntry.DEFLATED:
         bis.addDummy();
-        return new InflaterInputStream(bis, new Inflater(true));
+        int bufferSize = Math.min((int)this.size, 8192);
+        return new InflaterInputStream(bis, new Inflater(true), bufferSize);
       default:
         throw new ZipException("Found unsupported compression method " + getMethod());
     }
