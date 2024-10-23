@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-final class CombinedPopupLayout implements LayoutManager {
+public final class CombinedPopupLayout implements LayoutManager {
 
   private static final int MAX_POPUP_WIDTH = 950;
 
