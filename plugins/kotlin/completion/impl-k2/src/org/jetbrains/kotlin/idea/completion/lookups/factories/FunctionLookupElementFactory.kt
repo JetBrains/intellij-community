@@ -43,7 +43,7 @@ internal object FunctionLookupElementFactory {
         signature: KaFunctionSignature<*>,
         options: CallableInsertionOptions,
         expectedType: KaType? = null,
-    ): LookupElement {
+    ): LookupElementBuilder {
         val valueParameters = signature.valueParameters
 
         val lookupObject = FunctionCallLookupObject(
@@ -67,7 +67,7 @@ internal object FunctionLookupElementFactory {
         shortName: Name,
         signature: KaFunctionSignature<*>,
         options: CallableInsertionOptions,
-    ): LookupElement? {
+    ): LookupElementBuilder? {
         val valueParameters = signature.valueParameters
 
         val trailingFunctionSignature = valueParameters.lastOrNull()
@@ -138,9 +138,9 @@ internal object FunctionLookupElementFactory {
     private fun createLookupElement(
         signature: KaFunctionSignature<*>,
         lookupObject: FunctionCallLookupObject,
-    ): LookupElement = LookupElementBuilder.create(
+    ): LookupElementBuilder = LookupElementBuilder.create(
         /* lookupObject = */ lookupObject,
-        /* lookupString = */ lookupObject.shortName.asString()
+        /* lookupString = */ lookupObject.shortName.asString(),
     ).appendTailText(lookupObject.renderedDeclaration, true)
         .appendTailText(TailTextProvider.getTailText(signature), true)
         .let { withCallableSignatureInfo(signature, it) }
@@ -266,7 +266,6 @@ internal data class FunctionCallLookupObject(
     val inputTypeArgumentsAreRequired: Boolean = false,
     val trailingLambdaTemplate: Template? = null,
 ) : KotlinCallableLookupObject()
-
 
 internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
     private fun addArguments(context: InsertionContext, offsetElement: PsiElement, lookupObject: FunctionCallLookupObject) {

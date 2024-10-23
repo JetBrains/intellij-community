@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion.lookups.factories
 
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -52,7 +53,7 @@ object KotlinFirLookupElementFactory {
         signature: KaCallableSignature<*>,
         options: CallableInsertionOptions,
         expectedType: KaType? = null,
-    ): LookupElement = when (signature) {
+    ): LookupElementBuilder = when (signature) {
         is KaFunctionSignature<*> -> FunctionLookupElementFactory.createLookup(name, signature, options, expectedType)
         is KaVariableSignature<*> -> VariableLookupElementFactory.createLookup(signature, options)
     }
@@ -63,7 +64,7 @@ object KotlinFirLookupElementFactory {
         name: Name,
         signature: KaCallableSignature<*>,
         options: CallableInsertionOptions,
-    ): LookupElement? = when (signature) {
+    ): LookupElementBuilder? = when (signature) {
         is KaFunctionSignature<*> -> FunctionLookupElementFactory.createLookupWithTrailingLambda(name, signature, options)
         else -> null
     }

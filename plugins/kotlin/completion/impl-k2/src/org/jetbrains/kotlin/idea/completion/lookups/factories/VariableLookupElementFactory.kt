@@ -30,7 +30,7 @@ internal object VariableLookupElementFactory {
     fun createLookup(
         signature: KaVariableSignature<*>,
         options: CallableInsertionOptions,
-    ): LookupElement {
+    ): LookupElementBuilder {
         val rendered = renderVariable(signature)
         var builder = createLookupElementBuilder(options, signature, rendered)
 
@@ -48,17 +48,18 @@ internal object VariableLookupElementFactory {
         options: CallableInsertionOptions,
         signature: KaVariableSignature<*>,
         rendered: String,
-        insertionStrategy: CallableInsertionStrategy = options.insertionStrategy
+        insertionStrategy: CallableInsertionStrategy = options.insertionStrategy,
     ): LookupElementBuilder {
         val name = signature.symbol.name
+        val lookupString = name.asString()
 
         return when (insertionStrategy) {
             CallableInsertionStrategy.AsCall -> {
                 val functionalType = signature.returnType as KaFunctionType
                 val lookupObject = FunctionCallLookupObject(
-                    name,
-                    options,
-                    rendered,
+                    shortName = name,
+                    options = options,
+                    renderedDeclaration = rendered,
                     inputValueArgumentsAreRequired = functionalType.parameterTypes.isNotEmpty(),
                     inputTypeArgumentsAreRequired = false,
                     trailingLambdaTemplate = null, // TODO
@@ -66,7 +67,7 @@ internal object VariableLookupElementFactory {
 
                 val tailText = getTailTextForVariableCall(functionalType, signature)
 
-                LookupElementBuilder.create(lookupObject, name.asString())
+                LookupElementBuilder.create(lookupObject, lookupString)
                     .withTailText(tailText, true)
                     .withInsertHandler(FunctionInsertionHandler)
             }
@@ -79,7 +80,7 @@ internal object VariableLookupElementFactory {
             else -> {
                 val lookupObject = VariableLookupObject(name, options, rendered)
                 markIfSyntheticJavaProperty(
-                    LookupElementBuilder.create(lookupObject, name.asString())
+                    LookupElementBuilder.create(lookupObject, lookupString)
                         .withTailText(getTailText(signature), true), signature.symbol
                 ).withInsertHandler(VariableInsertionHandler)
             }
@@ -114,7 +115,6 @@ private data class VariableLookupObject(
     override val options: CallableInsertionOptions,
     override val renderedDeclaration: String,
 ) : KotlinCallableLookupObject()
-
 
 private object VariableInsertionHandler : CallableIdentifierInsertionHandler()
 
