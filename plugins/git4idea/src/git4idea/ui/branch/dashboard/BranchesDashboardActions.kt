@@ -392,13 +392,16 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class ShowMyBranchesAction(private val uiController: BranchesDashboardController)
-    : ToggleAction(messagePointer("action.Git.Show.My.Branches.title"), AllIcons.Actions.Find), DumbAware {
+  class ShowMyBranchesAction : ToggleAction(messagePointer("action.Git.Show.My.Branches.title"), AllIcons.Actions.Find), DumbAware {
 
-    override fun isSelected(e: AnActionEvent) = uiController.showOnlyMy
+    override fun isSelected(e: AnActionEvent): Boolean {
+      val controller = e.getData(BRANCHES_UI_CONTROLLER) ?: return false
+      return controller.showOnlyMy
+    }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
-      uiController.showOnlyMy = state
+      val controller = e.getData(BRANCHES_UI_CONTROLLER) ?: return
+      controller.showOnlyMy = state
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread {

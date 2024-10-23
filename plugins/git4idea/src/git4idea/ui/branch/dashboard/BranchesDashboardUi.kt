@@ -212,7 +212,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     val deleteAction = DeleteBranchAction()
     val toggleFavoriteAction = ToggleFavoriteAction()
     val fetchAction = FetchAction(this)
-    val showMyBranchesAction = ShowMyBranchesAction(uiController)
+    val showMyBranchesAction = ShowMyBranchesAction()
     val newBranchAction = actionManager.getAction("Git.New.Branch.In.Log")
     val updateSelectedAction = UpdateSelectedBranchAction()
     val defaultTreeExpander = DefaultTreeExpander(filteringTree.component)
