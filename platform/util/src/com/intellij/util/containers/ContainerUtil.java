@@ -719,7 +719,7 @@ public final class ContainerUtil {
                                                                     boolean mergeEqualItems) {
     List<T> result = new ArrayList<>(list1.size() + list2.size());
     processSortedListsInOrder(list1, list2, comparator, mergeEqualItems, (t, __) -> result.add(t));
-    return result;
+    return result.isEmpty() ? emptyList() : result;
   }
 
   @Contract(pure = true)
