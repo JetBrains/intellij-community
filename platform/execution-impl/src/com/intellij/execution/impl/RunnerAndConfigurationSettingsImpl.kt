@@ -171,7 +171,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   override fun getName(): String {
     val configuration = configuration
     if (isTemplate) {
-      return "<template> of ${factory.id}"
+      return ExecutionBundle.message("runner.and.configuration.settings.from.template", factory.name)
     }
     return configuration.name
   }
