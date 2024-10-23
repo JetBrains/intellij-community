@@ -13,6 +13,7 @@ import java.io.RandomAccessFile;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipException;
 
 /**
@@ -25,6 +26,9 @@ import java.util.zip.ZipException;
  *
  * <p>As a pure-Java implementation, the class is noticeably slower (up to 2x, depending on a configuration).
  * On a positive side, the class doesn't crash a JVM when an archive is overwritten externally while open.</p>
+ *
+ * <h3>IntelliJ-specific changes</h3>
+ * We added synchronization to this class, so now reading a single {@code JBZipFile} from several threads is safe.
  *
  * <h3>Implementation notes</h3>
  *
@@ -58,7 +62,7 @@ public class JBZipFile implements Closeable {
   /**
    * A map of entry names.
    */
-  private final Map<String, JBZipEntry> nameMap = new HashMap<>(HASH_SIZE);
+  private final Map<String, JBZipEntry> nameMap = new ConcurrentHashMap<>(HASH_SIZE);
 
   /**
    * The encoding to use for filenames and the file comment

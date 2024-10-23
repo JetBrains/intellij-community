@@ -30,20 +30,20 @@ public class JBZipEntry implements Cloneable {
   private static final int SHORT_MASK = 0xFFFF;
   private static final int SHORT_SHIFT = 16;
 
-  private long time = -1;     // modification time (in DOS time)
-  private long crc = -1;      // crc-32 of entry data
-  private long size = -1;     // uncompressed size of entry data
-  private long csize = -1;    // compressed size of entry data
-  private int method = -1;    // compression method
-  private List<JBZipExtraField> extra = new SmartList<>();   // optional extra field data for entry
-  private String comment;     // optional comment string for entry
+  private volatile long time = -1;     // modification time (in DOS time)
+  private volatile long crc = -1;      // crc-32 of entry data
+  private volatile long size = -1;     // uncompressed size of entry data
+  private volatile long csize = -1;    // compressed size of entry data
+  private volatile int method = -1;    // compression method
+  private volatile List<JBZipExtraField> extra = new SmartList<>();   // optional extra field data for entry
+  private volatile String comment;     // optional comment string for entry
 
-  private int internalAttributes = 0;
-  private int platform = PLATFORM_FAT;
-  private long externalAttributes = 0;
-  private String name;
+  private volatile int internalAttributes = 0;
+  private volatile int platform = PLATFORM_FAT;
+  private volatile long externalAttributes = 0;
+  private volatile String name;
 
-  private long headerOffset = -1;
+  private volatile long headerOffset = -1;
   private final JBZipFile myFile;
 
 
@@ -336,7 +336,10 @@ public class JBZipEntry implements Cloneable {
 
   private InputStream getInputStream() throws IOException {
     myFile.ensureFlushed(getHeaderOffset() + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH + JBZipFile.WORD);
-    long start = calcDataOffset();
+    long start;
+    synchronized (myFile.myArchive) {
+      start = calcDataOffset();
+    }
     long size = getCompressedSize();
     myFile.ensureFlushed(start + size);
     if (myFile.myArchive.length() < start + size) {
@@ -607,8 +610,10 @@ public class JBZipEntry implements Cloneable {
 
       final int ret;
       RandomAccessFile archive = myFile.myArchive;
-      archive.seek(loc);
-      ret = archive.read(b, off, len);
+      synchronized (myFile.myArchive) {
+        archive.seek(loc);
+        ret = archive.read(b, off, len);
+      }
 
       if (ret > 0) {
         loc += ret;
