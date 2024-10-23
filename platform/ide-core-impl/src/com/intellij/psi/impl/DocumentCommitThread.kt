@@ -19,26 +19,26 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ProperTextRange
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.*
 import com.intellij.psi.text.BlockSupport
 import com.intellij.util.SmartList
-import com.intellij.util.concurrency.createBoundedTaskExecutor
+import com.intellij.util.concurrency.waitAllTasksExecuted
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.job
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.lang.ref.Reference
 import java.util.concurrent.Callable
 import java.util.concurrent.TimeUnit
-import java.util.function.BooleanSupplier
 
 private val LOG = logger<DocumentCommitThread>()
 
 @ApiStatus.Internal
 class DocumentCommitThread internal constructor(coroutineScope: CoroutineScope) : DocumentCommitProcessor {
-  private val executor = createBoundedTaskExecutor("Document Commit Pool", coroutineScope)
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val childScope = coroutineScope.childScope("Document Commit Pool", Dispatchers.Default.limitedParallelism(1))
 
   @Volatile
   private var isDisposed = false
@@ -85,30 +85,38 @@ class DocumentCommitThread internal constructor(coroutineScope: CoroutineScope) 
     )
     ReadAction
       .nonBlocking(Callable { commitUnderProgress(task = task, synchronously = false, documentManager = documentManager) })
-      .expireWhen(
-        BooleanSupplier { project.isDisposed() || isDisposed || !documentManager.isInUncommittedSet(document) || !task.isStillValid }
-      )
+      .expireWhen { isDisposed || project.isDisposed() || !documentManager.isInUncommittedSet(document) || !task.isStillValid }
       .coalesceBy(task)
-      .finishOnUiThread(modality) { it.run() }
-      .submit(executor)
+      .finishOnUiThread(modality) { it() }
+      .submit {
+        childScope.launch {
+          it.run()
+        }
+      }
   }
 
   override fun commitSynchronously(document: Document, project: Project, psiFile: PsiFile) {
     assert(!isDisposed)
 
     require(!(!project.isInitialized() && !project.isDefault)) {
-      "Must not call sync commit with unopened project: " + project + "; Disposed: " + project.isDisposed() + "; Open: " + project.isOpen()
+      "Must not call sync commit with unopened project: $project; Disposed: ${project.isDisposed()}; Open: ${project.isOpen()}"
     }
 
     val documentManager = PsiDocumentManager.getInstance(project) as PsiDocumentManagerBase
-    val task = CommitTask(project, document, "Sync commit", ModalityState.defaultModalityState(),
-                          documentManager.getLastCommittedText(document), psiFile.getViewProvider())
+    val task = CommitTask(
+      project = project,
+      document = document,
+      reason = "Sync commit",
+      myCreationModality = ModalityState.defaultModalityState(),
+      myLastCommittedText = documentManager.getLastCommittedText(document),
+      cachedViewProvider = psiFile.getViewProvider(),
+    )
 
-    commitUnderProgress(task, true, documentManager).run()
+    commitUnderProgress(task = task, synchronously = true, documentManager = documentManager)()
   }
 
   // returns finish commit Runnable (to be invoked later in EDT) or null on failure
-  private fun commitUnderProgress(task: CommitTask, synchronously: Boolean, documentManager: PsiDocumentManagerBase): Runnable {
+  private fun commitUnderProgress(task: CommitTask, synchronously: Boolean, documentManager: PsiDocumentManagerBase): () -> Unit {
     val document = task.document
     val project = task.project
     val finishProcessors = SmartList<BooleanRunnable>()
@@ -152,10 +160,11 @@ class DocumentCommitThread internal constructor(coroutineScope: CoroutineScope) 
       }
     }
 
-    return Runnable {
+    return task@ {
       if (project.isDisposed()) {
-        return@Runnable
+        return@task
       }
+
       val success = documentManager.finishCommit(document, finishProcessors, reparseInjectedProcessors, synchronously, task.reason)
       if (synchronously) {
         assert(success)
@@ -183,16 +192,17 @@ class DocumentCommitThread internal constructor(coroutineScope: CoroutineScope) 
   @TestOnly
   fun waitForAllCommits(timeout: Long, timeUnit: TimeUnit) {
     if (!ApplicationManager.getApplication().isDispatchThread()) {
-      while (!executor.isEmpty()) {
-        executor.waitAllTasksExecuted(timeout, timeUnit)
+      while (childScope.coroutineContext.job.children.any()) {
+        waitAllTasksExecuted(coroutineScope = childScope, timeout = timeout, timeUnit = timeUnit)
       }
       return
     }
+
     assert(!ApplicationManager.getApplication().isWriteAccessAllowed())
 
     EDT.dispatchAllInvocationEvents()
-    while (!executor.isEmpty()) {
-      executor.waitAllTasksExecuted(timeout, timeUnit)
+    while (childScope.coroutineContext.job.children.any()) {
+      waitAllTasksExecuted(coroutineScope = childScope, timeout = timeout, timeUnit = timeUnit)
       EDT.dispatchAllInvocationEvents()
     }
   }

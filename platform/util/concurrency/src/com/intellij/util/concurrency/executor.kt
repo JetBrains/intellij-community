@@ -73,6 +73,7 @@ class CoroutineDispatcherBackedExecutor(coroutineScope: CoroutineScope, name: St
   fun isEmpty(): Boolean = childScope.coroutineContext.job.children.none()
 
   override fun execute(command: Runnable) {
+    childScope.coroutineContext.ensureActive()
     childScope.launch(ClientId.coroutineContext()) {
       blockingContext {
         command.run()
@@ -108,16 +109,22 @@ class CoroutineDispatcherBackedExecutor(coroutineScope: CoroutineScope, name: St
   @Throws(TimeoutCancellationException::class)
   @TestOnly
   fun waitAllTasksExecuted(timeout: Long, timeUnit: TimeUnit) {
-    @Suppress("RAW_RUN_BLOCKING")
-    runBlocking {
-      withTimeout(timeUnit.toMillis(timeout)) {
-        while (true) {
-          val jobs = childScope.coroutineContext.job.children.toList()
-          if (jobs.isEmpty()) {
-            break
-          }
-          jobs.joinAll()
+    waitAllTasksExecuted(coroutineScope = childScope, timeout = timeout, timeUnit = timeUnit)
+  }
+}
+
+@Internal
+@TestOnly
+fun waitAllTasksExecuted(coroutineScope: CoroutineScope, timeout: Long, timeUnit: TimeUnit) {
+  @Suppress("RAW_RUN_BLOCKING")
+  runBlocking {
+    withTimeout(timeUnit.toMillis(timeout)) {
+      while (true) {
+        val jobs = coroutineScope.coroutineContext.job.children.toList()
+        if (jobs.isEmpty()) {
+          break
         }
+        jobs.joinAll()
       }
     }
   }
