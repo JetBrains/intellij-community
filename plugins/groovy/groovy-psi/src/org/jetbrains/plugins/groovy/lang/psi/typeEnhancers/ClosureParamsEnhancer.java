@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
@@ -49,6 +50,7 @@ public final class ClosureParamsEnhancer extends AbstractClosureParameterEnhance
   }
 
   @NotNull
+  @Unmodifiable
   public static List<PsiType[]> findFittingSignatures(@NotNull GrFunctionalExpression expression) {
     GrMethodCall call = findCall(expression);
     if (call == null) return Collections.emptyList();

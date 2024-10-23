@@ -128,7 +128,7 @@ public final class DualView extends JPanel {
   }
 
   private void refreshFlatModel() {
-    ((ListTableModel)myFlatView.getModel()).setItems(myTreeView.getFlattenItems());
+    ((ListTableModel)myFlatView.getModel()).setItems(new ArrayList<>(myTreeView.getFlattenItems()));
   }
 
   private static ColumnInfo[] createTreeColumns(DualViewColumnInfo[] columns) {

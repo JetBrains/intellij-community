@@ -12,6 +12,7 @@ import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -90,6 +91,7 @@ public final class DomElementsProblemsHolderImpl implements DomElementsProblemsH
     return ContainerUtil.concat(getProblemsMap(domElement).values());
   }
 
+  @Unmodifiable
   public List<DomElementProblemDescriptor> getProblems(DomElement domElement,
                                                        final boolean includeXmlProblems,
                                                        final boolean withChildren,

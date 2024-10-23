@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -18,6 +19,7 @@ public final class ExternalLanguageAnnotators extends LanguageExtension<External
     super(EP_NAME.getName());
   }
 
+  @Unmodifiable
   public static @NotNull List<ExternalAnnotator<?,?>> allForFile(@NotNull Language language, final @NotNull PsiFile file) {
     List<ExternalAnnotator<?,?>> annotators = INSTANCE.allForLanguageOrAny(language);
     List<ExternalAnnotatorsFilter> filters = ExternalAnnotatorsFilter.EXTENSION_POINT_NAME.getExtensionList();

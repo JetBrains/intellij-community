@@ -10,6 +10,7 @@ import com.intellij.psi.ResolvingHint;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,6 +32,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
    * @param context context
    * @return reference completion variants
    */
+  @Unmodifiable
   public abstract @NotNull Collection<? extends T> getVariants(@NotNull ConvertContext context);
 
   /**

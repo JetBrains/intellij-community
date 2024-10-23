@@ -8,6 +8,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
@@ -45,6 +46,7 @@ public final class GppClosureParameterTypeProvider extends AbstractClosureParame
   }
 
   @NotNull
+  @Unmodifiable
   public static List<Pair<PsiMethod, PsiSubstitutor>> getOverriddenMethodVariants(GrNamedArgument namedArgument) {
 
     final GrArgumentLabel label = namedArgument.getLabel();

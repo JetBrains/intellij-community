@@ -18,6 +18,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -109,6 +110,7 @@ public final class ThrowableSupplierOnlyThrowExceptionInspection extends BaseIns
     return lambdaSupplier;
   }
 
+  @Unmodifiable
   private static @NotNull List<PsiThrowStatement> getThrowStatements(@Nullable PsiLambdaExpression psiLambdaExpression) {
     if (psiLambdaExpression == null) {
       return List.of();

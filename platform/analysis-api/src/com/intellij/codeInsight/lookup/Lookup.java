@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.*;
 import java.util.List;
@@ -78,6 +79,7 @@ public interface Lookup {
 
   boolean isCompletion();
 
+  @Unmodifiable
   List<LookupElement> getItems();
 
   boolean isFocused();

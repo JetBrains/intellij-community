@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -35,6 +36,7 @@ public interface ActionPromoter {
    * and {@link PlatformCoreDataKeys#FILE_EDITOR} keys are available,
    * but {@link CommonDataKeys#PSI_FILE} is not.
    */
+  @Unmodifiable
   default @Nullable List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
     return null;
   }

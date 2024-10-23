@@ -23,6 +23,7 @@ import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.FinalUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -131,6 +132,7 @@ public final class BindFieldsFromParametersAction implements ModCommandAction {
   /**
    * Exclude parameters passed to super() or this() calls from initial selection
    */
+  @Unmodifiable
   private static List<ParameterClassMember> getInitialSelection(@NotNull PsiMethod method,
                                                                 List<@NotNull ParameterClassMember> members) {
     Set<PsiElement> resolvedInSuperOrThis = new HashSet<>();

@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source.tree.injected;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,7 +35,7 @@ final class ClassMapCachingNulls<T> {
     return cache(aClass, getFromBackingMap(aClass));
   }
 
-  private T[] cache(@NotNull Class<?> aClass, @Nullable List<T> result) {
+  private T[] cache(@NotNull Class<?> aClass, @Nullable @Unmodifiable List<T> result) {
     T[] value;
     if (result == null) {
       myMap.put(aClass, myEmptyArray);
@@ -48,6 +49,7 @@ final class ClassMapCachingNulls<T> {
     return value;
   }
 
+  @Unmodifiable
   private @Nullable List<T> getFromBackingMap(@NotNull Class<?> aClass) {
     T[] value = myBackingMap.get(aClass);
     Set<T> result = null;
