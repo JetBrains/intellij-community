@@ -6,6 +6,13 @@ package com.intellij.java.analysis.bytecode
  * [JvmBytecodeAnalysis.createDeclarationAndReferencesAnalyzer] to process declarations in *.class files.
  */
 interface JvmBytecodeDeclarationProcessor {
-  fun processClass(jvmClass: JvmClassBytecodeDeclaration)
+  fun processClass(jvmClass: JvmClassBytecodeDeclaration) {
+  }
+
+  fun processMethod(jvmMethod: JvmMethodBytecodeDeclaration) {
+  }
+
+  fun processField(jvmField: JvmFieldBytecodeDeclaration) {
+  }
 }  
 

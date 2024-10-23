@@ -12,5 +12,24 @@ interface JvmBytecodeReferenceProcessor {
    * @param targetClass the referenced class
    * @param sourceClass the class code from which refers to [targetClass].
    */
-  fun processClassReference(targetClass: JvmClassBytecodeDeclaration, sourceClass: JvmClassBytecodeDeclaration)
+  fun processClassReference(targetClass: JvmClassBytecodeDeclaration, sourceClass: JvmClassBytecodeDeclaration) {
+  }
+
+  /**
+   * Called for each reference to a method from another class from the class being processed.
+   *
+   * @param targetMethod the referenced method
+   * @param sourceClass the class code from which refers to [targetMethod].
+   */
+  fun processMethodReference(targetMethod: JvmMethodBytecodeDeclaration, sourceClass: JvmClassBytecodeDeclaration) {
+  }
+
+  /**
+   * Called for each reference to a field from another class from the class being processed.
+   *
+   * @param targetField the referenced field
+   * @param sourceClass the class code from which refers to [targetField].
+   */
+  fun processFieldReference(targetField: JvmFieldBytecodeDeclaration, sourceClass: JvmClassBytecodeDeclaration) {
+  }
 }

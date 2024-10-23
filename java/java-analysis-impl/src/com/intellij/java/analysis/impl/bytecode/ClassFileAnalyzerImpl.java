@@ -91,6 +91,20 @@ class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnalyzer {
     return result;
   }
 
+  private void processMethodReference(JvmClassBytecodeDeclaration targetClass, String methodName, String methodDescriptor) {
+    if (myReferenceProcessor != null && targetClass != null && !targetClass.equals(myCurrentClass)) {
+      myReferenceProcessor.processMethodReference(new JvmMethodBytecodeDeclarationImpl(targetClass, methodName, methodDescriptor),
+                                                  myCurrentClass);
+    }
+  }
+
+  private void processFieldReference(JvmClassBytecodeDeclaration targetClass, String fieldName, String fieldDescriptor) {
+    if (myReferenceProcessor != null && targetClass != null && !targetClass.equals(myCurrentClass)) {
+      myReferenceProcessor.processFieldReference(new JvmFieldBytecodeDeclarationImpl(targetClass, fieldName, fieldDescriptor),
+                                                 myCurrentClass);
+    }
+  }
+
   @Override
   public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
     addDesc(desc);
@@ -105,6 +119,9 @@ class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnalyzer {
 
   @Override
   public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+    if (myDeclarationProcessor != null) {
+      myDeclarationProcessor.processField(new JvmFieldBytecodeDeclarationImpl(myCurrentClass, name, desc));
+    }
     if (signature == null) {
       addDesc(desc);
     }
@@ -118,6 +135,9 @@ class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnalyzer {
   @Override
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
     // skip signature of synthetic methods created for lambda's and such
+    if (myDeclarationProcessor != null) {
+      myDeclarationProcessor.processMethod(new JvmMethodBytecodeDeclarationImpl(myCurrentClass, name, desc));
+    }
     if ((access & Opcodes.ACC_SYNTHETIC) == 0) {
       if (signature == null) {
         addMethodDesc(desc);
@@ -178,14 +198,16 @@ class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnalyzer {
 
     @Override
     public void visitFieldInsn(int opcode, String owner, String name, String desc) {
-      addName(owner);
+      JvmClassBytecodeDeclaration targetClass = addName(owner);
       addDesc(desc);
+      processFieldReference(targetClass, name, desc);
     }
 
     @Override
     public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-      addName(owner);
+      JvmClassBytecodeDeclaration targetClass = addName(owner);
       addMethodDesc(desc);
+      processMethodReference(targetClass, name, desc);
     }
 
     @Override
@@ -318,14 +340,15 @@ class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnalyzer {
     }
   }
 
-  private void addName(@Nullable String name) {
-    if (name == null) return;
+  private JvmClassBytecodeDeclaration addName(@Nullable String name) {
+    if (name == null) return null;
 
     JvmClassBytecodeDeclaration declaration = getOrCreateClassDeclaration(name);
 
     if (myReferenceProcessor != null && !declaration.equals(myCurrentClass)) {
       myReferenceProcessor.processClassReference(declaration, myCurrentClass);
     }
+    return declaration;
   }
 
   private void addNames(String[] names) {
@@ -339,7 +362,7 @@ class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnalyzer {
   }
 
   private void addHandle(Handle h) {
-    addName(h.getOwner());
+    JvmClassBytecodeDeclaration targetClass = addName(h.getOwner());
     int tag = h.getTag();
     String desc = h.getDesc();
     if (tag == Opcodes.H_INVOKEVIRTUAL ||
@@ -348,6 +371,11 @@ class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnalyzer {
         tag == Opcodes.H_NEWINVOKESPECIAL || 
         tag == Opcodes.H_INVOKEINTERFACE) {
       addMethodDesc(desc);
+      processMethodReference(targetClass, h.getName(), desc);
+    }
+    else if (tag == Opcodes.H_GETFIELD || tag == Opcodes.H_PUTFIELD || tag == Opcodes.H_GETSTATIC || tag == Opcodes.H_PUTSTATIC) {
+      processFieldReference(targetClass, h.getName(), desc);
+      addDesc(desc);
     }
     else {
       addDesc(desc);

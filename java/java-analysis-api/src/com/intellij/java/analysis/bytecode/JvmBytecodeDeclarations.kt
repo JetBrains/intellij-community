@@ -15,3 +15,19 @@ interface JvmClassBytecodeDeclaration {
    */
   val topLevelSourceClassName: String
 }
+
+/**
+ * Represents a JVM method or field declaration in a *.class file
+ */
+interface JvmMemberBytecodeDeclaration {
+  val containingClass: JvmClassBytecodeDeclaration
+  val name: String
+
+  /**
+   * Descriptor of the method or field in JVM bytecode format.
+   */
+  val descriptor: String
+}
+
+interface JvmMethodBytecodeDeclaration : JvmMemberBytecodeDeclaration
+interface JvmFieldBytecodeDeclaration : JvmMemberBytecodeDeclaration
