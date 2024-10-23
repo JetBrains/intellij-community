@@ -246,6 +246,7 @@
     <localInspection language="Python" shortName="PyPep8NamingInspection" suppressId="PyPep8Naming" bundle="messages.PyPsiBundle" key="INSP.NAME.pep8.naming" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyPep8NamingInspection"/>
     <localInspection language="Python" shortName="PyShadowingBuiltinsInspection" suppressId="PyShadowingBuiltins" bundle="messages.PyPsiBundle" key="INSP.NAME.shadowing.builtins" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyShadowingBuiltinsInspection"/>
     <localInspection language="Python" shortName="PyNewStyleGenericSyntaxInspection" suppressId="PyNewStyleGenericSyntax" bundle="messages.PyPsiBundle" key="INSP.NAME.new.style.generics.type.param.syntax" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyNewStyleGenericSyntaxInspection"/>
+    <localInspection language="Python" shortName="PyAssertTypeInspection" suppressId="PyAssertType" bundle="messages.PyPsiBundle" key="INSP.NAME.assert.type" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyAssertTypeInspection"/>
 
     <codeInsight.parameterNameHints language="Python"
                                     implementationClass="com.jetbrains.python.inlayHints.PythonInlayParameterHintsProvider"/>

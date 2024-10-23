@@ -133,6 +133,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   public static final Pattern TYPE_IGNORE_PATTERN = Pattern.compile("# *type: *ignore(\\[ *[^ ,\\]]+ *(, *[^ ,\\]]+ *)*\\])? *($|(#.*))",
                                                                     Pattern.CASE_INSENSITIVE);
 
+  public static final String ASSERT_TYPE = "typing.assert_type";
+
   public static final ImmutableMap<String, String> BUILTIN_COLLECTION_CLASSES = ImmutableMap.<String, String>builder()
     .put(LIST, "list")
     .put(DICT, "dict")
