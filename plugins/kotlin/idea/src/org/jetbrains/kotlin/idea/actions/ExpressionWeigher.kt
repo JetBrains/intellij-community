@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -137,11 +138,7 @@ internal class CallExpressionWeigher(private val element: KtNameReferenceExpress
     override fun ownWeigh(descriptor: DeclarationDescriptor): Int =
         when (descriptor) {
             is CallableMemberDescriptor -> calculateWeight(descriptor, argumentKotlinTypes)
-            // TODO: some constructors could be not visible
-            is ClassDescriptor -> {
-                descriptor.constructors.maxOfOrNull { calculateWeight(it, argumentKotlinTypes) } ?: 0
-            }
-
+            is ClassDescriptor -> calculateWeight(descriptor, argumentKotlinTypes)
             else -> 0
         }
 
@@ -169,9 +166,9 @@ internal class CallExpressionWeigher(private val element: KtNameReferenceExpress
         }
 
         // apply weighing extensions
-        val namedFunction = DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, callableMemberDescriptor) as? KtNamedFunction
-        if (namedFunction != null) {
-            weight += calculateCallExtensionsWeight(namedFunction)
+        val function = DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, callableMemberDescriptor) as? KtFunction
+        if (function != null) {
+            weight += calculateCallExtensionsWeight(function)
         }
 
         val valueParameterDescriptorIterator: MutableIterator<ValueParameterDescriptor> = valueParameters.iterator()
@@ -207,17 +204,50 @@ internal class CallExpressionWeigher(private val element: KtNameReferenceExpress
         return weight
     }
 
+    private fun calculateWeight(descriptor: ClassDescriptor, kotlinTypes: List<KotlinType>): Int {
+        // TODO: some constructors could be not visible
+        descriptor.constructors
+            // Filter out default constructors that don't have their own PSI.
+            .filter { DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, it) is KtFunction }
+            .maxOfOrNull { calculateWeight(it, kotlinTypes) }?.let { return it }
+
+        // In some cases (eg with an interface), there are no constructors. Weigh the class instead.
+        val classOrObject =
+            DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, descriptor) as? KtClassOrObject
+                ?: return 0
+
+        return calculateCallExtensionsWeight(classOrObject)
+    }
+
     /**
      * Since [ExpressionWeigher]s are executed on EDT in K1 plugin, we have to use [allowAnalysisOnEdt] to be able to perform the [analyze].
      * With K2 plugin, there will be no such issue.
      */
     @OptIn(KaAllowAnalysisOnEdt::class)
-    private fun calculateCallExtensionsWeight(namedFunction: KtNamedFunction): Int {
+    private fun calculateCallExtensionsWeight(function: KtFunction): Int {
         return allowAnalysisOnEdt {
             analyze(element) {
-                val callableSymbol = namedFunction.symbol as? KaCallableSymbol
+                val callableSymbol = function.symbol as? KaCallableSymbol
                 if (callableSymbol != null) {
                     with(KotlinAutoImportCallableWeigher) { weigh(callableSymbol, element) }
+                } else {
+                    0
+                }
+            }
+        }
+    }
+
+    /**
+     * Since [ExpressionWeigher]s are executed on EDT in K1 plugin, we have to use [allowAnalysisOnEdt] to be able to perform the [analyze].
+     * With K2 plugin, there will be no such issue.
+     */
+    @OptIn(KaAllowAnalysisOnEdt::class)
+    private fun calculateCallExtensionsWeight(classOrObject: KtClassOrObject): Int {
+        return allowAnalysisOnEdt {
+            analyze(element) {
+                val symbol = classOrObject.symbol as? KaClassSymbol
+                if (symbol != null) {
+                    with(KotlinAutoImportCallableWeigher) { weigh(symbol, element) }
                 } else {
                     0
                 }
