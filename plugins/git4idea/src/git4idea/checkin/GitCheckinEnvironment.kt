@@ -53,6 +53,7 @@ import git4idea.checkin.GitCheckinExplicitMovementProvider.Movement
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
+import git4idea.commit.GitMergeCommitMessageReader
 import git4idea.config.GitConfigUtil
 import git4idea.i18n.GitBundle
 import git4idea.index.GitIndexUtil
@@ -92,37 +93,10 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
   }
 
   override fun getDefaultMessageFor(filesToCheckin: Array<FilePath>): String? {
-    val messages = LinkedHashSet<String>()
     val manager = GitUtil.getRepositoryManager(myProject)
     val repositories = filesToCheckin.mapNotNullTo(HashSet()) { file -> manager.getRepositoryForFileQuick(file) }
-
-    for (repository in repositories) {
-      val mergeMsg = repository.repositoryFiles.mergeMessageFile
-      val squashMsg = repository.repositoryFiles.squashMessageFile
-      try {
-        if (!mergeMsg.exists() && !squashMsg.exists()) {
-          continue
-        }
-        val encoding = GitConfigUtil.getCommitEncodingCharset(myProject, repository.root)
-        if (mergeMsg.exists()) {
-          messages.add(loadMessage(mergeMsg, encoding))
-        }
-        else {
-          messages.add(loadMessage(squashMsg, encoding))
-        }
-      }
-      catch (e: IOException) {
-        if (LOG.isDebugEnabled) {
-          LOG.debug("Unable to load merge message", e)
-        }
-      }
-    }
-    return DvcsUtil.joinMessagesOrNull(messages)
-  }
-
-  @Throws(IOException::class)
-  private fun loadMessage(messageFile: File, encoding: Charset): String {
-    return FileUtil.loadFile(messageFile, encoding)
+    val singleRepo = repositories.singleOrNull() ?: return null
+    return GitMergeCommitMessageReader.getInstance(myProject).read(singleRepo)
   }
 
   override fun getHelpId(): String? {
