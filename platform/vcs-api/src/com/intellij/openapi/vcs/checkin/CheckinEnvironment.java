@@ -46,7 +46,12 @@ public interface CheckinEnvironment {
     return null;
   }
 
+  /**
+   * @deprecated implementations returning non-null messages should be replaced with
+   * {@link com.intellij.openapi.vcs.changes.ui.CommitMessageProvider}.
+   */
   @Nullable
+  @Deprecated(forRemoval = true)
   default @NlsSafe String getDefaultMessageFor(FilePath @NotNull [] filesToCheckin) {
     return null;
   }

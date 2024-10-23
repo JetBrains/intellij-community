@@ -34,17 +34,6 @@ abstract class AbstractCommitMessagePolicy(protected val project: Project) {
     return null
   }
 
-  protected fun getCommitMessageFromVcs(changes: List<Change>): String? {
-    var result: String? = null
-    processChangesByVcs(project, changes) { vcs, vcsChanges ->
-      if (result == null) result = getCommitMessageFromVcs(vcs, vcsChanges)
-    }
-    return result
-  }
-
-  private fun getCommitMessageFromVcs(vcs: AbstractVcs, changes: List<Change>): String? =
-    vcs.checkinEnvironment?.getDefaultMessageFor(ChangesUtil.getPaths(changes).toTypedArray())
-
   protected fun listenForDelayedProviders(commitMessageUi: CommitMessageUi, disposable: Disposable) {
     CommitMessageProvider.EXTENSION_POINT_NAME.forEachExtensionSafe { extension ->
       if (extension is DelayedCommitMessageProvider) {

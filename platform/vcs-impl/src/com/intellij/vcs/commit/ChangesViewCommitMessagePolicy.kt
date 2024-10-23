@@ -4,12 +4,10 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.LocalChangeList
 
 internal class ChangesViewCommitMessagePolicy(project: Project,
-                                              private val commitMessageUi: CommitMessageUi,
-                                              private val includedChanges: () -> List<Change>) : AbstractCommitMessagePolicy(project) {
+                                              private val commitMessageUi: CommitMessageUi) : AbstractCommitMessagePolicy(project) {
   fun init(changeList: LocalChangeList, disposable: Disposable) {
     listenForDelayedProviders(commitMessageUi, disposable)
 
@@ -47,7 +45,6 @@ internal class ChangesViewCommitMessagePolicy(project: Project,
   private fun getCommitMessage(changeList: LocalChangeList): String {
     if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return ""
     return getCommitMessageForList(changeList)?.takeIf { it.isNotBlank() }
-           ?: getCommitMessageFromVcs(includedChanges())
            ?: vcsConfiguration.LAST_COMMIT_MESSAGE.orEmpty()
   }
 

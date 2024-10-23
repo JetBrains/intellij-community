@@ -48,7 +48,7 @@ internal class ChangesViewCommitWorkflowHandler(
 
   private val inclusionModel = PartialCommitInclusionModel(project)
 
-  private val commitMessagePolicy = ChangesViewCommitMessagePolicy(project, ui.commitMessageUi) { getIncludedChanges() }
+  private val commitMessagePolicy = ChangesViewCommitMessagePolicy(project, ui.commitMessageUi)
   private var currentChangeList: LocalChangeList = changeListManager.defaultChangeList
 
   init {

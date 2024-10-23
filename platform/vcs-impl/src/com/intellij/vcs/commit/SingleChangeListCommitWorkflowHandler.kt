@@ -66,7 +66,7 @@ class SingleChangeListCommitWorkflowHandler(
 
     ui.addInclusionListener(this, this)
     updateDefaultCommitActionName()
-    setCommitMessage(commitMessagePolicy.init(getChangeList(), getIncludedChanges()))
+    setCommitMessage(commitMessagePolicy.init(getChangeList()))
     initCommitOptions()
 
     amendCommitHandler.initialMessage = getCommitMessage()

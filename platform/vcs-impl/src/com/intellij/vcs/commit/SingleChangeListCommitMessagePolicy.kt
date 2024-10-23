@@ -2,7 +2,6 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.ui.TextAccessor
@@ -13,18 +12,11 @@ internal class SingleChangeListCommitMessagePolicy(project: Project, initialComm
   private var lastKnownComment: String? = initialCommitMessage
   private val messagesToSave = mutableMapOf<String, String>()
 
-  fun init(changeList: LocalChangeList, includedChanges: List<Change>): String? {
-    if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return lastKnownComment
-
-    if (lastKnownComment != null) {
-      return lastKnownComment
-    }
+  fun init(changeList: LocalChangeList): String? {
+    if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE || lastKnownComment != null) return lastKnownComment
 
     val commitMessage = getCommitMessageForList(changeList)?.takeIf { it.isNotBlank() }
-    if (commitMessage != null) return commitMessage
-
-    lastKnownComment = vcsConfiguration.LAST_COMMIT_MESSAGE
-    return getCommitMessageFromVcs(includedChanges) ?: lastKnownComment
+    return commitMessage ?: vcsConfiguration.LAST_COMMIT_MESSAGE
   }
 
   /**
