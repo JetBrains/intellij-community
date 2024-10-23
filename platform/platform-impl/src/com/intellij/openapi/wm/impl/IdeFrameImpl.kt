@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.traceThrowable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
@@ -248,6 +249,14 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
           isClose(e.xOnScreen, e.yOnScreen, lastInactiveMouseXAbs, lastInactiveMouseYAbs)
         mouseNotPressedYetSinceLastActivation = false
       }
+    }
+  }
+
+  @Suppress("OVERRIDE_DEPRECATION") // just for debugging, because all other methods delegate to this one
+  override fun reshape(x: Int, y: Int, width: Int, height: Int) {
+    super.reshape(x, y, width, height)
+    IDE_FRAME_EVENT_LOG.traceThrowable {
+      Throwable("IdeFrameImpl.reshape(x=$x, y=$y, width=$width, height=$height)")
     }
   }
 }
