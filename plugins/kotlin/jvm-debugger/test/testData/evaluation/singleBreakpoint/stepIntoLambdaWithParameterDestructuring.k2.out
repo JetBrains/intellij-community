@@ -1,0 +1,25 @@
+LineBreakpoint created at stepIntoLambdaWithParameterDestructuring.kt:13
+Run Java
+Connected to the target VM
+stepIntoLambdaWithParameterDestructuring.kt:13
+stepIntoLambdaWithParameterDestructuring.kt:27
+Compile bytecode for a + b + c + d + e + f + g + h + i + j + k + l + m + n + o
+KotlinStackFrame (stepIntoLambdaWithParameterDestructuring.kt:27)
+    JavaValue[local] c: int = 1 (stepIntoLambdaWithParameterDestructuring.kt:18)
+    JavaValue[local] d: int = 1 (stepIntoLambdaWithParameterDestructuring.kt:19)
+    JavaValue[local] i: int = 1 (stepIntoLambdaWithParameterDestructuring.kt:22)
+    JavaValue[local] a: int = 1 (stepIntoLambdaWithParameterDestructuring.kt:17)
+    JavaValue[local] b: int = 1 (stepIntoLambdaWithParameterDestructuring.kt:17)
+    JavaValue[local] e: int = 1 (stepIntoLambdaWithParameterDestructuring.kt:19)
+    JavaValue[local] f: int = 1 (stepIntoLambdaWithParameterDestructuring.kt:20)
+    JavaValue[local] g: int = 1 (stepIntoLambdaWithParameterDestructuring.kt:20)
+    JavaValue[local] h: int = 1 (stepIntoLambdaWithParameterDestructuring.kt:21)
+    JavaValue[local] j: int = 1 (stepIntoLambdaWithParameterDestructuring.kt:23)
+    JavaValue[local] k: int = 1 (stepIntoLambdaWithParameterDestructuring.kt:23)
+    JavaValue[local] l: int = 1 (stepIntoLambdaWithParameterDestructuring.kt:24)
+    JavaValue[local] m: int = 1 (stepIntoLambdaWithParameterDestructuring.kt:25)
+    JavaValue[local] n: int = 1 (stepIntoLambdaWithParameterDestructuring.kt:26)
+    JavaValue[local] o: int = 1 (stepIntoLambdaWithParameterDestructuring.kt:26)
+Disconnected from the target VM
+
+Process finished with exit code 0
