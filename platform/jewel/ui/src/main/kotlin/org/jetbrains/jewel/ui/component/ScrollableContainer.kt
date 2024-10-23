@@ -5,6 +5,7 @@ package org.jetbrains.jewel.ui.component
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
@@ -33,6 +34,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
@@ -52,6 +54,9 @@ public fun VerticallyScrollableContainer(
     scrollbarModifier: Modifier = Modifier,
     scrollState: ScrollState = rememberScrollState(),
     style: ScrollbarStyle = JewelTheme.scrollbarStyle,
+    reverseLayout: Boolean = false,
+    scrollbarEnabled: Boolean = true,
+    scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable () -> Unit,
 ) {
     var keepVisible by remember { mutableStateOf(false) }
@@ -59,7 +64,15 @@ public fun VerticallyScrollableContainer(
 
     ScrollableContainerImpl(
         verticalScrollbar = {
-            VerticalScrollbar(scrollState, scrollbarModifier, style = style, keepVisible = keepVisible)
+            VerticalScrollbar(
+                scrollState = scrollState,
+                modifier = scrollbarModifier,
+                style = style,
+                keepVisible = keepVisible,
+                enabled = scrollbarEnabled,
+                reverseLayout = reverseLayout,
+                interactionSource = scrollbarInteractionSource,
+            )
         },
         horizontalScrollbar = null,
         modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
@@ -102,6 +115,9 @@ public fun VerticallyScrollableContainer(
     modifier: Modifier = Modifier,
     scrollbarModifier: Modifier = Modifier,
     style: ScrollbarStyle = JewelTheme.scrollbarStyle,
+    reverseLayout: Boolean = false,
+    scrollbarEnabled: Boolean = true,
+    scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable () -> Unit,
 ) {
     var keepVisible by remember { mutableStateOf(false) }
@@ -109,7 +125,15 @@ public fun VerticallyScrollableContainer(
 
     ScrollableContainerImpl(
         verticalScrollbar = {
-            VerticalScrollbar(scrollState, scrollbarModifier, style = style, keepVisible = keepVisible)
+            VerticalScrollbar(
+                scrollState = scrollState,
+                modifier = scrollbarModifier,
+                style = style,
+                keepVisible = keepVisible,
+                enabled = scrollbarEnabled,
+                reverseLayout = reverseLayout,
+                interactionSource = scrollbarInteractionSource,
+            )
         },
         horizontalScrollbar = null,
         modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
@@ -125,6 +149,9 @@ public fun VerticallyScrollableContainer(
     modifier: Modifier = Modifier,
     scrollbarModifier: Modifier = Modifier,
     style: ScrollbarStyle = JewelTheme.scrollbarStyle,
+    reverseLayout: Boolean = false,
+    scrollbarEnabled: Boolean = true,
+    scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable () -> Unit,
 ) {
     var keepVisible by remember { mutableStateOf(false) }
@@ -132,7 +159,15 @@ public fun VerticallyScrollableContainer(
 
     ScrollableContainerImpl(
         verticalScrollbar = {
-            VerticalScrollbar(scrollState, scrollbarModifier, style = style, keepVisible = keepVisible)
+            VerticalScrollbar(
+                scrollState = scrollState,
+                modifier = scrollbarModifier,
+                style = style,
+                keepVisible = keepVisible,
+                enabled = scrollbarEnabled,
+                reverseLayout = reverseLayout,
+                interactionSource = scrollbarInteractionSource,
+            )
         },
         horizontalScrollbar = null,
         modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
@@ -148,6 +183,9 @@ public fun HorizontallyScrollableContainer(
     scrollbarModifier: Modifier = Modifier,
     scrollState: ScrollState = rememberScrollState(),
     style: ScrollbarStyle = JewelTheme.scrollbarStyle,
+    reverseLayout: Boolean = false,
+    scrollbarEnabled: Boolean = true,
+    scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable () -> Unit,
 ) {
     var keepVisible by remember { mutableStateOf(false) }
@@ -156,7 +194,15 @@ public fun HorizontallyScrollableContainer(
     ScrollableContainerImpl(
         verticalScrollbar = null,
         horizontalScrollbar = {
-            HorizontalScrollbar(scrollState, scrollbarModifier, style = style, keepVisible = keepVisible)
+            HorizontalScrollbar(
+                scrollState = scrollState,
+                modifier = scrollbarModifier,
+                style = style,
+                keepVisible = keepVisible,
+                enabled = scrollbarEnabled,
+                reverseLayout = reverseLayout,
+                interactionSource = scrollbarInteractionSource,
+            )
         },
         modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
         scrollbarStyle = style,
@@ -171,6 +217,9 @@ public fun HorizontallyScrollableContainer(
     modifier: Modifier = Modifier,
     scrollbarModifier: Modifier = Modifier,
     style: ScrollbarStyle = JewelTheme.scrollbarStyle,
+    reverseLayout: Boolean = false,
+    scrollbarEnabled: Boolean = true,
+    scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable () -> Unit,
 ) {
     var keepVisible by remember { mutableStateOf(false) }
@@ -179,7 +228,15 @@ public fun HorizontallyScrollableContainer(
     ScrollableContainerImpl(
         verticalScrollbar = null,
         horizontalScrollbar = {
-            HorizontalScrollbar(scrollState, scrollbarModifier, style = style, keepVisible = keepVisible)
+            HorizontalScrollbar(
+                scrollState = scrollState,
+                modifier = scrollbarModifier,
+                style = style,
+                keepVisible = keepVisible,
+                enabled = scrollbarEnabled,
+                reverseLayout = reverseLayout,
+                interactionSource = scrollbarInteractionSource,
+            )
         },
         modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
         scrollbarStyle = style,
@@ -194,6 +251,9 @@ public fun HorizontallyScrollableContainer(
     modifier: Modifier = Modifier,
     scrollbarModifier: Modifier = Modifier,
     style: ScrollbarStyle = JewelTheme.scrollbarStyle,
+    reverseLayout: Boolean = false,
+    scrollbarEnabled: Boolean = true,
+    scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable () -> Unit,
 ) {
     var keepVisible by remember { mutableStateOf(false) }
@@ -202,7 +262,15 @@ public fun HorizontallyScrollableContainer(
     ScrollableContainerImpl(
         verticalScrollbar = null,
         horizontalScrollbar = {
-            HorizontalScrollbar(scrollState, scrollbarModifier, style = style, keepVisible = keepVisible)
+            HorizontalScrollbar(
+                scrollState = scrollState,
+                modifier = scrollbarModifier,
+                style = style,
+                keepVisible = keepVisible,
+                enabled = scrollbarEnabled,
+                reverseLayout = reverseLayout,
+                interactionSource = scrollbarInteractionSource,
+            )
         },
         modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
         scrollbarStyle = style,
@@ -211,6 +279,8 @@ public fun HorizontallyScrollableContainer(
     }
 }
 
+@ScheduledForRemoval(inVersion = "Before Jewel 1.0")
+@Deprecated("Not properly supported due to Compose limitations", level = DeprecationLevel.HIDDEN)
 @ExperimentalJewelApi
 @Composable
 public fun ScrollableContainer(
@@ -246,6 +316,8 @@ public fun ScrollableContainer(
     }
 }
 
+@ScheduledForRemoval(inVersion = "Before Jewel 1.0")
+@Deprecated("Not properly supported due to Compose limitations", level = DeprecationLevel.HIDDEN)
 @ExperimentalJewelApi
 @Composable
 public fun ScrollableContainer(
@@ -279,6 +351,8 @@ public fun ScrollableContainer(
     }
 }
 
+@ScheduledForRemoval(inVersion = "Before Jewel 1.0")
+@Deprecated("Not properly supported due to Compose limitations", level = DeprecationLevel.HIDDEN)
 @ExperimentalJewelApi
 @Composable
 public fun ScrollableContainer(
