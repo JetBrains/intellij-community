@@ -70,6 +70,8 @@
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleBuildCancelledIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleOutOfMemoryIssueChecker"/>
     <executionHelperExtension implementation="org.jetbrains.plugins.gradle.service.execution.GradleTaskExecutionMeasuringExtension"/>
+    <executionHelperExtension
+      implementation="org.jetbrains.plugins.gradle.service.execution.telemetry.GradleTelemetryAgentProvidingExecutionHelperExtension"/>
 
     <autoReloadSettingsCollector
       implementation="org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware$GradlePropertiesCollector"/>
@@ -214,6 +216,8 @@
                  description="Send progress information like files download during project import to `Build Output`"/>
     <registryKey key="gradle.daemon.opentelemetry.enabled" defaultValue="false"
                  description="Enable performance trace collection in the Gradle daemon"/>
+    <registryKey key="gradle.daemon.opentelemetry.agent.enabled" defaultValue="false"
+                 description="Enable performance trace collection in the Gradle daemon collected by OTLP java agent"/>
     <registryKey key="gradle.daemon.opentelemetry.format" defaultValue="PROTOBUF"
                  description="Sets the expected serialization format for the collected traces"/>
     <registryKey key="gradle.daemon.opentelemetry.folder" defaultValue=""
