@@ -984,7 +984,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
           prevSelectedIndex = selectedIndex;
         }
         Object newValue = myResultsList.getSelectedValue();
-        if (isPreviewEnabled() && myProject != null && newValue != null && newValue != currentValue && myUsagePreviewPanel != null) {
+        if (isPreviewEnabled() && isPreviewActive() && myProject != null && newValue != null && newValue != currentValue && myUsagePreviewPanel != null) {
           schedulePreview(newValue);
           currentValue = newValue;
         }
