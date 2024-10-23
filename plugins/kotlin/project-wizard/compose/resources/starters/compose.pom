@@ -8,8 +8,8 @@
     <java.version>11</java.version>
     <kotlin.target>11</kotlin.target>
     <gradle.version>8.7</gradle.version>
-    <kotlin.version>2.0.0</kotlin.version>
-    <compose.version>1.6.11</compose.version>
+    <kotlin.version>2.0.21</kotlin.version>
+    <compose.version>1.7.0</compose.version>
   </properties>
 
   <dependencyManagement>
