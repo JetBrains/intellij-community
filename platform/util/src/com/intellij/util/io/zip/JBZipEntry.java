@@ -339,10 +339,7 @@ public class JBZipEntry implements Cloneable {
   @ApiStatus.Internal
   public InputStream getInputStream() throws IOException {
     myFile.ensureFlushed(getHeaderOffset() + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH + JBZipFile.WORD);
-    long start;
-    synchronized (myFile.myArchive) {
-      start = calcDataOffset();
-    }
+    long start = calcDataOffset();
     long size = getCompressedSize();
     myFile.ensureFlushed(start + size);
     if (myFile.myArchive.size() < start + size) {
@@ -553,9 +550,8 @@ public class JBZipEntry implements Cloneable {
 
   public long calcDataOffset() throws IOException {
     long offset = getHeaderOffset();
-    myFile.myArchive.position(offset + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH);
     byte[] b = new byte[JBZipFile.WORD];
-    myFile.readFully(b);
+    myFile.readFullyFromPosition(b, offset + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH);
     int fileNameLen = ZipShort.getValue(b, 0);
     int extraFieldLen = ZipShort.getValue(b, JBZipFile.SHORT);
     return offset + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH + JBZipFile.WORD + fileNameLen + extraFieldLen;
@@ -612,11 +608,7 @@ public class JBZipEntry implements Cloneable {
       }
 
       final int ret;
-      SeekableByteChannel archive = myFile.myArchive;
-      synchronized (myFile.myArchive) {
-        archive.position(loc);
-        ret = archive.read(ByteBuffer.wrap(b, off, len));
-      }
+      ret = myFile.readFromPosition(b, off, len, loc);
 
       if (ret > 0) {
         loc += ret;

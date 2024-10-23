@@ -409,6 +409,43 @@ public class JBZipFile implements Closeable {
     }
   }
 
+  // tries to read content at a specific position atomically.
+  // the position of the channel after this operation completes is undefined
+  void readFullyFromPosition(byte[] b, long position) throws IOException {
+    if (myArchive instanceof FileChannel) {
+      ByteBuffer buffer = ByteBuffer.wrap(b);
+      int totalRead = 0;
+      while (totalRead < b.length) {
+        int currentlyRead = ((FileChannel)myArchive).read(buffer, position + totalRead);
+        if (currentlyRead == 0) {
+          throw new EOFException("unexpected EOF");
+        }
+        totalRead += currentlyRead;
+      }
+    }
+    else {
+      synchronized (myArchive) {
+        myArchive.position(position);
+        readFully(b);
+      }
+    }
+  }
+
+  // tries to read content at a specific position atomically.
+  // the position of the channel after this operation completes is undefined
+  int readFromPosition(byte[] b, int offset, int length, long position) throws IOException {
+    ByteBuffer buf = ByteBuffer.wrap(b, offset, length);
+    if (myArchive instanceof FileChannel) {
+      return ((FileChannel)myArchive).read(buf, position);
+    }
+    else {
+      synchronized (myArchive) {
+        myArchive.position(position);
+        return myArchive.read(buf);
+      }
+    }
+  }
+
   int readByte() throws IOException {
     ByteBuffer buffer = ByteBuffer.allocate(1);
     if (myArchive.read(buffer) < 0) {
