@@ -103,7 +103,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
     if (newEditor == null) return;
     Template template =
       CreateFieldFromUsageHelper.setupTemplate(field, expectedTypes, targetClass, newEditor, context, createConstantField);
-
+    if (template == null) return;
     startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
       @Override
       public void templateFinished(@NotNull Template template, boolean brokenOff) {

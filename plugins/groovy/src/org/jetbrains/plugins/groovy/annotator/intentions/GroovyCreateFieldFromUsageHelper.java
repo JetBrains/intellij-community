@@ -24,12 +24,14 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
+import java.util.Objects;
+
 /**
  * @author Max Medvedev
  */
 public final class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
   @Override
-  public Template setupTemplateImpl(PsiField f,
+  public @Nullable Template setupTemplateImpl(@NotNull PsiField f,
                                     Object expectedTypes,
                                     PsiClass targetClass,
                                     Editor editor,
@@ -40,7 +42,10 @@ public final class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsage
     GrVariableDeclaration fieldDecl = (GrVariableDeclaration)f.getParent();
     GrField field = (GrField)fieldDecl.getVariables()[0];
     Project project = field.getProject();
+
     fieldDecl = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(fieldDecl);
+    if (fieldDecl == null) return null;
+
     TemplateBuilderImpl builder = new TemplateBuilderImpl(fieldDecl);
     builder.setScrollToTemplate(isScrollToTemplate);
 
@@ -55,7 +60,7 @@ public final class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsage
     }
     else if (expectedTypes instanceof ExpectedTypeInfo[]) {
       new GuessTypeParameters(project, factory, builder, substitutor)
-        .setupTypeElement(field.getTypeElement(), (ExpectedTypeInfo[])expectedTypes, context, targetClass);
+        .setupTypeElement(Objects.requireNonNull(field.getTypeElement()), (ExpectedTypeInfo[])expectedTypes, context, targetClass);
     }
 
     GrExpression initializer = field.getInitializerGroovy();
@@ -67,6 +72,8 @@ public final class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsage
     }
 
     fieldDecl = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(fieldDecl);
+    if (fieldDecl == null) return null;
+
     Template template = builder.buildTemplate();
 
     TextRange range = fieldDecl.getTextRange();
