@@ -62,6 +62,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Supplier;
 
 import static com.intellij.diff.tools.util.DiffNotifications.createNotificationProvider;
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
@@ -110,11 +111,9 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
     showShelvedChangesDiff(dc, false);
   }
 
-  public static @Nullable ListSelection<? extends ChangeDiffRequestChain.Producer> createDiffProducers(@NotNull DataContext dc,
-                                                                                                       boolean withLocal) {
-    final Project project = CommonDataKeys.PROJECT.getData(dc);
-    if (project == null) return null;
-
+  public static @Nullable ListSelection<? extends ChangeDiffRequestChain.Producer> createDiffProducers(@NotNull Project project,
+                                                                                                       boolean withLocal,
+                                                                                                       Supplier<ListSelection<ShelvedWrapper>> listLoader) {
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return null;
 
     final String base = project.getBasePath();
@@ -123,7 +122,7 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
       return null;
     }
 
-    ListSelection<ShelvedWrapper> wrappers = ShelvedChangesViewManager.getSelectedChangesOrAll(dc);
+    ListSelection<ShelvedWrapper> wrappers = listLoader.get();
 
     ApplyPatchContext patchContext = new ApplyPatchContext(project.getBaseDir(), 0, false, false);
 
@@ -166,8 +165,16 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
   public static void showShelvedChangesDiff(@NotNull DataContext dc, boolean withLocal) {
     Project project = CommonDataKeys.PROJECT.getData(dc);
     if (project == null) return;
+    showShelvedChangesDiff(project, withLocal,
+                           () -> {
+                             return ShelvedChangesViewManager.getSelectedChangesOrAll(dc);
+                           });
+  }
 
-    ListSelection<? extends ChangeDiffRequestChain.Producer> diffRequestProducers = createDiffProducers(dc, withLocal);
+  public static void showShelvedChangesDiff(@NotNull Project project,
+                                            boolean withLocal,
+                                            Supplier<ListSelection<ShelvedWrapper>> listLoader) {
+    ListSelection<? extends ChangeDiffRequestChain.Producer> diffRequestProducers = createDiffProducers(project, withLocal, listLoader);
     if (diffRequestProducers == null || diffRequestProducers.isEmpty()) return;
 
     DiffRequestChain chain = new ChangeDiffRequestChain(diffRequestProducers);
@@ -417,7 +424,9 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
           String leftTitle = DiffBundle.message("merge.version.title.current");
           String rightTitle = VcsBundle.message("shelve.shelved.version");
           DiffRequest request = new SimpleDiffRequest(getRequestTitle(), leftContent, rightContent, leftTitle, rightTitle);
-          return DiffUtil.addTitleCustomizers(request, DiffTitleFilePathCustomizer.getTitleCustomizers(myProject, myChange.getChange(), leftTitle, rightTitle));
+          return DiffUtil.addTitleCustomizers(request,
+                                              DiffTitleFilePathCustomizer.getTitleCustomizers(myProject, myChange.getChange(), leftTitle,
+                                                                                              rightTitle));
         }
         catch (VcsException e) {
           throw new DiffRequestProducerException(VcsBundle.message("changes.error.can.t.show.diff.for", getFilePath()), e);
