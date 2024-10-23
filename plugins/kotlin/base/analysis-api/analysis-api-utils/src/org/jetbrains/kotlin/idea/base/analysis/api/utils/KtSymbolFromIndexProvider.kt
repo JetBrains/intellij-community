@@ -10,6 +10,7 @@ import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
+import com.intellij.util.Processor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -96,25 +97,21 @@ class KtSymbolFromIndexProvider private constructor(
         psiFilter: (PsiClass) -> Boolean = { true }
     ): Sequence<KaNamedClassSymbol> {
         val names = buildSet {
-            nonKotlinNamesCaches.forEach { cache ->
-                cache.processAllClassNames({ nameString ->
-                                               if (!Name.isValidIdentifier(nameString)) return@processAllClassNames true
-                                               val name = Name.identifier(nameString)
-                                               if (nameFilter(name)) {
-                                                   add(name)
-                                               }
-                                               true
-                                           }, scope, null)
+            val processor = Processor { nameString: String ->
+                Name.identifierIfValid(nameString)
+                    ?.takeIf(nameFilter)
+                    ?.let(::add)
+                true
+            }
+
+            nonKotlinNamesCaches.forEach {
+                it.processAllClassNames(processor, scope, null)
             }
         }
 
-        return sequence {
-            names.forEach { name ->
-                yieldAll(getJavaClassesByName(name, psiFilter))
-            }
-        }
+        return names.asSequence()
+            .flatMap { getJavaClassesByName(it, psiFilter) }
     }
-
 
     context(KaSession)
     fun getJavaClassesByName(
