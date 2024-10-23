@@ -13,9 +13,7 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.IdeBorderFactory.createBorder
@@ -34,20 +32,13 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy
 import com.intellij.vcs.log.VcsLogBranchLikeFilter
-import com.intellij.vcs.log.VcsLogFilterCollection
-import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.impl.*
-import com.intellij.vcs.log.impl.VcsLogManager.BaseVcsLogUiFactory
+import com.intellij.vcs.log.impl.VcsLogApplicationSettings
+import com.intellij.vcs.log.impl.VcsLogContentProvider
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToBranch
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToRefOrHash
-import com.intellij.vcs.log.ui.VcsLogColorManager
+import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
-import com.intellij.vcs.log.ui.VcsLogUiImpl
-import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
-import com.intellij.vcs.log.ui.frame.MainFrame
 import com.intellij.vcs.log.util.VcsLogUtil
-import com.intellij.vcs.log.visible.VisiblePackRefresher
-import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.with
 import com.intellij.vcs.log.visible.filters.without
@@ -368,43 +359,6 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
       sink[GitBranchActionsDataKeys.SELECTED_REPOSITORY] = selectedRepositories.singleOrNull()
     }
   }
-}
-
-internal class BranchesVcsLogUiFactory(logManager: VcsLogManager, logId: String, filters: VcsLogFilterCollection? = null)
-  : BaseVcsLogUiFactory<BranchesVcsLogUi>(logId, filters, logManager.uiProperties, logManager.colorManager) {
-  override fun createVcsLogUiImpl(logId: String,
-                                  logData: VcsLogData,
-                                  properties: MainVcsLogUiProperties,
-                                  colorManager: VcsLogColorManager,
-                                  refresher: VisiblePackRefresherImpl,
-                                  filters: VcsLogFilterCollection?) =
-    BranchesVcsLogUi(logId, logData, colorManager, properties, refresher, filters)
-}
-
-internal class BranchesVcsLogUi(id: String, logData: VcsLogData, colorManager: VcsLogColorManager,
-                                uiProperties: MainVcsLogUiProperties, refresher: VisiblePackRefresher,
-                                initialFilters: VcsLogFilterCollection?) :
-  VcsLogUiImpl(id, logData, colorManager, uiProperties, refresher, initialFilters) {
-
-  private val branchesUi =
-    BranchesDashboardUi(logData.project, this)
-      .also { branchesUi -> Disposer.register(this, branchesUi) }
-
-  internal val mainLogComponent: JComponent
-    get() = mainFrame
-
-  internal val changesBrowser: ChangesBrowserBase
-    get() = mainFrame.changesBrowser
-
-  override fun createMainFrame(logData: VcsLogData, uiProperties: MainVcsLogUiProperties,
-                               filterUi: VcsLogFilterUiEx, isEditorDiffPreview: Boolean) =
-    MainFrame(logData, this, uiProperties, filterUi, myColorManager, isEditorDiffPreview, this)
-      .apply {
-        isFocusCycleRoot = false
-        focusTraversalPolicy = null //new focus traversal policy will be configured include branches tree
-      }
-
-  override fun getMainComponent() = branchesUi.getMainComponent()
 }
 
 @ApiStatus.Internal
