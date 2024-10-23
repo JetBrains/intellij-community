@@ -157,8 +157,8 @@ public class JBZipEntry implements Cloneable {
    *		  extra field data is greater than 0xFFFF bytes
    * @see #getExtra()
    */
-  void setExtra(@NotNull List<JBZipExtraField> extra) {
-      this.extra = extra;
+  void setExtra(@NotNull List<? extends JBZipExtraField> extra) {
+      this.extra = new SmartList<>(extra);
   }
 
   public void addExtra(@NotNull JBZipExtraField field) {
@@ -325,7 +325,7 @@ public class JBZipEntry implements Cloneable {
   public int hashCode() {
     // this method has severe consequences on performance. We cannot rely
     // on the super.hashCode() method since super.getName() always return
-    // the empty string in the current implemention (there's no setter)
+    // the empty string in the current implementation (there's no setter)
     // so it is basically draining the performance of a hashmap lookup
     return getName().hashCode();
   }
@@ -370,16 +370,16 @@ public class JBZipEntry implements Cloneable {
    * @return the extra data for central directory file record
    */
   byte @NotNull [] getCentralDirectoryExtraBytes() throws IOException {
-    BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
-    for (JBZipExtraField field : extra) {
-      stream.write(field.getHeaderId().getBytes());
-      stream.write(field.getCentralDirectoryLength().getBytes());
-      stream.write(field.getCentralDirectoryData());
+    try (BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream()) {
+      for (JBZipExtraField field : extra) {
+        stream.write(field.getHeaderId().getBytes());
+        stream.write(field.getCentralDirectoryLength().getBytes());
+        stream.write(field.getCentralDirectoryData());
+      }
+      byte[] bytes = stream.toByteArray();
+      assertValidExtraFieldSize(bytes);
+      return bytes;
     }
-
-    byte[] bytes = stream.toByteArray();
-    assertValidExtraFieldSize(bytes);
-    return bytes;
   }
 
   /**
@@ -388,17 +388,16 @@ public class JBZipEntry implements Cloneable {
    * @return the extra data for local file header
    */
   byte @NotNull [] getLocalFileHeaderDataExtra() throws IOException {
-    BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
-    for (JBZipExtraField field : extra) {
-      stream.write(field.getHeaderId().getBytes());
-      stream.write(field.getLocalFileDataLength().getBytes());
-      stream.write(field.getLocalFileDataData());
+    try (BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream()) {
+      for (JBZipExtraField field : extra) {
+        stream.write(field.getHeaderId().getBytes());
+        stream.write(field.getLocalFileDataLength().getBytes());
+        stream.write(field.getLocalFileDataData());
+      }
+      byte[] bytes = stream.toByteArray();
+      assertValidExtraFieldSize(bytes);
+      return bytes;
     }
-    byte[] bytes = stream.toByteArray();
-
-    assertValidExtraFieldSize(bytes);
-
-    return bytes;
   }
 
   private static void assertValidExtraFieldSize(byte @NotNull [] bytes) {
@@ -497,7 +496,7 @@ public class JBZipEntry implements Cloneable {
 
   public void setDataFromFile(File file) throws IOException {
     if (file.length() < FileUtilRt.LARGE_FOR_CONTENT_LOADING / 2) {
-      //for small files its faster to load their whole content into memory so we can write it to zip sequentially
+      //for small files it's faster to load their whole content into memory so we can write it to zip sequentially
       setData(FileUtil.loadFileBytes(file));
     }
     else {
