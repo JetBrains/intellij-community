@@ -145,6 +145,16 @@ fun loadJvmDebugInitScript(): String {
   return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/JvmDebugInit.gradle")
 }
 
+fun loadJvmOptionsInitScript(
+  tasks: List<String>,
+  jvmArgs: List<String>,
+): String {
+  return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/JvmOptionsInit.gradle", mapOf(
+    "TASKS" to tasks.toGroovyListLiteral { toGroovyStringLiteral() },
+    "JVM_ARGS" to jvmArgs.toGroovyListLiteral { toGroovyStringLiteral() }
+  ))
+}
+
 private val JUNIT_3_COMPARISON_FAILURE = listOf("junit.framework.ComparisonFailure")
 private val JUNIT_4_COMPARISON_FAILURE = listOf("org.junit.ComparisonFailure")
 private val ASSERTION_FAILED_ERROR = listOf("org.opentest4j.AssertionFailedError")

@@ -1,0 +1,18 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+interface Properties {
+  //noinspection GrUnresolvedAccess
+  public static final List<String> tasks = TASKS
+  //noinspection GrUnresolvedAccess
+  public static final List<String> jvmArgs = JVM_ARGS
+}
+
+gradle.taskGraph.whenReady { taskGraph ->
+  taskGraph.allTasks.each { Task task ->
+    if (task instanceof JavaForkOptions && (Properties.tasks.contains(task.name) || Properties.tasks.contains(task.path))) {
+      def jvmArgs = task.jvmArgs.findAll { !it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp') }
+      jvmArgs.addAll(Properties.jvmArgs)
+      task.jvmArgs = jvmArgs
+    }
+  }
+}

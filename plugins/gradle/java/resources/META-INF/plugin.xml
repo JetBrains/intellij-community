@@ -42,6 +42,8 @@
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
 
+    <taskManager implementation="org.jetbrains.plugins.gradle.service.task.JavaGradleTaskManagerExtension"/>
+
     <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncContributor.GradleSourceRootSyncContributor"/>
 
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.JavaGradleProjectResolver"/>
