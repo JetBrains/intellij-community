@@ -200,7 +200,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     };
     schemeManager = SchemeManagerFactory.getInstance().create(FILE_SPEC, abstractTypesProcessor, null, null, SettingsCategory.CODE);
-    Disposer.register(this, myDetectionService);
 
     checkDuplicatedAlarm = singleAlarm(400, coroutineScope, this::checkUnique);
     EP_NAME.addExtensionPointListener(this, this);

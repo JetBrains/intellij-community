@@ -3,7 +3,6 @@ package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
@@ -35,6 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSetQueue;
 import com.intellij.util.xmlb.Constants;
 import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.JobKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +48,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-final class FileTypeDetectionService implements Disposable {
+final class FileTypeDetectionService {
   private static final Logger LOG = Logger.getInstance(FileTypeDetectionService.class);
 
   // cached auto-detected file type. If the file was auto-detected as plain text or binary
@@ -91,13 +91,18 @@ final class FileTypeDetectionService implements Disposable {
   FileTypeDetectionService(@NotNull FileTypeManagerImpl fileTypeManager, @NotNull CoroutineScope coroutineScope) {
     myFileTypeManager = fileTypeManager;
 
+    JobKt.getJob(coroutineScope.getCoroutineContext()).invokeOnCompletion(throwable -> {
+      LOG.info(String.format("%s auto-detected files. Detection took %s ms", counterAutoDetect, elapsedAutoDetect));
+      return null;
+    });
+
     fileTypeChangedCount = new AtomicInteger(AUTO_DETECTED_CACHE_INITIAL_ATTRIBUTE.getVersion());
     autoDetectedAttribute = AUTO_DETECTED_CACHE_INITIAL_ATTRIBUTE;
 
-    FileTypeRegistry.FileTypeDetector.EP_NAME.addChangeListener(() -> {
+    FileTypeRegistry.FileTypeDetector.EP_NAME.addChangeListener(coroutineScope, () -> {
       cachedDetectFileBufferSize = -1;
       onDetectorListChange();
-    }, this);
+    });
 
     List<String> prevDetectors = PropertiesComponent.getInstance().getList(FILE_TYPE_DETECTORS_PROPERTY);
     if (!Objects.equals(prevDetectors, getDetectorListString())) {
@@ -308,12 +313,6 @@ final class FileTypeDetectionService implements Disposable {
       result.add(adapter.getAssignableToClassName());
     }
     return result;
-  }
-
-  @Override
-  public void dispose() {
-    LOG.info(String.format("%s auto-detected files. Detection took %s ms", counterAutoDetect, elapsedAutoDetect));
-    reDetectExecutor.cancel();
   }
 
   static boolean isDetectable(@NotNull VirtualFile file) {
