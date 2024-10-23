@@ -15,22 +15,19 @@ import org.jetbrains.annotations.NotNull;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Enumeration;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 public abstract class ZipHandlerBase extends ArchiveHandler {
   private static final Logger LOG = Logger.getInstance(ZipHandlerBase.class);
 
   public @NotNull Map<String, Long> getArchiveCrcHashes() throws IOException {
-    try (@NotNull ResourceHandle<ZipFile> handle = acquireZipHandle()) {
-      ZipFile file = handle.get();
-      Enumeration<? extends ZipEntry> entries = file.entries();
+    try (@NotNull ResourceHandle<GenericZipFile> handle = acquireZipHandle()) {
+      GenericZipFile file = handle.get();
+      List<? extends GenericZipEntry> entries = file.getEntries();
       Map<String, Long> result = new Object2LongOpenHashMap<>();
-      while (entries.hasMoreElements()) {
-        ZipEntry entry = entries.nextElement();
+      for (GenericZipEntry entry : entries) {
         result.put(normalizeName(entry.getName()), entry.getCrc());
       }
       return result;
@@ -48,17 +45,16 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
 
   @Override
   protected @NotNull Map<String, EntryInfo> createEntriesMap() throws IOException {
-    try (ResourceHandle<ZipFile> zipRef = acquireZipHandle()) {
+    try (ResourceHandle<GenericZipFile> zipRef = acquireZipHandle()) {
       return buildEntryMapForZipFile(zipRef.get());
     }
   }
 
-  protected @NotNull Map<String, EntryInfo> buildEntryMapForZipFile(@NotNull ZipFile zip) {
-    Map<String, EntryInfo> map = new ZipEntryMap(zip.size());
+  private @NotNull Map<String, EntryInfo> buildEntryMapForZipFile(@NotNull GenericZipFile zip) {
+    Map<String, EntryInfo> map = new ZipEntryMap(zip.getEntries().size());
 
-    Enumeration<? extends ZipEntry> entries = zip.entries();
-    while (entries.hasMoreElements()) {
-      ZipEntry ze = entries.nextElement();
+    List<? extends GenericZipEntry> entries = zip.getEntries();
+    for (GenericZipEntry ze : entries) {
       processEntry(map, LOG, ze.getName(), ze.isDirectory() ? null : (parent, name) -> {
         long fileStamp = getUseCrcInsteadOfTimestampPropertyValue() ? ze.getCrc() : getEntryFileStamp();
         return new EntryInfo(name, false, ze.getSize(), fileStamp, parent);
@@ -69,9 +65,9 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
   }
 
   public long getEntryCrc(@NotNull String relativePath) throws IOException {
-    try (ResourceHandle<ZipFile> zipRef = acquireZipHandle()) {
-      ZipFile zip = zipRef.get();
-      ZipEntry entry = zip.getEntry(relativePath);
+    try (ResourceHandle<GenericZipFile> zipRef = acquireZipHandle()) {
+      GenericZipFile zip = zipRef.get();
+      GenericZipEntry entry = zip.getEntry(relativePath);
       if (entry != null) {
         return entry.getCrc();
       }
@@ -82,15 +78,15 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
 
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull String relativePath) throws IOException {
-    try (ResourceHandle<ZipFile> zipRef = acquireZipHandle()) {
-      ZipFile zip = zipRef.get();
-      ZipEntry entry = zip.getEntry(relativePath);
+    try (ResourceHandle<GenericZipFile> zipRef = acquireZipHandle()) {
+      GenericZipFile zip = zipRef.get();
+      GenericZipEntry entry = zip.getEntry(relativePath);
       if (entry != null) {
         long length = entry.getSize();
         if (FileSizeLimit.isTooLarge(length, FileUtilRt.getExtension(entry.getName()))) {
           throw new FileTooBigException(getFile() + "!/" + relativePath);
         }
-        try (InputStream stream = zip.getInputStream(entry)) {
+        try (InputStream stream = entry.getInputStream()) {
           if (stream != null) {
             // ZipFile.c#Java_java_util_zip_ZipFile_read reads data in 8K (stack allocated) blocks - no sense to create BufferedInputStream
             return FileUtil.loadBytes(stream, (int)length);
@@ -105,12 +101,12 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
   @Override
   public @NotNull InputStream getInputStream(@NotNull String relativePath) throws IOException {
     boolean release = true;
-    ResourceHandle<ZipFile> zipRef = acquireZipHandle();
+    ResourceHandle<GenericZipFile> zipRef = acquireZipHandle();
     try {
-      ZipFile zip = zipRef.get();
-      ZipEntry entry = zip.getEntry(relativePath);
+      GenericZipFile zip = zipRef.get();
+      GenericZipEntry entry = zip.getEntry(relativePath);
       if (entry != null) {
-        InputStream stream = zip.getInputStream(entry);
+        InputStream stream = entry.getInputStream();
         if (stream != null) {
           long length = entry.getSize();
           if (!FileSizeLimit.isTooLarge(length, FileUtilRt.getExtension(entry.getName()))) {
@@ -137,14 +133,14 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
 
   protected abstract long getEntryFileStamp();
 
-  protected abstract @NotNull ResourceHandle<ZipFile> acquireZipHandle() throws IOException;
+  protected abstract @NotNull ResourceHandle<GenericZipFile> acquireZipHandle() throws IOException;
 
   private static class InputStreamWrapper extends InputStream {
     private final InputStream myStream;
-    private final ResourceHandle<ZipFile> myZipRef;
+    private final ResourceHandle<GenericZipFile> myZipRef;
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
-    InputStreamWrapper(InputStream stream, ResourceHandle<ZipFile> zipRef) {
+    InputStreamWrapper(InputStream stream, ResourceHandle<GenericZipFile> zipRef) {
       myStream = stream;
       myZipRef = zipRef;
     }

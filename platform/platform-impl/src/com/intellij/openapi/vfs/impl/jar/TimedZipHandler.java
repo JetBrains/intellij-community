@@ -2,7 +2,7 @@
 package com.intellij.openapi.vfs.impl.jar;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.impl.ZipHandlerBase;
+import com.intellij.openapi.vfs.impl.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.ResourceHandle;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
@@ -57,7 +57,7 @@ public final class TimedZipHandler extends ZipHandlerBase {
   }
 
   @Override
-  protected @NotNull ResourceHandle<ZipFile> acquireZipHandle() throws IOException {
+  protected @NotNull ResourceHandle<GenericZipFile> acquireZipHandle() throws IOException {
     myHandle.attach();
     return myHandle;
   }
@@ -67,8 +67,8 @@ public final class TimedZipHandler extends ZipHandlerBase {
     return myHandle.getFileStamp();
   }
 
-  private final class ZipResourceHandle extends ResourceHandle<ZipFile> {
-    private ZipFile myFile;
+  private final class ZipResourceHandle extends ResourceHandle<GenericZipFile> {
+    private GenericZipFile myFile;
     private long myFileStamp;
     private final ReentrantLock myLock = new ReentrantLock();
     private ScheduledFuture<?> myInvalidationRequest;
@@ -88,7 +88,13 @@ public final class TimedZipHandler extends ZipHandlerBase {
         if (myFile == null) {
           var file = getFile();
           myFileStamp = Files.getLastModifiedTime(file.toPath()).toMillis();
-          myFile = new ZipFile(file);
+          // see com.intellij.openapi.vfs.impl.ZipHandler
+          if (ZipHandler.isFileLikelyLocal(file)) {
+            myFile = new JavaZipFileWrapper(file);
+          }
+          else {
+            myFile = new JBZipFileWrapper(file);
+          }
         }
       }
       catch (Throwable t) {
@@ -123,7 +129,7 @@ public final class TimedZipHandler extends ZipHandlerBase {
     }
 
     @Override
-    public @NotNull ZipFile get() {
+    public @NotNull GenericZipFile get() {
       assert myLock.isLocked();
       return myFile;
     }
