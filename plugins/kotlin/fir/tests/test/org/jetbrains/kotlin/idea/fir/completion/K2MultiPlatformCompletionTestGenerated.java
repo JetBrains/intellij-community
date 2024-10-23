@@ -32,6 +32,11 @@ public abstract class K2MultiPlatformCompletionTestGenerated extends AbstractK2M
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("actualFun")
+        public void testActualFun() throws Exception {
+            runTest("../../completion/testData/multiPlatform/actualDeclaration/actualFun/");
+        }
+
         @TestMetadata("actualKeywordFromSeveralFiles")
         public void testActualKeywordFromSeveralFiles() throws Exception {
             runTest("../../completion/testData/multiPlatform/actualDeclaration/actualKeywordFromSeveralFiles/");
@@ -55,6 +60,11 @@ public abstract class K2MultiPlatformCompletionTestGenerated extends AbstractK2M
         @TestMetadata("actualKeywordWithSamePackage")
         public void testActualKeywordWithSamePackage() throws Exception {
             runTest("../../completion/testData/multiPlatform/actualDeclaration/actualKeywordWithSamePackage/");
+        }
+
+        @TestMetadata("actualVal")
+        public void testActualVal() throws Exception {
+            runTest("../../completion/testData/multiPlatform/actualDeclaration/actualVal/");
         }
     }
 
