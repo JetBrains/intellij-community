@@ -12,7 +12,6 @@ import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import com.intellij.vcs.impl.shared.rpc.ChangeListDto
 import com.intellij.vcs.impl.shared.rpc.RemoteShelfActionsApi
-import com.intellij.vcs.impl.shared.rpc.RemoteShelfApi
 import fleet.kernel.rete.collectLatest
 import fleet.kernel.rete.each
 import fleet.kernel.rete.filter
@@ -23,14 +22,14 @@ import kotlinx.coroutines.launch
 
 @Service(Service.Level.PROJECT)
 class ShelfService(private val project: Project, private val cs: CoroutineScope) {
-  fun unshelveSilently(changeListsMap: Map<ShelvedChangeListEntity, List<ShelvedChangeEntity>>?) {
+  fun unshelve(changeListsMap: Map<ShelvedChangeListEntity, List<ShelvedChangeEntity>>, withDialog: Boolean) {
     cs.launch {
       withKernel {
-        val changeLists = changeListsMap?.map {
+        val changeLists = changeListsMap.map {
           ChangeListDto(it.key.sharedRef(), it.value.map { it.sharedRef() })
-        } ?: return@withKernel
+        }
         val projectRef = project.asEntity().sharedRef()
-        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).unshelveSilently(projectRef, changeLists)
+        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).unshelve(projectRef, changeLists, withDialog)
       }
     }
   }

@@ -2,16 +2,12 @@
 package com.intellij.vcs.impl.shared.rpc
 
 import com.intellij.platform.project.ProjectEntity
-import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
-import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import fleet.kernel.SharedRef
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
-import kotlinx.coroutines.Deferred
-import kotlinx.serialization.Serializable
 
 @Rpc
 interface RemoteShelfActionsApi : RemoteApi<Unit> {
-  suspend fun unshelveSilently(projectRef: SharedRef<ProjectEntity>, changeListDto: List<ChangeListDto>)
+  suspend fun unshelve(projectRef: SharedRef<ProjectEntity>, changeListDto: List<ChangeListDto>, withDialog: Boolean)
   suspend fun createPatchForShelvedChanges(projectRef: SharedRef<ProjectEntity>, changeListsDto: List<ChangeListDto>, silentClipboard: Boolean)
 }

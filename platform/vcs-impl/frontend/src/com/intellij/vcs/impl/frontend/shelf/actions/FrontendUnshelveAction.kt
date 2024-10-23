@@ -9,19 +9,22 @@ import com.intellij.vcs.impl.frontend.shelf.ShelfService
 import com.intellij.vcs.impl.frontend.shelf.tree.ShelfTree
 import com.intellij.vcs.impl.frontend.shelf.tree.ShelfTree.Companion.GROUPED_CHANGES_KEY
 
-class UnshelveSilentlyAction : AnAction(), DumbAware {
+open class FrontendUnshelveAction(private val withDialog: Boolean) : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     val project = getEventProject(e) ?: return
     val dataContext = e.dataContext
-    val selectedChangelists = GROUPED_CHANGES_KEY.getData(dataContext)
-    ShelfService.getInstance(project).unshelveSilently(selectedChangelists)
+    val selectedChangelists = GROUPED_CHANGES_KEY.getData(dataContext) ?: return
+    ShelfService.getInstance(project).unshelve(selectedChangelists, withDialog)
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = getEventProject(e) != null && ShelfTree.SELECTED_CHANGELISTS_KEY.getData(e.dataContext) != null
+    e.presentation.isEnabled = getEventProject(e) != null && !ShelfTree.SELECTED_CHANGELISTS_KEY.getData(e.dataContext).isNullOrEmpty()
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
 }
+
+class UnshelveWithDialogAction() : FrontendUnshelveAction(true)
+class UnshelveSilentlyAction() : FrontendUnshelveAction(false)

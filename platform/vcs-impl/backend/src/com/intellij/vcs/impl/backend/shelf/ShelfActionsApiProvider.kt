@@ -18,11 +18,11 @@ class ShelfActionsApiProvider : RemoteApiProvider {
 
 class BackendShelfActionsApi : RemoteShelfActionsApi {
 
-  override suspend fun unshelveSilently(projectRef: SharedRef<ProjectEntity>, changeListDto: List<ChangeListDto>) {
+  override suspend fun unshelve(projectRef: SharedRef<ProjectEntity>, changeListDto: List<ChangeListDto>, withDialog: Boolean) {
     val project = projectRef.asProject()
 
     val executor = ShelfRemoteActionExecutor.getInstance(project)
-    executor.unshelveSilently(changeListDto)
+    executor.unshelve(changeListDto, withDialog)
   }
 
   override suspend fun createPatchForShelvedChanges(projectRef: SharedRef<ProjectEntity>, changeListDto: List<ChangeListDto>, silentClipboard: Boolean) {

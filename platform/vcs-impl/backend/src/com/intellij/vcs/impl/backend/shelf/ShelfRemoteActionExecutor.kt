@@ -8,10 +8,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction
 import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor
-import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
-import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile
-import com.intellij.openapi.vcs.changes.shelf.ShelvedChange
-import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
+import com.intellij.openapi.vcs.changes.shelf.*
 import com.intellij.vcs.impl.shared.rpc.ChangeListDto
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +35,7 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
     }
   }
 
-  fun unshelveSilently(changeListDto: List<ChangeListDto>) {
+  fun unshelve(changeListDto: List<ChangeListDto>, withDialog: Boolean) {
     cs.launch {
       withContext(Dispatchers.EDT) {
         FileDocumentManager.getInstance().saveAllDocuments()
@@ -46,20 +43,32 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
       val changeLists = mutableListOf<ShelvedChangeList>()
       val changes = mutableListOf<ShelvedChange>()
       val files = mutableListOf<ShelvedBinaryFile>()
-      changeListDto.forEach {
-        shelfTreeHolder.findChangesInTree(it).forEach { node ->
-          val change = node.shelvedChange
-          changeLists.add(change.changeList)
-          if (change.binaryFile != null) {
-            files.add(change.binaryFile!!)
-          }
-          else {
-            changes.add(change.shelvedChange!!)
-          }
+      val nodes = changeListDto.flatMap {
+        shelfTreeHolder.findChangesInTree(it)
+      }
+      nodes.forEach { node ->
+        val change = node.shelvedChange
+        changeLists.add(change.changeList)
+        if (change.binaryFile != null) {
+          files.add(change.binaryFile!!)
+        }
+        else {
+          changes.add(change.shelvedChange!!)
         }
       }
-
-      ShelveChangesManager.getInstance(project).unshelveSilentlyAsynchronously(project, changeLists, changes, files, null)
+      cs.launch(Dispatchers.EDT) {
+        if (withDialog) {
+          if (changeLists.size == 1) {
+            val changesToUnshelve = nodes.map { it.shelvedChange.getChangeWithLocal(project) }.toTypedArray()
+            UnshelveWithDialogAction.unshelveSingleChangeList(changeLists.first(), project, changesToUnshelve)
+          }
+          else {
+            UnshelveWithDialogAction.unshelveMultipleShelveChangeLists(project, changeLists, files, changes)
+          }
+          return@launch
+        }
+        ShelveChangesManager.getInstance(project).unshelveSilentlyAsynchronously(project, changeLists, changes, files, null)
+      }
     }
   }
 
