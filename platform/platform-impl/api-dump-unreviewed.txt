@@ -16776,6 +16776,7 @@ c:com.intellij.ui.popup.tree.TreePopupImpl
 - p:onSpeedSearchPatternChanged():V
 - p:process(java.awt.event.KeyEvent):V
 - scrollToSelection():V
+- p:selectFirstSelectableItem():V
 c:com.intellij.ui.render.IconCompOptionalCompPanel
 - com.intellij.ui.popup.list.SelectablePanel
 - <init>(javax.swing.JComponent):V
