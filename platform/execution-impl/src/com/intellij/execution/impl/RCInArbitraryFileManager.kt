@@ -120,7 +120,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
     val filePathToRunConfigs: Map<String, List<RunnerAndConfigurationSettingsImpl>> = filePathToRunConfigs
 
     val file = LocalFileSystem.getInstance().findFileByPath(filePath)
-    if (file == null) {
+    if (file == null || !file.isValid) {
       LOG.warn("It's unexpected that the file doesn't exist at this point ($filePath)")
       val rcsToDelete = filePathToRunConfigs.get(filePath) ?: emptyList()
       return DeletedAndAddedRunConfigs(rcsToDelete, emptyList())
