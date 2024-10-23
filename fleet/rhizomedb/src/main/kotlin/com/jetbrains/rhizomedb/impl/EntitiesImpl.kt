@@ -7,6 +7,7 @@ import com.jetbrains.rhizomedb.*
 import fleet.util.logging.logger
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonElement
+import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
@@ -433,6 +434,19 @@ private class MetaInfBasedEntityTypeProvider(
   }
 
   private val logger = logger<MetaInfBasedEntityTypeProvider>()
+}
+
+/**
+ * Register entity type provider for loading.
+ * This should not be called manually and is intended for use from compiler plugins in non-JVM contexts.
+ * No-op on JVM.
+ *
+ * @see com.jetbrains.rhizomedb.plugin.EntityTypeRegistrationGenerator
+ */
+@ApiStatus.Internal
+fun registerEntityTypeProvider(provider: EntityTypeProvider): Boolean {
+  // Later: this should push entity type provider somewhere on non-JVM platforms
+  return true
 }
 
 private const val INSTANCE = "INSTANCE"
