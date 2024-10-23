@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
+import com.intellij.ui.EditorNotifications
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -68,7 +69,7 @@ class KotlinK2FeaturesInK1ModeNotifier : EditorNotificationProvider {
             }
             createActionLabel(KotlinProjectConfigurationBundle.message("k1.does.not.support.features.ignore")) {
                 PropertiesComponent.getInstance().setValue(KOTLIN_K2_FEATURES_IN_K1_MODE_NOTIFICATION_DISABLED, true)
-                isVisible = false
+                EditorNotifications.getInstance(project).updateNotifications(fileEditor.file)
             }
         }
     }
