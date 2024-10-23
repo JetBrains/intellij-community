@@ -19,7 +19,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-class AbstractDependencyVisitor extends ClassVisitor implements ClassFileAnalyzer {
+class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnalyzer {
   private static final Label LABEL = new Label();
 
   private final AnnotationDependencyVisitor myAnnotationVisitor = new AnnotationDependencyVisitor();
@@ -30,8 +30,8 @@ class AbstractDependencyVisitor extends ClassVisitor implements ClassFileAnalyze
 
   private JvmClassBytecodeDeclaration myCurrentClass;
 
-  protected AbstractDependencyVisitor(@Nullable JvmBytecodeDeclarationProcessor declarationProcessor, 
-                                      @Nullable JvmBytecodeReferenceProcessor referenceProcessor) {
+  ClassFileAnalyzerImpl(@Nullable JvmBytecodeDeclarationProcessor declarationProcessor,
+                        @Nullable JvmBytecodeReferenceProcessor referenceProcessor) {
     super(Opcodes.API_VERSION);
     myDeclarationProcessor = declarationProcessor;
     myReferenceProcessor = referenceProcessor;

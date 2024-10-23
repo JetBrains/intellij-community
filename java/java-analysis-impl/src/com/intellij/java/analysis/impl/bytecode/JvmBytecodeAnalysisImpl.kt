@@ -8,14 +8,14 @@ import com.intellij.java.analysis.bytecode.JvmBytecodeReferenceProcessor
 
 class JvmBytecodeAnalysisImpl : JvmBytecodeAnalysis {
   override fun createReferenceAnalyzer(processor: JvmBytecodeReferenceProcessor): ClassFileAnalyzer {
-    return AbstractDependencyVisitor(null, processor)
+    return ClassFileAnalyzerImpl(null, processor)
   }
 
   override fun createDeclarationAnalyzer(processor: JvmBytecodeDeclarationProcessor): ClassFileAnalyzer {
-    return AbstractDependencyVisitor(processor, null)
+    return ClassFileAnalyzerImpl(processor, null)
   }
 
   override fun createDeclarationAndReferencesAnalyzer(declarationProcessor: JvmBytecodeDeclarationProcessor, referenceProcessor: JvmBytecodeReferenceProcessor): ClassFileAnalyzer {
-    return AbstractDependencyVisitor(declarationProcessor, referenceProcessor)
+    return ClassFileAnalyzerImpl(declarationProcessor, referenceProcessor)
   }
 }
