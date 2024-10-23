@@ -52,7 +52,7 @@ abstract class DeclarationAndUsagesLesson
       task("GotoDeclaration") { actionId ->
         text(LessonsBundle.message("declaration.and.usages.show.usages", action(actionId)))
         stateCheck l@{
-          val curEditor = editor
+          val curEditor = FileEditorManager.getInstance(project).selectedTextEditor ?: return@l false
           val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(curEditor.document) ?: return@l false
           val offset = curEditor.caretModel.offset
           val element = psiFile.findElementAt(offset) ?: return@l false
