@@ -2,18 +2,13 @@
 package com.intellij.psi.xml;
 
 import com.intellij.html.embedding.HtmlRawTextElementType;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.lang.html.HTMLParserDefinition;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.psi.impl.source.parsing.xml.DtdParsing;
-import com.intellij.psi.tree.CustomParsingType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.xml.IXmlElementType;
-import com.intellij.util.CharTable;
-import org.jetbrains.annotations.NotNull;
 
 public interface XmlElementType extends XmlTokenType {
   IElementType XML_DOCUMENT = new IXmlElementType("XML_DOCUMENT");
@@ -53,10 +48,5 @@ public interface XmlElementType extends XmlTokenType {
 
   IFileElementType DTD_FILE = new IFileElementType("DTD_FILE", DTDLanguage.INSTANCE);
 
-  IElementType XML_MARKUP_DECL = new CustomParsingType("XML_MARKUP_DECL", XMLLanguage.INSTANCE) {
-    @Override
-    public @NotNull ASTNode parse(@NotNull CharSequence text, @NotNull CharTable table) {
-      return new DtdParsing(text, XML_MARKUP_DECL, DtdParsing.TYPE_FOR_MARKUP_DECL, null).parse();
-    }
-  };
+  IElementType XML_MARKUP_DECL = new XmlMarkupDeclElementType();
 }
