@@ -123,6 +123,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return null;
   }
 
+  /**
+   * Does not handle array types correctly
+   * @deprecated use {@link DebuggerUtils#instanceOf(Type, String)}
+   */
   @Deprecated
   public static boolean isAssignableFrom(@NotNull String baseQualifiedName, @NotNull Type checkedType) {
     if (checkedType instanceof ReferenceType) {
