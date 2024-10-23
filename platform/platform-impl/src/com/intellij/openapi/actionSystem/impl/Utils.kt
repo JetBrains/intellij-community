@@ -1029,12 +1029,6 @@ object Utils {
     result
   }
 
-  fun rearrangeByPromotersNonAsync(actions: List<AnAction>, dataContext: DataContext): List<AnAction> = runBlockingForActionExpand {
-    val asyncDataContext = createAsyncDataContext(dataContext)
-    checkAsyncDataContext(asyncDataContext, "rearrangeByPromotersNonAsync")
-    rearrangeByPromoters(actions, asyncDataContext)
-  }
-
   fun <R> CoroutineScope.runUpdateSessionForActionSearch(updateSession: UpdateSession,
                                                          block: suspend CoroutineScope.(suspend (AnAction) -> Presentation) -> R): Deferred<R> {
     val updater = ActionUpdater.getUpdater(updateSession) ?: throw AssertionError()
