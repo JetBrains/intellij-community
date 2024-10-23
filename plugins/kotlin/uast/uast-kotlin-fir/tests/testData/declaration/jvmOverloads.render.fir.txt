@@ -1,0 +1,73 @@
+public final class Test {
+    @org.jetbrains.annotations.NotNull private final var x: int
+    @org.jetbrains.annotations.NotNull private final var y: java.lang.String
+    @kotlin.jvm.JvmOverloads
+    public final fun foo(@org.jetbrains.annotations.NotNull p1: double, @org.jetbrains.annotations.NotNull p2: java.lang.String) : void {
+        if (x > p1.toInt()) {
+            println(p1)
+        }
+        println(p2)
+    }
+    @kotlin.jvm.JvmOverloads
+    public final fun foo(@org.jetbrains.annotations.NotNull p1: double) : void {
+        if (x > p1.toInt()) {
+            println(p1)
+        }
+        println(p2)
+    }
+    @kotlin.jvm.JvmOverloads
+    public final fun foo() : void {
+        if (x > p1.toInt()) {
+            println(p1)
+        }
+        println(p2)
+    }
+    @kotlin.jvm.JvmOverloads
+    public final fun bar(@org.jetbrains.annotations.NotNull p1: double, @org.jetbrains.annotations.NotNull p2: java.lang.String) : java.lang.String {
+        return buildString({
+            append(p1)
+            append(" | ")
+            return append(p2)
+        })
+    }
+    @kotlin.jvm.JvmOverloads
+    public final fun bar(@org.jetbrains.annotations.NotNull p1: double) : java.lang.String {
+        return buildString({
+            append(p1)
+            append(" | ")
+            return append(p2)
+        })
+    }
+    @kotlin.jvm.JvmOverloads
+    public final fun bar() : java.lang.String {
+        return buildString({
+            append(p1)
+            append(" | ")
+            return append(p2)
+        })
+    }
+    public final fun getX() : int = UastEmptyExpression
+    public final fun getY() : java.lang.String = UastEmptyExpression
+    public fun Test(@org.jetbrains.annotations.NotNull x: int, @org.jetbrains.annotations.NotNull y: java.lang.String) = UastEmptyExpression
+    @kotlin.jvm.JvmOverloads
+    public fun Test(@org.jetbrains.annotations.NotNull x: long, @org.jetbrains.annotations.NotNull y: java.lang.String) {
+        Test(x.toInt(), y)
+        if (x > 0) {
+            println(x)
+        }
+    }
+    @kotlin.jvm.JvmOverloads
+    public fun Test(@org.jetbrains.annotations.NotNull x: long) {
+        Test(x.toInt(), y)
+        if (x > 0) {
+            println(x)
+        }
+    }
+    @kotlin.jvm.JvmOverloads
+    public fun Test() {
+        Test(x.toInt(), y)
+        if (x > 0) {
+            println(x)
+        }
+    }
+}

@@ -130,6 +130,11 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
         runTest("../../uast-kotlin-fir/tests/testData/declaration/interfaceCompanionObject.kt");
     }
 
+    @TestMetadata("jvmOverloads.kt")
+    public void testJvmOverloads() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/jvmOverloads.kt");
+    }
+
     @TestMetadata("labeledExpression.kt")
     public void testLabeledExpression() throws Exception {
         runTest("../../uast-kotlin-fir/tests/testData/declaration/labeledExpression.kt");

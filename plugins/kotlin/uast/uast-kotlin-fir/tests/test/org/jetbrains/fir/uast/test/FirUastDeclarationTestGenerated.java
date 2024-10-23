@@ -130,6 +130,11 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
         runTest("testData/declaration/interfaceCompanionObject.kt");
     }
 
+    @TestMetadata("jvmOverloads.kt")
+    public void testJvmOverloads() throws Exception {
+        runTest("testData/declaration/jvmOverloads.kt");
+    }
+
     @TestMetadata("labeledExpression.kt")
     public void testLabeledExpression() throws Exception {
         runTest("testData/declaration/labeledExpression.kt");
