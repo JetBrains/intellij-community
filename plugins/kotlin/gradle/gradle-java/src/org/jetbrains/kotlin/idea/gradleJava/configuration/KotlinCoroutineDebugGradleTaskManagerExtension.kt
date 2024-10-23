@@ -3,41 +3,50 @@
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
-import com.intellij.openapi.project.Project
-import com.intellij.util.Consumer
 import kotlinx.coroutines.DEBUG_PROPERTY_NAME
 import kotlinx.coroutines.DEBUG_PROPERTY_VALUE_OFF
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.extensions.KotlinJvmDebuggerFacade
-import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension
+import org.jetbrains.plugins.gradle.service.execution.joinInitScripts
+import org.jetbrains.plugins.gradle.service.execution.loadCommonTasksUtilsScript
+import org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension
+import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 
-class KotlinGradleCoroutineDebugProjectResolver : AbstractProjectResolverExtension() {
+class KotlinCoroutineDebugGradleTaskManagerExtension : GradleTaskManagerExtension {
+
     companion object {
-        val log = Logger.getInstance(this::class.java)
+
+        private val LOG = Logger.getInstance(this::class.java)
+
         private const val MIN_SUPPORTED_GRADLE_VERSION = "4.6" // CommandLineArgumentProvider is available only since Gradle 4.6
+
+        private const val KOTLIN_COROUTINE_DEBUG_SCRIPT_NAME = "ijKotlinCoroutineDebugInit"
     }
 
-    override fun enhanceTaskProcessing(
-        project: Project?,
-        taskNames: MutableList<String>,
-        initScriptConsumer: Consumer<String>,
-        parameters: Map<String, String>
-    ): Map<String, String> {
+    override fun configureTasks(
+        projectPath: String,
+        id: ExternalSystemTaskId,
+        settings: GradleExecutionSettings,
+        gradleVersion: GradleVersion?
+    ) {
         try {
             val allowCoroutineAgent = KotlinJvmDebuggerFacade.instance?.isCoroutineAgentAllowedInDebug ?: false
-            val gradleVersion = parameters[GradleProjectResolverExtension.GRADLE_VERSION]?.let { GradleVersion.version(it) }
             if (allowCoroutineAgent && (gradleVersion == null || gradleVersion >= GradleVersion.version(MIN_SUPPORTED_GRADLE_VERSION))) {
-                setupCoroutineAgentForJvmForkedTestTasks(initScriptConsumer, gradleVersion == null)
+                val initScript = joinInitScripts(
+                    loadCommonTasksUtilsScript(),
+                    createCoroutineDebuggerScript(gradleVersion == null)
+                )
+                settings.addInitScript(KOTLIN_COROUTINE_DEBUG_SCRIPT_NAME, initScript)
             }
+
         } catch (e: Exception) {
-            log.error("Gradle: not possible to attach a coroutine debugger agent.", e)
+            LOG.error("Gradle: not possible to attach a coroutine debugger agent.", e)
         }
-        return emptyMap()
     }
 
-    private fun setupCoroutineAgentForJvmForkedTestTasks(initScriptConsumer: Consumer<String>, shouldCheckGradleVersion: Boolean) {
+    private fun createCoroutineDebuggerScript(shouldCheckGradleVersion: Boolean): String {
         val gradleVersionCheck = if (shouldCheckGradleVersion) {
             //language=Gradle
             """
@@ -46,9 +55,8 @@ class KotlinGradleCoroutineDebugProjectResolver : AbstractProjectResolverExtensi
         } else {
             ""
         }
-        val script =
-            //language=Gradle
-            """
+        //language=Gradle
+        return """
             gradle.taskGraph.whenReady { TaskExecutionGraph taskGraph ->
                 $gradleVersionCheck
                 def debugAllIsEnabled = Boolean.valueOf(System.properties["idea.gradle.debug.all"])
@@ -91,6 +99,5 @@ class KotlinGradleCoroutineDebugProjectResolver : AbstractProjectResolverExtensi
                 }
             }
             """.trimIndent()
-        initScriptConsumer.consume(script)
     }
 }

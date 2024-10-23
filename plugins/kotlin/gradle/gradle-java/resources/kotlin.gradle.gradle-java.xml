@@ -62,12 +62,12 @@
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptModelResolver" order="first"/>
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.PrepareKotlinIdeImportTaskResolver" order="first" />
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleProjectResolverExtension" order="first"/>
-    <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleCoroutineDebugProjectResolver" order="last"/>
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinTestTasksResolver"/>
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver"/>
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.kpm.KotlinKPMGradleProjectResolver"/>
 
     <taskManager implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinTestGradleTaskManagerExtension"/>
+    <taskManager implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinCoroutineDebugGradleTaskManagerExtension"/>
 
     <orderEnumerationHandlerFactory implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinGradleOrderEnumerationHandler$Factory" order="first"/>
 
