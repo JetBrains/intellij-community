@@ -211,6 +211,7 @@ class MavenProjectResolver(private val myProject: Project) {
         }
       }
     }
+    tree.recalculateMavenIdToProjectMap()
     MavenLog.LOG.debug("Project resolution finished: ${projectsWithUnresolvedPlugins.size}")
     return projectsWithUnresolvedPlugins
   }

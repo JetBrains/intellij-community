@@ -40,7 +40,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Consumer
 import java.util.regex.Pattern
 import java.util.zip.CRC32
-import kotlin.Throws
 
 class MavenProjectsTree(val project: Project) {
   private val myStructureLock = ReentrantReadWriteLock()
@@ -586,6 +585,19 @@ class MavenProjectsTree(val project: Project) {
     }
 
     return true
+  }
+
+  internal fun recalculateMavenIdToProjectMap() {
+    withWriteLock {
+      myMavenIdToProjectMapping.clear()
+      myWorkspaceMap.availableIds.toList().forEach {
+        myWorkspaceMap.unregister(it)
+      }
+      myVirtualFileToProjectMapping.values.forEach {
+        myMavenIdToProjectMapping[it.mavenId] = it
+        myWorkspaceMap.register(it.mavenId, File(it.file.path))
+      }
+    }
   }
 
   fun hasProjects(): Boolean {
