@@ -83,8 +83,6 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         }
 
         val className = FileUtil.loadFile(candidateFiles[0]).trim { it <= ' ' }
-        if (className.isBlank()) return object : LocalInspectionTool() {} // return a stub inspection if K1 is not supported
-
         return Class.forName(className).getDeclaredConstructor().newInstance() as LocalInspectionTool
     }
 
