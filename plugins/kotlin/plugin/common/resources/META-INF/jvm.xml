@@ -10,6 +10,9 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <scratch.creationHelper language="kotlin"
+                            implementationClass="org.jetbrains.kotlin.idea.scratch.KtScratchFileCreationHelper"/>
+
     <registryKey
             key="repo.with.kotlin.versions.url"
             description="URL of a JSON file with Kotlin versions"
