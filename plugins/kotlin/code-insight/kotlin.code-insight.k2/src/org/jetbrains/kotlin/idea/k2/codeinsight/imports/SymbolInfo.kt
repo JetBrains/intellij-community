@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.name.FqName
@@ -126,6 +127,10 @@ private fun KaSession.computeImportableName(
     target: KaSymbol,
     containingClass: KaClassLikeSymbol?
 ): FqName? {
+    if (target is KaReceiverParameterSymbol) {
+        return null
+    }
+
     if (containingClass == null) {
         return target.importableFqName
     }
