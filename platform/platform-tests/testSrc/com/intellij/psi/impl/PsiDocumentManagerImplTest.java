@@ -66,7 +66,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -554,12 +557,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   }
 
   private static void waitForCommits() {
-    try {
-      DocumentCommitThread.getInstance().waitForAllCommits(100, TimeUnit.SECONDS);
-    }
-    catch (ExecutionException | InterruptedException | TimeoutException e) {
-      throw new RuntimeException(e);
-    }
+    DocumentCommitThread.getInstance().waitForAllCommits(100, TimeUnit.SECONDS);
   }
 
   public void testReparseDoesNotModifyDocument() throws Exception {
@@ -682,7 +680,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertTrue(invoked.get());
   }
 
-  public void testPerformLaterWhenAllCommittedFromCommitHandler() throws Exception {
+  public void testPerformLaterWhenAllCommittedFromCommitHandler() {
     PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText("a.txt", PlainTextFileType.INSTANCE, "", 0, true);
     Document document = file.getViewProvider().getDocument();
 
