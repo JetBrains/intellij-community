@@ -14,6 +14,14 @@
                              key="configurable.name.ide.debugger"
                              provider="org.jetbrains.idea.devkit.debugger.settings.DevKitDebuggerConfigurableProvider"/>
   </extensions>
+  <actions>
+    <action id="DevKit.Debugger.Disable.IDE.State"
+            class="org.jetbrains.idea.devkit.debugger.settings.DisableIDEStateAction"
+            icon="AllIcons.General.Remove"
+            use-shortcut-of="$Delete">
+      <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="after" relative-to-action="XDebugger.EditWatch"/>
+    </action>
+  </actions>
   <applicationListeners>
     <listener class="org.jetbrains.idea.devkit.debugger.SteppingStartListener"
               topic="com.intellij.debugger.engine.SteppingListener"/>
