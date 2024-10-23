@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarCompo
 import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
 import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider
 import com.intellij.openapi.editor.toolbar.floating.isInsideMainEditor
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.AnimatedIcon
@@ -50,7 +51,7 @@ private fun showFloatingToolbar(): Boolean = HotSwapUiExtension.computeSafeIfAva
 
 private fun collectPopupMenuActions(): DefaultActionGroup? = HotSwapUiExtension.computeSafeIfAvailable { it.popupMenuActions() }
 
-internal class HotSwapModifiedFilesAction : AnAction() {
+internal class HotSwapModifiedFilesAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val session = findSession(project) ?: return
@@ -81,7 +82,7 @@ private enum class HotSwapButtonStatus {
   READY, IN_PROGRESS, SUCCESS
 }
 
-private class HotSwapWithRebuildAction : AnAction(), CustomComponentAction {
+private class HotSwapWithRebuildAction : AnAction(), CustomComponentAction, DumbAware {
   var status = HotSwapButtonStatus.READY
 
   override fun actionPerformed(e: AnActionEvent) {
