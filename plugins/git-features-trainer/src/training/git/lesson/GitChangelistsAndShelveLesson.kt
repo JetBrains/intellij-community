@@ -4,6 +4,8 @@ package training.git.lesson
 import com.intellij.CommonBundle
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -25,7 +27,6 @@ import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.ui.components.DropDownLink
 import com.intellij.util.DocumentUtil
 import com.intellij.util.ui.JBUI
 import training.dsl.*
@@ -88,8 +89,9 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       text(GitLessonsBundle.message("git.changelists.shelf.introduction"))
       text(GitLessonsBundle.message("git.changelists.shelf.click.line.marker.balloon"),
            LearningBalloonConfig(Balloon.Position.below, 0))
-      triggerAndBorderHighlight().component { ui: DropDownLink<*> ->
-        ui.text?.contains(defaultChangelistName) == true
+      triggerAndBorderHighlight().component { ui: ActionButton ->
+        val group = ui.action as? ActionGroup ?: return@component false
+        group.getChildren(null).any { it.templateText == VcsBundle.message("ex.new.changelist") }
       }
       test {
         ideFrame {
@@ -104,15 +106,15 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
 
     task {
       val newChangelistText = VcsBundle.message("ex.new.changelist")
-      text(GitLessonsBundle.message("git.changelists.shelf.choose.new.changelist",
-                                    strong(defaultChangelistName), strong(newChangelistText)))
+      text(GitLessonsBundle.message("git.changelists.shelf.choose.new.changelist", strong(newChangelistText)))
       triggerUI().component { ui: EditorComponentImpl ->
         ui.text.contains(defaultChangelistName)
       }
       restoreByUi(highlightLineMarkerTaskId)
       test {
         ideFrame {
-          button(defaultChangelistName).click()
+          val changelistsButton = previous.ui as? ActionButton ?: return@ideFrame
+          jComponent(changelistsButton).click()
           jList(newChangelistText).clickItem(newChangelistText)
         }
       }
