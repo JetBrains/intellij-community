@@ -7,6 +7,12 @@
     <debugger.extraDebugNodesProvider implementation="org.jetbrains.idea.devkit.debugger.DebugeeIdeStateRenderer"/>
     <registryKey defaultValue="true" description="Show details of a debugee IDE in the variables view" key="devkit.debugger.show.ide.state"/>
     <registryKey defaultValue="true" description="Do not throw PCE during stepping" key="devkit.debugger.prevent.pce.while.stepping"/>
+
+    <applicationConfigurable parentId="project.propDebugger"
+                             id="devkit.debugger"
+                             bundle="messages.DevKitDebuggerBundle"
+                             key="configurable.name.ide.debugger"
+                             provider="org.jetbrains.idea.devkit.debugger.settings.DevKitDebuggerConfigurableProvider"/>
   </extensions>
   <applicationListeners>
     <listener class="org.jetbrains.idea.devkit.debugger.SteppingStartListener"

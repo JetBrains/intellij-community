@@ -18,6 +18,7 @@ import com.intellij.xdebugger.impl.frame.XFramesView
 import com.sun.jdi.BooleanValue
 import com.sun.jdi.ClassType
 import com.sun.jdi.ObjectReference
+import org.jetbrains.idea.devkit.debugger.settings.DevKitDebuggerSettings
 import java.util.*
 
 /**
@@ -61,6 +62,7 @@ catch (e: Exception) {
 
 internal class DebugeeIdeStateRenderer : ExtraDebugNodesProvider {
   override fun addExtraNodes(evaluationContext: EvaluationContext, children: XValueChildrenList) {
+    if (!DevKitDebuggerSettings.getInstance().showIdeState) return
     if (!Registry.`is`("devkit.debugger.show.ide.state")) return
     val ideState = getIdeState(evaluationContext) ?: return
     if (ideState.readAllowed == null && ideState.writeAllowed == null) return
