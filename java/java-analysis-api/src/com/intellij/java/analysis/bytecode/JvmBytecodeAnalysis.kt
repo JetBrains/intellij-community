@@ -44,6 +44,7 @@ interface JvmBytecodeAnalysis {
  * If you want to process multiple *.class files in parallel, create separate instances.
  */
 interface ClassFileAnalyzer {
+  @Throws(IOException::class)
   fun processFile(path: Path)
   
   @Throws(IOException::class)

@@ -29,6 +29,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Supplier;
@@ -108,7 +109,12 @@ class DescriptorsGenerator {
         continue;
       }
       for (Path file : moduleFiles.files) {
-        analyzer.processFile(file);
+        try {
+          analyzer.processFile(file);
+        }
+        catch (IOException e) {
+          myLogger.error("Failed to process " + file, e);
+        }
         myProgressTracker.increment();
       }
       Set<String> declaredPackages = visitor.getDeclaredPackages();

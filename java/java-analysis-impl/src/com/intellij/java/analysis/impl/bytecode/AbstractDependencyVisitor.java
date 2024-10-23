@@ -5,22 +5,21 @@ import com.intellij.java.analysis.bytecode.ClassFileAnalyzer;
 import com.intellij.java.analysis.bytecode.JvmBytecodeDeclarationProcessor;
 import com.intellij.java.analysis.bytecode.JvmBytecodeReferenceProcessor;
 import com.intellij.java.analysis.bytecode.JvmClassBytecodeDeclaration;
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.signature.SignatureReader;
 import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
 class AbstractDependencyVisitor extends ClassVisitor implements ClassFileAnalyzer {
-
-  private static final Logger LOG = Logger.getInstance(AbstractDependencyVisitor.class);
   private static final Label LABEL = new Label();
 
   private final AnnotationDependencyVisitor myAnnotationVisitor = new AnnotationDependencyVisitor();
@@ -39,12 +38,9 @@ class AbstractDependencyVisitor extends ClassVisitor implements ClassFileAnalyze
   }
 
   @Override
-  public void processFile(@NotNull Path path) {
+  public void processFile(@NotNull Path path) throws IOException {
     try (InputStream is = new BufferedInputStream(Files.newInputStream(path))) {
       processInputStream(is);
-    }
-    catch (IOException e) {
-      LOG.warn(e);
     }
   }
 
