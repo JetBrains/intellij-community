@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
-import com.intellij.psi.ContributedReferenceHost
 import com.intellij.psi.util.descendants
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.psi.KtFile
@@ -28,7 +27,7 @@ internal class KtReferencesInCopyMap(
         fun createFor(originalFile: KtFile, copyFile: KtFile): KtReferencesInCopyMap {
             // TODO unify reference processing with code from UsedReferencesCollector
             val referenceMap = originalFile.descendants().zip(copyFile.descendants())
-                .filterNot { (original, _) -> original is ContributedReferenceHost }
+                .filterNot { (original, _) -> original.ignoreReferencesDuringImportOptimization }
                 .flatMap { (original, copy) ->
                     val originals = original.references.filterIsInstance<KtReference>()
                     val copies = copy.references.filterIsInstance<KtReference>()

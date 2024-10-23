@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
 import com.intellij.openapi.progress.ProgressIndicatorProvider
-import com.intellij.psi.ContributedReferenceHost
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -52,9 +51,7 @@ internal class UsedReferencesCollector(private val file: KtFile) {
     }
 
     private fun KaSession.collectReferencesFrom(element: KtElement) {
-        // we ignore such elements because resolving them leads to UAST resolution,
-        // and that in turn leads to KT-68601 when import optimization is called after move refactoring
-        if (element is ContributedReferenceHost) return
+        if (element.ignoreReferencesDuringImportOptimization) return
 
         if (element is KtLabelReferenceExpression) return
 
