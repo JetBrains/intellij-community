@@ -6,7 +6,10 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.Closeable;
+import java.io.EOFException;
+import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
@@ -33,6 +36,11 @@ import static java.nio.file.StandardOpenOption.*;
  *
  * <h3>IntelliJ-specific changes</h3>
  * We added synchronization to this class, so now reading a single {@code JBZipFile} from several threads is safe.
+ * <p>
+ * {@link JBZipFile} is adapted for the scenario where the archive is physically located on a remote file system.
+ * In particular, during the initialization it reads the entire central directory in one request to IO.
+ * In general, this class tries to reduce the number of IO calls, hence avoiding communication over a potentially expensive channel
+ * to the remote file system.
  *
  * <h3>Implementation notes</h3>
  *
@@ -319,14 +327,31 @@ public class JBZipFile implements Closeable {
   private void populateFromCentralDirectory(@NotNull ThreeState isZip64) throws IOException {
     positionAtCentralDirectory(isZip64);
 
+    /*
+      Apache ZipFile reads central directory in very small chunks -- by 4 and 40 bytes.
+      This is unacceptable in situations with non-local IO, where there is no caching, and each call takes several milliseconds to finish.
+      To mitigate it, we try to read and cache the entire central directory, so that the parsing of the central directory happens in-memory.
+
+      However, the directory is anyway stored within the IDE after that, so we are willing to accept this temporary increase in memory,
+      instead gaining a performance boost.
+     */
+    ByteBuffer centralDirectoryCached = ByteBuffer.allocate(
+      Math.min((int)(myArchive.size() - myArchive.position()),
+               // Sometimes the size of the central directory may be significant -- up to 3 megabytes.
+               64 * 1024) // seems enough
+    );
+    // we must fill the buffer before the loop starts
+    centralDirectoryCached.position(centralDirectoryCached.limit());
+
+
     byte[] cfh = new byte[CFH_LEN];
 
     byte[] signatureBytes = new byte[WORD];
-    readFully(signatureBytes);
+    readCachedCentralDirectory(centralDirectoryCached, signatureBytes);
     long sig = ZipLong.getValue(signatureBytes);
     long cfhSig = ZipLong.getValue(JBZipOutputStream.CFH_SIG);
     while (sig == cfhSig) {
-      readFully(cfh);
+      readCachedCentralDirectory(centralDirectoryCached, cfh);
       int off = 0;
 
       int versionMadeBy = ZipShort.getValue(cfh, off);
@@ -369,9 +394,9 @@ public class JBZipFile implements Closeable {
 
       long localHeaderOffset = ZipLong.getValue(cfh, off);
 
-      String name = getString(readBytes(fileNameLen));
-      byte[] extra = readBytes(extraLen);
-      String comment = getString(readBytes(commentLen));
+      String name = getString(readBytesFromBuf(centralDirectoryCached, fileNameLen));
+      byte[] extra = readBytesFromBuf(centralDirectoryCached, extraLen);
+      String comment = getString(readBytesFromBuf(centralDirectoryCached, commentLen));
 
       JBZipEntry ze = new JBZipEntry(this);
       ze.setName(name);
@@ -395,9 +420,35 @@ public class JBZipFile implements Closeable {
       nameMap.put(ze.getName(), ze);
       entries.add(ze);
 
-      readFully(signatureBytes);
+      readCachedCentralDirectory(centralDirectoryCached, signatureBytes);
       sig = ZipLong.getValue(signatureBytes);
     }
+  }
+
+
+  private void readCachedCentralDirectory(ByteBuffer cache, byte[] target) throws IOException {
+    if (cache.remaining() < target.length) {
+      cache.compact();
+      while (cache.hasRemaining()) {
+        int rd = myArchive.read(cache);
+        if (rd == -1) {
+          if (cache.position() < target.length) {
+            throw new EOFException("unexpected EOF");
+          }
+          else {
+            break;
+          }
+        }
+      }
+      cache.flip();
+    }
+    cache.get(target);
+  }
+
+  private byte[] readBytesFromBuf(ByteBuffer buffer, int howMany) throws IOException {
+    byte[] res = new byte[howMany];
+    readCachedCentralDirectory(buffer, res);
+    return res;
   }
 
   void readFully(byte[] b) throws IOException {
