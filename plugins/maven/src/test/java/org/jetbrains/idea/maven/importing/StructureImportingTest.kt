@@ -946,7 +946,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                                    <profile>
                                        <id>custom1</id>
                                        <properties>
-                                           <projectName>customName</prop>
+                                           <projectName>customName</projectName>
                                        </properties>
                                    </profile>
                                </profiles>

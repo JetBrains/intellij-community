@@ -16,6 +16,7 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenConsole
 import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.server.MavenEmbedderWrapper.LongRunningEmbedderTask
 import org.jetbrains.idea.maven.telemetry.getCurrentTelemetryIds
 import org.jetbrains.idea.maven.telemetry.scheduleExportTelemetryTrace
 import org.jetbrains.idea.maven.telemetry.tracer
@@ -26,7 +27,6 @@ import java.io.Serializable
 import java.nio.file.Path
 import java.rmi.RemoteException
 import java.util.*
-import kotlin.Throws
 
 abstract class MavenEmbedderWrapper internal constructor(private val project: Project) :
   MavenRemoteObjectWrapper<MavenServerEmbedder?>() {
@@ -63,8 +63,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     updateSnapshots: Boolean,
     userProperties: Properties,
   ): Collection<MavenServerExecutionResult> {
-    val transformer = if (pomToDependencyHash.isEmpty()) RemotePathTransformerFactory.Transformer.ID
-    else RemotePathTransformerFactory.createForProject(project)
+    val transformer = RemotePathTransformerFactory.createForProject(project)
 
     val pomHashMap = PomHashMap()
     pomToDependencyHash.mapNotNull { (file, checkSum) ->
@@ -98,7 +97,20 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       val data = result.projectData ?: continue
       MavenServerResultTransformer.transformPaths(transformer, data.mavenModel)
     }
-    return results
+    if (transformer == RemotePathTransformerFactory.Transformer.ID) return results
+    return results.map {
+      MavenServerExecutionResult(
+        it.file.toIdePath(transformer),
+        it.projectData,
+        it.problems,
+        it.unresolvedArtifacts,
+        it.unresolvedProblems)
+    }
+  }
+
+  private fun File?.toIdePath(transformer: RemotePathTransformerFactory.Transformer): File? {
+    if (this == null) return null
+    return File(transformer.toIdePath(this.path) ?: this.path)
   }
 
   fun evaluateEffectivePom(file: VirtualFile, activeProfiles: Collection<String>, inactiveProfiles: Collection<String>): String? {

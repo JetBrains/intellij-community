@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.CollectionFactory
@@ -39,6 +40,7 @@ data class MavenProjectResolutionResult(val mavenProjectMap: Map<String, Collect
 
 @ApiStatus.Internal
 class MavenProjectResolverResult(
+  @JvmField val file: File?,
   @JvmField val mavenModel: MavenModel,
   @JvmField val managedDependencies: List<MavenId>,
   @JvmField val dependencyHash: String?,
@@ -199,16 +201,13 @@ class MavenProjectResolver(private val myProject: Project) {
         "Project resolution problems: ${problems.unresolvedArtifacts.size} ${problems.unresolvedArtifactProblems.size} ${problems.repositoryBlockedProblems.size}")
     }
     notifySyncForProblem(problems)
-    val artifactIdToMavenProjects = mavenProjects
-      .groupBy { mavenProject -> mavenProject.mavenId.artifactId }
-      .filterKeys { it != null }
-      .mapKeys { it.key!! }
+    val fileToMavenProject = mavenProjects.associateBy { it.file }
     val projectsWithUnresolvedPlugins = ConcurrentLinkedQueue<MavenProject>()
 
     coroutineScope {
       results.forEach {
         launch {
-          collectProjectWithUnresolvedPlugins(it, artifactIdToMavenProjects, generalSettings, embedder, tree, projectsWithUnresolvedPlugins)
+          collectProjectWithUnresolvedPlugins(it, fileToMavenProject, generalSettings, embedder, tree, projectsWithUnresolvedPlugins)
         }
       }
     }
@@ -357,6 +356,7 @@ class MavenProjectResolver(private val myProject: Project) {
         }
         else {
           resolverResults.add(MavenProjectResolverResult(
+            result.file,
             projectData.mavenModel,
             projectData.managedDependencies,
             projectData.dependencyHash,
@@ -390,44 +390,38 @@ class MavenProjectResolver(private val myProject: Project) {
 
   private suspend fun collectProjectWithUnresolvedPlugins(
     result: MavenProjectResolverResult,
-    artifactIdToMavenProjects: Map<String, List<MavenProject>>,
+    fileToMavenProjects: Map<VirtualFile, MavenProject>,
     generalSettings: MavenGeneralSettings,
     embedder: MavenEmbedderWrapper,
     tree: MavenProjectsTree,
     projectsWithUnresolvedPlugins: ConcurrentLinkedQueue<MavenProject>,
   ) {
-    val mavenId = result.mavenModel.mavenId
-    val artifactId = mavenId.artifactId
-    val mavenProjects = artifactIdToMavenProjects[artifactId]
-    if (mavenProjects == null) {
-      MavenLog.LOG.warn("Maven projects not found for '$artifactId'")
+    val file = result.file
+    if (file == null) {
+      MavenLog.LOG.warn("Maven project file is null")
       return
     }
-    var mavenProjectCandidate: MavenProject? = null
-    for (mavenProject in mavenProjects) {
-      if (mavenProject.mavenId == mavenId) {
-        mavenProjectCandidate = mavenProject
-        break
-      }
-      else if (mavenProject.mavenId.equals(mavenId.groupId, mavenId.artifactId)) {
-        mavenProjectCandidate = mavenProject
-      }
-    }
-    if (mavenProjectCandidate == null) {
-      MavenLog.LOG.warn("Maven project not found for $artifactId")
+    val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(file.toPath())
+    if (virtualFile == null) {
+      MavenLog.LOG.warn("Maven project virtual file is null for $file")
       return
     }
-    val snapshot = mavenProjectCandidate.snapshot
+    val mavenProject = fileToMavenProjects[virtualFile]
+    if (mavenProject == null) {
+      MavenLog.LOG.warn("Maven project not found for $file")
+      return
+    }
+    val snapshot = mavenProject.snapshot
     val keepPreviousResolutionResults = MavenUtil.shouldKeepPreviousResolutionResults(result.readingProblems)
     val keepPreviousArtifacts = keepPreviousResolutionResults || result.dependencyResolutionSkipped
 
     MavenLog.LOG.debug(
-      "Project resolution: updating maven project $mavenProjectCandidate, keepPreviousArtifacts=$keepPreviousArtifacts, dependencies: ${result.mavenModel.dependencies.size}, managedDeps: ${result.managedDependencies.size}")
+      "Project resolution: updating maven project $mavenProject, keepPreviousArtifacts=$keepPreviousArtifacts, dependencies: ${result.mavenModel.dependencies.size}, managedDeps: ${result.managedDependencies.size}")
 
     MavenServerResultTransformer.getInstance(myProject)
-      .transform(result.mavenModel, mavenProjectCandidate.file)
+      .transform(result.mavenModel, mavenProject.file)
 
-    mavenProjectCandidate.updateState(
+    mavenProject.updateState(
       result.mavenModel,
       result.managedDependencies,
       result.dependencyHash,
@@ -440,14 +434,14 @@ class MavenProjectResolver(private val myProject: Project) {
       keepPreviousResolutionResults)
 
     for (contributor in EP_NAME.extensionList) {
-      contributor.onMavenProjectResolved(myProject, mavenProjectCandidate, embedder)
+      contributor.onMavenProjectResolved(myProject, mavenProject, embedder)
     }
     // project may be modified by MavenImporters, so we need to collect the changes after them:
-    val changes = mavenProjectCandidate.getChangesSinceSnapshot(snapshot)
-    mavenProjectCandidate.problems // need for fill problem cache
-    tree.fireProjectResolved(Pair.create(mavenProjectCandidate, changes))
-    if (!mavenProjectCandidate.hasReadingProblems()) {
-      projectsWithUnresolvedPlugins.add(mavenProjectCandidate)
+    val changes = mavenProject.getChangesSinceSnapshot(snapshot)
+    mavenProject.problems // need for fill problem cache
+    tree.fireProjectResolved(Pair.create(mavenProject, changes))
+    if (!mavenProject.hasReadingProblems()) {
+      projectsWithUnresolvedPlugins.add(mavenProject)
     }
   }
 
