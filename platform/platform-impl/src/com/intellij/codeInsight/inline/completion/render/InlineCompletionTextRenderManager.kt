@@ -105,11 +105,12 @@ internal class InlineCompletionTextRenderManager private constructor(
 
       editor.inlayModel.execute(true) {
         val element = renderInlineInlay(editor, offset, suffixBlocks)
-        element?.addActionAvailabilityHint(
-          EditorActionAvailabilityHint(
-            IdeActions.ACTION_INSERT_INLINE_COMPLETION,
-            EditorActionAvailabilityHint.AvailabilityCondition.CaretOnStart,
-          )
+        element?.addActionAvailabilityHints(
+          IdeActions.ACTION_INSERT_INLINE_COMPLETION,
+          IdeActions.ACTION_INSERT_INLINE_COMPLETION_WORD,
+          IdeActions.ACTION_INSERT_INLINE_COMPLETION_LINE,
+          IdeActions.ACTION_NEXT_INLINE_COMPLETION_SUGGESTION,
+          IdeActions.ACTION_PREV_INLINE_COMPLETION_SUGGESTION
         )
         suffixInlay = element
       }
@@ -161,6 +162,16 @@ internal class InlineCompletionTextRenderManager private constructor(
       if (visualPosition.leansRight) {
         val leftLeaningPosition = VisualPosition(visualPosition.line, visualPosition.column, false)
         caretModel.moveToVisualPosition(leftLeaningPosition)
+      }
+    }
+
+    private fun Inlay<*>.addActionAvailabilityHints(vararg actionIds: String) {
+      for (actionId in actionIds) {
+        val hint = EditorActionAvailabilityHint(
+          actionId,
+          EditorActionAvailabilityHint.AvailabilityCondition.CaretOnStart,
+        )
+        addActionAvailabilityHint(hint)
       }
     }
 
