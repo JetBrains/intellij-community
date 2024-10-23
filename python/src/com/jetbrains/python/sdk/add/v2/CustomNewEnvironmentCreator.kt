@@ -90,11 +90,14 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
    * 4. Runs (pythonExecutable -m) pip install `package_name` --user
    * 5. Reruns `detectExecutable`
    */
+  @RequiresEdt
   private fun createInstallFix(): ActionLink {
     return ActionLink(message("sdk.create.custom.venv.install.fix.title", name, "via pip")) {
       PythonSdkFlavor.clearExecutablesCache()
       installExecutable()
-      detectExecutable()
+      runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.progress.title.detect.executable")) {
+        detectExecutable()
+      }
     }
   }
 
@@ -135,5 +138,5 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
 
   protected abstract fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Sdk?
 
-  internal abstract fun detectExecutable()
+  internal abstract suspend fun detectExecutable()
 }
