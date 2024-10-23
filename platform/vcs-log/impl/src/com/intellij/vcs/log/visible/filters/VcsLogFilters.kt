@@ -134,7 +134,7 @@ object VcsLogFilterObject {
   @JvmStatic
   fun fromHash(text: String): VcsLogHashFilter? {
     val hashes = mutableListOf<String>()
-    for (word in StringUtil.split(text, CharFilter.WHITESPACE_FILTER, true, true)) {
+    for (word in StringUtil.split(text, HashSeparatorCharFilter, true, true)) {
       if (!VcsLogUtil.HASH_REGEX.matcher(word).matches()) {
         return null
       }
@@ -291,4 +291,21 @@ private fun <T> replace(set: ObjectOpenCustomHashSet<T>, element: T): Boolean {
   val isModified = set.remove(element)
   set.add(element)
   return isModified
+}
+
+internal object HashSeparatorCharFilter : CharFilter {
+  override fun accept(ch: Char): Boolean {
+    if (ch == ',' || ch == ';') return true
+    if (Character.isWhitespace(ch)) return true
+    return false
+  }
+
+  @JvmStatic
+  fun invert(): CharFilter {
+    return object : CharFilter {
+      override fun accept(ch: Char): Boolean {
+        return !HashSeparatorCharFilter.accept(ch)
+      }
+    }
+  }
 }
