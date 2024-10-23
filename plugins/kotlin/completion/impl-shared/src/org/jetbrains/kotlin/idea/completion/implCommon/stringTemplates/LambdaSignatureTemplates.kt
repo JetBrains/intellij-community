@@ -16,18 +16,18 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.types.Variance
 
 @KaExperimentalApi
-private val NoAnnotationsTypeRenderer: KaTypeRenderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
+private val NoAnnotationsTypeRenderer: KaTypeRenderer = KaTypeRendererForSource.WITH_SHORT_NAMES.with {
     annotationsRenderer = annotationsRenderer.with {
         annotationFilter = KaRendererAnnotationsFilter.NONE
     }
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 fun Template.build(
     parametersCount: Int,
     trailingFunctionType: KaFunctionType,
@@ -53,59 +53,68 @@ fun Template.build(
     val kotlinNameSuggester = KotlinNameSuggester()
 
     addTextSegment(" { ")
-    val parameterTypes = trailingFunctionType.parameterTypes
-        .zip(suggestedParameterNames)
-    val iterator = parameterTypes.iterator()
-    while (iterator.hasNext()) {
-        val (parameterType, suggestedName) = iterator.next()
 
+    val namedParameterTypes = trailingFunctionType.parameterTypes
+        .zip(suggestedParameterNames)
+    namedParameterTypes.forEachIndexed { index, (parameterType, suggestedName) ->
         //TODO: check for names in scope
         val validator = typeNames.getOrPut(parameterType) {
             mutableSetOf()
         }::add
 
-        val items = (suggestedName?.let { sequenceOf(it.render()) }
-            ?: kotlinNameSuggester.suggestTypeNames(parameterType))
-            .map { KotlinNameSuggester.suggestNameByName(it, validator) }
-            .toList()
+        val suggestedNames = suggestedName?.let { sequenceOf(it.asString()) }
+            ?: kotlinNameSuggester.suggestTypeNames(parameterType)
+
+        val parameterTypeText = parameterType.render(
+            renderer = NoAnnotationsTypeRenderer,
+            position = Variance.INVARIANT,
+        )
+
+        val showDefault = namedParameterTypes.size != 1
+        val lookupElements = suggestedNames.map {
+            KotlinNameSuggester.suggestNameByName(it, validator)
+        }.map { name ->
+            if (showDefault) {
+                LookupElementBuilder.create(name)
+            } else {
+                val tailText = " -> "
+                LookupElementBuilder.create(name + tailText)
+                    .withPresentableText(name)
+                    .withTailText(tailText, true)
+            }
+        }.map { it.withTypeText(parameterTypeText) }
 
         addVariable(
-            /* expression = */ LambdaParameterExpression(items),
+            /* expression = */
+            LambdaParameterExpression(
+                lookupElements = lookupElements.toList(),
+                showDefault = showDefault,
+            ),
             /* isAlwaysStopAt = */ true,
         )
 
-        //parameterType.render(
-        //    renderer = NoAnnotationsTypeRenderer,
-        //    position = Variance.INVARIANT,
-        //).let { typeText ->
-        //    addTextSegment(KtTokens.COLON.value)
-        //    addTextSegment(" ")
-        //    addTextSegment(typeText)
-        //}
-
-        if (iterator.hasNext()) {
-            addTextSegment(KtTokens.COMMA.value)
-            addTextSegment(" ")
+        if (index != namedParameterTypes.lastIndex) {
+            addTextSegment(", ")
+        } else if (index != 0) {
+            addTextSegment(" -> ")
         }
     }
 
-    if (parameterTypes.isNotEmpty()) {
-        addTextSegment(" ")
-        addTextSegment(KtTokens.ARROW.value)
-        addTextSegment(" ")
-    }
     addEndVariable()
     addTextSegment(" }")
 }
 
 private class LambdaParameterExpression(
-    private val items: List<String>,
+    private val lookupElements: Collection<LookupElement>,
+    private val showDefault: Boolean = true,
 ) : Expression() {
 
-    override fun calculateResult(context: ExpressionContext): TextResult =
-        TextResult(items.first())
+    override fun calculateResult(context: ExpressionContext): TextResult? =
+        lookupElements.takeIf { showDefault }
+            ?.firstOrNull()
+            ?.lookupString
+            ?.let { TextResult(it) }
 
     override fun calculateLookupItems(context: ExpressionContext): Array<LookupElement> =
-        items.map { LookupElementBuilder.create(it) }
-            .toTypedArray()
+        lookupElements.toTypedArray()
 }
