@@ -59,12 +59,4 @@ public interface XmlElementType extends XmlTokenType {
       return new DtdParsing(text, XML_MARKUP_DECL, DtdParsing.TYPE_FOR_MARKUP_DECL, null).parse();
     }
   };
-
-  final class XmlTagElementType extends IXmlElementType implements IXmlTagElementType {
-    public XmlTagElementType(String debugName) { super(debugName); }
-  }
-
-  final class XmlAttributeElementType extends IXmlElementType implements IXmlAttributeElementType {
-    public XmlAttributeElementType() { super("XML_ATTRIBUTE"); }
-  }
 }
