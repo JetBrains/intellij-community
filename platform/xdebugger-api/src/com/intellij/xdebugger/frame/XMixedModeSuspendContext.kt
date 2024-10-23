@@ -14,6 +14,10 @@ interface XMixedModeHighLevelDebugProcess {
   fun getFramesMatcher(): MixedModeFramesMatcher
 }
 
+interface XMixedModeLowLevelDebugProcess {
+  suspend fun resumeAllExceptEventThread()
+}
+
 class XMixedModeSuspendContext(
   val lowLevelDebugSuspendContext: XSuspendContext,
   val highLevelDebugSuspendContext: XSuspendContext,

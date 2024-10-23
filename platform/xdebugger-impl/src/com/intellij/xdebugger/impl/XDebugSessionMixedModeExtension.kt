@@ -2,17 +2,22 @@
 package com.intellij.xdebugger.impl
 
 import com.intellij.openapi.application.EDT
-import com.intellij.util.io.await
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugProcessDebuggeeInForeground
-import com.intellij.xdebugger.frame.XMixedModeSuspendContext
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
-import kotlinx.coroutines.CompletableDeferred
+import com.intellij.xdebugger.impl.MixedModeProcessTransitionStateMachine.BothRunning
+import com.intellij.xdebugger.impl.MixedModeProcessTransitionStateMachine.BothStopped
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.future.future
 import kotlinx.coroutines.launch
+import kotlinx.serialization.builtins.PairSerializer
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
+import java.util.function.Consumer
+import kotlin.jvm.javaClass
 
 private val logger = com.intellij.openapi.diagnostic.logger<XDebugProcessDebuggeeInForeground>()
 
@@ -26,59 +31,36 @@ abstract class XDebugSessionMixedModeExtension(
   private val high: XDebugProcess,
   private val low: XDebugProcess,
 ) {
-  private val lowMixedModeProcess: XMixedModeDebugProcess
-    get() = low as XMixedModeDebugProcess
-  private val highMixedModeProcess: XMixedModeDebugProcess
-    get() = high as XMixedModeDebugProcess
-  val lowLevelSuspendContext: XSuspendContext? = null
+  private val stateMachine = MixedModeProcessTransitionStateMachine(low as XMixedModeDebugProcess, high as XMixedModeDebugProcess, coroutineScope)
+  private val session = (high.session as XDebugSessionImpl)
+
 
   abstract fun isLowSuspendContext(suspendContext: XSuspendContext): Boolean
   abstract fun isLowStackFrame(stackFrame: XStackFrame): Boolean
 
   fun pause() {
     coroutineScope.launch(Dispatchers.EDT) {
-      pauseAsync()
+      assert(stateMachine.get() is BothRunning)
+
+      stateMachine.set(MixedModeProcessTransitionStateMachine.StopRequested)
+      stateMachine.waitFor(BothStopped::class)
     }
   }
 
   // On stop, low level debugger calls positionReached first and then the high level debugger does it
-  fun positionReached(debugProcess: XSuspendContext): /*Continue with new context if not null*/XSuspendContext? {
-    if (!isLowSuspendContext(debugProcess)) {
-      highDebugPositionReachedDeferred?.complete(debugProcess)
-      return null
+  fun positionReached(suspendContext: XSuspendContext, attract: Boolean): CompletableFuture<Pair<XSuspendContext, Boolean>?> =
+    coroutineScope.future {
+      val context = stateMachine.onPositionReached(suspendContext)
+      if (context != null) {
+        return@future Pair(context, attract)
+      }
+      return@future null
     }
-
-    val lowLevelDebugProcess = debugProcess
-    lowDebugPositionReachedDeferred?.complete(lowLevelDebugProcess)
-    val notNullHighLevelSuspendContext = (highDebugPositionReachedDeferred ?: return null).getCompleted()
-    return XMixedModeSuspendContext(lowLevelDebugProcess, notNullHighLevelSuspendContext, high, coroutineScope)
-  }
-
-  private var lowDebugPositionReachedDeferred: CompletableDeferred<XSuspendContext>? = null
-  private var highDebugPositionReachedDeferred: CompletableDeferred<XSuspendContext>? = null
-
-  private suspend fun pauseAsync() {
-    lowDebugPositionReachedDeferred = CompletableDeferred()
-    highDebugPositionReachedDeferred = CompletableDeferred()
-
-    highMixedModeProcess.pauseMixedModeSession().await().also { logger.info("High level process has been stopped") }
-    highDebugPositionReachedDeferred!!.await().also { logger.info("High level stopped reached a position") }
-
-    // pausing low level session
-    // but some threads can be resumed to let high level debugger work
-    lowMixedModeProcess.pauseMixedModeSession().await().also { logger.info("Low level process has been stopped") }
-
-    lowDebugPositionReachedDeferred!!.await().also { logger.info("Low level stopped reached a position") }
-
-    lowDebugPositionReachedDeferred = null
-    highDebugPositionReachedDeferred = null
-  }
 
   fun resume() {
     coroutineScope.launch(Dispatchers.EDT) {
-      lowMixedModeProcess.resumeAndWait()
-
-      highMixedModeProcess.resumeAndWait()
+      stateMachine.set(MixedModeProcessTransitionStateMachine.ResumeRequested)
+      stateMachine.waitFor(BothRunning::class)
     }
   }
 
@@ -88,6 +70,15 @@ abstract class XDebugSessionMixedModeExtension(
     }
     else
       TODO("not yet supported")
+  }
+
+  fun onResumed(isLowLevel: Boolean) {
+    coroutineScope.launch {
+      val handled = stateMachine.onSessionResumed(isLowLevel)
+      if (!handled) {
+        session.sessionResumed()
+      }
+    }
   }
 }
 

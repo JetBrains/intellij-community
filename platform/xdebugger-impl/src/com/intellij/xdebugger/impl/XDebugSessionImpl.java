@@ -47,6 +47,7 @@ import com.intellij.xdebugger.impl.inline.DebuggerInlayListener;
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer;
 import com.intellij.xdebugger.impl.rhizome.XDebugSessionEntity;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
@@ -70,6 +71,7 @@ import javax.swing.event.HyperlinkListener;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import static com.intellij.xdebugger.impl.rhizome.XDebugSessionDbUtilsKt.storeXDebugSessionInDb;
 
@@ -674,13 +676,13 @@ public final class XDebugSessionImpl implements XDebugSession {
   @Override
   public void resume() {
     if (!myDebugProcess.checkCanPerformCommands()) return;
-    var doResume = doResume();
+    var suspendContext = doResume();
     if (myMixedModeExtension != null) {
       myMixedModeExtension.resume();
       return;
     }
 
-    myDebugProcess.resume(doResume);
+    myDebugProcess.resume(suspendContext);
   }
 
   private @Nullable XSuspendContext doResume() {
@@ -904,7 +906,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     // set this session active on breakpoint, update execution position will be called inside positionReached
     myDebuggerManager.setCurrentSession(this);
 
-    positionReachedInternal(suspendContext, true);
+    positionReachedMixedModeAware(suspendContext, true);
 
     if (doProcessing && breakpoint instanceof XLineBreakpoint<?> && ((XLineBreakpoint<?>)breakpoint).isTemporary()) {
       handleTemporaryBreakpointHit(breakpoint);
@@ -967,7 +969,22 @@ public final class XDebugSessionImpl implements XDebugSession {
     myPaused.set(false);
   }
 
-  private void positionReachedInternal(final @NotNull XSuspendContext suspendContext, boolean attract) {
+  private void positionReachedMixedModeAware(@NotNull XSuspendContext suspendContext, boolean attract) {
+    if (myMixedModeExtension != null) {
+      myMixedModeExtension.positionReached(suspendContext, attract)
+        .thenAccept(pair -> {
+                     if (pair != null) {
+                       DebuggerUIUtil.invokeLater(() -> positionReachedInternal2(pair.getFirst(), pair.getSecond()));
+                     }
+                   });
+
+      return;
+    }
+
+    positionReachedInternal2(suspendContext, attract);
+  }
+
+  public void positionReachedInternal2(final @NotNull XSuspendContext suspendContext, boolean attract) {
     setBreakpointsDisabledTemporarily(false);
     mySuspendContext = suspendContext;
     myCurrentExecutionStack = suspendContext.getActiveExecutionStack();
@@ -1029,23 +1046,24 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   public void positionReached(@NotNull XSuspendContext suspendContext, boolean attract) {
-    if (myMixedModeExtension != null) {
-      // for now, we consider that suspendContext is a context of high-level debug process, TODO: if you change the code of this method, please check if that's still so
-      mySuspendContext = suspendContext;
-      var mixedSuspendContext = myMixedModeExtension.positionReached(suspendContext);
-      if (mixedSuspendContext == null) {
-        return;
-      }
-      suspendContext = mixedSuspendContext;
-    }
-
     clearActiveNonLineBreakpoint();
-    positionReachedInternal(suspendContext, attract);
+    positionReachedMixedModeAware(suspendContext, attract);
   }
 
   @Override
   public void sessionResumed() {
     doResume();
+  }
+
+  @Override
+  public void mixedModeSessionResumed(Boolean isLowLevelDebugger) {
+    var extension = Objects.requireNonNull(myMixedModeExtension);
+    extension.onResumed(isLowLevelDebugger);
+  }
+
+  @Override
+  public boolean isMixedMode() {
+    return myMixedModeExtension != null;
   }
 
   @Override

@@ -131,6 +131,9 @@ public interface XDebugSession extends AbstractDebuggerSession {
    */
   void sessionResumed();
 
+  void mixedModeSessionResumed(Boolean isLowLevelDebugger);
+  boolean isMixedMode();
+
   void stop();
 
   void setBreakpointMuted(boolean muted);
