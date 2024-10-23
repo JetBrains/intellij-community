@@ -240,9 +240,29 @@ public class K2MoveNestedTestGenerated extends AbstractK2MoveNestedTest {
         runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveNestedClass/innerToTopLevelAddInstanceParam/innerToTopLevelAddInstanceParam.test");
     }
 
+    @TestMetadata("kotlin/moveNestedClass/innerToTopLevelImplicitReceiver/innerToTopLevelImplicitReceiver.test")
+    public void testKotlin_moveNestedClass_innerToTopLevelImplicitReceiver_InnerToTopLevelImplicitReceiver() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveNestedClass/innerToTopLevelImplicitReceiver/innerToTopLevelImplicitReceiver.test");
+    }
+
+    @TestMetadata("kotlin/moveNestedClass/innerToTopLevelInnerClassUsageNoThis/innerToTopLevelInnerClassUsageNoThis.test")
+    public void testKotlin_moveNestedClass_innerToTopLevelInnerClassUsageNoThis_InnerToTopLevelInnerClassUsageNoThis() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveNestedClass/innerToTopLevelInnerClassUsageNoThis/innerToTopLevelInnerClassUsageNoThis.test");
+    }
+
     @TestMetadata("kotlin/moveNestedClass/innerToTopLevelNoThis/innerToTopLevelNoThis.test")
     public void testKotlin_moveNestedClass_innerToTopLevelNoThis_InnerToTopLevelNoThis() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveNestedClass/innerToTopLevelNoThis/innerToTopLevelNoThis.test");
+    }
+
+    @TestMetadata("kotlin/moveNestedClass/innerToTopLevelSimpleThisNoInstanceParameter/innerToTopLevelSimpleThisNoInstanceParameter.test")
+    public void testKotlin_moveNestedClass_innerToTopLevelSimpleThisNoInstanceParameter_InnerToTopLevelSimpleThisNoInstanceParameter() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveNestedClass/innerToTopLevelSimpleThisNoInstanceParameter/innerToTopLevelSimpleThisNoInstanceParameter.test");
+    }
+
+    @TestMetadata("kotlin/moveNestedClass/innerToTopLevelSimpleThis/innerToTopLevelSimpleThis.test")
+    public void testKotlin_moveNestedClass_innerToTopLevelSimpleThis_InnerToTopLevelSimpleThis() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveNestedClass/innerToTopLevelSimpleThis/innerToTopLevelSimpleThis.test");
     }
 
     @TestMetadata("kotlin/moveNestedClass/innerToTopLevelWithThisOuterRefConflicts/innerToTopLevelWithThisOuterRefConflicts.test")

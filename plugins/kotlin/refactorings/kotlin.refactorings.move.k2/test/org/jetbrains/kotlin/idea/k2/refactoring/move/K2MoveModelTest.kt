@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveModel
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.*
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -337,18 +336,49 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
-    fun `test move nested class should fail`() {
+    fun `test move nested class`() {
         myFixture.configureByText(KotlinFileType.INSTANCE, """
             package foo
             
-            class Foo {
+            class OuterFoo {
                 class Ba<caret>r { }
             }
         """.trimIndent())
         val nestedClass = myFixture.elementAtCaret as KtNamedDeclaration
-        assertThrows(RefactoringErrorHintException::class.java) {
-            K2MoveModel.create(arrayOf(nestedClass), null)
-        }
+        val moveModel = K2MoveModel.create(arrayOf(nestedClass), null)
+        assertInstanceOf<K2MoveModel.NestedClass>(moveModel)
+        assertTrue(moveModel!!.isValidRefactoring())
+        val moveDeclarationsModel = moveModel as K2MoveModel.NestedClass
+        assertSize(1, moveDeclarationsModel.source.elements)
+        val sourceElement = moveDeclarationsModel.source.elements.firstOrNull()
+        assert(sourceElement is KtClass && sourceElement.name == "Bar")
+        val targetElement = moveDeclarationsModel.target.pkgName
+        assertEquals("foo", targetElement.asString())
+        assertEquals(false, moveDeclarationsModel.passOuterClass)
+        assertEquals(false, moveDeclarationsModel.isInnerClass)
+    }
+
+    fun `test move nested inner class`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            package foo
+            
+            class OuterFoo {
+                inner class Ba<caret>r { }
+            }
+        """.trimIndent())
+        val nestedClass = myFixture.elementAtCaret as KtNamedDeclaration
+        val moveModel = K2MoveModel.create(arrayOf(nestedClass), null)
+        assertInstanceOf<K2MoveModel.NestedClass>(moveModel)
+        assertTrue(moveModel!!.isValidRefactoring())
+        val moveDeclarationsModel = moveModel as K2MoveModel.NestedClass
+        assertSize(1, moveDeclarationsModel.source.elements)
+        val sourceElement = moveDeclarationsModel.source.elements.firstOrNull()
+        assert(sourceElement is KtClass && sourceElement.name == "Bar")
+        val targetElement = moveDeclarationsModel.target.pkgName
+        assertEquals("foo", targetElement.asString())
+        assertEquals(true, moveDeclarationsModel.passOuterClass)
+        assertEquals("outerFoo", moveDeclarationsModel.outerClassInstanceParameterName)
+        assertEquals(true, moveDeclarationsModel.isInnerClass)
     }
 
     fun `test move instance method should fail`() {

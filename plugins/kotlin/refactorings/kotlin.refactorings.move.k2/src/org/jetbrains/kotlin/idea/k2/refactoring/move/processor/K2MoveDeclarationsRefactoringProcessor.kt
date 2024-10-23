@@ -14,16 +14,17 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
+import com.intellij.usageView.UsageViewUtil
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.psi.deleteSingle
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtFileAnnotationList
-import org.jetbrains.kotlin.psi.KtImportList
-import org.jetbrains.kotlin.psi.KtPackageDirective
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 class K2MoveDeclarationsRefactoringProcessor(
     private val operationDescriptor: K2MoveOperationDescriptor.Declarations
@@ -32,35 +33,44 @@ class K2MoveDeclarationsRefactoringProcessor(
 
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor = operationDescriptor.usageViewDescriptor()
 
+    private val conflicts = MultiMap<PsiElement, String>()
+
     override fun findUsages(): Array<UsageInfo> {
         if (!operationDescriptor.searchReferences) return emptyArray()
-        return operationDescriptor.moveDescriptors.flatMap { moveDescriptor ->
+        val allUsages = operationDescriptor.moveDescriptors.flatMapTo(mutableSetOf()) { moveDescriptor ->
             moveDescriptor.source.elements.flatMap { elem ->
                 elem.findUsages(operationDescriptor.searchInComments, operationDescriptor.searchForText, moveDescriptor.target.pkgName)
-            }
-        }.toTypedArray()
+            } + operationDescriptor.moveDeclarationsDelegate.findInternalUsages(moveDescriptor.source)
+        }
+        operationDescriptor.moveDescriptors.forEach { moveDescriptor ->
+            operationDescriptor.moveDeclarationsDelegate.collectConflicts(
+                moveDescriptor.target,
+                allUsages,
+                conflicts
+            )
+        }
+
+        return UsageViewUtil.removeDuplicatedUsages(allUsages.toTypedArray())
     }
 
     override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
         val usages = refUsages.get()
-        val conflicts = ActionUtil.underModalProgress(
+        ActionUtil.underModalProgress(
             operationDescriptor.project,
             RefactoringBundle.message("detecting.possible.conflicts")
         ) {
-            MultiMap<PsiElement, String>().apply {
-                operationDescriptor.moveDescriptors.forEach { moveDescriptor ->
-                    putAllValues(
-                        findAllMoveConflicts(
-                            topLevelDeclarationsToMove = moveDescriptor.source.elements,
-                            allDeclarationsToMove = operationDescriptor.sourceElements,
-                            targetDir = moveDescriptor.target.baseDirectory,
-                            targetPkg = moveDescriptor.target.pkgName,
-                            usages = usages
-                                .filterIsInstance<MoveRenameUsageInfo>()
-                                .filter { it.referencedElement in moveDescriptor.source.elements },
-                        )
+            operationDescriptor.moveDescriptors.forEach { moveDescriptor ->
+                conflicts.putAllValues(
+                    findAllMoveConflicts(
+                        topLevelDeclarationsToMove = moveDescriptor.source.elements,
+                        allDeclarationsToMove = operationDescriptor.sourceElements,
+                        targetDir = moveDescriptor.target.baseDirectory,
+                        targetPkg = moveDescriptor.target.pkgName,
+                        usages = usages
+                            .filterIsInstance<MoveRenameUsageInfo>()
+                            .filter { it.referencedElement in moveDescriptor.source.elements },
                     )
-                }
+                )
             }
         }
         return showConflicts(conflicts, usages)
@@ -77,20 +87,57 @@ class K2MoveDeclarationsRefactoringProcessor(
         }
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
+    /**
+     * We consider a class effectively empty if it only contains whitespaces.
+     */
+    private fun KtClassOrObject.isEffectivelyEmpty(): Boolean {
+        if (!declarations.isEmpty()) return false
+        return body?.children?.all { it is PsiWhiteSpace } == true
+    }
+
+    /**
+     * Deletes
+     */
+    private fun deleteMovedElement(element: KtNamedDeclaration) {
+        val containingClass = element.containingClassOrObject
+        element.deleteSingle()
+        if (containingClass is KtObjectDeclaration && containingClass.isCompanion() && containingClass.isEffectivelyEmpty()) {
+            containingClass.deleteSingle()
+        }
+    }
+
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
     override fun performRefactoring(usages: Array<out UsageInfo>) {
         val movedElements = allowAnalysisOnEdt {
-            operationDescriptor.moveDescriptors.flatMap { moveDescriptor ->
-                val elementsToMove = moveDescriptor.source.elements.withContext()
-                val targetFile = moveDescriptor.target.getOrCreateTarget(operationDescriptor.dirStructureMatchesPkg)
-                val sourceFiles = elementsToMove.map { it.containingFile as KtFile }.distinct()
-                val oldToNewMap = elementsToMove.moveInto(targetFile)
-                moveDescriptor.source.elements.forEach(PsiElement::deleteSingle)
-                // Delete files if they are effectively empty after moving declarations out of them
-                sourceFiles.filter { it.isEffectivelyEmpty() }.forEach { it.delete() }
-                @Suppress("UNCHECKED_CAST")
-                retargetUsagesAfterMove(usages.toList(), oldToNewMap as Map<PsiElement, PsiElement>)
-                oldToNewMap.values
+            allowAnalysisFromWriteAction {
+                operationDescriptor.moveDescriptors.flatMap { moveDescriptor ->
+                    operationDescriptor.moveDeclarationsDelegate.preprocessUsages(
+                        moveDescriptor.project,
+                        moveDescriptor.source,
+                        usages.toList()
+                    )
+
+                    val elementsToMove = moveDescriptor.source.elements.withContext()
+                    val targetFile = moveDescriptor.target.getOrCreateTarget(operationDescriptor.dirStructureMatchesPkg)
+                    val sourceFiles = elementsToMove.map { it.containingFile as KtFile }.distinct()
+
+                    elementsToMove.forEach { elementToMove ->
+                        if (elementToMove !is KtNamedDeclaration) return@forEach
+                        operationDescriptor.moveDeclarationsDelegate.preprocessDeclaration(moveDescriptor.target, elementToMove)
+                    }
+
+                    val oldToNewMap = elementsToMove.moveInto(targetFile)
+                    moveDescriptor.source.elements.forEach(::deleteMovedElement)
+                    // Delete files if they are effectively empty after moving declarations out of them
+                    sourceFiles.filter { it.isEffectivelyEmpty() }.forEach { it.delete() }
+
+                    @Suppress("UNCHECKED_CAST")
+                    retargetUsagesAfterMove(usages.toList(), oldToNewMap as Map<PsiElement, PsiElement>)
+                    oldToNewMap.forEach { original, new ->
+                        operationDescriptor.moveDeclarationsDelegate.postprocessDeclaration(moveDescriptor.target, original, new)
+                    }
+                    oldToNewMap.values
+                }
             }
         }
 

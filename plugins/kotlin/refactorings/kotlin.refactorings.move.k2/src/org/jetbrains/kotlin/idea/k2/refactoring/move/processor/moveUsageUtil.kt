@@ -4,16 +4,28 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.refactoring.util.NonCodeUsageInfo
 import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.usageView.UsageInfo
+import com.intellij.util.SmartList
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.markInternalUsages
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 /**
  * Retrieves all declarations that might need their references to be updated.
@@ -178,4 +190,98 @@ internal fun <T : MoveRenameUsageInfo> List<T>.groupByFile(): Map<PsiFile, List<
 
 internal fun <T : MoveRenameUsageInfo> Map<PsiFile, List<T>>.sortedByOffset(): Map<PsiFile, List<T>> = mapValues { (_, value) ->
     value.sortedBy { it.element?.textOffset }
+}
+
+
+internal fun collectOuterInstanceReferences(member: KtNamedDeclaration): List<OuterInstanceReferenceUsageInfo> {
+    val result = SmartList<OuterInstanceReferenceUsageInfo>()
+    traverseOuterInstanceReferences(member, false) { result += it }
+    return result
+}
+
+internal fun traverseOuterInstanceReferences(
+    member: KtNamedDeclaration,
+    stopAtFirst: Boolean
+) = traverseOuterInstanceReferences(member, stopAtFirst) { }
+
+context(KaSession)
+private fun KaSymbol.isStrictAncestorOf(other: KaSymbol): Boolean {
+    var containingDeclaration = other.containingDeclaration
+    while (containingDeclaration != null) {
+        if (this == containingDeclaration)  return true
+        containingDeclaration = containingDeclaration.containingDeclaration
+    }
+    return false
+}
+
+private fun traverseOuterInstanceReferences(
+    member: KtNamedDeclaration,
+    stopAtFirst: Boolean,
+    body: (OuterInstanceReferenceUsageInfo) -> Unit
+): Boolean {
+    if (member is KtObjectDeclaration || member is KtClass && !member.isInner()) return false
+    analyze(member) {
+        val containingClassOrObject = member.containingClassOrObject ?: return false
+        val outerClassSymbol = containingClassOrObject.symbol as? KaClassSymbol ?: return false
+        var found = false
+        member.accept(object : PsiRecursiveElementWalkingVisitor() {
+            private fun getOuterInstanceReference(element: PsiElement): OuterInstanceReferenceUsageInfo? {
+                return when (element) {
+                    is KtThisExpression -> {
+                        val symbol = element.expressionType?.symbol ?: return null
+                        val isIndirect = when {
+                            symbol == outerClassSymbol -> false
+                            symbol.isStrictAncestorOf(outerClassSymbol) -> true
+                            else -> return null
+                        }
+                        OuterInstanceReferenceUsageInfo.ExplicitThis(element, isIndirect)
+                    }
+
+                    is KtSimpleNameExpression -> {
+                        val resolvedCall = element.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>() ?: return null
+                        val dispatchReceiver = resolvedCall.partiallyAppliedSymbol.dispatchReceiver as? KaImplicitReceiverValue
+                        val extensionReceiver = resolvedCall.partiallyAppliedSymbol.extensionReceiver as? KaImplicitReceiverValue
+                        var isIndirect = false
+                        val isDoubleReceiver = when (outerClassSymbol) {
+                            dispatchReceiver?.symbol -> extensionReceiver != null
+                            extensionReceiver?.symbol -> dispatchReceiver != null
+                            else -> {
+                                isIndirect = true
+                                when {
+                                    dispatchReceiver?.symbol?.isStrictAncestorOf(outerClassSymbol) == true ->
+                                        extensionReceiver != null
+
+                                    extensionReceiver?.symbol?.isStrictAncestorOf(outerClassSymbol) == true ->
+                                        dispatchReceiver != null
+
+                                    else -> return null
+                                }
+                            }
+                        }
+
+                        val callElement = if (resolvedCall is KaVariableAccessCall) {
+                            element
+                        } else {
+                            element.parent as? KtCallExpression
+                        } ?: return null
+
+                        OuterInstanceReferenceUsageInfo.ImplicitReceiver(callElement, isIndirect, isDoubleReceiver)
+                    }
+
+                    else -> null
+                }
+            }
+
+            override fun visitElement(element: PsiElement) {
+                getOuterInstanceReference(element)?.let {
+                    body(it)
+                    found = true
+                    if (stopAtFirst) stopWalking()
+                    return
+                }
+                super.visitElement(element)
+            }
+        })
+        return found
+    }
 }

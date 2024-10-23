@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveDeclarationDelegate
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveDialog
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveModel
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -100,6 +101,7 @@ class ExtractDeclarationFromCurrentFileIntention : SelfTargetingRangeIntention<K
             searchInComments = false,
             searchReferences = true,
             dirStructureMatchesPkg = false,
+            moveDeclarationsDelegate = K2MoveDeclarationDelegate.TopLevel,
             moveCallBack
         ).refactoringProcessor().run()
     }

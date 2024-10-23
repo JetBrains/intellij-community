@@ -1,0 +1,1 @@
+Following declarations would clash: to move function 'fun foo(a: Int, b: Int)' and destination function 'fun foo(a: Int, b: Int)' declared in scope b

@@ -120,6 +120,8 @@ sealed class K2MoveRenameUsageInfo(
         }
 
         override fun retarget(to: PsiNamedElement): PsiElement? {
+            // Cannot qualify labels
+            if (element is KtLabelReferenceExpression) return null
             val reference = element?.reference as? KtReference ?: return null
             if (reference is KtSimpleNameReference) {
                 // shortening will be done later when all references are updated and the code isn't broken anymore

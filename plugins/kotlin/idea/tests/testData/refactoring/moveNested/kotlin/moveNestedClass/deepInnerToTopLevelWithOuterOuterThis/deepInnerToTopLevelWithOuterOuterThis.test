@@ -3,6 +3,6 @@
   "type": "MOVE_KOTLIN_NESTED_CLASS",
   "outerInstanceParameter": "a",
   "withRuntime": "true",
-  "enabledInK1": "true",
-  "enabledInK2": "false"
+  "enabledInK1": "false",
+  "enabledInK2": "true"
 }

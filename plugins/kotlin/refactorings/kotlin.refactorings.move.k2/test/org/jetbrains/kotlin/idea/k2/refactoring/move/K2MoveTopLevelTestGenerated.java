@@ -280,6 +280,26 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveFromDefaultPackage/moveFromDefaultPackage.test");
     }
 
+    @TestMetadata("kotlin/moveFunctionNameClashErasedTypes/moveFunctionNameClashErasedTypes.test")
+    public void testKotlin_moveFunctionNameClashErasedTypes_MoveFunctionNameClashErasedTypes() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveFunctionNameClashErasedTypes/moveFunctionNameClashErasedTypes.test");
+    }
+
+    @TestMetadata("kotlin/moveFunctionNameClash/moveFunctionNameClash.test")
+    public void testKotlin_moveFunctionNameClash_MoveFunctionNameClash() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveFunctionNameClash/moveFunctionNameClash.test");
+    }
+
+    @TestMetadata("kotlin/moveFunctionNoClashDifferentParameterCount/moveFunctionNoClashDifferentParameterCount.test")
+    public void testKotlin_moveFunctionNoClashDifferentParameterCount_MoveFunctionNoClashDifferentParameterCount() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveFunctionNoClashDifferentParameterCount/moveFunctionNoClashDifferentParameterCount.test");
+    }
+
+    @TestMetadata("kotlin/moveFunctionNoNameClash/moveFunctionNoNameClash.test")
+    public void testKotlin_moveFunctionNoNameClash_MoveFunctionNoNameClash() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveFunctionNoNameClash/moveFunctionNoNameClash.test");
+    }
+
     @TestMetadata("kotlin/moveFunctionToFile/moveFunctionToFile.test")
     public void testKotlin_moveFunctionToFile_MoveFunctionToFile() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveFunctionToFile/moveFunctionToFile.test");

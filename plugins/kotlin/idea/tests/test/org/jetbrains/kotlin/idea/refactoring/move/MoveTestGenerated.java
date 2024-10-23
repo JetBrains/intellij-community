@@ -563,6 +563,26 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveTopLevel/kotlin/moveFromDefaultPackage/moveFromDefaultPackage.test");
         }
 
+        @TestMetadata("kotlin/moveFunctionNameClashErasedTypes/moveFunctionNameClashErasedTypes.test")
+        public void testKotlin_moveFunctionNameClashErasedTypes_MoveFunctionNameClashErasedTypes() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveFunctionNameClashErasedTypes/moveFunctionNameClashErasedTypes.test");
+        }
+
+        @TestMetadata("kotlin/moveFunctionNameClash/moveFunctionNameClash.test")
+        public void testKotlin_moveFunctionNameClash_MoveFunctionNameClash() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveFunctionNameClash/moveFunctionNameClash.test");
+        }
+
+        @TestMetadata("kotlin/moveFunctionNoClashDifferentParameterCount/moveFunctionNoClashDifferentParameterCount.test")
+        public void testKotlin_moveFunctionNoClashDifferentParameterCount_MoveFunctionNoClashDifferentParameterCount() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveFunctionNoClashDifferentParameterCount/moveFunctionNoClashDifferentParameterCount.test");
+        }
+
+        @TestMetadata("kotlin/moveFunctionNoNameClash/moveFunctionNoNameClash.test")
+        public void testKotlin_moveFunctionNoNameClash_MoveFunctionNoNameClash() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveFunctionNoNameClash/moveFunctionNoNameClash.test");
+        }
+
         @TestMetadata("kotlin/moveFunctionToFile/moveFunctionToFile.test")
         public void testKotlin_moveFunctionToFile_MoveFunctionToFile() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/moveFunctionToFile/moveFunctionToFile.test");
@@ -1061,9 +1081,29 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveNested/kotlin/moveNestedClass/innerToTopLevelAddInstanceParam/innerToTopLevelAddInstanceParam.test");
         }
 
+        @TestMetadata("kotlin/moveNestedClass/innerToTopLevelImplicitReceiver/innerToTopLevelImplicitReceiver.test")
+        public void testKotlin_moveNestedClass_innerToTopLevelImplicitReceiver_InnerToTopLevelImplicitReceiver() throws Exception {
+            runTest("testData/refactoring/moveNested/kotlin/moveNestedClass/innerToTopLevelImplicitReceiver/innerToTopLevelImplicitReceiver.test");
+        }
+
+        @TestMetadata("kotlin/moveNestedClass/innerToTopLevelInnerClassUsageNoThis/innerToTopLevelInnerClassUsageNoThis.test")
+        public void testKotlin_moveNestedClass_innerToTopLevelInnerClassUsageNoThis_InnerToTopLevelInnerClassUsageNoThis() throws Exception {
+            runTest("testData/refactoring/moveNested/kotlin/moveNestedClass/innerToTopLevelInnerClassUsageNoThis/innerToTopLevelInnerClassUsageNoThis.test");
+        }
+
         @TestMetadata("kotlin/moveNestedClass/innerToTopLevelNoThis/innerToTopLevelNoThis.test")
         public void testKotlin_moveNestedClass_innerToTopLevelNoThis_InnerToTopLevelNoThis() throws Exception {
             runTest("testData/refactoring/moveNested/kotlin/moveNestedClass/innerToTopLevelNoThis/innerToTopLevelNoThis.test");
+        }
+
+        @TestMetadata("kotlin/moveNestedClass/innerToTopLevelSimpleThisNoInstanceParameter/innerToTopLevelSimpleThisNoInstanceParameter.test")
+        public void testKotlin_moveNestedClass_innerToTopLevelSimpleThisNoInstanceParameter_InnerToTopLevelSimpleThisNoInstanceParameter() throws Exception {
+            runTest("testData/refactoring/moveNested/kotlin/moveNestedClass/innerToTopLevelSimpleThisNoInstanceParameter/innerToTopLevelSimpleThisNoInstanceParameter.test");
+        }
+
+        @TestMetadata("kotlin/moveNestedClass/innerToTopLevelSimpleThis/innerToTopLevelSimpleThis.test")
+        public void testKotlin_moveNestedClass_innerToTopLevelSimpleThis_InnerToTopLevelSimpleThis() throws Exception {
+            runTest("testData/refactoring/moveNested/kotlin/moveNestedClass/innerToTopLevelSimpleThis/innerToTopLevelSimpleThis.test");
         }
 
         @TestMetadata("kotlin/moveNestedClass/innerToTopLevelWithThisOuterRefConflicts/innerToTopLevelWithThisOuterRefConflicts.test")

@@ -2,7 +2,7 @@ package test
 
 class C(private val a: A.B) {
     fun test() {
-        OuterOuterY()
+        A.OuterOuterY()
         this@A.OuterOuterY()
     }
 }

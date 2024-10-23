@@ -17,6 +17,8 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel
+import org.jetbrains.kotlin.psi.KtClassBody
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclarationContainer
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import javax.swing.JComponent
@@ -63,7 +65,17 @@ sealed interface K2MoveSourceModel<T : PsiElement> {
 
         override fun toDescriptor(): K2MoveSourceDescriptor.ElementSource = K2MoveSourceDescriptor.ElementSource(elements)
 
+        private fun isNestedDeclarationMove(): Boolean {
+            val singleElement = elements.singleOrNull() ?: return false
+            return singleElement.parent is KtClassBody
+        }
+
         override fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
+            if (isNestedDeclarationMove()) {
+                // We only want to move a single declaration, no choosing necessary.
+                return
+            }
+
             fun getDeclarationsContainers(elementsToMove: Collection<KtNamedDeclaration>): Set<KtDeclarationContainer> = elementsToMove
                 .mapNotNull { it.parent as? KtDeclarationContainer }
                 .toSet()
