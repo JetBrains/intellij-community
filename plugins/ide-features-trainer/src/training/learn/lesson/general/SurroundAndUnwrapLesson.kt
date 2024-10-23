@@ -43,7 +43,7 @@ abstract class SurroundAndUnwrapLesson
             surroundItems.all { sequence.contains(it) }
           }
         }
-        restoreByUi()
+        restoreByUi(delayMillis = defaultRestoreDelay)
         test {
           type("${surroundItems.joinToString(separator = " ")}\n")
         }
