@@ -110,7 +110,7 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
     if (!res && !method.isStatic() && stackFrame != null) {
       ObjectReference thisObject = stackFrame.thisObject();
       if (thisObject != null) {
-        res = DebuggerUtils.instanceOf(thisObject.referenceType(), (declaringClassNameName));
+        res = DebuggerUtils.instanceOf(thisObject.referenceType(), declaringClassNameName);
       }
     }
     return res;
