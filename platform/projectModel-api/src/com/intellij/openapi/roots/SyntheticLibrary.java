@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.BooleanSupplier;
@@ -183,10 +184,12 @@ public abstract class SyntheticLibrary {
     return new ImmutableSyntheticLibrary(comparisonId, sourceRoots, binaryRoots, excludedRoots, null, excludeCondition);
   }
 
+  @Unmodifiable
   public final @NotNull Collection<VirtualFile> getAllRoots() {
     return getRoots(true, true);
   }
 
+  @Unmodifiable
   private @NotNull Collection<VirtualFile> getRoots(boolean includeSources, boolean includeBinaries) {
     if (includeSources && includeBinaries) {
       Collection<VirtualFile> sourceRoots = getSourceRoots();

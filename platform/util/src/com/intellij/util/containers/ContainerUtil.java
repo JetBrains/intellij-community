@@ -21,6 +21,7 @@ import java.util.stream.Stream;
  * @see CollectionFactory
  * @see com.intellij.concurrency.ConcurrentCollectionFactory
  */
+@SuppressWarnings("UnstableApiUsage")
 public final class ContainerUtil {
   private static final int INSERTION_SORT_THRESHOLD = 10;
 
@@ -391,7 +392,7 @@ public final class ContainerUtil {
     Map<K, V> result = new HashMap<>(map.size() + map2.size());
     result.putAll(map);
     result.putAll(map2);
-    return result;
+    return result.isEmpty() ? Collections.emptyMap() : result;
   }
 
   @Contract(pure = true)
@@ -404,7 +405,7 @@ public final class ContainerUtil {
     Set<T> result = new HashSet<>(set.size() + set2.size());
     result.addAll(set);
     result.addAll(set2);
-    return result;
+    return result.isEmpty() ? Collections.emptySet() : result;
   }
 
   /**
@@ -1369,8 +1370,8 @@ public final class ContainerUtil {
   @SafeVarargs
   @Contract(pure = true)
   public static @Unmodifiable @NotNull <T> List<T> append(@NotNull List<? extends T> list, T @NotNull ... values) {
-    //noinspection unchecked
     if (values.length == 0) {
+      //noinspection unchecked
       return (List<T>)list;
     }
 
@@ -1394,8 +1395,8 @@ public final class ContainerUtil {
   @SafeVarargs
   @Contract(pure = true)
   public static @Unmodifiable @NotNull <T> List<T> prepend(@NotNull List<? extends T> list, T @NotNull ... values) {
-    //noinspection unchecked
     if (values.length == 0) {
+      //noinspection unchecked
       return (List<T>)list;
     }
     return new AbstractList<T>() {
@@ -1534,6 +1535,7 @@ public final class ContainerUtil {
   @Contract(pure = true)
   public static @Unmodifiable @NotNull <T> List<T> concat(@NotNull List<? extends T> @NotNull ... lists) {
     if (lists.length == 1) {
+      //noinspection unchecked
       return (List<T>)lists[0];
     }
     int size = 0;
