@@ -87,7 +87,7 @@ public final class HighlightDisplayKey {
                                                        @NotNull @NonNls String id) {
     HighlightDisplayKey key = find(shortName);
     if (key != null) {
-      LOG.error("Key with shortName '" + shortName + "' already registered with display name: " + getDisplayNameByKey(key));
+      LOG.error("Key with shortName '" + shortName + "' already registered with display name: '" + getDisplayNameByKey(key)+"' while calling register(Display name='"+displayName.compute()+"', ID='"+id+"')");
       return null;
     }
     HighlightDisplayKey highlightDisplayKey = new HighlightDisplayKey(shortName, id);
