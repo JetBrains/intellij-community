@@ -331,6 +331,11 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
                 runTest("testData/editor/optimizeImports/common/ExtensionFunWithThisReference.kt");
             }
 
+            @TestMetadata("ExtensionFunWithThisReference_unusedImport.kt")
+            public void testExtensionFunWithThisReference_unusedImport() throws Exception {
+                runTest("testData/editor/optimizeImports/common/ExtensionFunWithThisReference_unusedImport.kt");
+            }
+
             @TestMetadata("ExtensionFunctionalTypeVal.kt")
             public void testExtensionFunctionalTypeVal() throws Exception {
                 runTest("testData/editor/optimizeImports/common/ExtensionFunctionalTypeVal.kt");
