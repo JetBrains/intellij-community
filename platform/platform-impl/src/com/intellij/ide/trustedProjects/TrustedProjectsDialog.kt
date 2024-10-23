@@ -87,7 +87,7 @@ object TrustedProjectsDialog {
 
     TrustedProjectsStatistics.NEW_PROJECT_OPEN_OR_IMPORT_CHOICE.log(openChoice)
 
-    if (isWinDefenderEnabled) {
+    if (isWinDefenderEnabled && openChoice == OpenUntrustedProjectChoice.TRUST_AND_OPEN) {
       WindowsDefenderExcludeUtil.markPathAsShownDefender(projectRoot)
       if (windowDefenderPathsToExclude.isNotEmpty()) {
         if (project != null) {
