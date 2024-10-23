@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
@@ -14,7 +15,6 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Companion.suggestNameByName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.extractDataClassParameterNames
-import org.jetbrains.kotlin.idea.codeinsight.utils.toLowerBoundIfNeeded
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2ExtractableSubstringInfo
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -99,7 +99,7 @@ private fun suggestDestructuringNames(
     validator: KotlinDeclarationNameValidator,
 ): SuggestedNames? {
     return analyzeInModalWindow(expression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-        val expressionType = expression.expressionType.toLowerBoundIfNeeded() ?: return@analyzeInModalWindow null
+        val expressionType = expression.expressionType?.lowerBoundIfFlexible() as? KaClassType ?: return@analyzeInModalWindow null
         val dataClassParameterNames = extractDataClassParameterNames(expressionType) ?: emptyList()
         val applicableComponents = extractApplicableComponents(expression, expressionType, dataClassParameterNames)
         val usedNames = mutableSetOf<String>()

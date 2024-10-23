@@ -40,6 +40,6 @@ private fun getClassType(declaration: KtDestructuringDeclaration): KaClassType? 
     } else {
         val parentAsParameter = declaration.parent as? KtParameter
         parentAsParameter?.symbol?.returnType
-    }
-    return type?.toLowerBoundIfNeeded()
+    } ?: return null
+    return type.lowerBoundIfFlexible() as? KaClassType
 }

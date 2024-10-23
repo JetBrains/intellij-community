@@ -44,7 +44,3 @@ object KtFlexibleTypeAsUpperBoundRenderer : KaFlexibleTypeRenderer {
         typeRenderer.renderType(analysisSession, type.upperBound, printer)
     }
 }
-
-fun KaType?.toLowerBoundIfNeeded(): KaClassType? {
-    return ((this as? KaFlexibleType)?.lowerBound ?: this) as? KaClassType
-}
