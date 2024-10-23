@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
@@ -291,11 +292,14 @@ class MavenProjectReader(private val myProject: Project) {
 
     val parent: MavenParent
     if (hasChildByPath(xmlProject, "parent")) {
-      parent = MavenParent(MavenId(findChildValueByPath(xmlProject, "parent.groupId", UNKNOWN),
-                                   findChildValueByPath(xmlProject, "parent.artifactId", UNKNOWN),
+      val parentGroupId = findParentGroupId(file, xmlProject)
+      val parentArtifactId = findParentArtifactId(file, xmlProject)
+      parent = MavenParent(MavenId(parentGroupId,
+                                   parentArtifactId,
                                    calculateParentVersion(xmlProject, problems, file, isAutomaticVersionFeatureEnabled)),
                            findChildValueByPath(xmlProject, "parent.relativePath", "../pom.xml"))
       result.parent = parent
+      MavenLog.LOG.trace("Parent maven id for $file: $parent")
     }
     else {
       parent = MavenParent(MavenId(UNKNOWN, UNKNOWN, UNKNOWN), "../pom.xml")
@@ -315,6 +319,28 @@ class MavenProjectReader(private val myProject: Project) {
 
     result.profiles = collectProfiles(file, xmlProject, problems, alwaysOnProfiles)
     return RawModelReadResult(result, problems, alwaysOnProfiles)
+  }
+
+  private suspend fun findParentGroupId(file: VirtualFile, xmlProject: Element) = findParentSubtagValue(file, xmlProject, "groupId")
+
+  private suspend fun findParentArtifactId(file: VirtualFile, xmlProject: Element) = findParentSubtagValue(file, xmlProject, "artifactId")
+
+  private suspend fun findParentSubtagValue(file: VirtualFile, xmlProject: Element, path: String): String {
+    val explicitParentValue = findChildValueByPath(xmlProject, "parent.$path", null)
+    if (null != explicitParentValue) return explicitParentValue
+
+    if (!hasChildByPath(xmlProject, "parent")) return UNKNOWN
+
+    val parentFile = readAction { file.parent.parent.findChild(MavenConstants.POM_XML) }
+    if (null == parentFile) {
+      MavenLog.LOG.trace("Parent pom for $file not found")
+      return UNKNOWN
+    }
+    val parentXmlProject = readXml(parentFile, mutableListOf(), MavenProjectProblem.ProblemType.SYNTAX) ?: return UNKNOWN
+    val explicitValue = findChildValueByPath(parentXmlProject, path, null)
+    if (null != explicitValue) return explicitValue
+
+    return findParentSubtagValue(parentFile, parentXmlProject, path)
   }
 
   private suspend fun calculateParentVersion(

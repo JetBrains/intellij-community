@@ -33,4 +33,12 @@ public class MavenParent implements Serializable {
   public String getRelativePath() {
     return myRelativePath;
   }
+
+  @Override
+  public String toString() {
+    return "MavenParent{" +
+           "myMavenId=" + myMavenId +
+           ", myRelativePath='" + myRelativePath + '\'' +
+           '}';
+  }
 }
