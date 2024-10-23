@@ -4,4 +4,12 @@
                  description="Use Rhizome DB for inline completion implementation in RemDev"
                  defaultValue="false"/>
   </extensions>
+
+  <extensionPoints>
+    <extensionPoint
+      qualifiedName="com.intellij.inline.completion.shortcutHintListener"
+      interface="com.intellij.codeInsight.inline.completion.shortcut.InlineCompletionShortcutHintListener"
+      dynamic="true"
+    />
+  </extensionPoints>
 </idea-plugin>
