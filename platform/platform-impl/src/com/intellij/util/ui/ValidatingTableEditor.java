@@ -321,7 +321,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
 
   private void setItems(List<? extends Item> items) {
     if (items.isEmpty()) {
-      getTableModel().setItems(Collections.emptyList());
+      getTableModel().setItems(new ArrayList<>());
       myWarnings.clear();
     }
     else {

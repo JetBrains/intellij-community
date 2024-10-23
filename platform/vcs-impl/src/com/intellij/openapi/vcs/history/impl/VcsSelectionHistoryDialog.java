@@ -278,7 +278,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
       IntPair range = getSelectedRevisionsRange(data);
       List<VcsFileRevision> oldSelection = data.getRevisions().subList(range.first, range.second);
 
-      myListModel.setItems(newItems);
+      myListModel.setItems(new ArrayList<>(newItems));
 
       myList.setSelection(oldSelection);
       if (myList.getSelectedRowCount() == 0) {

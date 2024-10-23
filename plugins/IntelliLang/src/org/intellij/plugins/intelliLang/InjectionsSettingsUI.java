@@ -219,7 +219,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
             cfg.addInjection(info.injection);
           }
           final int[] selectedRows = myInjectionsTable.getSelectedRows();
-          myInjectionsTable.getListTableModel().setItems(getInjInfoList(myInfos));
+          myInjectionsTable.getListTableModel().setItems(new ArrayList<>(getInjInfoList(myInfos)));
           TableUtil.selectRows(myInjectionsTable, selectedRows);
         }
 
@@ -329,7 +329,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
 
   private void addInjection(final BaseInjection injection) {
     final InjInfo info = getDefaultCfgInfo().addInjection(injection);
-    myInjectionsTable.getListTableModel().setItems(getInjInfoList(myInfos));
+    myInjectionsTable.getListTableModel().setItems(new ArrayList<>(getInjInfoList(myInfos)));
     final int index = myInjectionsTable.convertRowIndexToView(myInjectionsTable.getListTableModel().getItems().indexOf(info));
     myInjectionsTable.getSelectionModel().setSelectionInterval(index, index);
     TableUtil.scrollSelectionToVisible(myInjectionsTable);
@@ -380,7 +380,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     for (CfgInfo info : myInfos) {
       info.reset();
     }
-    myInjectionsTable.getListTableModel().setItems(getInjInfoList(myInfos));
+    myInjectionsTable.getListTableModel().setItems(new ArrayList<>(getInjInfoList(myInfos)));
     updateCountLabel();
   }
 
@@ -426,7 +426,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       if (info.bundled) continue;
       info.cfgInfo.injectionInfos.remove(info);
     }
-    myInjectionsTable.getListTableModel().setItems(getInjInfoList(myInfos));
+    myInjectionsTable.getListTableModel().setItems(new ArrayList<>(getInjInfoList(myInfos)));
     final int index = Math.min(myInjectionsTable.getListTableModel().getRowCount() - 1, selectedRow);
     myInjectionsTable.getSelectionModel().setSelectionInterval(index, index);
     TableUtil.scrollSelectionToVisible(myInjectionsTable);
@@ -747,7 +747,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
         Configuration.importInjections(currentInjections, importingInjections, originalInjections, newInjections);
       }
       info.replace(originalInjections, newInjections);
-      myInjectionsTable.getListTableModel().setItems(getInjInfoList(myInfos));
+      myInjectionsTable.getListTableModel().setItems(new ArrayList<>(getInjInfoList(myInfos)));
       final int n = newInjections.size();
       if (n > 1) {
         Messages.showInfoMessage(myProject, IntelliLangBundle.message("dialog.message.0.entries.have.been.successfully.imported", n),

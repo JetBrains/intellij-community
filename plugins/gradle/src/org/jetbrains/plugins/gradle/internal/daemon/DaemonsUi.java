@@ -122,7 +122,7 @@ public class DaemonsUi implements Disposable {
       List<DaemonState> daemonStateList = ContainerUtil.filter(getDaemonsStatus(gradleUserHomes),
                                                                state -> myShowStopped || state.getToken() != null);
       ApplicationManager.getApplication().invokeLater(() -> {
-        myTableModel.setItems(daemonStateList);
+        myTableModel.setItems(new ArrayList<>(daemonStateList));
         myContent.stopLoading();
         invalidateActions();
       });

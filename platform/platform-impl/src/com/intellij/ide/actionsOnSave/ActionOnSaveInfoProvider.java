@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * Allows adding UI (CheckBox, comment, ActionLink and more) to the 'Actions on Save' page in Settings (Preferences).<br/>
@@ -25,7 +24,7 @@ public abstract class ActionOnSaveInfoProvider {
   public static final ExtensionPointName<ActionOnSaveInfoProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.actionOnSaveInfoProvider");
 
-  static List<ActionOnSaveInfo> getAllActionOnSaveInfos(@NotNull ActionOnSaveContext context) {
+  static ArrayList<ActionOnSaveInfo> getAllActionOnSaveInfos(@NotNull ActionOnSaveContext context) {
     ArrayList<ActionOnSaveInfo> infos = new ArrayList<>();
     for (ActionOnSaveInfoProvider provider : EP_NAME.getExtensionList()) {
       infos.addAll(provider.getActionOnSaveInfos(context));

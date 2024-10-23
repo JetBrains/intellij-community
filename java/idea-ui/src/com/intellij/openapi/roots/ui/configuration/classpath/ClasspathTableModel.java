@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -129,7 +128,7 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
   }
 
   public void clear() {
-    setItems(Collections.emptyList());
+    setItems(new ArrayList<>());
   }
 
   private List<OrderEntry> getEntries() {

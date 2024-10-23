@@ -177,10 +177,6 @@ public class CommittedChangesBrowserDialogPanel extends JPanel {
     tableModel.fireTableStructureChanged();
   }
 
-  public void setItems(List<CommittedChangeList> items) {
-    myTableModel.setItems(items);
-  }
-
   private void updateBySelectionChange() {
     final int idx = myChangeListsView.getSelectionModel().getLeadSelectionIndex();
     final List<CommittedChangeList> items = myTableModel.getItems();

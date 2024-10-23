@@ -434,7 +434,9 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       myShowHiddenFiles = !myShowHiddenFiles;
       if (myCurrentDirectory != null) {
         var selection = myList.getSelectedObject();
-        myModel.setItems(myShowHiddenFiles ? new ArrayList<>(myCurrentContent) : ContainerUtil.filter(myCurrentContent, item -> item.visible));
+        myModel.setItems(myShowHiddenFiles
+                         ? new ArrayList<>(myCurrentContent)
+                         : new ArrayList<>(ContainerUtil.filter(myCurrentContent, item -> item.visible)));
         myList.setSelection(selection != null ? List.of(selection) : List.of());
       }
       return myShowHiddenFiles;
