@@ -6,7 +6,8 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -155,18 +156,22 @@ class KtSymbolFromIndexProvider private constructor(
             resolveExtensionScopeWithTopLevelDeclarations.callables(name)
 
     context(KaSession)
-    fun getJavaCallableSymbolsByName(
+    fun getJavaMethodsByName(
         name: Name,
-        psiFilter: (PsiMember) -> Boolean = { true }
-    ): Sequence<KaCallableSymbol> {
-        val nameString = name.asString()
+        psiFilter: (PsiMethod) -> Boolean = { true },
+    ): Sequence<KaCallableSymbol> = nonKotlinNamesCaches.flatMap {
+        it.getMethodsByName(name.asString(), scope).asSequence()
+    }.filter { it.isAcceptable(psiFilter) }
+        .mapNotNull { it.callableSymbol }
 
-        return nonKotlinNamesCaches.flatMap { cache ->
-            cache.getMethodsByName(nameString, scope).asSequence() +
-                    cache.getFieldsByName(nameString, scope)
-        }.filter { it.isAcceptable(psiFilter) }
-            .mapNotNull { it.callableSymbol }
-    }
+    context(KaSession)
+    fun getJavaFieldsByName(
+        name: Name,
+        psiFilter: (PsiField) -> Boolean = { true },
+    ): Sequence<KaCallableSymbol> = nonKotlinNamesCaches.flatMap {
+        it.getFieldsByName(name.asString(), scope).asSequence()
+    }.filter { it.isAcceptable(psiFilter) }
+        .mapNotNull { it.callableSymbol }
 
     /**
      *  Returns top-level callables, excluding extensions. To obtain extensions use [getExtensionCallableSymbolsByNameFilter].

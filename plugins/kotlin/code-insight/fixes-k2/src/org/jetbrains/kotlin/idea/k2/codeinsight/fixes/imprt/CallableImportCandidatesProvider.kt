@@ -40,7 +40,8 @@ internal open class CallableImportCandidatesProvider(
                     // filter out extensions here, because they are added later with the use of information about receiver types
                     acceptsKotlinCallable(declaration) && !declaration.isExtensionDeclaration()
                 })
-                addAll(indexProvider.getJavaCallableSymbolsByName(unresolvedName, ::acceptsJavaCallable))
+                addAll(indexProvider.getJavaMethodsByName(unresolvedName, ::acceptsJavaCallable))
+                addAll(indexProvider.getJavaFieldsByName(unresolvedName, ::acceptsJavaCallable))
             }
 
             when (val context = positionContext) {
