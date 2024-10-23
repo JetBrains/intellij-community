@@ -5321,6 +5321,7 @@ c:com.intellij.util.io.zip.JBZipFile
 - <init>(java.io.File,Z):V
 - <init>(java.lang.String):V
 - <init>(java.lang.String,java.lang.String):V
+- <init>(java.nio.channels.SeekableByteChannel,java.nio.charset.Charset,Z,com.intellij.util.ThreeState):V
 - close():V
 - eraseEntry(com.intellij.util.io.zip.JBZipEntry):V
 - gc():V

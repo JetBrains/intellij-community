@@ -6,15 +6,19 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipException;
+
+import static java.nio.file.StandardOpenOption.*;
 
 /**
  * <h3>Overview</h3>
@@ -32,8 +36,8 @@ import java.util.zip.ZipException;
  *
  * <h3>Implementation notes</h3>
  *
- * <p>It doesn't extend {@code java.util.zip.ZipFile} as it would have to re-implement all methods anyway. Like
- * {@link java.util.zip.ZipFile}, it uses RandomAccessFile under the hood, and supports compressed and uncompressed entries.</p>
+ * <p>It doesn't extend {@code java.util.zip.ZipFile} as it would have to re-implement all methods anyway. Unike
+ * {@link java.util.zip.ZipFile}, it uses {@link SeekableByteChannel} under the hood, and supports compressed and uncompressed entries.</p>
  *
  * <p>The method signatures mimic the ones of {@link java.util.zip.ZipFile}, with a couple of exceptions:
  * <ul>
@@ -74,7 +78,7 @@ public class JBZipFile implements Closeable {
   /**
    * The actual data source.
    */
-  final RandomAccessFile myArchive;
+  final SeekableByteChannel myArchive;
 
   private boolean myIsZip64;
 
@@ -176,11 +180,27 @@ public class JBZipFile implements Closeable {
                    @NotNull Charset encoding,
                    boolean readonly,
                    @NotNull ThreeState isZip64) throws IOException {
+    this(getFileChannel(f, readonly), encoding, readonly, isZip64);
+  }
+
+  /**
+   * Interprets a given channel as a zip file.
+   *
+   * @param channel  the channel.
+   * @param encoding the encoding to use for file names
+   * @param readonly true to open file as readonly
+   * @throws IOException if an error occurs while reading the file.
+   */
+  public JBZipFile(SeekableByteChannel channel,
+                    @NotNull Charset encoding,
+                    boolean readonly,
+                    @NotNull ThreeState isZip64) throws IOException {
     myEncoding = encoding;
     myIsReadonly = readonly;
-    myArchive = new RandomAccessFile(f, readonly ? "r" : "rw");
+    myArchive = channel;
+
     try {
-      if (myArchive.length() > 0) {
+      if (myArchive.size() > 0) {
         populateFromCentralDirectory(isZip64);
       }
       else {
@@ -197,6 +217,11 @@ public class JBZipFile implements Closeable {
       }
       throw e;
     }
+  }
+
+  private static FileChannel getFileChannel(final File file, boolean isReadonly) throws IOException {
+    Path path = Paths.get(file.getPath());
+    return path.getFileSystem().provider().newFileChannel(path, isReadonly ? EnumSet.of(READ) : EnumSet.of(READ, WRITE, CREATE));
   }
 
   @Override
@@ -229,7 +254,7 @@ public class JBZipFile implements Closeable {
       }
 
       myOutputStream.finish();
-      myArchive.setLength(myOutputStream.getWritten());
+      myArchive.truncate(myOutputStream.getWritten());
     }
     myArchive.close();
   }
@@ -297,11 +322,11 @@ public class JBZipFile implements Closeable {
     byte[] cfh = new byte[CFH_LEN];
 
     byte[] signatureBytes = new byte[WORD];
-    myArchive.readFully(signatureBytes);
+    readFully(signatureBytes);
     long sig = ZipLong.getValue(signatureBytes);
     long cfhSig = ZipLong.getValue(JBZipOutputStream.CFH_SIG);
     while (sig == cfhSig) {
-      myArchive.readFully(cfh);
+      readFully(cfh);
       int off = 0;
 
       int versionMadeBy = ZipShort.getValue(cfh, off);
@@ -370,15 +395,35 @@ public class JBZipFile implements Closeable {
       nameMap.put(ze.getName(), ze);
       entries.add(ze);
 
-      myArchive.readFully(signatureBytes);
+      readFully(signatureBytes);
       sig = ZipLong.getValue(signatureBytes);
+    }
+  }
+
+  void readFully(byte[] b) throws IOException {
+    ByteBuffer buffer = ByteBuffer.wrap(b);
+    while (buffer.hasRemaining()) {
+      if (myArchive.read(buffer) < 0) {
+        throw new EOFException("unexpected EOF");
+      }
+    }
+  }
+
+  int readByte() throws IOException {
+    ByteBuffer buffer = ByteBuffer.allocate(1);
+    if (myArchive.read(buffer) < 0) {
+      return -1;
+    }
+    else {
+      buffer.flip();
+      return buffer.get(0) & 0xff;
     }
   }
 
   private byte[] readBytes(int count) throws IOException {
     if (count > 0) {
       byte[] bytes = new byte[count];
-      myArchive.readFully(bytes);
+      readFully(bytes);
       return bytes;
     }
     else {
@@ -450,18 +495,18 @@ public class JBZipFile implements Closeable {
    */
   private void positionAtCentralDirectory(@NotNull ThreeState isZip64) throws IOException {
     boolean found = false;
-    long off = myArchive.length() - MIN_EOCD_SIZE;
+    long off = myArchive.size() - MIN_EOCD_SIZE;
     if (off >= 0) {
-      myArchive.seek(off);
+      myArchive.position(off);
       byte[] sig = JBZipOutputStream.EOCD_SIG;
-      int curr = myArchive.read();
+      int curr = readByte();
       while (curr != -1) {
         if (curr == sig[0]) {
-          curr = myArchive.read();
+          curr = readByte();
           if (curr == sig[1]) {
-            curr = myArchive.read();
+            curr = readByte();
             if (curr == sig[2]) {
-              curr = myArchive.read();
+              curr = readByte();
               if (curr == sig[3]) {
                 found = true;
                 break;
@@ -469,17 +514,17 @@ public class JBZipFile implements Closeable {
             }
           }
         }
-        myArchive.seek(--off);
-        curr = myArchive.read();
+        myArchive.position(--off);
+        curr = readByte();
       }
     }
     if (!found) {
       throw new ZipException("archive is not a ZIP archive");
     }
 
-    boolean searchForZip64EOCD = myArchive.getFilePointer() > ZIP64_EOCDL_LENGTH;
+    boolean searchForZip64EOCD = myArchive.position() > ZIP64_EOCDL_LENGTH;
     if (searchForZip64EOCD) {
-      myArchive.seek(myArchive.getFilePointer() - ZIP64_EOCDL_LENGTH - WORD);
+      myArchive.position(myArchive.position() - ZIP64_EOCDL_LENGTH - WORD);
       myIsZip64 = Arrays.equals(readBytes(WORD), JBZipOutputStream.ZIP64_EOCD_LOC_SIG);
     }
 
@@ -488,28 +533,28 @@ public class JBZipFile implements Closeable {
         throw new IOException("Non ZIP64 archive was requested but it is a ZIP64 archive");
       }
 
-      myArchive.skipBytes(ZIP64_EOCDL_LOCATOR_OFFSET - WORD);
-      myArchive.seek(ZipUInt64.getLongValue(readBytes(DWORD)));
+      myArchive.position(myArchive.position() + ZIP64_EOCDL_LOCATOR_OFFSET - WORD);
+      myArchive.position(ZipUInt64.getLongValue(readBytes(DWORD)));
       if (!Arrays.equals(readBytes(WORD), JBZipOutputStream.ZIP64_EOCD_SIG)) {
         throw new IOException("archive is not a ZIP64 archive");
       }
 
-      myArchive.skipBytes(ZIP64_EOCD_CFD_LOCATOR_OFFSET
+      myArchive.position(myArchive.position() + ZIP64_EOCD_CFD_LOCATOR_OFFSET
                           - WORD /* signature has already been read */);
       long value = ZipUInt64.getLongValue(readBytes(DWORD));
       currentCfdOffset = value;
-      myArchive.seek(value);
+      myArchive.position(value);
     }
     else {
       if (isZip64.equals(ThreeState.YES)) {
         throw new IOException("ZIP64 archive was requested but it is not a ZIP64 archive");
       }
 
-      myArchive.seek(off + CFD_LOCATOR_OFFSET);
+      myArchive.position(off + CFD_LOCATOR_OFFSET);
       byte[] cfdOffset = new byte[WORD];
-      myArchive.readFully(cfdOffset);
+      readFully(cfdOffset);
       currentCfdOffset = ZipLong.getValue(cfdOffset);
-      myArchive.seek(currentCfdOffset);
+      myArchive.position(currentCfdOffset);
     }
   }
 
