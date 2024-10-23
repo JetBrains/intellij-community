@@ -17,7 +17,6 @@ import com.intellij.psi.impl.source.tree.LightTreeUtil
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
 import com.intellij.psi.stub.JavaStubImplUtil
 import com.intellij.psi.tree.TokenSet
-import com.intellij.psi.util.PropertyUtil
 import com.intellij.psi.util.PropertyUtilBase
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.PsiFileGist
@@ -45,7 +44,7 @@ private fun resolveFieldFromIndexValue(method: PsiMethod, isGetter: Boolean): Ps
       val psiClass = method.containingClass
       val project = psiClass!!.project
       val expr = JavaPsiFacade.getElementFactory(project).createExpressionFromText(indexValue.propertyRefText, psiClass)
-      return PropertyUtil.getSimplyReturnedField(expr)
+      return PropertyUtilBase.getSimplyReturnedField(expr)
     }
   }
   return null
@@ -117,9 +116,9 @@ private fun findSimplePropertyCandidates(tree: LighterAST): Int2ObjectMap<Proper
           JavaTokenType.IDENTIFIER -> {
             if (isConstructor) return null
             val name = RecordUtil.intern(tree.charTable, child)
-            when (PropertyUtil.getMethodNameGetterFlavour(name)) {
+            when (PropertyUtilBase.getMethodNameGetterFlavour(name)) {
               PropertyUtilBase.GetterFlavour.NOT_A_GETTER -> {
-                if (PropertyUtil.isSetterName(name)) {
+                if (PropertyUtilBase.isSetterName(name)) {
                   isGetter = false
                 }
                 else {

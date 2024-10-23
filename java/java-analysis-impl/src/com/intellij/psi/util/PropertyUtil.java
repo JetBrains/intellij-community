@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.lang.java.beans.PropertyKind;
@@ -35,39 +35,6 @@ public final class PropertyUtil extends PropertyUtilBase {
     if (field == null || !checkFieldLocation(method, field)) return null;
     final PsiType returnType = method.getReturnType();
     return returnType != null && field.getType().equals(returnType) ? field : null;
-  }
-
-  @Nullable
-  public static PsiField getSimplyReturnedField(@Nullable PsiExpression value) {
-    value = PsiUtil.skipParenthesizedExprDown(value);
-    if (!(value instanceof PsiReferenceExpression reference)) {
-      return null;
-    }
-
-    if (hasSubstantialQualifier(reference)) {
-      return null;
-    }
-
-    final PsiElement referent = reference.resolve();
-    if (!(referent instanceof PsiField)) {
-      return null;
-    }
-
-    return (PsiField)referent;
-  }
-
-  private static boolean hasSubstantialQualifier(PsiReferenceExpression reference) {
-    final PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(reference.getQualifierExpression());
-    if (qualifier == null) return false;
-
-    if (qualifier instanceof PsiQualifiedExpression) {
-      return false;
-    }
-
-    if (qualifier instanceof PsiReferenceExpression) {
-      return !(((PsiReferenceExpression)qualifier).resolve() instanceof PsiClass);
-    }
-    return true;
   }
 
   public static boolean isSimpleGetter(@Nullable PsiMethod method) {
