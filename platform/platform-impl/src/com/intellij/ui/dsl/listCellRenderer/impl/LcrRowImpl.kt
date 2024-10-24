@@ -155,8 +155,6 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
       }
     }
 
-    result.applyAccessibleName()
-
     return result
   }
 
@@ -321,6 +319,14 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
     if (accessibleContext == null) {
       accessibleContext = object : AccessibleJPanel() {
         override fun getAccessibleRole(): AccessibleRole = AccessibleRole.LABEL
+        override fun getAccessibleName(): String? {
+          val names = cellsPanel.components
+            .map { it.accessibleContext.accessibleName?.trim() }
+            .filter { !it.isNullOrEmpty() }
+
+          // Comma gives a good pause between unrelated text for readers on Windows and macOS
+          return names.joinToString(", ")
+        }
       }
     }
     return accessibleContext
@@ -366,15 +372,6 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
     }
 
     return result
-  }
-
-  fun applyAccessibleName() {
-    val names = cellsPanel.components
-      .map { it.accessibleContext.accessibleName?.trim() }
-      .filter { !it.isNullOrEmpty() }
-
-    // Comma gives a good pause between unrelated text for readers on Windows and macOS
-    getAccessibleContext().accessibleName = names.joinToString(", ")
   }
 
   /**
