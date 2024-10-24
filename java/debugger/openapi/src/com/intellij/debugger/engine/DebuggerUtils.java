@@ -614,6 +614,10 @@ public abstract class DebuggerUtils {
     return ContainerUtil.exists(SyntheticTypeComponentProvider.EP_NAME.getExtensionList(), provider -> provider.isSynthetic(typeComponent));
   }
 
+  public static boolean shouldDisplayField(@NotNull Field field) {
+    return ContainerUtil.all(FieldVisibilityProvider.EP_NAME.getExtensionList(), provider -> provider.shouldDisplay(field));
+  }
+
   public static boolean isInsideSimpleGetter(@NotNull PsiElement contextElement) {
     return ContainerUtil.exists(SimplePropertyGetterProvider.EP_NAME.getExtensionList(),
                                 provider -> provider.isInsideSimpleGetter(contextElement));

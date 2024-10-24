@@ -303,6 +303,9 @@
     <extensionPoint qualifiedName="com.intellij.debugger.syntheticProvider"
                     interface="com.intellij.debugger.engine.SyntheticTypeComponentProvider" dynamic="true"/>
 
+    <extensionPoint qualifiedName="com.intellij.debugger.fieldVisibilityProvider"
+                    interface="com.intellij.debugger.engine.FieldVisibilityProvider" dynamic="true"/>
+
     <extensionPoint qualifiedName="com.intellij.debugger.extraSteppingFilter"
                     interface="com.intellij.debugger.engine.ExtraSteppingFilter" dynamic="true"/>
 

@@ -293,7 +293,7 @@ public class ClassRenderer extends NodeRendererImpl {
       return false;
     }
 
-    return true;
+    return DebuggerUtils.shouldDisplayField(field);
   }
 
   @Override
