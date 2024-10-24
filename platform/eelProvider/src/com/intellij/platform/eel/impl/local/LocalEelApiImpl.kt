@@ -50,6 +50,7 @@ internal class LocalWindowsEelApiImpl(nioFs: FileSystem = FileSystems.getDefault
   override val exec: EelExecApi = EelLocalExecApi()
   override val userInfo: EelUserWindowsInfo = EelUserWindowsInfoImpl
   override val mapper: EelPathMapper = LocalEelPathMapper(this)
+  override val archive: EelArchiveApi = LocalEelArchiveApiImpl
 
   override val fs: EelFileSystemWindowsApi = object : WindowsNioBasedEelFileSystemApi(nioFs, userInfo) {
     override suspend fun createTemporaryDirectory(
@@ -69,6 +70,7 @@ class LocalPosixEelApiImpl(nioFs: FileSystem = FileSystems.getDefault()) : Local
   override val platform: EelPlatform.Posix = if (SystemInfo.isAarch64) EelPlatform.Aarch64Linux else EelPlatform.X8664Linux
   override val exec: EelExecApi = EelLocalExecApi()
   override val mapper: EelPathMapper = LocalEelPathMapper(this)
+  override val archive: EelArchiveApi = LocalEelArchiveApiImpl
 
   override val userInfo: EelUserPosixInfo = run {
     val unix = UnixSystem()

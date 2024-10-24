@@ -23,6 +23,8 @@ interface EelApiBase {
   /** Docs: [EelTunnelsApi] */
   val tunnels: EelTunnelsApi
 
+  val archive: EelArchiveApi
+
   /**
    * Returns basic info about the user with whose privileges the IJent process runs.
    */

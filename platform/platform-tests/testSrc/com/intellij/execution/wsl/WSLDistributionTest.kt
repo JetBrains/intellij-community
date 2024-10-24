@@ -512,6 +512,8 @@ enum class WslTestStrategy { Legacy, Ijent }
 private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser: Boolean) : IjentPosixApi {
   override val platform: EelPlatform.Posix get() = throw UnsupportedOperationException()
 
+  override val archive: EelArchiveApi get() = throw UnsupportedOperationException()
+
   override val isRunning: Boolean get() = true
 
   override val ijentProcessInfo: IjentProcessInfo get() = throw UnsupportedOperationException()
