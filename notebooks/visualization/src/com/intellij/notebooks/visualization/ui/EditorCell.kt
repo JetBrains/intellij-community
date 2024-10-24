@@ -122,7 +122,8 @@ class EditorCell(
       ?.takeIf { it.isNotEmpty() }
     ?: emptyList()
 
-  private fun updateOutputs(newOutputs: List<NotebookOutputDataKey>) = runInEdt {
+  // Made non-private to make it possible in RemoteDev to update outputs bypassing notebook JSON, which was accessed in updateOutputs().
+  fun updateOutputs(newOutputs: List<NotebookOutputDataKey>) = runInEdt {
     outputs.set(newOutputs)
   }
 
