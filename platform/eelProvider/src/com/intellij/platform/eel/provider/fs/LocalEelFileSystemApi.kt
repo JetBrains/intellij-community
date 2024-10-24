@@ -11,6 +11,7 @@ import com.intellij.platform.eel.fs.EelFileSystemApi.FileWriterCreationMode.*
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi.CreateDirectoryException
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi.CreateSymbolicLinkException
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.EelFsResultImpl
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.ByteBuffer
@@ -52,7 +53,7 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
         try {
           EelPath.Absolute.parse(err.file.toString(), pathOs)
         }
-        catch (_: InvalidPathException) {
+        catch (_: EelPathException) {
           EelPath.Absolute.parse(fs.rootDirectories.first().toString(), pathOs)
         }
       val err: EelFsError = when (err) {
@@ -79,7 +80,7 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
         try {
           EelPath.Absolute.parse(err.file.toString(), pathOs)
         }
-        catch (_: InvalidPathException) {
+        catch (_: EelPathException) {
           EelPath.Absolute.parse(fs.rootDirectories.first().toString(), pathOs)
         }
       val subclasses = E::class.sealedSubclasses
