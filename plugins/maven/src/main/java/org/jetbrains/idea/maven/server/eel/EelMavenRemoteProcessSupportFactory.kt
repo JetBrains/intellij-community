@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server.eel
 
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.LocalEelApi
@@ -30,7 +29,7 @@ class EelMavenRemoteProcessSupportFactory : MavenRemoteProcessSupportFactory {
 
   override fun isApplicable(project: Project): Boolean {
     // TODO: should we use eel also for local environments?
-    return runBlockingMaybeCancellable { project.getEelApiBlocking() !is LocalEelApi }
+    return project.getEelApiBlocking() !is LocalEelApi
   }
 }
 
