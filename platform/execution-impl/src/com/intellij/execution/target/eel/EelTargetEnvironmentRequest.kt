@@ -176,7 +176,7 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
               targetRootPath.parentDirectory?.let(eel.fs::getPath)?.let(options::parentDirectory)
               options.deleteOnExit(true)
 
-              eel.fs.createTemporaryDirectory(options).toString()
+              eel.fs.createTemporaryDirectory(options).getOrThrow().toString()
             }
           }
           is TargetPath.Persistent -> targetRootPath.absolutePath
