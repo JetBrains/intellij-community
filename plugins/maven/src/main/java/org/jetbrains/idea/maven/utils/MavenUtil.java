@@ -50,7 +50,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.platform.eel.EelApi;
 import com.intellij.platform.eel.EelPlatform;
 import com.intellij.platform.eel.LocalEelApi;
-import com.intellij.platform.eel.provider.EelProviderKt;
 import com.intellij.platform.eel.provider.utils.EelPathUtilsKt;
 import com.intellij.platform.eel.provider.utils.EelUtilsKt;
 import com.intellij.psi.PsiFile;
@@ -100,6 +99,7 @@ import java.util.zip.CRC32;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.platform.eel.fs.EelFileSystemApiKt.getPath;
+import static com.intellij.platform.eel.provider.EelProviderUtil.getEelApiBlocking;
 import static com.intellij.util.xml.NanoXmlBuilder.stop;
 import static icons.ExternalSystemIcons.Task;
 import static org.jetbrains.idea.maven.project.MavenHomeKt.resolveMavenHomeType;
@@ -682,7 +682,7 @@ public class MavenUtil {
   public static List<MavenHomeType> getSystemMavenHomeVariants(Project project) {
     List<MavenHomeType> result = new ArrayList<>();
 
-    var eel = EelProviderKt.getEelApiBlocking(project);
+    var eel = getEelApiBlocking(project);
     var envs = EelUtilsKt.fetchLoginShellEnvVariablesBlocking(eel.getExec());
 
     String m2home = envs.get(ENV_M2_HOME);
@@ -990,7 +990,7 @@ public class MavenUtil {
 
   @NotNull
   public static Path resolveM2Dir(@Nullable Project project) {
-    var eel = project != null ? EelProviderKt.getEelApiBlocking(project) : null;
+    var eel = project != null ? getEelApiBlocking(project) : null;
     return MavenEelUtil.resolveM2Dir(eel);
   }
 
