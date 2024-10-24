@@ -11,6 +11,7 @@ import com.intellij.notebooks.visualization.outputs.NotebookOutputDataKey
 import com.intellij.notebooks.visualization.outputs.impl.CollapsingComponent
 import com.intellij.notebooks.visualization.outputs.impl.InnerComponent
 import com.intellij.notebooks.visualization.outputs.impl.SurroundingComponent
+import com.intellij.notebooks.visualization.settings.NotebookSettings
 import com.intellij.notebooks.visualization.ui.EditorCellView.NotebookCellDataProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
@@ -56,7 +57,13 @@ class EditorCellOutputs(
 
   internal val innerComponent = InnerComponent().also {
     it.maxHeight = if (!ApplicationManager.getApplication().isUnitTestMode) {
-      (Toolkit.getDefaultToolkit().screenSize.height * 0.3).toInt()
+      val outputMaxHeightInEditorLines = NotebookSettings.getInstance().outputMaxHeightInEditorLines
+      if (outputMaxHeightInEditorLines <= 0) {
+        (Toolkit.getDefaultToolkit().screenSize.height * 0.3).toInt()
+      }
+      else {
+        outputMaxHeightInEditorLines * editor.lineHeight
+      }
     }
     else {
       200

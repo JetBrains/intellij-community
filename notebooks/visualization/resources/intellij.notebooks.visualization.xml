@@ -47,6 +47,8 @@
 
     <editorFactoryDocumentListener implementation="com.intellij.notebooks.visualization.UndoableActionListener"
                                    order="last"/>
+
+    <applicationService serviceImplementation="com.intellij.notebooks.visualization.settings.NotebookSettings"/>
   </extensions>
 
   <!-- New output inlays -->
