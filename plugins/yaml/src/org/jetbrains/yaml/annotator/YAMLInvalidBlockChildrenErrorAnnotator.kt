@@ -4,6 +4,7 @@ package org.jetbrains.yaml.annotator
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
@@ -23,7 +24,7 @@ import org.jetbrains.yaml.psi.impl.YAMLBlockSequenceImpl
 import org.jetbrains.yaml.psi.impl.YAMLKeyValueImpl
 import kotlin.math.min
 
-private class YAMLInvalidBlockChildrenErrorAnnotator : Annotator {
+private class YAMLInvalidBlockChildrenErrorAnnotator : Annotator, DumbAware {
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
     if (PsiTreeUtil.findChildrenOfType(element, OuterLanguageElement::class.java).isNotEmpty()) return
 
