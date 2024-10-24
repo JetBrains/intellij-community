@@ -293,6 +293,10 @@ public class ClassRenderer extends NodeRendererImpl {
       return false;
     }
 
+    if (isAndroidSpecific(field)) {
+      return false;
+    }
+
     return true;
   }
 
@@ -373,5 +377,19 @@ public class ClassRenderer extends NodeRendererImpl {
       return null;
     }
     return ((StringReference)value).value();
+  }
+
+  /**
+   * Returns true if `field` is <a href="https://cs.android.com/android/platform/superproject/main/+/main:libcore/ojluni/src/main/java/java/lang/Object.java;l=48-50;drc=c5565cd051a075091e0a5e1943d2b29d3bdf8bbd">Android Specific</a>
+   */
+  private static boolean isAndroidSpecific(Field field) {
+    if (!field.virtualMachine().name().startsWith("Dalvik")) {
+      return false;
+    }
+    if (!field.declaringType().name().equals("java.lang.Object")) {
+      return false;
+    }
+    String name = field.name();
+    return name.equals("shadow$_monitor_") || name.equals("shadow$_klass_");
   }
 }
