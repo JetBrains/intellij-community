@@ -27,21 +27,4 @@ public final class QuickFixes {
       throw new UnsupportedOperationException();
     }
   };
-
-  public static final IntentionAndQuickFixAction EMPTY_ACTION = new IntentionAndQuickFixAction() {
-    @Override
-    public @NotNull String getName() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public @NotNull String getFamilyName() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor) {
-      throw new UnsupportedOperationException();
-    }
-  };
 }
