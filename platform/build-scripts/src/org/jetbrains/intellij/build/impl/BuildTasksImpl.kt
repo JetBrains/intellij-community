@@ -80,7 +80,7 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
     BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
-    buildDistribution(state = compileAllModulesAndCreateDistributionState(context), context = context, isUpdateFromSources = true)
+    buildDistribution(state = createDistributionState(context), context = context, isUpdateFromSources = true)
     val arch = if (SystemInfoRt.isMac && CpuArch.isIntel64() && CpuArch.isEmulated()) {
       JvmArchitecture.aarch64
     }
@@ -336,10 +336,7 @@ private suspend fun buildSourcesArchive(contentReport: ContentReport, context: B
   )
 }
 
-private suspend fun compileAllModulesAndCreateDistributionState(context: BuildContext): DistributionBuilderState {
-  // compile all
-  context.compileModules(null)
-
+private suspend fun createDistributionState(context: BuildContext): DistributionBuilderState {
   val productLayout = context.productProperties.productLayout
   val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = productLayout.pluginModulesToPublish, productLayout = productLayout)
   filterPluginsToPublish(plugins = pluginsToPublish, context = context)
@@ -425,7 +422,10 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
   copyDependenciesFile(context)
 
   logFreeDiskSpace("before compilation", context)
-  val distributionState = compileAllModulesAndCreateDistributionState(context)
+  // compile all
+  context.compileModules(null)
+
+  val distributionState = createDistributionState(context)
   logFreeDiskSpace("after compilation", context)
 
   coroutineScope {
