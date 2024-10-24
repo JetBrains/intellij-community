@@ -31,7 +31,7 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
   @Override
   public boolean runInDispatchThread() { return false; }
 
-  public static final String[] MAVEN_VERSIONS = new String[]{"bundled", "4.0.0-beta-4"};
+  public static final String[] MAVEN_VERSIONS = new String[]{"bundled", "4.0.0-beta-5"};
   @Parameterized.Parameter(0)
   public String myMavenVersion;
   @Nullable
