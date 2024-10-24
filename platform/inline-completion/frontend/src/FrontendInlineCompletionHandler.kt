@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.inline.completion.frontend
 
 import com.intellij.codeInsight.inline.completion.*
+import com.intellij.codeInsight.inline.completion.frontend.tooltip.onboarding.InlineCompletionOnboardingListener
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
@@ -16,6 +17,11 @@ internal class FrontendInlineCompletionHandler(
   editor: Editor,
   parentDisposable: Disposable
 ) : InlineCompletionHandler(scope, editor, parentDisposable) {
+
+  init {
+    addEventListener(InlineCompletionNoSuggestionsListener(editor))
+    InlineCompletionOnboardingListener.createIfOnboarding(editor)?.let(::addEventListener)
+  }
 
   override fun startSessionOrNull(request: InlineCompletionRequest, provider: InlineCompletionProvider): InlineCompletionSession? {
     return sessionManager.createSession(provider, request, parentDisposable, specificId = null)

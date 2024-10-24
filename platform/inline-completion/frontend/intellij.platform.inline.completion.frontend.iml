@@ -11,5 +11,6 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.inline.completion" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
   </component>
 </module>

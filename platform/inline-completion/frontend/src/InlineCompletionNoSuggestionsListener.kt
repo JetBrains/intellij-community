@@ -1,13 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.inline.completion
+package com.intellij.codeInsight.inline.completion.frontend
 
 import com.intellij.codeInsight.hint.HintManager
+import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
+import com.intellij.codeInsight.inline.completion.InlineCompletionEventAdapter
+import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.editor.Editor
 
-private class InlineCompletionNoSuggestionsListener(private val editor: Editor) : InlineCompletionEventAdapter {
+internal class InlineCompletionNoSuggestionsListener(private val editor: Editor) : InlineCompletionEventAdapter {
 
   override fun onHide(event: InlineCompletionEventType.Hide) {
     if (event.finishType == InlineCompletionUsageTracker.ShownEvents.FinishType.EMPTY) {
@@ -16,11 +19,5 @@ private class InlineCompletionNoSuggestionsListener(private val editor: Editor) 
         HintManager.getInstance().showInformationHint(editor, LangBundle.message("completion.no.suggestions"), HintManager.ABOVE)
       }
     }
-  }
-}
-
-private class InlineCompletionNoSuggestionListenerInstaller : InlineCompletionInstallListener {
-  override fun handlerInstalled(editor: Editor, handler: InlineCompletionHandler) {
-    handler.addEventListener(InlineCompletionNoSuggestionsListener(editor))
   }
 }
