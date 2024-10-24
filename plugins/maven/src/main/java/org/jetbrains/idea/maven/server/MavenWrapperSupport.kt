@@ -12,19 +12,24 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.EelPosixApi
 import com.intellij.platform.eel.provider.getEelApiBlocking
 import com.intellij.util.io.HttpRequests
+import com.intellij.util.io.zip.JBZipFile
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.NioFiles
-import java.io.*
+import java.io.ByteArrayInputStream
+import java.io.IOException
 import java.math.BigInteger
-import java.nio.file.*
+import java.nio.file.Files
+import java.nio.file.LinkOption
+import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.PosixFilePermissions
 import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.zip.ZipInputStream
+import kotlin.Throws
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
@@ -115,27 +120,22 @@ internal class MavenWrapperSupport {
     val destinationCanonicalPath = unpackDir.toRealPath(LinkOption.NOFOLLOW_LINKS)
     var errorUnpacking = true
     try {
-      Files.newInputStream(zip).use { fis ->
-        ZipInputStream(fis).use { zis ->
-          var entry = zis.nextEntry
-
-          while (entry != null) {
-            val entryPath = unpackDir.resolve(entry.name)
-            val canonicalPath = entryPath.toAbsolutePath().normalize()
-            if (!canonicalPath.startsWith(destinationCanonicalPath)) {
-              Files.deleteIfExists(zip)
-              throw RuntimeException("Directory traversal attack detected; zip file is malicious and has been deleted.")
+      JBZipFile(zip.toFile()).use { zipFile ->
+        for (entry in zipFile.entries) {
+          val entryPath = unpackDir.resolve(entry.name)
+          val canonicalPath = entryPath.toAbsolutePath().normalize()
+          if (!canonicalPath.startsWith(destinationCanonicalPath)) {
+            Files.deleteIfExists(zip)
+            throw RuntimeException("Directory traversal attack detected; zip file is malicious and has been deleted.")
+          }
+          if (entry.isDirectory) {
+            Files.createDirectories(entryPath)
+          }
+          else {
+            Files.createDirectories(entryPath.parent)
+            entry.getInputStream().use { input ->
+              Files.copy(input, entryPath, StandardCopyOption.REPLACE_EXISTING)
             }
-
-            if (entry.isDirectory) {
-              Files.createDirectories(entryPath)
-            }
-            else {
-              Files.createDirectories(entryPath.parent)
-              Files.copy(zis, entryPath, StandardCopyOption.REPLACE_EXISTING)
-            }
-            zis.closeEntry()
-            entry = zis.nextEntry
           }
         }
       }
