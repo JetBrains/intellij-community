@@ -27,7 +27,7 @@ public interface XmlElementType extends XmlTokenType {
   IElementType XML_ELEMENT_CONTENT_SPEC = new IXmlElementType("XML_ELEMENT_CONTENT_SPEC");
   IElementType XML_ELEMENT_CONTENT_GROUP = new IXmlElementType("XML_ELEMENT_CONTENT_GROUP");
   IElementType XML_ATTRIBUTE_DECL = new IXmlElementType("XML_ATTRIBUTE_DECL");
-  IElementType XML_ATTRIBUTE_VALUE = BasicXmlElementType.XML_ATTRIBUTE_VALUE;
+  IElementType XML_ATTRIBUTE_VALUE = new IXmlElementType("XML_ATTRIBUTE_VALUE");
   IElementType XML_ENTITY_REF = new IXmlElementType("XML_ENTITY_REF");
   IElementType XML_ENUMERATED_TYPE = new IXmlElementType("XML_ENUMERATED_TYPE");
   IElementType XML_PROCESSING_INSTRUCTION = new IXmlElementType("XML_PROCESSING_INSTRUCTION");
@@ -40,7 +40,7 @@ public interface XmlElementType extends XmlTokenType {
   IElementType HTML_EMBEDDED_CONTENT = new EmbeddedHtmlContentElementType();
   IElementType HTML_RAW_TEXT = HtmlRawTextElementType.INSTANCE;
 
-  IElementType XML_TEXT = BasicXmlElementType.XML_TEXT;
+  IElementType XML_TEXT = new XmlTextElementType();
 
   IFileElementType XML_FILE = new IFileElementType(XMLLanguage.INSTANCE);
   IElementType XHTML_FILE = new IFileElementType(XHTMLLanguage.INSTANCE);
