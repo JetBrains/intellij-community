@@ -34,6 +34,18 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
     }
   }
 
+  fun compareWithLocal(changeListsMap: Map<ShelvedChangeListEntity, List<ShelvedChangeEntity>>) {
+    cs.launch {
+      withKernel {
+        val changeLists = changeListsMap.map {
+          ChangeListDto(it.key.sharedRef(), it.value.map { it.sharedRef() })
+        }
+        val projectRef = project.asEntity().sharedRef()
+        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).compareWithLocal(projectRef, changeLists)
+      }
+    }
+  }
+
   fun createPatch(changeLists: List<ChangeList>, silentClipboard: Boolean) {
     cs.launch {
       withKernel {

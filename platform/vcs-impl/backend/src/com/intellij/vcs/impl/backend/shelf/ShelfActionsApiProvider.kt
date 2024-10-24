@@ -31,4 +31,11 @@ class BackendShelfActionsApi : RemoteShelfActionsApi {
     val executor = ShelfRemoteActionExecutor.getInstance(project)
     executor.createPatchForShelvedChanges(changeListDto, silentClipboard)
   }
+
+  override suspend fun compareWithLocal(projectRef: SharedRef<ProjectEntity>, changeListsDto: List<ChangeListDto>) {
+    val project = projectRef.asProject()
+
+    val executor = ShelfRemoteActionExecutor.getInstance(project)
+    executor.compareWithLocal(changeListsDto)
+  }
 }

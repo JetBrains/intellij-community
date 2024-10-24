@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.impl.backend.shelf
 
+import com.intellij.openapi.ListSelection
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -68,6 +69,19 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
           return@launch
         }
         ShelveChangesManager.getInstance(project).unshelveSilentlyAsynchronously(project, changeLists, changes, files, null)
+      }
+    }
+  }
+
+  fun compareWithLocal(dtos: List<ChangeListDto>) {
+    cs.launch(Dispatchers.EDT) {
+      DiffShelvedChangesActionProvider.showShelvedChangesDiff(project, true) {
+        val shelvedChanges = dtos.flatMap { shelfTreeHolder.findChangesInTree(it) }.map { it.shelvedChange }
+        val wrappers: ListSelection<ShelvedWrapper> = ListSelection.createAt(shelvedChanges, 0)
+        if (wrappers.list.size == 1 && shelvedChanges.size > 1) {
+          return@showShelvedChangesDiff ListSelection.create(shelvedChanges, wrappers.list.first())
+        }
+        return@showShelvedChangesDiff wrappers.asExplicitSelection()
       }
     }
   }
