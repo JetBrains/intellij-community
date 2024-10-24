@@ -302,17 +302,18 @@ public class Maven40ProjectResolver {
   }
 
   @NotNull
-  private MavenServerExecutionResult createExecutionResult(MavenProject mavenProject, Exception exception) {
+  private MavenServerExecutionResult createExecutionResult(@Nullable MavenProject mavenProject, Exception exception) {
     return createExecutionResult(Collections.singletonList(exception), Collections.emptyList(), mavenProject, null, null);
   }
 
   @NotNull
   private MavenServerExecutionResult createExecutionResult(List<Exception> exceptions,
                                                            List<ModelProblem> modelProblems,
-                                                           MavenProject mavenProject,
+                                                           @Nullable MavenProject mavenProject,
                                                            DependencyResolutionResult dependencyResolutionResult,
                                                            String dependencyHash) {
-    return createExecutionResult(mavenProject.getFile(), exceptions, modelProblems, mavenProject, dependencyResolutionResult, dependencyHash, false);
+    File file = null == mavenProject ? null : mavenProject.getFile();
+    return createExecutionResult(file, exceptions, modelProblems, mavenProject, dependencyResolutionResult, dependencyHash, false);
   }
 
   @NotNull
