@@ -120,7 +120,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
   init {
     val app = ApplicationManager.getApplication()
-    if (!app.isUnitTestMode && !app.isHeadlessEnvironment && !app.isCommandLine) {
+    if (!app.isUnitTestMode && !app.isHeadlessEnvironment && !app.isCommandLine && app.isDispatchThread) {
       LOG.error("Instantiating ActionManager in EDT is prohibited")
     }
 
