@@ -13,7 +13,10 @@ import com.intellij.execution.wsl.rootMappings
 import com.intellij.execution.wsl.runCommand
 import com.intellij.execution.wsl.sync.WslSync
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -126,7 +129,9 @@ class WslTargetEnvironment(override val request: WslTargetEnvironmentRequest,
     request.wslOptions.remoteWorkingDirectory = commandLine.workingDirectory
     generalCommandLine.withRedirectErrorStream(commandLine.isRedirectErrorStream)
     distribution.patchCommandLine(generalCommandLine, null, request.wslOptions)
-    return generalCommandLine.createProcess().apply {
+
+    val process = ProgressManager.getInstance().runProcess(Computable<Process> { generalCommandLine.createProcess() }, EmptyProgressIndicator())
+    return process.apply {
       onExit().whenCompleteAsync { _, _ ->
         proxies.forEach { Disposer.dispose(it.value) }
         proxies.clear()
