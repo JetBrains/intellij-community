@@ -15,10 +15,7 @@ import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.text.html.HTML;
@@ -35,6 +32,12 @@ public class TestStatusLine extends NonOpaquePanel {
   protected final SimpleColoredComponent myState = new SimpleColoredComponent();
   private final SimpleColoredComponent myStateDescription = new SimpleColoredComponent();
   private final JPanel myProgressPanel;
+
+  @TestOnly
+  protected SimpleColoredComponent getStateDescription() {
+    return myStateDescription;
+  }
+
   private final JLabel myWarning = new JLabel();
 
   public TestStatusLine() {

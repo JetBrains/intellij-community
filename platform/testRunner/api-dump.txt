@@ -460,6 +460,7 @@ c:com.intellij.execution.testframework.ui.TestStatusLine
 - pf:myState:com.intellij.ui.SimpleColoredComponent
 - <init>():V
 - formatTestMessage(I,I,I,I,java.lang.Long,J):V
+- p:getStateDescription():com.intellij.ui.SimpleColoredComponent
 - getStateText():java.lang.String
 - getStatusColor():java.awt.Color
 - onTestsDone(java.util.function.Supplier):V
