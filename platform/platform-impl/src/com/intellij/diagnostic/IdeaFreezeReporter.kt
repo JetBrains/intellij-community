@@ -211,18 +211,15 @@ internal class IdeaFreezeReporter : PerformanceListener {
                           reportDir: Path?,
                           performanceWatcher: PerformanceWatcher,
                           finished: Boolean): IdeaLoggingEvent? {
+    if (!dumpTask.isValid()) return null
     var infos = dumpTask.threadInfos.toList()
-    val dumpInterval = (if (infos.isEmpty()) performanceWatcher.dumpInterval else dumpTask.dumpInterval).toLong()
-    if (infos.isEmpty()) {
-      infos = currentDumps.map { it.threadInfos }
-    }
 
     val causeThreads = infos.mapNotNull { getCauseThread(it) }
     val jitProblem = performanceWatcher.jitProblem
     val allInEdt = causeThreads.all { ThreadDumper.isEDT(it) }
-    val root = buildTree(threadInfos = causeThreads, time = dumpInterval)
+    val root = buildTree(threadInfos = causeThreads, time = dumpTask.dumpInterval.toLong())
     val classLoadingRatio = countClassLoading(causeThreads) * 100 / causeThreads.size
-    val commonStackNode = root.findDominantCommonStack((causeThreads.size * dumpInterval * COMMON_SUB_STACK_WEIGHT).toLong())
+    val commonStackNode = root.findDominantCommonStack((causeThreads.size * dumpTask.dumpInterval * COMMON_SUB_STACK_WEIGHT).toLong())
     var commonStack = commonStackNode?.getStack()
     var nonEdtCause = false
 
@@ -250,7 +247,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
     val durationInSeconds = duration / 1000
     val edtNote = if (allInEdt) "in EDT " else ""
     var message = """Freeze ${edtNote}for $durationInSeconds seconds
-${if (finished) "" else if (appClosing) "IDE is closing. " else "IDE KILLED! "}Sampled time: ${infos.size * dumpInterval}ms, sampling rate: ${dumpInterval}ms"""
+${if (finished) "" else if (appClosing) "IDE is closing. " else "IDE KILLED! "}Sampled time: ${infos.size * dumpTask.dumpInterval}ms, sampling rate: ${dumpTask.dumpInterval}ms"""
     if (jitProblem != null) {
       message += ", $jitProblem"
     }
