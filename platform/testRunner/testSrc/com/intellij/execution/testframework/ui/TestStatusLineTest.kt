@@ -27,12 +27,13 @@ class TestStatusLineTest : LightPlatformTestCase() {
   fun testFinished() {
     val duration = 1L
     val durationText = NlsMessages.formatDurationApproximateNarrow(duration)
-    testStatus(1, 1, 0, 0, 1L, 1L, "All tests passed", "1 test total, $durationText")
-    testStatus(2, 2, 0, 0, 1L, 1L, "All tests passed", "2 tests total, $durationText")
-    testStatus(1, 1, 1, 0, 1L, 1L, "All tests failed", "1 test total, $durationText")
-    testStatus(2, 2, 2, 0, 1L, 1L, "All tests failed", "2 tests total, $durationText")
-    testStatus(1, 1, 0, 1, 1L, 1L, "All tests ignored", "1 test total, $durationText")
-    testStatus(2, 2, 0, 2, 1L, 1L, "All tests ignored", "2 tests total, $durationText")
+
+    testStatus(1, 1, 0, 0, 1L, 1L, "1 test passed", "1 test total, $durationText")
+    testStatus(2, 2, 0, 0, 1L, 1L, "2 tests passed", "2 tests total, $durationText")
+    testStatus(1, 1, 1, 0, 1L, 1L, "1 test failed", "1 test total, $durationText")
+    testStatus(2, 2, 2, 0, 1L, 1L, "2 tests failed", "2 tests total, $durationText")
+    testStatus(1, 1, 0, 1, 1L, 1L, "1 test ignored", "1 test total, $durationText")
+    testStatus(2, 2, 0, 2, 1L, 1L, "2 tests ignored", "2 tests total, $durationText")
   }
 
   fun testFinishedMixed() {
@@ -50,49 +51,49 @@ class TestStatusLineTest : LightPlatformTestCase() {
   }
 
   fun testInProgress() {
-    testStatus(9, 1, 0, 0, null, 0L, "1 / 9 tests passed")
-    testStatus(9, 2, 0, 0, null, 0L, "2 / 9 tests passed")
-    testStatus(9, 1, 1, 0, null, 0L, "1 / 9 tests: 1 failed")
-    testStatus(9, 2, 2, 0, null, 0L, "2 / 9 tests: 2 failed")
-    testStatus(9, 1, 0, 1, null, 0L, "1 / 9 tests: 1 ignored")
-    testStatus(9, 2, 0, 2, null, 0L, "2 / 9 tests: 2 ignored")
+    testStatus(9, 1, 0, 0, null, 0L, "1 test passed", "1 / 9 tests")
+    testStatus(9, 2, 0, 0, null, 0L, "2 tests passed", "2 / 9 tests")
+    testStatus(9, 1, 1, 0, null, 0L, "1 test failed", "1 / 9 tests")
+    testStatus(9, 2, 2, 0, null, 0L, "2 tests failed", "2 / 9 tests")
+    testStatus(9, 1, 0, 1, null, 0L, "1 test ignored", "1 / 9 tests")
+    testStatus(9, 2, 0, 2, null, 0L, "2 tests ignored", "2 / 9 tests")
   }
 
   fun testInProgressMixed() {
-    testStatus(9, 3, 1, 0, null, 0L, "3 / 9 tests: 1 failed, 2 passed")
-    testStatus(9, 3, 2, 0, null, 0L, "3 / 9 tests: 2 failed, 1 passed")
-    testStatus(9, 3, 1, 2, null, 0L, "3 / 9 tests: 1 failed, 2 ignored")
-    testStatus(9, 3, 2, 1, null, 0L, "3 / 9 tests: 2 failed, 1 ignored")
-    testStatus(9, 3, 0, 2, null, 0L, "3 / 9 tests: 1 passed, 2 ignored")
-    testStatus(9, 3, 0, 1, null, 0L, "3 / 9 tests: 2 passed, 1 ignored")
-    testStatus(9, 3, 1, 1, null, 0L, "3 / 9 tests: 1 failed, 1 passed, 1 ignored")
-    testStatus(9, 4, 2, 1, null, 0L, "4 / 9 tests: 2 failed, 1 passed, 1 ignored")
+    testStatus(9, 3, 1, 0, null, 0L, "1 test failed, 2 passed", "3 / 9 tests")
+    testStatus(9, 3, 2, 0, null, 0L, "2 tests failed, 1 passed", "3 / 9 tests")
+    testStatus(9, 3, 1, 2, null, 0L, "1 test failed, 2 ignored", "3 / 9 tests")
+    testStatus(9, 3, 2, 1, null, 0L, "2 tests failed, 1 ignored", "3 / 9 tests")
+    testStatus(9, 3, 0, 2, null, 0L, "1 test passed, 2 ignored", "3 / 9 tests")
+    testStatus(9, 3, 0, 1, null, 0L, "2 tests passed, 1 ignored", "3 / 9 tests")
+    testStatus(9, 3, 1, 1, null, 0L, "1 test failed, 1 passed, 1 ignored", "3 / 9 tests")
+    testStatus(9, 4, 2, 1, null, 0L, "2 tests failed, 1 passed, 1 ignored", "4 / 9 tests")
   }
 
   fun testStopped() {
     val duration = 1L
     val durationText = NlsMessages.formatDurationApproximateNarrow(duration)
 
-    testStatus(9, 1, 0, 0, 1L, 1L, "Stopped. 1 / 9 tests passed", durationText)
-    testStatus(9, 2, 0, 0, 1L, 1L, "Stopped. 2 / 9 tests passed", durationText)
-    testStatus(9, 1, 1, 0, 1L, 1L, "Stopped. 1 / 9 tests: 1 failed", durationText)
-    testStatus(9, 2, 2, 0, 1L, 1L, "Stopped. 2 / 9 tests: 2 failed", durationText)
-    testStatus(9, 1, 0, 1, 1L, 1L, "Stopped. 1 / 9 tests: 1 ignored", durationText)
-    testStatus(9, 2, 0, 2, 1L, 1L, "Stopped. 2 / 9 tests: 2 ignored", durationText)
+    testStatus(9, 1, 0, 0, 1L, 1L, "Stopped. 1 test passed", "1 / 9 tests, $durationText")
+    testStatus(9, 2, 0, 0, 1L, 1L, "Stopped. 2 tests passed", "2 / 9 tests, $durationText")
+    testStatus(9, 1, 1, 0, 1L, 1L, "Stopped. 1 test failed", "1 / 9 tests, $durationText")
+    testStatus(9, 2, 2, 0, 1L, 1L, "Stopped. 2 tests failed", "2 / 9 tests, $durationText")
+    testStatus(9, 1, 0, 1, 1L, 1L, "Stopped. 1 test ignored", "1 / 9 tests, $durationText")
+    testStatus(9, 2, 0, 2, 1L, 1L, "Stopped. 2 tests ignored", "2 / 9 tests, $durationText")
 
-    testStatus(9, 3, 1, 0, 1L, 1L, "Stopped. 3 / 9 tests: 1 failed, 2 passed", durationText)
-    testStatus(9, 3, 2, 0, 1L, 1L, "Stopped. 3 / 9 tests: 2 failed, 1 passed", durationText)
-    testStatus(9, 3, 1, 2, 1L, 1L, "Stopped. 3 / 9 tests: 1 failed, 2 ignored", durationText)
-    testStatus(9, 3, 2, 1, 1L, 1L, "Stopped. 3 / 9 tests: 2 failed, 1 ignored", durationText)
-    testStatus(9, 3, 0, 2, 1L, 1L, "Stopped. 3 / 9 tests: 1 passed, 2 ignored", durationText)
-    testStatus(9, 3, 0, 1, 1L, 1L, "Stopped. 3 / 9 tests: 2 passed, 1 ignored", durationText)
-    testStatus(9, 3, 1, 1, 1L, 1L, "Stopped. 3 / 9 tests: 1 failed, 1 passed, 1 ignored", durationText)
-    testStatus(9, 4, 2, 1, 1L, 1L, "Stopped. 4 / 9 tests: 2 failed, 1 passed, 1 ignored", durationText)
+    testStatus(9, 3, 1, 0, 1L, 1L, "Stopped. 1 test failed, 2 passed", "3 / 9 tests, $durationText")
+    testStatus(9, 3, 2, 0, 1L, 1L, "Stopped. 2 tests failed, 1 passed", "3 / 9 tests, $durationText")
+    testStatus(9, 3, 1, 2, 1L, 1L, "Stopped. 1 test failed, 2 ignored", "3 / 9 tests, $durationText")
+    testStatus(9, 3, 2, 1, 1L, 1L, "Stopped. 2 tests failed, 1 ignored", "3 / 9 tests, $durationText")
+    testStatus(9, 3, 0, 2, 1L, 1L, "Stopped. 1 test passed, 2 ignored", "3 / 9 tests, $durationText")
+    testStatus(9, 3, 0, 1, 1L, 1L, "Stopped. 2 tests passed, 1 ignored", "3 / 9 tests, $durationText")
+    testStatus(9, 3, 1, 1, 1L, 1L, "Stopped. 1 test failed, 1 passed, 1 ignored", "3 / 9 tests, $durationText")
+    testStatus(9, 4, 2, 1, 1L, 1L, "Stopped. 2 tests failed, 1 passed, 1 ignored", "4 / 9 tests, $durationText")
   }
 
   fun testOutdatedTestCount() {
-    testStatus(9, 1, 2, 0, null, 0L, "2 / 9 tests: 2 failed")
-    testStatus(9, 1, 0, 2, null, 0L, "2 / 9 tests: 2 ignored")
-    testStatus(9, 1, 1, 1, null, 0L, "2 / 9 tests: 1 failed, 1 ignored")
+    testStatus(9, 1, 2, 0, null, 0L, "2 tests failed", "2 / 9 tests")
+    testStatus(9, 1, 0, 2, null, 0L, "2 tests ignored", "2 / 9 tests")
+    testStatus(9, 1, 1, 1, null, 0L, "1 test failed, 1 ignored", "2 / 9 tests")
   }
 }

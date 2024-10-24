@@ -70,7 +70,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertorTest extends BaseSMTRunnerT
     assertStatusLine("");
     SMTestProxy proxy = validateTest("1", "my test", null, true, myRootProxy);
     onTestFailed("1", "", 1);
-    assertStatusLine("All tests failed");
+    assertStatusLine("1 test failed");
     validateTestFailure("1", proxy, 1);
   }
 
@@ -117,7 +117,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertorTest extends BaseSMTRunnerT
     SMTestProxy testB = validateTest("B", "testB", null, true, suite);
     assertEquals(1, myResultsViewer.getFinishedTestCount());
     onTestIgnored("B");
-    assertStatusLine("All tests ignored");
+    assertStatusLine("2 tests ignored");
     assertEquals(2, myResultsViewer.getFinishedTestCount());
     validateTestIgnored("B", testB);
   }
