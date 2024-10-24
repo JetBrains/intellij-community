@@ -1,18 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.inline.completion.frontend
+package com.intellij.codeInsight.inline.completion
 
-import com.intellij.codeInsight.inline.completion.*
-import com.intellij.codeInsight.inline.completion.frontend.tooltip.onboarding.InlineCompletionOnboardingListener
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
+import com.intellij.codeInsight.inline.completion.onboarding.InlineCompletionOnboardingListener
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
+import com.intellij.codeInsight.inline.completion.session.InlineCompletionInvalidationListener
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessionManager
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
+import com.intellij.util.EventDispatcher
 import kotlinx.coroutines.CoroutineScope
 
-internal class FrontendInlineCompletionHandler(
+internal class InlineCompletionHandlerImpl(
   scope: CoroutineScope,
   editor: Editor,
   parentDisposable: Disposable
@@ -22,6 +23,10 @@ internal class FrontendInlineCompletionHandler(
     addEventListener(InlineCompletionNoSuggestionsListener(editor))
     InlineCompletionOnboardingListener.createIfOnboarding(editor)?.let(::addEventListener)
   }
+
+  // Fighting with 'AccessError' of protected method
+  private val myInvalidationListeners: EventDispatcher<InlineCompletionInvalidationListener>
+    get() = invalidationListeners
 
   override fun startSessionOrNull(request: InlineCompletionRequest, provider: InlineCompletionProvider): InlineCompletionSession? {
     return sessionManager.createSession(provider, request, parentDisposable, specificId = null)
@@ -41,10 +46,10 @@ internal class FrontendInlineCompletionHandler(
         // TODO share with backend
         when (val reason = invalidatedResult?.reason) {
           is UpdateSessionResult.Invalidated.Reason.Event -> {
-            invalidationListeners.multicaster.onInvalidatedByEvent(reason.event)
+            myInvalidationListeners.multicaster.onInvalidatedByEvent(reason.event)
           }
           UpdateSessionResult.Invalidated.Reason.UnclassifiedDocumentChange -> {
-            invalidationListeners.multicaster.onInvalidatedByUnclassifiedDocumentChange()
+            myInvalidationListeners.multicaster.onInvalidatedByUnclassifiedDocumentChange()
           }
           null -> Unit
         }
