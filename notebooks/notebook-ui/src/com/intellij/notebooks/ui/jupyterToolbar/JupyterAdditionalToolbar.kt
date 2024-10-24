@@ -7,12 +7,12 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 @ApiStatus.Internal
-class JupyterAddNewCellToolbar(  // PY-66455
+class JupyterAdditionalToolbar(  // PY-72283
   actionGroup: ActionGroup,
   target: JComponent,
   place: String = ActionPlaces.EDITOR_INLAY
 ) : JupyterAbstractAboveCellToolbar(actionGroup, target, place) {
 
-  override fun getArcSize(): Int = JBUI.scale(14)
+  override fun getArcSize(): Int = JBUI.scale(6)
   override fun getOuterPadding(): Int = JBUI.scale(1)
 }
