@@ -33,7 +33,7 @@ internal class ProjectConfigurationCollector : ProjectUsagesCollector() {
                 val buildSystem = getBuildSystemType(it)
                 val platform = getPlatform(it)
                 val languageLevel = KotlinFacet.get(it)?.configuration?.settings?.languageLevel?.versionString
-                val nonDefaultLanguageFeatures = getNonDefaultLanguageFeatures(it).sorted()
+                val nonDefaultLanguageFeatures = getNonDefaultLanguageFeatures(it).toList()
                 metrics.add(
                     buildEvent.metric(
                         systemField.with(buildSystem),
