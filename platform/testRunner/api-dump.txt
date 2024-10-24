@@ -226,9 +226,8 @@ a:com.intellij.execution.testframework.TestTreeViewStructure
 - getFilter():com.intellij.execution.testframework.Filter
 - setFilter(com.intellij.execution.testframework.Filter):V
 f:com.intellij.execution.testframework.TestsUIUtil
-- sf:NOTIFICATION_GROUP:com.intellij.notification.NotificationGroup
-- sf:PASSED_COLOR:java.awt.Color
 - s:clearIconProgress(com.intellij.openapi.project.Project):V
+- s:getNotificationGroup():com.intellij.notification.NotificationGroup
 - s:getOpenFileDescriptor(com.intellij.execution.testframework.AbstractTestProxy,com.intellij.execution.testframework.TestConsoleProperties):com.intellij.pom.Navigatable
 - s:getOpenFileDescriptor(com.intellij.execution.testframework.AbstractTestProxy,com.intellij.execution.testframework.TestFrameworkRunningModel):com.intellij.pom.Navigatable
 - s:getTestSummary(com.intellij.execution.testframework.AbstractTestProxy):java.lang.String
