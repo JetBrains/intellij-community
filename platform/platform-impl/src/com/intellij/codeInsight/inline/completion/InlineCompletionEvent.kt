@@ -19,7 +19,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiUtilBase
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import kotlin.random.Random
 
 class InlineCompletionRequest(
@@ -97,7 +96,10 @@ interface InlineCompletionEvent {
    *
    * Use [ManualCall] instead as it guarantees that exactly your provider is going to be called.
    */
-  class DirectCall @ApiStatus.Internal constructor(
+  class DirectCall
+  @Deprecated("This constructor is going to be internal. It should not be created outside of the platform.")
+  @ApiStatus.ScheduledForRemoval
+  constructor(
     val editor: Editor,
     val caret: Caret,
     val context: DataContext? = null,
@@ -124,10 +126,10 @@ interface InlineCompletionEvent {
    * @param additionalData The data context for the call (not stable).
    */
   @ApiStatus.Experimental
-  class ManualCall(
+  class ManualCall @ApiStatus.Experimental constructor(
     val editor: Editor,
 
-    @ApiStatus.Internal
+    @get:ApiStatus.Internal
     override val providerId: InlineCompletionProviderID,
 
     @ApiStatus.Experimental
@@ -190,14 +192,13 @@ interface InlineCompletionEvent {
    * @param event The lookup event.
    */
   class LookupChange @ApiStatus.Internal constructor(
-    @ApiStatus.Experimental
+    @get:ApiStatus.Experimental
     override val editor: Editor,
     override val event: LookupEvent,
   ) : InlineLookupEvent, Builtin {
 
-    @Deprecated("This event should not be created outside the platform.")
-    @ScheduledForRemoval
-    @ApiStatus.Internal
+    @Deprecated("It should not be created outside of the platform.")
+    @ApiStatus.ScheduledForRemoval
     constructor(event: LookupEvent) : this(
       runReadAction { event.lookup!!.editor },
       event
@@ -223,9 +224,8 @@ interface InlineCompletionEvent {
     override val event: LookupEvent
   ) : InlineLookupEvent, Builtin {
 
-    @Deprecated("This event should not be created outside the platform.")
-    @ScheduledForRemoval
-    @ApiStatus.Internal
+    @Deprecated("It should not be created outside of the platform.")
+    @ApiStatus.ScheduledForRemoval
     constructor(event: LookupEvent) : this(
       runReadAction { event.lookup!!.editor },
       event
