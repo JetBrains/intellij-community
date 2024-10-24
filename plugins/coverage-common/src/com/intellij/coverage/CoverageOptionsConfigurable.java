@@ -96,21 +96,17 @@ public final class CoverageOptionsConfigurable extends CompositeConfigurable<Cov
 
   @Override
   public boolean isModified() {
-    if (myManager.getOptionToReplace() != getSelectedValue()) {
-      return true;
-    }
-
-    if (myManager.activateViewOnRun() != myPanel.myActivateCoverageViewCB.isSelected()) {
-      return true;
-    }
-
-    return super.isModified();
+    return myManager.getOptionToReplace() != getSelectedValue()
+           || myManager.activateViewOnRun() != myPanel.myActivateCoverageViewCB.isSelected()
+           || myManager.showInProjectView() != myPanel.myShowInProjectViewCB.isSelected()
+           || super.isModified();
   }
 
   @Override
   public void apply() throws ConfigurationException {
     myManager.setOptionsToReplace(getSelectedValue());
     myManager.setActivateViewOnRun(myPanel.myActivateCoverageViewCB.isSelected());
+    myManager.setShowInProjectView(myPanel.myShowInProjectViewCB.isSelected());
     super.apply();
   }
 
@@ -139,6 +135,7 @@ public final class CoverageOptionsConfigurable extends CompositeConfigurable<Cov
     radioButton.setSelected(true);
 
     myPanel.myActivateCoverageViewCB.setSelected(myManager.activateViewOnRun());
+    myPanel.myShowInProjectViewCB.setSelected(myManager.showInProjectView());
     super.reset();
   }
 
@@ -161,5 +158,6 @@ public final class CoverageOptionsConfigurable extends CompositeConfigurable<Cov
 
     private JPanel myWholePanel;
     private JCheckBox myActivateCoverageViewCB;
+    private JCheckBox myShowInProjectViewCB;
   }
 }

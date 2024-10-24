@@ -20,6 +20,10 @@ public abstract class AbstractCoverageProjectViewNodeDecorator implements Projec
   public AbstractCoverageProjectViewNodeDecorator(@SuppressWarnings("unused") @NotNull Project project) {
   }
 
+  protected static boolean isApplicable(@NotNull Project project) {
+    return CoverageOptionsProvider.getInstance(project).showInProjectView();
+  }
+
   /**
    * @deprecated Use {@link CoverageDataManager#getInstance(Project)} directly.
    */
