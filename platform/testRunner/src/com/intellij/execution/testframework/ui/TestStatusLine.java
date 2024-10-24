@@ -113,12 +113,12 @@ public class TestStatusLine extends NonOpaquePanel {
         myState.append(" ");
       }
 
-      if (finishedTestsCount <= passedCount) myState.append(TestRunnerBundle.message("test.result.in.progress.all.passed", finishedTestsCount, testsTotal));
-      else if (finishedTestsCount <= failuresCount) appendColored(TestRunnerBundle.message("test.result.in.progress.failed", finishedTestsCount, testsTotal, failuresCount));
-      else if (finishedTestsCount <= ignoredTestsCount) appendColored(TestRunnerBundle.message("test.result.in.progress.ignored", finishedTestsCount, testsTotal, ignoredTestsCount));
-      else if (ignoredTestsCount == 0) appendColored(TestRunnerBundle.message("test.result.in.progress.failed.passed", finishedTestsCount, testsTotal, failuresCount, passedCount));
-      else if (passedCount == 0) appendColored(TestRunnerBundle.message("test.result.in.progress.failed.ignored", finishedTestsCount, testsTotal, failuresCount, ignoredTestsCount));
-      else if (failuresCount == 0) appendColored(TestRunnerBundle.message("test.result.in.progress.passed.ignored", finishedTestsCount, testsTotal, passedCount, ignoredTestsCount));
+      if (failuresCount == 0 && ignoredTestsCount == 0) myState.append(TestRunnerBundle.message("test.result.in.progress.all.passed", finishedTestsCount, testsTotal));
+      else if (passedCount == 0 && ignoredTestsCount == 0) appendColored(TestRunnerBundle.message("test.result.in.progress.failed", failuresCount, testsTotal, failuresCount));
+      else if (failuresCount == 0 && passedCount == 0) appendColored(TestRunnerBundle.message("test.result.in.progress.ignored", ignoredTestsCount, testsTotal, ignoredTestsCount));
+      else if (ignoredTestsCount == 0) appendColored(TestRunnerBundle.message("test.result.in.progress.failed.passed",  failuresCount + passedCount, testsTotal, failuresCount, passedCount));
+      else if (passedCount == 0) appendColored(TestRunnerBundle.message("test.result.in.progress.failed.ignored", failuresCount + ignoredTestsCount, testsTotal, failuresCount, ignoredTestsCount));
+      else if (failuresCount == 0) appendColored(TestRunnerBundle.message("test.result.in.progress.passed.ignored", passedCount + ignoredTestsCount, testsTotal, passedCount, ignoredTestsCount));
       else appendColored(TestRunnerBundle.message("test.result.in.progress.failed.passed.ignored", finishedTestsCount, testsTotal, failuresCount, passedCount, ignoredTestsCount));
 
       if (stopped && duration != null) {
@@ -129,9 +129,9 @@ public class TestStatusLine extends NonOpaquePanel {
       return;
     }
 
-    if (finishedTestsCount == passedCount) myState.append(TestRunnerBundle.message("test.result.finished.all.passed"));
-    else if (finishedTestsCount == failuresCount) myState.append(TestRunnerBundle.message("test.result.finished.all.failed"), FAILED_ATTRIBUTES);
-    else if (finishedTestsCount == ignoredTestsCount) myState.append(TestRunnerBundle.message("test.result.finished.all.ignored"), IGNORED_ATTRIBUTES);
+    if (failuresCount == 0 && ignoredTestsCount == 0) myState.append(TestRunnerBundle.message("test.result.finished.all.passed"));
+    else if (passedCount == 0 && ignoredTestsCount == 0) myState.append(TestRunnerBundle.message("test.result.finished.all.failed"), FAILED_ATTRIBUTES);
+    else if (failuresCount == 0 && passedCount == 0) myState.append(TestRunnerBundle.message("test.result.finished.all.ignored"), IGNORED_ATTRIBUTES);
     else if (ignoredTestsCount == 0) appendColored(TestRunnerBundle.message("test.result.finished.failed.passed", failuresCount, passedCount));
     else if (passedCount == 0) appendColored(TestRunnerBundle.message("test.result.finished.failed.ignored", failuresCount, ignoredTestsCount));
     else if (failuresCount == 0) appendColored(TestRunnerBundle.message("test.result.finished.passed.ignored", passedCount, ignoredTestsCount));
