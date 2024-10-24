@@ -2,67 +2,78 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl;
-import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.io.Compressor;
 import com.intellij.util.lang.ZipFilePool;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class PluginDescriptorLoadingTest {
-  @Rule public TempDirectory tempDir = new TempDirectory();
+  private static boolean ourResetPool = false;
 
-  private boolean myResetPool = false;
+  @Test void descriptorLoadingFromJarArtifact(@TempDir Path tempDir) throws IOException {
+    var jarFile = tempDir.resolve("test.plugin.jar");
+    try (var jar = new Compressor.Jar(jarFile)) {
+      jar.addFile(PluginManagerCore.META_INF + "/ext-plugin.xml", "<idea-plugin/>".getBytes(StandardCharsets.UTF_8));
+      jar.addFile(PluginManagerCore.PLUGIN_XML_PATH, "<idea-plugin><id>test.plugin</id></idea-plugin>".getBytes(StandardCharsets.UTF_8));
+    }
 
-  @Before
-  public void setUp() throws Exception {
+    var descriptor = PluginDescriptorLoader.readBasicDescriptorDataFromArtifact(jarFile);
+    assertThat(descriptor).isNotNull();
+    assertThat(descriptor.getPluginId().getIdString()).isEqualTo("test.plugin");
+
+    descriptor = PluginDescriptorLoader.loadDescriptorFromArtifact(jarFile, null);
+    assertThat(descriptor).isNotNull();
+    assertThat(descriptor.getPluginId().getIdString()).isEqualTo("test.plugin");
+  }
+
+  @Test void descriptorLoadingFromZipArtifact(@TempDir Path tempDir) throws IOException {
+    var clientFile = tempDir.resolve("client.jar");
+    try (var jar = new Compressor.Jar(clientFile)) {
+      jar.addFile(PluginManagerCore.PLUGIN_XML_PATH, "<idea-plugin><id>test.plugin.client</id></idea-plugin>".getBytes(StandardCharsets.UTF_8));
+    }
+    var otherFile = tempDir.resolve("other.jar");
+    try (var jar = new Compressor.Jar(otherFile)) {
+      jar.addFile("file.txt", "...".getBytes(StandardCharsets.UTF_8));
+    }
+    var mainFile = tempDir.resolve("main.jar");
+    try (var jar = new Compressor.Jar(mainFile)) {
+      jar.addFile(PluginManagerCore.META_INF + "/ext-plugin.xml", "<idea-plugin/>".getBytes(StandardCharsets.UTF_8));
+      jar.addFile(PluginManagerCore.PLUGIN_XML_PATH, "<idea-plugin><id>test.plugin</id></idea-plugin>".getBytes(StandardCharsets.UTF_8));
+    }
+    var zipFile = tempDir.resolve("test.plugin.zip");
+    try (var zip = new Compressor.Zip(zipFile)) {
+      zip.addFile("test.plugin/lib/client/plugin.jar", clientFile);
+      zip.addFile("test.plugin/lib/other.jar", otherFile);
+      zip.addFile("test.plugin/lib/plugin.jar", mainFile);
+    }
+
+    var descriptor = PluginDescriptorLoader.readBasicDescriptorDataFromArtifact(zipFile);
+    assertThat(descriptor).isNotNull();
+    assertThat(descriptor.getPluginId().getIdString()).isEqualTo("test.plugin");
+
+    descriptor = PluginDescriptorLoader.loadDescriptorFromArtifact(zipFile, null);
+    assertThat(descriptor).isNotNull();
+    assertThat(descriptor.getPluginId().getIdString()).isEqualTo("test.plugin");
+  }
+
+  @BeforeAll static void setUp() {
     if (ZipFilePool.POOL == null) {
       ZipFilePool.POOL = new ZipFilePoolImpl();
-      myResetPool = true;
+      ourResetPool = true;
     }
   }
 
-  @After
-  public void tearDown() throws Exception {
-    if (myResetPool) {
+  @AfterAll static void tearDown() {
+    if (ourResetPool) {
       ZipFilePool.POOL = null;
     }
-  }
-
-  @Test
-  public void descriptorLoadingFromJarArtifact() throws IOException {
-    File jarFile = tempDir.newFile("test.jar");
-    try (Compressor.Jar jar = new Compressor.Jar(jarFile)) {
-      jar.addFile(PluginManagerCore.PLUGIN_XML_PATH, "<idea-plugin><id>test.plugin</id></idea-plugin>".getBytes(StandardCharsets.UTF_8));
-    }
-    IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadDescriptorFromArtifact(jarFile.toPath(), null);
-    assertNotNull(descriptor);
-    assertEquals("test.plugin", descriptor.getPluginId().getIdString());
-  }
-
-  @Test
-  public void descriptorLoadingFromZipArtifact() throws IOException {
-    File jarFile = tempDir.newFile("test.jar");
-    try (Compressor.Jar jar = new Compressor.Jar(jarFile)) {
-      jar.addFile(PluginManagerCore.PLUGIN_XML_PATH, "<idea-plugin><id>test.plugin</id></idea-plugin>".getBytes(StandardCharsets.UTF_8));
-    }
-
-    Path zipFile = tempDir.newFile("test.zip").toPath();
-    try (Compressor.Zip zip = new Compressor.Zip(zipFile)) {
-      zip.addFile("test.plugin/lib/plugin.jar", jarFile);
-    }
-
-    IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadDescriptorFromArtifact(zipFile, null);
-    assertNotNull(descriptor);
-    assertEquals("test.plugin", descriptor.getPluginId().getIdString());
   }
 }
