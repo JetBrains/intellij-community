@@ -69,6 +69,23 @@ public class ProjectBytecodeAnalysis {
     nullableMethodTransitivity = Registry.is(NULLABLE_METHOD_TRANSITIVITY);
   }
 
+  /**
+   * @param getter getter method
+   * @return field that this method reads and returns; null if the method is not identified as a getter
+   */
+  public @Nullable PsiField findFieldForGetter(@NotNull PsiMethod getter) {
+    EKey eKey = getKey(getter);
+    if (eKey == null) return null;
+    EKey accessKey = myEquationProvider.adaptKey(eKey.withDirection(Access));
+    for (Equations equation : myEquationProvider.getEquations(accessKey.member)) {
+      if (equation.find(Access).orElse(null) instanceof FieldAccess access) {
+        PsiClass containingClass = getter.getContainingClass();
+        return containingClass != null ? containingClass.findFieldByName(access.name(), false) : null;
+      }
+    }
+    return null;
+  }
+
   @Nullable
   public PsiAnnotation findInferredAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
     if (!(listOwner instanceof PsiCompiledElement)) {

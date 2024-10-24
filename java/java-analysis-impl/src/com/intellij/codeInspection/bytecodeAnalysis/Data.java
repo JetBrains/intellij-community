@@ -129,7 +129,7 @@ class Equations {
   }
 }
 
-class DirectionResultPair {
+final class DirectionResultPair {
   final int directionKey;
   @NotNull
   final Result result;
@@ -159,7 +159,7 @@ class DirectionResultPair {
   }
 }
 
-interface Result {
+sealed interface Result permits Effects, FieldAccess, Pending, Value {
   /**
    * @return a stream of keys which should be solved to make this result final
    */
@@ -170,6 +170,14 @@ interface Result {
   default void processDependencies(Consumer<EKey> processor) {
   }
 }
+
+/**
+ * A result for the {@link Direction#Access} direction:
+ * for setter/constructor parameter: unconditional field set;
+ * for method: unconditional field return
+ * @param name name of the field
+ */
+record FieldAccess(String name) implements Result {}
 
 final class Pending implements Result {
   final Component @NotNull [] delta; // sum

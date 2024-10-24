@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
-import org.jetbrains.org.objectweb.asm.tree.MethodNode;
+import org.jetbrains.org.objectweb.asm.tree.*;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
 import java.io.DataOutputStream;
@@ -53,7 +53,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
   static final BinaryOperator<Equations> MERGER =
     (eq1, eq2) -> eq1.equals(eq2) ? eq1 : new Equations(Collections.emptyList(), false);
 
-  private static final int VERSION = 16; // change when inference algorithm changes
+  private static final int VERSION = 17; // change when inference algorithm changes
   private static final int VERSION_MODIFIER = HardCodedPurity.AGGRESSIVE_HARDCODED_PURITY ? 1 : 0;
   private static final int FINAL_VERSION = VERSION * 2 + VERSION_MODIFIER;
   private static final VirtualFileGist<Map<HMember, Equations>> ourGist = GistManager.getInstance().newVirtualFileGist(
@@ -199,7 +199,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
     return new Equations(compressedMethodEquations, methodKey.stable);
   }
 
-  public static Map<EKey, Equations> processClass(final ClassReader classReader, final String presentableUrl) {
+  static Map<EKey, Equations> processClass(final ClassReader classReader, final String presentableUrl) {
 
     // It is OK to share pending states, actions and results for analyses.
     // Analyses are designed in such a way that they first write to states/actions/results and then read only those portion
@@ -641,6 +641,9 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
                                            boolean stable,
                                            List<? super Equation> result) throws AnalyzerException {
       Set<Member> fieldsToTrack = method.methodName.equals("<clinit>") ? myStaticFinalFields : Collections.emptySet();
+      if (argumentTypes.length == 0 && !Type.VOID_TYPE.equals(returnType)) {
+        ContainerUtil.addIfNotNull(result, getterEquation(method, graph, stable));
+      }
       CombinedAnalysis analyzer = new CombinedAnalysis(method, graph, fieldsToTrack);
       analyzer.analyze();
       ContainerUtil.addIfNotNull(result, analyzer.outContractEquation(stable));
@@ -665,6 +668,40 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
           }
         }
       }
+    }
+
+    private @Nullable Equation getterEquation(@NotNull Member method, @NotNull ControlFlowGraph controlFlow, boolean stable) {
+      MethodNode node = controlFlow.methodNode;
+      boolean isStatic = (node.access & Opcodes.ACC_STATIC) != 0;
+      InsnList instructions = node.instructions;
+      int size = instructions.size();
+      int shift = isStatic ? 0 : 1;
+      if (size != 2 + shift) return null;
+      if (!isReturn(instructions.get(1 + shift))) return null;
+      // isStatic -> GETSTATIC + xRETURN
+      // !isStatic -> ALOAD_0 + GETFIELD + xRETURN
+      if (!isStatic) {
+        if (!(instructions.get(0) instanceof VarInsnNode varAccess) ||
+            varAccess.getOpcode() != Opcodes.ALOAD ||
+            varAccess.var != 0) {
+          return null;
+        }
+      }
+      if (!(instructions.get(shift) instanceof FieldInsnNode fieldAccess) ||
+          fieldAccess.getOpcode() != (isStatic ? Opcodes.GETSTATIC : Opcodes.GETFIELD) ||
+          !fieldAccess.owner.equals(className)) {
+        return null;
+      }
+      String name = fieldAccess.name;
+      if (!isReturn(instructions.get(1 + shift))) return null;
+      return new Equation(new EKey(method, Access, stable), new FieldAccess(name));
+    }
+
+    private static boolean isReturn(AbstractInsnNode insn) {
+      int opcode = insn.getOpcode();
+      return opcode == Opcodes.ARETURN || opcode == Opcodes.DRETURN ||
+             opcode == Opcodes.FRETURN || opcode == Opcodes.IRETURN ||
+             opcode == Opcodes.LRETURN;
     }
 
     private void storeStaticFieldEquations(CombinedAnalysis analyzer) {

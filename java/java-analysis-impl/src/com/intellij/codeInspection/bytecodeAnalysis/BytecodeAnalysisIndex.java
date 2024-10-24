@@ -186,6 +186,12 @@ public final class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
           }
           writeDataValue(out, effects.returnValue);
         }
+        else if (rhs instanceof FieldAccess fieldAccess) {
+          out.writeUTF(fieldAccess.name());
+        }
+        else {
+          throw new UnsupportedOperationException("Unsupported result: " + rhs + " in " + eqs);
+        }
       }
     }
 
@@ -204,6 +210,9 @@ public final class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
           }
           DataValue returnValue = readDataValue(in);
           results.add(new DirectionResultPair(directionKey, new Effects(returnValue, Set.copyOf(effects))));
+        }
+        else if (direction == Direction.Access) {
+          results.add(new DirectionResultPair(directionKey, new FieldAccess(in.readUTF())));
         }
         else {
           boolean isFinal = in.readBoolean(); // flag

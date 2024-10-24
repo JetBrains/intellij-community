@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
+import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
 import com.intellij.lang.java.beans.PropertyKind;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.psi.*;
@@ -29,12 +30,24 @@ public final class PropertyUtil extends PropertyUtilBase {
 
   @Nullable
   public static PsiField getFieldOfGetter(PsiMethod method, Supplier<? extends PsiExpression> returnExprSupplier, boolean useIndex) {
-    PsiField field = useIndex && method instanceof PsiMethodImpl && method.isPhysical()
-                     ? JavaSimplePropertyGistKt.getFieldOfGetter(method)
-                     : getSimplyReturnedField(returnExprSupplier.get());
+    PsiField field = getFieldImpl(method, returnExprSupplier, useIndex);
     if (field == null || !checkFieldLocation(method, field)) return null;
     final PsiType returnType = method.getReturnType();
     return returnType != null && field.getType().equals(returnType) ? field : null;
+  }
+
+  private static @Nullable PsiField getFieldImpl(@NotNull PsiMethod method,
+                                                 @NotNull Supplier<? extends PsiExpression> returnExprSupplier,
+                                                 boolean useIndex) {
+    if (useIndex) {
+      if (PsiUtil.preferCompiledElement(method) instanceof PsiMethod compiledMethod) {
+        return ProjectBytecodeAnalysis.getInstance(method.getProject()).findFieldForGetter(compiledMethod);
+      }
+      if (method instanceof PsiMethodImpl && method.isPhysical()) {
+        return JavaSimplePropertyGistKt.getFieldOfGetter(method);
+      }
+    }
+    return getSimplyReturnedField(returnExprSupplier.get());
   }
 
   public static boolean isSimpleGetter(@Nullable PsiMethod method) {
