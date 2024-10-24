@@ -3,7 +3,13 @@ package com.intellij.codeInsight.inline.completion
 
 import org.jetbrains.annotations.ApiStatus
 
-// TODO docs
+/**
+ * **This interface must have exactly once instance, and it's only on the client when the RemDev mode is active**.
+ *
+ * Its purpose is to proxy Inline Completion providers from the Host side.
+ *
+ * Since it repeats all the actions from the Host side, this provider skips all the logs.
+ */
 @ApiStatus.Internal
 @ApiStatus.NonExtendable
 interface RemDevAggregatorInlineCompletionProvider : InlineCompletionProvider {

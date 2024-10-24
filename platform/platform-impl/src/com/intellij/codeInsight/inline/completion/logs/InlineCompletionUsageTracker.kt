@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.logs
 
-import com.intellij.codeInsight.inline.completion.InlineCompletionEventAdapter
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsUtils.isLoggable
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.*
@@ -147,10 +147,14 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  class Listener : InlineCompletionEventAdapter {
+  internal class Listener : InlineCompletionFilteringEventListener() {
     private val lock = ReentrantLock()
     private var invocationTracker: InlineCompletionInvocationTracker? = null
     private var showTracker: InlineCompletionShowTracker? = null
+
+    override fun isApplicable(requestEvent: InlineCompletionEventType.Request): Boolean {
+      return requestEvent.provider.isLoggable()
+    }
 
     override fun onRequest(event: InlineCompletionEventType.Request): Unit = lock.withLock {
       invocationTracker = InlineCompletionInvocationTracker(event).also {
