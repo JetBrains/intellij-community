@@ -1196,10 +1196,9 @@ public final class ConfigImportHelper {
 
   private static void downloadUpdatesForIncompatiblePlugins(Path newPluginsDir,  ConfigImportOptions options, List<IdeaPluginDescriptor> incompatiblePlugins) {
     if (options.headless) {
-      PluginDownloader.runSynchronouslyInBackground(() -> {
-        ProgressIndicator progressIndicator =
-          options.headlessProgressIndicator == null ? new EmptyProgressIndicator(ModalityState.nonModal()) : options.headlessProgressIndicator;
-        downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, progressIndicator);
+      runSynchronouslyInBackground(() -> {
+        var indicator = options.headlessProgressIndicator == null ? new EmptyProgressIndicator(ModalityState.nonModal()) : options.headlessProgressIndicator;
+        downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, indicator);
       });
     }
     else {
@@ -1209,7 +1208,7 @@ public final class ConfigImportHelper {
       dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
       AppUIUtilKt.updateAppWindowIcon(dialog);
       hideSplash();
-      PluginDownloader.runSynchronouslyInBackground(() -> {
+      runSynchronouslyInBackground(() -> {
         try {
           downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, dialog.getIndicator());
         }
@@ -1219,6 +1218,17 @@ public final class ConfigImportHelper {
         SwingUtilities.invokeLater(() -> dialog.setVisible(false));
       });
       dialog.setVisible(true);
+    }
+  }
+
+  private static void runSynchronouslyInBackground(Runnable runnable) {
+    try {
+      var thread = new Thread(runnable, "Plugin downloader");
+      thread.start();
+      thread.join();
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
     }
   }
 

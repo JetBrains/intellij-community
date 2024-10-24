@@ -4,8 +4,8 @@ package com.intellij.openapi.updateSettings.impl
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.IdeaPluginDependency
+import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.PluginAutoUpdateRepository
 import com.intellij.openapi.components.Service
@@ -142,18 +142,17 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
             val updateFile = coroutineToIndicator {
               downloader.tryDownloadPlugin(ProgressManager.getInstanceOrNull()?.progressIndicator)
             }
-            val updatePath = updateFile.toPath()
             val autoUpdateDir = PluginAutoUpdateRepository.getAutoUpdateDirPath()
-            val updatePathInAutoUpdatesDir = autoUpdateDir.resolve(updatePath.fileName)
+            val updatePathInAutoUpdatesDir = autoUpdateDir.resolve(updateFile.fileName)
             if (!autoUpdateDir.exists()) {
               autoUpdateDir.createDirectories()
             }
             if (updatePathInAutoUpdatesDir.exists()) {
-              LOG.warn("update for plugin ${downloader.id} located in file ${updatePath.fileName} already exists and will be overwritten")
+              LOG.warn("update for plugin ${downloader.id} located in file ${updateFile.fileName} already exists and will be overwritten")
               updatePathInAutoUpdatesDir.delete()
             }
             ensureActive()
-            updatePath.move(updatePathInAutoUpdatesDir)
+            updateFile.move(updatePathInAutoUpdatesDir)
             updatePathInAutoUpdatesDir
           }
           updatesState[downloader.id] = DownloadedUpdate(downloader.id, downloader.pluginVersion, updatePathInAutoUpdateDir)

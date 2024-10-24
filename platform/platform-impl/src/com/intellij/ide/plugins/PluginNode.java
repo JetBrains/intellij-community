@@ -7,7 +7,6 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSou
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +15,6 @@ import java.text.DecimalFormat;
 import java.util.*;
 
 public final class PluginNode implements IdeaPluginDescriptor {
-
   private static final DecimalFormat K_FORMAT = new DecimalFormat("###.#K");
   private static final DecimalFormat M_FORMAT = new DecimalFormat("###.#M");
 
@@ -59,8 +57,8 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private List<IdeaPluginDependency> myDependencies = new ArrayList<>();
   private Status myStatus = Status.UNKNOWN;
   private boolean myLoaded;
-  private @NonNls String myDownloadUrl;
-  private @NonNls String myChannel; // TODO parameters map?
+  private String myDownloadUrl;
+  private String myChannel; // TODO parameters map?
   private @NlsSafe String myRepositoryName;
   private String myInstalledVersion;
   private boolean myEnabled = true;
@@ -78,13 +76,6 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private Collection<String> dependencyNames;
 
   private FUSEventSource installSource;
-
-  /**
-   * @deprecated Use {@link #PluginNode(PluginId)}
-   */
-  @Deprecated
-  public PluginNode() {
-  }
 
   public PluginNode(@NotNull PluginId id) {
     this.id = id;
@@ -146,7 +137,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   /*
-    Allows customising trial period duration per product for a plugin on Marketplace.
+    Allows customizing trial period duration per product for a plugin on Marketplace.
     For the details, see: https://youtrack.jetbrains.com/issue/LLM-3752
   */
   @ApiStatus.Internal
@@ -197,8 +188,8 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   /**
-   * Plugin update unique ID from Marketplace database.
-   * Needed for getting Plugin meta information.
+   * Plugin update unique ID from the Marketplace database.
+   * Needed for getting plugin meta-information.
    */
   public @Nullable String getExternalUpdateId() {
     return externalUpdateId;
@@ -209,8 +200,8 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   /**
-   * Plugin unique ID from Marketplace storage.
-   * Needed for getting Plugin meta information.
+   * Plugin unique ID from the Marketplace storage.
+   * Needed for getting plugin meta-information.
    */
   public @Nullable String getExternalPluginId() {
     return externalPluginId;
@@ -325,7 +316,6 @@ public final class PluginNode implements IdeaPluginDescriptor {
     myLoaded = loaded;
   }
 
-  @Override
   public @Nullable @NlsSafe String getDownloads() {
     return downloads;
   }
@@ -335,19 +325,14 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   public @Nullable @NlsSafe String getPresentableDownloads() {
-    String downloads = getDownloads();
-
     if (!StringUtil.isEmptyOrSpaces(downloads)) {
       try {
         long value = Long.parseLong(downloads);
-        return value <= 1000 ?
-               Long.toString(value) :
-               value < 1000000 ?
-               K_FORMAT.format(value / 1000D) :
+        return value <= 1000 ? Long.toString(value) :
+               value < 1000000 ? K_FORMAT.format(value / 1000D) :
                M_FORMAT.format(value / 1000000D);
       }
-      catch (NumberFormatException ignore) {
-      }
+      catch (NumberFormatException ignore) { }
     }
 
     return null;
@@ -372,10 +357,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   public @Nullable @NlsSafe String getPresentableSize() {
     long size = getIntegerSize();
-
-    return size >= 0 ?
-           StringUtil.formatFileSize(size).toUpperCase(Locale.ENGLISH) :
-           null;
+    return size >= 0 ? StringUtil.formatFileSize(size).toUpperCase(Locale.ENGLISH) : null;
   }
 
   @Override
@@ -542,17 +524,6 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
-  public PluginId @NotNull [] getOptionalDependentPluginIds() {
-    List<PluginId> result = new ArrayList<>();
-    for (IdeaPluginDependency dependency : myDependencies) {
-      if (dependency.isOptional()) {
-        result.add(dependency.getPluginId());
-      }
-    }
-    return result.toArray(PluginId.EMPTY_ARRAY);
-  }
-
-  @Override
   public @Nullable String getResourceBundleBaseName() {
     return null;
   }
@@ -576,21 +547,21 @@ public final class PluginNode implements IdeaPluginDescriptor {
     myEnabled = enabled;
   }
 
-  public @NonNls String getDownloadUrl() {
+  public String getDownloadUrl() {
     return myDownloadUrl;
   }
 
-  public void setDownloadUrl(@NonNls String downloadUrl) {
+  public void setDownloadUrl(String downloadUrl) {
     myDownloadUrl = downloadUrl;
   }
 
   @ApiStatus.Experimental
-  public @NonNls String getChannel() {
+  public String getChannel() {
     return myChannel;
   }
 
   @ApiStatus.Experimental
-  public void setChannel(@NonNls String channel) {
+  public void setChannel(String channel) {
     myChannel = channel;
   }
 
@@ -725,7 +696,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
-  public @NotNull @NonNls String toString() {
+  public @NotNull String toString() {
     return String.format("PluginNode{id=%s, name='%s'}", id, name);
   }
 

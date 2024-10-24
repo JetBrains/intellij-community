@@ -33,7 +33,6 @@ f:com.intellij.openapi.extensions.DefaultPluginDescriptor
 - getChangeNotes():java.lang.String
 - getDescription():java.lang.String
 - getName():java.lang.String
-- getOptionalDependentPluginIds():com.intellij.openapi.extensions.PluginId[]
 - getPluginClassLoader():java.lang.ClassLoader
 - getPluginId():com.intellij.openapi.extensions.PluginId
 - getPluginPath():java.nio.file.Path
@@ -158,9 +157,7 @@ com.intellij.openapi.extensions.PluginDescriptor
 - a:getChangeNotes():java.lang.String
 - a:getDescription():java.lang.String
 - getDisplayCategory():java.lang.String
-- getDownloads():java.lang.String
 - a:getName():java.lang.String
-- a:getOptionalDependentPluginIds():com.intellij.openapi.extensions.PluginId[]
 - getOrganization():java.lang.String
 - getPath():java.io.File
 - a:getPluginClassLoader():java.lang.ClassLoader

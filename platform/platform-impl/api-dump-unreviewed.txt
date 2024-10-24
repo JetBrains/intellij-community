@@ -4147,7 +4147,6 @@ f:com.intellij.ide.plugins.PluginManagerUISettings
 - shouldStartInBackground():Z
 f:com.intellij.ide.plugins.PluginNode
 - com.intellij.ide.plugins.IdeaPluginDescriptor
-- <init>():V
 - <init>(com.intellij.openapi.extensions.PluginId):V
 - <init>(com.intellij.openapi.extensions.PluginId,java.lang.String,java.lang.String):V
 - addDepends(java.lang.String):V
@@ -4176,7 +4175,6 @@ f:com.intellij.ide.plugins.PluginNode
 - getIsPaid():Z
 - getLicenseUrl():java.lang.String
 - getName():java.lang.String
-- getOptionalDependentPluginIds():com.intellij.openapi.extensions.PluginId[]
 - getOrganization():java.lang.String
 - getPluginClassLoader():java.lang.ClassLoader
 - getPluginId():com.intellij.openapi.extensions.PluginId
@@ -10878,7 +10876,6 @@ f:com.intellij.openapi.updateSettings.impl.PluginDownloader
 - prepareToInstall(com.intellij.openapi.progress.ProgressIndicator):Z
 - s:showErrorDialog(java.lang.String):V
 - toPluginNode():com.intellij.ide.plugins.PluginNode
-- toPluginNode(java.lang.String):com.intellij.ide.plugins.PluginNode
 - withDownloadService(com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService):com.intellij.openapi.updateSettings.impl.PluginDownloader
 - withErrorsConsumer(java.util.function.Consumer):com.intellij.openapi.updateSettings.impl.PluginDownloader
 f:com.intellij.openapi.updateSettings.impl.PluginUpdateFacadeKt

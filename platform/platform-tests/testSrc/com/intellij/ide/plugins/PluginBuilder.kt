@@ -4,14 +4,15 @@ package com.intellij.ide.plugins
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.write
+import com.intellij.util.xml.dom.NoOpXmlInterner
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.TestOnly
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.createDirectories
-import kotlin.io.path.createParentDirectories
 
 private val pluginIdCounter = AtomicInteger()
 
@@ -293,3 +294,20 @@ class PluginBuilder {
     return this
   }
 }
+
+@TestOnly
+fun readModuleDescriptorForTest(input: ByteArray): RawPluginDescriptor = readModuleDescriptor(
+  input,
+  object : ReadModuleContext {
+    override val interner = NoOpXmlInterner
+    override val isMissingIncludeIgnored = false
+  },
+  PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+  object : DataLoader {
+    override fun load(path: String, pluginDescriptorSourceOnly: Boolean) = throw UnsupportedOperationException()
+    override fun toString() = ""
+  },
+  includeBase = null,
+  readInto = null,
+  locationSource = null,
+)

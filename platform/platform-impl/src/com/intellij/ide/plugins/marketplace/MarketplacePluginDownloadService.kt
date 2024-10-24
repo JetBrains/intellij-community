@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.marketplace
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -7,54 +7,41 @@ import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.HttpRequests
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
 import org.jetbrains.annotations.ApiStatus
-import java.io.*
+import java.io.FileInputStream
+import java.io.IOException
+import java.io.InputStream
 import java.net.URLConnection
 import java.nio.file.Path
 import java.util.zip.ZipInputStream
-import kotlin.io.path.exists
-
-private val LOG = Logger.getInstance(MarketplacePluginDownloadService::class.java)
-
-private const val BLOCKMAP_ZIP_SUFFIX = ".blockmap.zip"
-
-private const val BLOCKMAP_FILENAME = "blockmap.json"
-
-private const val HASH_FILENAME_SUFFIX = ".hash.json"
-
-private const val FILENAME = "filename="
-
-private const val MAXIMUM_DOWNLOAD_PERCENT = 0.65 // 100% = 1.0
+import kotlin.io.path.*
 
 @ApiStatus.Internal
 open class MarketplacePluginDownloadService {
-
   companion object {
+    private val LOG = Logger.getInstance(MarketplacePluginDownloadService::class.java)
+
+    private const val BLOCKMAP_ZIP_SUFFIX = ".blockmap.zip"
+    private const val BLOCKMAP_FILENAME = "blockmap.json"
+    private const val HASH_FILENAME_SUFFIX = ".hash.json"
+    private const val FILENAME = "filename="
+    private const val MAXIMUM_DOWNLOAD_PERCENT = 0.65 // 100% = 1.0
 
     @JvmStatic
     @Throws(IOException::class)
-    fun getPluginTempFile(): File {
-      val pluginsTemp = PathManager.getStartupScriptDir().toFile()
-      if (!pluginsTemp.exists() && !pluginsTemp.mkdirs()) {
-        throw IOException(IdeBundle.message("error.cannot.create.temp.dir", pluginsTemp))
-      }
-      return FileUtil.createTempFile(pluginsTemp, "plugin_", "_download", true, false)
-    }
+    fun getPluginTempFile(): Path =
+      createTempFile(PathManager.getStartupScriptDir().createDirectories(), "plugin_", "_download")
 
     @JvmStatic
-    fun renameFileToZipRoot(zip: File): File {
-      val newName = "${PluginInstaller.rootEntryName(zip.toPath())}.zip"
-      val newZip = File("${zip.parent}/$newName")
-      if (newZip.exists()) {
-        FileUtil.delete(newZip)
-      }
-      FileUtil.rename(zip, newName)
+    @Throws(IOException::class)
+    fun renameFileToZipRoot(zip: Path): Path {
+      val newName = "${PluginInstaller.rootEntryName(zip)}.zip"
+      val newZip = zip.resolveSibling(newName)
+      zip.moveTo(newZip, overwrite = true)
       return newZip
     }
   }
@@ -62,30 +49,28 @@ open class MarketplacePluginDownloadService {
   private val objectMapper by lazy { ObjectMapper() }
 
   @Throws(IOException::class)
-  open fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator?): File {
+  open fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator?): Path {
     val file = getPluginTempFile()
-    return HttpRequests
-      .request(pluginUrl)
+    return HttpRequests.request(pluginUrl)
       .setHeadersViaTuner()
       .gzip(false)
       .productNameAsUserAgent()
-      .connect(
-        HttpRequests.RequestProcessor { request: HttpRequests.Request ->
-          request.saveToFile(file, indicator)
-          val pluginFileUrl = getPluginFileUrl(request.connection)
-          if (pluginFileUrl.endsWith(".zip")) {
-            renameFileToZipRoot(file)
-          }
-          else {
-            val contentDisposition: String? = request.connection.getHeaderField("Content-Disposition")
-            val url = request.connection.url.toString()
-            guessPluginFilenameAndRenameDownloadedFile(contentDisposition, url, file, pluginUrl)
-          }
-        })
+      .connect(HttpRequests.RequestProcessor { request ->
+        request.saveToFile(file, indicator)
+        val pluginFileUrl = getPluginFileUrl(request.connection)
+        if (pluginFileUrl.endsWith(".zip")) {
+          renameFileToZipRoot(file)
+        }
+        else {
+          val contentDisposition: String? = request.connection.getHeaderField("Content-Disposition")
+          val url = request.connection.url.toString()
+          guessPluginFilenameAndRenameDownloadedFile(contentDisposition, url, file, pluginUrl)
+        }
+      })
   }
 
   @Throws(IOException::class)
-  fun downloadPluginViaBlockMap(pluginUrl: String, prevPlugin: Path, indicator: ProgressIndicator?): File {
+  fun downloadPluginViaBlockMap(pluginUrl: String, prevPlugin: Path, indicator: ProgressIndicator?): Path {
     val prevPluginArchive = getPrevPluginArchive(prevPlugin)
     if (!prevPluginArchive.exists()) {
       LOG.info(IdeBundle.message("error.file.not.found.message", prevPluginArchive.toString()))
@@ -130,9 +115,9 @@ open class MarketplacePluginDownloadService {
 
       val file = getPluginTempFile()
       val merger = PluginChunkMerger(prevPluginArchive.toFile(), oldBlockMap, newBlockMap, indicator)
-      FileOutputStream(file).use { output -> merger.merge(output, PluginChunkDataSource(oldBlockMap, newBlockMap, pluginFileUrl)) }
+      file.outputStream().use { output -> merger.merge(output, PluginChunkDataSource(oldBlockMap, newBlockMap, pluginFileUrl)) }
 
-      val curFileHash = FileInputStream(file).use { input -> FileHash(input, newPluginHash.algorithm) }
+      val curFileHash = file.inputStream().use { input -> FileHash(input, newPluginHash.algorithm) }
       if (curFileHash != newPluginHash) {
         LOG.info(IdeBundle.message("hashes.doesnt.match"))
         return downloadPlugin(pluginUrl, indicator)
@@ -146,19 +131,14 @@ open class MarketplacePluginDownloadService {
       }
     }
     catch (e: HttpRequests.HttpStatusException) {
-      return processBlockmapDownloadProblem(e, pluginUrl, indicator)
+      return processBlockmapDownloadProblem(e, pluginUrl, indicator, printStackTrace = false)
     }
     catch (e: Exception) {
-      return processBlockmapDownloadProblem(e, pluginUrl, indicator, true)
+      return processBlockmapDownloadProblem(e, pluginUrl, indicator, printStackTrace = true)
     }
   }
 
-  private fun processBlockmapDownloadProblem(
-    exception: Exception,
-    pluginUrl: String,
-    indicator: ProgressIndicator?,
-    printStackTrace: Boolean = false,
-  ): File {
+  private fun processBlockmapDownloadProblem(exception: Exception, pluginUrl: String, indicator: ProgressIndicator?, printStackTrace: Boolean): Path {
     val message = IdeBundle.message("error.download.plugin.via.blockmap", pluginUrl)
     if (printStackTrace) {
       LOG.info(message, exception)
@@ -170,93 +150,80 @@ open class MarketplacePluginDownloadService {
   }
 
   @Throws(IOException::class)
-  private fun getBlockMapFromZip(input: InputStream): BlockMap {
-    return input.buffered().use { source ->
-      ZipInputStream(source).use { zip ->
-        var entry = zip.nextEntry
-        while (entry.name != BLOCKMAP_FILENAME && entry.name != null) entry = zip.nextEntry
-        if (entry.name == BLOCKMAP_FILENAME) {
-          // there is must only one entry otherwise we can't properly
-          // read entry because we don't know it size (entry.size returns -1)
-          objectMapper.readValue(zip.readBytes(), BlockMap::class.java)
-        }
-        else {
-          throw IOException("There is no entry $BLOCKMAP_FILENAME")
-        }
+  private fun getBlockMapFromZip(input: InputStream): BlockMap = input.buffered().use { source ->
+    ZipInputStream(source).use { zip ->
+      var entry = zip.nextEntry
+      while (entry.name != BLOCKMAP_FILENAME && entry.name != null) entry = zip.nextEntry
+      if (entry.name == BLOCKMAP_FILENAME) {
+        // there must be only one entry otherwise we can't properly read it because we don't know its size (entry.size returns -1)
+        objectMapper.readValue(zip.readBytes(), BlockMap::class.java)
+      }
+      else {
+        throw IOException("There is no entry $BLOCKMAP_FILENAME")
       }
     }
   }
-}
 
-private fun guessPluginFilenameAndRenameDownloadedFile(contentDisposition: String?, url: String, file: File, pluginUrl: String): File {
-  val fileName: String = guessFileName(contentDisposition, url, file, pluginUrl)
-  val newFile = File(file.parentFile, fileName)
-  FileUtil.rename(file, newFile)
-  return newFile
-}
+  private fun guessPluginFilenameAndRenameDownloadedFile(contentDisposition: String?, url: String, file: Path, pluginUrl: String): Path {
+    val fileName = guessFileName(contentDisposition, url, file, pluginUrl)
+    val newFile = file.resolveSibling(fileName)
+    file.moveTo(newFile)
+    return newFile
+  }
 
-@Throws(IOException::class)
-private fun guessFileName(contentDisposition: String?, usedURL: String, file: File, pluginUrl: String): String {
-  var fileName: String? = null
-  LOG.debug("header: $contentDisposition")
-  if (contentDisposition != null && contentDisposition.contains(FILENAME)) {
-    val startIdx = contentDisposition.indexOf(FILENAME)
-    val endIdx = contentDisposition.indexOf(';', startIdx)
-    fileName = contentDisposition.substring(startIdx + FILENAME.length, if (endIdx > 0) endIdx else contentDisposition.length)
-    if (StringUtil.startsWithChar(fileName, '\"') && StringUtil.endsWithChar(fileName, '\"')) {
-      fileName = fileName.substring(1, fileName.length - 1)
+  @Throws(IOException::class)
+  private fun guessFileName(contentDisposition: String?, usedURL: String, file: Path, pluginUrl: String): String {
+    var fileName: String? = null
+    LOG.debug("header: $contentDisposition")
+    if (contentDisposition != null && contentDisposition.contains(FILENAME)) {
+      val startIdx = contentDisposition.indexOf(FILENAME)
+      val endIdx = contentDisposition.indexOf(';', startIdx)
+      fileName = contentDisposition.substring(startIdx + FILENAME.length, if (endIdx > 0) endIdx else contentDisposition.length)
+      if (fileName.startsWith('\"') && fileName.endsWith('\"')) {
+        fileName = fileName.substring(1, fileName.length - 1)
+      }
     }
-  }
-  if (fileName == null) {
-    // try to find a filename in an URL
-    LOG.debug("url: $usedURL")
-    fileName = usedURL.substring(usedURL.lastIndexOf('/') + 1)
-    if (fileName.isEmpty() || fileName.contains("?")) {
-      fileName = pluginUrl.substring(pluginUrl.lastIndexOf('/') + 1)
+    if (fileName == null) {
+      // try to find a filename in a URL
+      LOG.debug("url: $usedURL")
+      fileName = usedURL.substring(usedURL.lastIndexOf('/') + 1)
+      if (fileName.isEmpty() || fileName.contains("?")) {
+        fileName = pluginUrl.substring(pluginUrl.lastIndexOf('/') + 1)
+      }
     }
-  }
-  if (!PathUtil.isValidFileName(fileName)) {
-    LOG.debug("fileName: $fileName")
-    FileUtil.delete(file)
-    throw IOException("Invalid filename returned by a server")
-  }
-  return fileName
-}
-
-private fun downloadPercent(oldBlockMap: BlockMap, newBlockMap: BlockMap): Double {
-  val oldSet = oldBlockMap.chunks.toSet()
-  val newChunks = newBlockMap.chunks.filter { chunk -> !oldSet.contains(chunk) }
-  return newChunks.sumOf { chunk -> chunk.length }.toDouble() /
-         newBlockMap.chunks.sumOf { chunk -> chunk.length }.toDouble()
-}
-
-private fun getPluginFileUrl(connection: URLConnection): String {
-  val url = connection.url
-  val port = url.port
-  return if (port == -1) {
-    "${url.protocol}://${url.host}${url.path}"
-  }
-  else {
-    "${url.protocol}://${url.host}:${port}${url.path}"
-  }
-}
-
-private data class GuessFileParameters(val contentDisposition: String?, val url: String)
-
-private fun getPluginFileUrlAndGuessFileParameters(pluginUrl: String): Pair<String, GuessFileParameters> {
-  return HttpRequests
-    .request(pluginUrl)
-    .setHeadersViaTuner()
-    .productNameAsUserAgent()
-    .connect { request ->
-      val connection = request.connection
-      Pair(getPluginFileUrl(connection),
-           GuessFileParameters(connection.getHeaderField("Content-Disposition"), connection.url.toString()))
+    if (!PathUtil.isValidFileName(fileName)) {
+      LOG.debug("fileName: $fileName")
+      file.deleteIfExists()
+      throw IOException("Invalid filename returned by a server")
     }
-}
+    return fileName
+  }
 
-private fun getPrevPluginArchive(prevPlugin: Path): Path {
-  val suffix = if (prevPlugin.endsWith(".jar")) "" else ".zip"
-  return PathManager.getStartupScriptDir().resolve("${prevPlugin.fileName}$suffix")
-}
+  private fun downloadPercent(oldBlockMap: BlockMap, newBlockMap: BlockMap): Double {
+    val oldSet = oldBlockMap.chunks.toSet()
+    val newChunks = newBlockMap.chunks.filter { chunk -> !oldSet.contains(chunk) }
+    return newChunks.sumOf { chunk -> chunk.length }.toDouble() /
+           newBlockMap.chunks.sumOf { chunk -> chunk.length }.toDouble()
+  }
 
+  private fun getPluginFileUrlAndGuessFileParameters(pluginUrl: String): Pair<String, GuessFileParameters> =
+    HttpRequests.request(pluginUrl)
+      .setHeadersViaTuner()
+      .productNameAsUserAgent()
+      .connect { request ->
+        val connection = request.connection
+        getPluginFileUrl(connection) to GuessFileParameters(connection.getHeaderField("Content-Disposition"), connection.url.toString())
+      }
+
+  private fun getPluginFileUrl(connection: URLConnection): String = connection.url.let { url ->
+    if (url.port == -1) "${url.protocol}://${url.host}${url.path}"
+    else "${url.protocol}://${url.host}:${url.port}${url.path}"
+  }
+
+  private fun getPrevPluginArchive(prevPlugin: Path): Path {
+    val suffix = if (prevPlugin.endsWith(".jar")) "" else ".zip"
+    return PathManager.getStartupScriptDir().resolve("${prevPlugin.fileName}$suffix")
+  }
+
+  private data class GuessFileParameters(val contentDisposition: String?, val url: String)
+}

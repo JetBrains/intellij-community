@@ -4,7 +4,6 @@ com/intellij/diagnostic/ActivityCategory
 com/intellij/ide/plugins/DescriptorListLoadingContext
 com/intellij/ide/plugins/PluginLoadingResult
 com/intellij/ide/plugins/PluginManagerState
-com/intellij/ide/plugins/RawPluginDescriptor
 com/intellij/lang/impl/PsiBuilderImpl$MyTreeStructure
 com/intellij/lang/impl/PsiBuilderImpl$StartMarker
 com/intellij/openapi/application/TransactionGuardImpl$TransactionIdImpl

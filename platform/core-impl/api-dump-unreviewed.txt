@@ -492,7 +492,6 @@ f:com.intellij.ide.plugins.PluginManagerCore
 - bs:writePluginIdsToFile$default(com.intellij.ide.plugins.PluginManagerCore,java.nio.file.Path,java.util.Collection,java.nio.file.OpenOption[],I,java.lang.Object):V
 f:com.intellij.ide.plugins.XmlReader
 - sf:isKotlinPlugin(com.intellij.openapi.extensions.PluginId):Z
-- sf:readModuleDescriptorForTest(B[]):com.intellij.ide.plugins.RawPluginDescriptor
 a:com.intellij.indentation.AbstractIndentParser
 - com.intellij.lang.PsiParser
 - p:myBuilder:com.intellij.indentation.IndentPsiBuilder

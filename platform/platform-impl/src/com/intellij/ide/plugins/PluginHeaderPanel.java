@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -63,7 +63,7 @@ public final class PluginHeaderPanel {
     boolean showVersion = !plugin.isBundled() || plugin.allowBundledUpdate();
     if (plugin instanceof PluginNode node) {
       myRating.setRate(node.getRating());
-      myDownloads.setText(IdeBundle.message("label.plugin.0.downloads", node.getDownloads()));
+      myDownloads.setText(IdeBundle.message("label.plugin.0.downloads", node.getPresentableDownloads()));
       versionText = showVersion ? "v" + node.getVersion() : null; //NON-NLS
       myUpdated.setText(IdeBundle.message("label.plugin.updated.0", DateFormatUtil.formatDate(node.getDate())));
       if (node.getRepositoryName() != null) {
