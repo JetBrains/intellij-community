@@ -14,7 +14,6 @@ import org.gradle.tooling.model.build.BuildEnvironment
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.gradle.util.telemetry.GradleDaemonOpenTelemetryUtil
 import kotlin.time.Duration.Companion.seconds
 
 class GradleTelemetryAgentProvidingExecutionHelperExtension : GradleExecutionHelperExtension {
@@ -25,9 +24,6 @@ class GradleTelemetryAgentProvidingExecutionHelperExtension : GradleExecutionHel
     settings: GradleExecutionSettings,
     buildEnvironment: BuildEnvironment?,
   ) {
-    if (!GradleDaemonOpenTelemetryUtil.isDaemonTracingEnabled(settings)) {
-      return
-    }
     if (!Registry.`is`("gradle.daemon.opentelemetry.agent.enabled", false)) {
       return
     }

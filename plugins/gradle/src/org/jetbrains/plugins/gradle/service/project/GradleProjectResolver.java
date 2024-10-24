@@ -7,8 +7,6 @@ import com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel.
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.DefaultGradleSourceSetModel;
 import com.intellij.gradle.toolingExtension.impl.model.taskModel.DefaultGradleTaskModel;
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction;
-import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry;
-import com.intellij.gradle.toolingExtension.impl.telemetry.TelemetryHolder;
 import com.intellij.gradle.toolingExtension.impl.util.GradleTreeTraverserUtil;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -77,11 +75,8 @@ import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleModuleDataKt;
-import org.jetbrains.plugins.gradle.util.telemetry.GradleDaemonOpenTelemetryUtil;
-import org.jetbrains.plugins.gradle.util.telemetry.GradleOpenTelemetryTraceService;
 
 import java.io.File;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -332,10 +327,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     Span gradleCallSpan = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
       .spanBuilder("GradleCall")
       .startSpan();
-    if (GradleDaemonOpenTelemetryUtil.isDaemonTracingEnabled(executionSettings)) {
-      TelemetryContext gradleDaemonObservabilityContext = getActionTelemetryContext(gradleCallSpan, executionSettings);
-      buildAction.setTracingContext(gradleDaemonObservabilityContext);
-    }
+    buildAction.setTracingContext(TelemetryContext.from(
+      Context.current().with(gradleCallSpan),
+      W3CTraceContextPropagator.getInstance()
+    ));
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
       var modelFetchActionResultHandler = new GradleModelFetchActionResultHandler(resolverContext);
       GradleModelFetchActionRunner.runAndTraceBuildAction(resolverContext, executionSettings, buildAction, modelFetchActionResultHandler);
@@ -359,7 +354,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       ExternalSystemSyncActionsCollector.logPhaseFinished(
         null, activityId, Phase.GRADLE_CALL, gradleCallTimeInMs, gradleCallErrorsCount);
       gradleCallSpan.end();
-      exportTelemetry(executionSettings, models.getTelemetry());
     }
 
     ProgressManager.checkCanceled();
@@ -1038,22 +1032,5 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     };
     chainWrapper.setNext(firstResolver);
     return chainWrapper;
-  }
-
-  private static @NotNull TelemetryContext getActionTelemetryContext(@NotNull Span span, @NotNull GradleExecutionSettings settings) {
-    TelemetryContext context = TelemetryContext.from(Context.current().with(span), W3CTraceContextPropagator.getInstance());
-    context.put(GradleOpenTelemetry.REQUESTED_FORMAT_KEY, GradleDaemonOpenTelemetryUtil.getTelemetryFormat(settings).name());
-    return context;
-  }
-
-  private static void exportTelemetry(
-    @NotNull GradleExecutionSettings settings,
-    @NotNull List<TelemetryHolder> holders
-  ) {
-    Path targetFolder = GradleDaemonOpenTelemetryUtil.getTargetFolder(settings);
-    URI targetEndpoint = GradleDaemonOpenTelemetryUtil.getTargetEndpoint(settings);
-    for (TelemetryHolder holder : holders) {
-      GradleOpenTelemetryTraceService.exportOpenTelemetry(holder, targetFolder, targetEndpoint);
-    }
   }
 }

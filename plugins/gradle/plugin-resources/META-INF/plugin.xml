@@ -62,7 +62,6 @@
 
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.BaseResolverExtension"/>
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.CommonGradleProjectResolverExtension"/>
-    <projectResolve implementation="org.jetbrains.plugins.gradle.service.telemetry.GradleOpenTelemetryResolverExtension"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.UnsupportedGradleVersionIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.UnsupportedGradleJvmByIdeaIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.IncompatibleGradleJvmAndGradleIssueChecker"/>
@@ -214,14 +213,8 @@
                  description="Enable experimental support of version catalogs based on after-sync gradle models"/>
     <registryKey key="gradle.output.sync.progress.events" defaultValue="true"
                  description="Send progress information like files download during project import to `Build Output`"/>
-    <registryKey key="gradle.daemon.opentelemetry.enabled" defaultValue="false"
-                 description="Enable performance trace collection in the Gradle daemon"/>
     <registryKey key="gradle.daemon.opentelemetry.agent.enabled" defaultValue="false"
                  description="Enable performance trace collection in the Gradle daemon collected by OTLP java agent"/>
-    <registryKey key="gradle.daemon.opentelemetry.format" defaultValue="PROTOBUF"
-                 description="Sets the expected serialization format for the collected traces"/>
-    <registryKey key="gradle.daemon.opentelemetry.folder" defaultValue=""
-                 description="Sets the target folder for the collected telemetry"/>
     <registryKey key="gradle.daemon.experimental.dependency.resolver" defaultValue="false"
                  description="Use ArtifactView to resolve Javadoc/Sources"/>
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
