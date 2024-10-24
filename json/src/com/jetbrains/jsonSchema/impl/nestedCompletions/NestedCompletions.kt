@@ -252,7 +252,8 @@ private fun addBeforeOrAfter(value: JsonValueAdapter,
     newElement
   }
   else {
-    val newElement = value.delegate.addBefore(elementToAdd, firstProperty?.delegate)
+    val newElement = (firstProperty?.delegate?.parent ?: value.delegate)
+      .addBefore(elementToAdd, firstProperty?.delegate)
     firstProperty?.delegate?.takeIf { it != fakeProperty }?.let {
       JsonLikePsiWalker.getWalker(newElement)?.getSyntaxAdapter(newElement.project)?.ensureComma(
         newElement, it
