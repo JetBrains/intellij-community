@@ -14,7 +14,7 @@ val flow = MutableSharedFlow<Int>()
 
 fun main(): Unit = runBlocking {
     val job = launch {
-        flow.debounce(15).collect {
+        flow.debounce(75).collect {
             //Breakpoint!
             println(it)
         }
@@ -22,15 +22,15 @@ fun main(): Unit = runBlocking {
 
     launch {
         `~~~!!! recognizableFrameWithEmitInAsyncStackTrace 1 !!!~~~`(flow, 0)
-        delay(10)
+        delay(50)
         `~~~!!! recognizableFrameWithEmitInAsyncStackTrace 2 !!!~~~`(flow, 1)
-        delay(20)
+        delay(100)
         `~~~!!! recognizableFrameWithEmitInAsyncStackTrace 3 !!!~~~`(flow, 2)
-        delay(10)
+        delay(50)
         `~~~!!! recognizableFrameWithEmitInAsyncStackTrace 4 !!!~~~`(flow, 3)
-        delay(20)
+        delay(100)
         `~~~!!! recognizableFrameWithEmitInAsyncStackTrace 5 !!!~~~`(flow, 4)
-        delay(10)
+        delay(50)
         job.cancel()
     }
 }

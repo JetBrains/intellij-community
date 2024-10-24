@@ -24,13 +24,13 @@ fun main(): Unit = runBlocking {
     }
 
     launch {
-        delay(10)
+        delay(50)
         `~~~!!! recognizableFrameWithEmitInAsyncStackTraceAssign !!!~~~`(f1, 1)
-        delay(10)
+        delay(50)
         `~~~!!! recognizableFrameWithEmitInAsyncStackTraceEmit !!!~~~`(f2, 2)
-        delay(10)
+        delay(50)
         `~~~!!! recognizableFrameWithEmitInAsyncStackTraceCas !!!~~~`(f3, 0, 3)
-        delay(10)
+        delay(50)
         job.cancel()
     }
 }

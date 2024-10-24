@@ -22,11 +22,11 @@ fun main(): Unit = runBlocking {
 
     launch {
         `~~~!!! recognizableFrameWithEmitInAsyncStackTrace 1 !!!~~~`(flow, 0)
-        delay(10)
+        delay(50)
         `~~~!!! recognizableFrameWithEmitInAsyncStackTrace 2 !!!~~~`(flow, 1)
-        delay(10)
+        delay(50)
         `~~~!!! recognizableFrameWithEmitInAsyncStackTrace 3 !!!~~~`(flow, 2)
-        delay(10)
+        delay(50)
         job.cancel()
     }
 }

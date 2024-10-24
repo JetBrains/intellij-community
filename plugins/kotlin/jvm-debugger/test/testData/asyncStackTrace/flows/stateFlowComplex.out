@@ -13,6 +13,24 @@ vvv stack trace vvv
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
+  ~~~!!! recognizableFrameWithEmitInAsyncStackTraceAssign 1 !!!~~~
+  invokeSuspend
+  <hidden frames>
+  main
+  main
+^^^ stack trace ^^^
+stateFlowComplex.kt:26
+vvv stack trace vvv
+  emit
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
   ~~~!!! recognizableFrameWithEmitInAsyncStackTraceEmit 1 !!!~~~
   invokeSuspend
   <hidden frames>
