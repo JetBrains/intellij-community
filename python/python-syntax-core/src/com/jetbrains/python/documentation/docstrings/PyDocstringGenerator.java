@@ -32,7 +32,9 @@ import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyAstElementGenerator;
+import com.jetbrains.python.psi.PyIndentUtil;
+import com.jetbrains.python.psi.StructuredDocString;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,7 +88,9 @@ public final class PyDocstringGenerator {
    *                       generate properly formatted docstring.
    */
   @NotNull
-  public static PyDocstringGenerator create(@NotNull DocStringFormat format, @NotNull String indentation, @NotNull PsiElement settingsAnchor) {
+  public static PyDocstringGenerator create(@NotNull DocStringFormat format,
+                                            @NotNull String indentation,
+                                            @NotNull PsiElement settingsAnchor) {
     return new PyDocstringGenerator(null, null, format, indentation, settingsAnchor);
   }
 
@@ -334,8 +338,8 @@ public final class PyDocstringGenerator {
   @NotNull
   private String createDocString() {
     DocStringBuilder builder = null;
-    if (myDocStringFormat == DocStringFormat.EPYTEXT || myDocStringFormat == DocStringFormat.REST) {
-      builder = new TagBasedDocStringBuilder(myDocStringFormat == DocStringFormat.EPYTEXT ? "@" : ":");
+    if (myDocStringFormat == DocStringFormat.REST) {
+      builder = new TagBasedDocStringBuilder(SphinxDocString.TAG_PREFIX);
       TagBasedDocStringBuilder tagBuilder = (TagBasedDocStringBuilder)builder;
       if (myAddFirstEmptyLine) {
         tagBuilder.addEmptyLine();
@@ -400,10 +404,9 @@ public final class PyDocstringGenerator {
   @NotNull
   private String updateDocString() {
     DocStringUpdater updater = null;
-    if (myDocStringFormat == DocStringFormat.EPYTEXT || myDocStringFormat == DocStringFormat.REST) {
-      final String prefix = myDocStringFormat == DocStringFormat.EPYTEXT ? "@" : ":";
+    if (myDocStringFormat == DocStringFormat.REST) {
       // noinspection ConstantConditions
-      updater = new TagBasedDocStringUpdater((TagBasedDocString)getStructuredDocString(), prefix, myDocStringIndent);
+      updater = new TagBasedDocStringUpdater((TagBasedDocString)getStructuredDocString(), SphinxDocString.TAG_PREFIX, myDocStringIndent);
     }
     else if (myDocStringFormat == DocStringFormat.GOOGLE) {
       //noinspection ConstantConditions
@@ -416,7 +419,7 @@ public final class PyDocstringGenerator {
       updater = new NumpyDocStringUpdater((SectionBasedDocString)getStructuredDocString(), myDocStringIndent);
     }
     // plain docstring - do nothing
-    else if (myDocStringText != null){
+    else if (myDocStringText != null) {
       return myDocStringText;
     }
     if (updater != null) {
@@ -503,6 +506,7 @@ public final class PyDocstringGenerator {
     private final String myName;
     private final String myType;
     private final boolean myReturnValue;
+
     private DocstringParam(@NotNull String name, @Nullable String type, boolean isReturn) {
       myName = name;
       myType = type;
@@ -551,13 +555,14 @@ public final class PyDocstringGenerator {
              ", myReturnValue=" + myReturnValue +
              '}';
     }
-
   }
+
   private static class RaiseVisitor extends PyAstRecursiveElementVisitor {
 
     private boolean myHasRaise = false;
     private boolean myHasReturn = false;
     @Nullable private PyAstExpression myRaiseTarget = null;
+
     @Override
     public void visitPyRaiseStatement(@NotNull PyAstRaiseStatement node) {
       myHasRaise = true;
@@ -586,7 +591,6 @@ public final class PyDocstringGenerator {
       }
       return "";
     }
-
   }
 
   @Nullable

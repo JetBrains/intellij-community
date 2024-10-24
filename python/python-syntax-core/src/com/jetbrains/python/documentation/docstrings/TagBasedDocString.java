@@ -40,16 +40,16 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
   private static final Pattern RE_LOOSE_TAG_LINE = Pattern.compile("([a-z]+)\\s+([a-zA-Z_0-9]*)\\s*:?\\s*?([^:]*)");
   private static final Pattern RE_ARG_TYPE = Pattern.compile("(.*?)\\s+([a-zA-Z_0-9]+)");
 
-  public static String[] PARAM_TAGS = new String[]{"param", "parameter", "arg", "argument"};
-  public static String[] PARAM_TYPE_TAGS = new String[]{"type"};
-  public static String[] VARIABLE_TAGS = new String[]{"ivar", "cvar", "var"};
+  public static final String[] PARAM_TAGS = new String[]{"param", "parameter", "arg", "argument"};
+  public static final String[] PARAM_TYPE_TAGS = new String[]{"type"};
+  public static final String[] VARIABLE_TAGS = new String[]{"ivar", "cvar", "var"};
 
-  public static String[] RAISES_TAGS = new String[]{"raises", "raise", "except", "exception"};
-  public static String[] RETURN_TAGS = new String[]{"return", "returns"};
+  public static final String[] RAISES_TAGS = new String[]{"raises", "raise", "except", "exception"};
+  public static final String[] RETURN_TAGS = new String[]{"return", "returns"};
   @NotNull
   private final String myTagPrefix;
 
-  public static String TYPE = "type";
+  static String TYPE = "type";
 
   protected TagBasedDocString(@NotNull Substring docStringText, @NotNull String tagPrefix) {
     super(docStringText);
@@ -68,8 +68,6 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
     }
     myDescription = builder.toString();
   }
-
-  public abstract List<String> getAdditionalTags();
 
   @NotNull
   @Override

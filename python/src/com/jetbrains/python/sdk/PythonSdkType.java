@@ -224,6 +224,7 @@ public final class PythonSdkType extends SdkType {
       return name;
     }
   }
+
   @RequiresBackgroundThread(generateAssertion = false) //because of process output
   public static @Nullable String suggestBaseSdkName(@NotNull String sdkHome) {
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdkHome);
@@ -537,23 +538,6 @@ public final class PythonSdkType extends SdkType {
   @Deprecated(forRemoval = true)
   public static @NotNull LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
     return PySdkUtil.getLanguageLevelForSdk(sdk);
-  }
-
-  public static @Nullable Sdk findPython2Sdk(@Nullable Module module) {
-    final Sdk moduleSDK = PythonSdkUtil.findPythonSdk(module);
-    if (moduleSDK != null && getLanguageLevelForSdk(moduleSDK).isPython2()) {
-      return moduleSDK;
-    }
-    return findPython2Sdk(PythonSdkUtil.getAllSdks());
-  }
-
-  public static @Nullable Sdk findPython2Sdk(@NotNull List<? extends Sdk> sdks) {
-    for (Sdk sdk : ContainerUtil.sorted(sdks, PreferredSdkComparator.INSTANCE)) {
-      if (getLanguageLevelForSdk(sdk).isPython2()) {
-        return sdk;
-      }
-    }
-    return null;
   }
 
   @Override

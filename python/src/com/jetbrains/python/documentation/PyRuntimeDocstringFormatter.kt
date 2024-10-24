@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.documentation
 
+import com.google.gson.Gson
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.text.HtmlChunk
@@ -10,12 +11,17 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.documentation.docstrings.DocStringFormat
 import com.jetbrains.python.sdk.PySdkUtil
+import com.jetbrains.python.sdk.PySdkUtil.getLanguageLevelForSdk
 import com.jetbrains.python.sdk.PythonSdkType
+import org.jetbrains.annotations.Nls
 import java.io.File
 
 object PyRuntimeDocstringFormatter {
   fun runExternalTool(module: Module, format: DocStringFormat, input: String, formatterFlags: List<String>): String? {
-    val sdk = PythonSdkType.findLocalCPython(module) ?: return logErrorAndReturnMessage(format)
+    val sdk = PythonSdkType.findLocalCPython(module) ?: return logSdkNotFound(format)
+    if (getLanguageLevelForSdk(sdk).isPython2) {
+      return logPy2NotSupported()
+    }
     val sdkHome = sdk.homePath ?: return null
 
     val encodedInput = DEFAULT_CHARSET.encode(input)
@@ -39,11 +45,21 @@ object PyRuntimeDocstringFormatter {
     else logScriptError(input)
   }
 
-  private fun logErrorAndReturnMessage(format: DocStringFormat): String {
+  private fun logErrorToJsonBody(@Nls message: String): String {
+    return Gson().toJson(
+      PyDocumentationBuilder.DocstringFormatterRequest(
+        HtmlChunk.p().attr("color", ColorUtil.toHtmlColor(JBColor.RED)).addRaw(message).toString()))
+  }
+
+  private fun logPy2NotSupported(): String {
+    val message = PyPsiBundle.message("QDOC.docstring.rendering.is.not.supported.for.python.2")
+    LOG.warn(message)
+    return logErrorToJsonBody(message)
+  }
+
+  private fun logSdkNotFound(format: DocStringFormat): String {
     LOG.warn("Python SDK for input formatter $format is not found")
-    val missingInterpreterMessage = PyPsiBundle.message("QDOC.local.sdk.not.found")
-    return HtmlChunk.p().attr("color", ColorUtil.toHtmlColor(JBColor.RED))
-      .addRaw(missingInterpreterMessage).toString()
+    return logErrorToJsonBody(PyPsiBundle.message("QDOC.local.sdk.not.found"))
   }
 
   private fun logScriptError(input: String): String? {
