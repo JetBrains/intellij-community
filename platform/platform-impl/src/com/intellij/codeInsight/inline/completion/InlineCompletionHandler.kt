@@ -15,7 +15,6 @@ import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessio
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariantsComputer
-import com.intellij.codeInsight.inline.completion.tooltip.onboarding.InlineCompletionOnboardingListener
 import com.intellij.codeInsight.inline.completion.utils.SafeInlineCompletionExecutor
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.inlinePrompt.isInlinePromptShown
@@ -81,7 +80,6 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
 
   init {
     addEventListener(InlineCompletionUsageTracker.Listener()) // todo remove
-    InlineCompletionOnboardingListener.createIfOnboarding(editor)?.let(::addEventListener)
 
     val logsListener = InlineCompletionLogsListener(editor)
     addEventListener(logsListener)
