@@ -313,10 +313,11 @@ open class KtLibraryModuleByModuleInfo(val libraryInfo: LibraryInfo) : KtModuleB
         }
 
     override val binaryRoots: Collection<Path>
-        get() = libraryInfo.getLibraryRoots().map(Paths::get)
+        get() = binaryVirtualFiles.map { it.toNioPath() }
 
     @KaExperimentalApi
-    override val binaryVirtualFiles: Collection<VirtualFile> = emptyList()
+    override val binaryVirtualFiles: Collection<VirtualFile> =
+        libraryInfo.library.getFiles(OrderRootType.CLASSES).toList()
 
     override val isSdk: Boolean get() = false
 
@@ -384,12 +385,13 @@ class KtSdkLibraryModuleByModuleInfo(val moduleInfo: SdkInfo) : KtModuleByModule
     override val contentScope: GlobalSearchScope get() = moduleInfo.contentScope
 
     override val binaryRoots: Collection<Path>
-        get() = moduleInfo.sdk.rootProvider.getFiles(OrderRootType.CLASSES).map { virtualFile ->
+        get() = binaryVirtualFiles.map { virtualFile ->
             Paths.get(virtualFile.fileSystem.extractPresentableUrl(virtualFile.path)).normalize()
         }
 
     @KaExperimentalApi
-    override val binaryVirtualFiles: Collection<VirtualFile> = emptyList()
+    override val binaryVirtualFiles: Collection<VirtualFile> =
+        moduleInfo.sdk.rootProvider.getFiles(OrderRootType.CLASSES).toList()
 
     override val librarySources: KaLibrarySourceModule? get() = null
 

@@ -88,7 +88,7 @@ internal class IdeKotlinModulePackageNamesProvider(private val project: Project)
 
     private fun computeSourceModulePackageSet(module: KaSourceModule): Set<String>? = null // KTIJ-27450
 
-    private fun computePackageSetFromBinaryRoots(binaryRoots: Array<VirtualFile>): Set<String>? {
+    private fun computePackageSetFromBinaryRoots(binaryRoots: Collection<VirtualFile>): Set<String>? {
         if (binaryRoots.any { !it.isSupportedByBinaryRootToPackageIndex }) {
             return null
         }
@@ -143,18 +143,9 @@ internal class IdeKotlinModulePackageNamesProvider(private val project: Project)
         binaryRootsCache.map.clear()
     }
 
-    @OptIn(KaImplementationDetail::class)
-    private val KaModule.binaryRootFiles: Array<VirtualFile>?
+    private val KaModule.binaryRootFiles: Collection<VirtualFile>?
         get() = when (this) {
-            is KaLibraryModule -> {
-                val rootProvider =
-                    openapiLibrary?.rootProvider
-                        ?: openapiSdk?.rootProvider
-                        ?: errorWithAttachment("${KaLibraryModule::class} should be either sdk or library") {
-                            withKaModuleEntry("kaModule", this@binaryRootFiles)
-                        }
-                rootProvider.getFiles(OrderRootType.CLASSES)
-            }
+            is KaLibraryModule -> binaryVirtualFiles
             else -> null
         }
 

@@ -94,16 +94,18 @@ private class KtScriptDependencyModuleByModuleInfo(
     override val isSdk: Boolean
         get() = false
 
+    @OptIn(KaExperimentalApi::class)
     override val binaryRoots: Collection<Path>
-        get() = when (moduleInfo) {
-            is ScriptDependenciesInfo.ForProject -> ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFiles().map { it.toNioPath() }
-
-            is ScriptDependenciesInfo.ForFile -> ScriptDependencyAware.getInstance(project)
-                .getScriptDependenciesClassFiles(moduleInfo.scriptFile).map { it.toNioPath() }
-        }
+        get() = binaryVirtualFiles.map { it.toNioPath() }
 
     @KaExperimentalApi
-    override val binaryVirtualFiles: Collection<VirtualFile> = emptyList()
+    override val binaryVirtualFiles: Collection<VirtualFile> =
+        when (moduleInfo) {
+            is ScriptDependenciesInfo.ForProject -> ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFiles()
+
+            is ScriptDependenciesInfo.ForFile -> ScriptDependencyAware.getInstance(project)
+                .getScriptDependenciesClassFiles(moduleInfo.scriptFile)
+        }
 
     override val file: KtFile?
         get() = optScriptFile((moduleInfo as? ScriptDependenciesInfo.ForFile)?.scriptFile)
