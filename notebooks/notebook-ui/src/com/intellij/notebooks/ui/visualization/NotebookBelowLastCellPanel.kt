@@ -4,7 +4,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.util.ui.JBUI
-import com.intellij.notebooks.ui.jupyterToolbar.JupyterAddCellToolbarService
+import com.intellij.notebooks.ui.jupyterToolbar.JupyterAboveCellToolbarService
 import com.intellij.notebooks.ui.jupyterToolbar.JupyterAddNewCellToolbar
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isOrdinaryNotebookEditor
 import java.awt.GridBagLayout
@@ -57,7 +57,7 @@ class NotebookBelowLastCellPanel(val editor: EditorImpl) : JPanel(GridBagLayout(
 
   private fun adjustToolbarBounds() {
     toolbar?.let { tb ->
-      tb.bounds = JupyterAddCellToolbarService.calculateToolbarBounds(editor, this, tb)
+      tb.bounds = JupyterAboveCellToolbarService.calculateToolbarBounds(editor, this, tb)
       revalidate()
       repaint()
     }
