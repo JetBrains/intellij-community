@@ -85,6 +85,11 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
   }
 
   @Override
+  public final void resetHomePathCache() {
+    myRegistryCache.drop();
+  }
+
+  @Override
   public boolean sdkSeemsValid(@NotNull Sdk sdk,
                                PyFlavorData.@NotNull Empty flavorData,
                                @Nullable TargetEnvironmentConfiguration targetConfig) {
