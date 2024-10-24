@@ -22,6 +22,7 @@ import com.intellij.util.ui.UIUtil
 import java.awt.Point
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.awt.event.MouseAdapter
 
 @Service(Service.Level.APP)
 internal class LineStatusMarkerPopupService {
@@ -43,6 +44,9 @@ internal class LineStatusMarkerPopupService {
     })
     hint.addHintListener(HintListener { Disposer.dispose(popupDisposable) })
     hint.setForceLightweightPopup(true)
+
+    // if there are no listeners, events are passed to the top level
+    panel.addMouseListener(object : MouseAdapter() {})
 
 
     val line = editor.getCaretModel().logicalPosition.line
@@ -103,7 +107,7 @@ internal class LineStatusMarkerPopupService {
       UIUtil.forEachComponentInHierarchy(panel) { c ->
         if (c is EditorTextComponent) {
           componentsWithListener.add(c)
-          c.component.addComponentListener(adapter)
+           c.component.addComponentListener(adapter)
         }
       }
 
