@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.python.featuresTrainer.ift
 
-import com.intellij.util.PlatformUtils
-import com.jetbrains.python.PythonLanguage
+import com.intellij.execution.actions.RunConfigurationsComboBoxAction
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.python.featuresTrainer.ift.lesson.assistance.PythonEditorCodingAssistanceLesson
 import com.intellij.python.featuresTrainer.ift.lesson.basic.PythonContextActionsLesson
 import com.intellij.python.featuresTrainer.ift.lesson.basic.PythonSelectLesson
@@ -19,6 +19,8 @@ import com.intellij.python.featuresTrainer.ift.lesson.refactorings.PythonRefacto
 import com.intellij.python.featuresTrainer.ift.lesson.refactorings.PythonRenameLesson
 import com.intellij.python.featuresTrainer.ift.lesson.run.PythonDebugLesson
 import com.intellij.python.featuresTrainer.ift.lesson.run.PythonRunConfigurationLesson
+import com.intellij.util.PlatformUtils
+import com.jetbrains.python.PythonLanguage
 import training.dsl.LessonUtil
 import training.learn.CourseManager
 import training.learn.LessonsBundle
@@ -125,17 +127,21 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
         PythonRecentFilesLesson(),
       )
     },
-    LearningModule(id = "Python.RunAndDebug",
-                   name = LessonsBundle.message("run.debug.module.name"),
-                   description = LessonsBundle.message("run.debug.module.description"),
-                   primaryLanguage = langSupport,
-                   moduleType = LessonType.SINGLE_EDITOR) {
-      listOf(
-        PythonRunConfigurationLesson(),
-        PythonDebugLesson(),
-      )
-    },
-  )
+  ) + if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(ProjectManager.getInstance().defaultProject)) { // project doesn't matter in this check for us
+    listOf(
+      LearningModule(id = "Python.RunAndDebug",
+                     name = LessonsBundle.message("run.debug.module.name"),
+                     description = LessonsBundle.message("run.debug.module.description"),
+                     primaryLanguage = langSupport,
+                     moduleType = LessonType.SINGLE_EDITOR) {
+        listOf(
+          PythonRunConfigurationLesson(),
+          PythonDebugLesson(),
+        )
+      }
+    )
+  }
+  else emptyList()
 
   override fun getLessonIdToTipsMap(): Map<String, List<String>> = mutableMapOf(
     // EditorBasics
