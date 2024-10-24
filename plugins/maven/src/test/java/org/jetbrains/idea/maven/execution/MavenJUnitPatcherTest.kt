@@ -680,6 +680,239 @@ org.jetbrains:annotations
     )
   }
 
+
+  @Test
+  fun `should add classpath compile dependency on dependency with classifier if two classifiers are present`() = runBlocking {
+    Registry.get("maven.build.additional.jars").setValue("true", getTestRootDisposable())
+    val lib = createModulePom("library", """
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>library</artifactId>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.1.2</version>
+                <executions>
+                    <execution>
+                        <id>default-jar</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <excludes>
+                                <exclude>excluded-another/**</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>some-execution</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <classifier>some-classifier</classifier>
+                            <skipIfEmpty>true</skipIfEmpty>
+                            <includes>
+                                <include>included/**</include>
+                            </includes>
+                            <excludes>
+                                <exclude>excluded/**</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+""")
+
+    val app = createModulePom("application", """
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>application</artifactId>
+    <packaging>jar</packaging>
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>test</groupId>
+            <artifactId>library</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>test</groupId>
+            <artifactId>library</artifactId>
+            <classifier>some-classifier</classifier> 
+            <scope>compile</scope>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+""")
+
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>parent</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
+      <packaging>pom</packaging>
+      <modules>
+          <module>library</module>
+          <module>application</module>
+      </modules>
+""")
+
+    val module = getModule("application")
+    val mavenJUnitPatcher = MavenJUnitPatcher()
+    val javaParameters = JavaParameters()
+    javaParameters.vmParametersList.add("-ea")
+    javaParameters.classPath.add(buildDir("application/target/classes"))
+    javaParameters.classPath.add(buildDir("application/target/test-classes"))
+    javaParameters.classPath.add(buildDir("library/target/classes"))
+    patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
+
+    val pathList = javaParameters.classPath.pathList.mapNotNull {
+      FileUtil.getRelativePath(File(projectPath), File(it))
+    }
+    assertOrderedEquals(
+      pathList,
+      "application/target/classes",
+      "application/target/test-classes",
+      "library/target/classes",
+      "library/target/classes-jar-some-classifier",
+    )
+  }
+
+  @Test
+  fun `should replace classpath compile dependency on dependency with classifier`() = runBlocking {
+    Registry.get("maven.build.additional.jars").setValue("true", getTestRootDisposable())
+    val lib = createModulePom("library", """
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>library</artifactId>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.1.2</version>
+                <executions>
+                    <execution>
+                        <id>default-jar</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <excludes>
+                                <exclude>excluded-another/**</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>some-execution</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <classifier>some-classifier</classifier>
+                            <skipIfEmpty>true</skipIfEmpty>
+                            <includes>
+                                <include>included/**</include>
+                            </includes>
+                            <excludes>
+                                <exclude>excluded/**</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+""")
+
+    val app = createModulePom("application", """
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>application</artifactId>
+    <packaging>jar</packaging>
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>test</groupId>
+            <artifactId>library</artifactId>
+            <classifier>some-classifier</classifier> 
+            <scope>compile</scope>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+""")
+
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>parent</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
+      <packaging>pom</packaging>
+      <modules>
+          <module>library</module>
+          <module>application</module>
+      </modules>
+""")
+
+    val module = getModule("application")
+    val mavenJUnitPatcher = MavenJUnitPatcher()
+    val javaParameters = JavaParameters()
+    javaParameters.vmParametersList.add("-ea")
+    javaParameters.classPath.add(buildDir("application/target/classes"))
+    javaParameters.classPath.add(buildDir("application/target/test-classes"))
+    javaParameters.classPath.add(buildDir("library/target/classes"))
+    patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
+
+    val pathList = javaParameters.classPath.pathList.mapNotNull {
+      FileUtil.getRelativePath(File(projectPath), File(it))
+    }
+    assertOrderedEquals(
+      pathList,
+      "application/target/classes",
+      "application/target/test-classes",
+      "library/target/classes-jar-some-classifier",
+    )
+  }
+
   private fun buildDir(path: String): File {
     return File(File(projectPath), path)
   }
