@@ -18,20 +18,14 @@ import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoImpl;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchPerformanceTracker;
-import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.ide.structureView.StructureViewTreeElement;
-import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
-import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.internal.statistic.local.ContributorsLocalSummary;
 import com.intellij.internal.statistic.utils.StartMoment;
-import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -453,8 +447,14 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
   }
 
   public @Nullable Object getSelectionIdentity() {
-    Object value = myResultsList.getSelectedValue();
+    Object value = getIdentity(myResultsList.getSelectedValue());
     return value == null ? null : Objects.hashCode(value);
+  }
+
+  private static @Nullable Object getIdentity(@Nullable Object item) {
+    if (item == null) return null;
+    if (item instanceof PSIPresentationBgRendererWrapper.ItemWithPresentation iwp) return iwp.getItem();
+    return item;
   }
 
   @Override
@@ -1739,13 +1739,14 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
 
       mySelectionTracker.restoreSelection();
 
-      if (myListModel.getSize() > 0) {
+      if (myListModel.getSize() > 0 && myResultsList.getSelectedIndex() <= 0) {
         SearchEverywhereManagerImpl manager = (SearchEverywhereManagerImpl)SearchEverywhereManager.getInstance(myProject);
         String contributorID = getSelectedTabID();
         Object prevSelection = manager.getPrevSelection(contributorID);
         if (prevSelection instanceof Integer) {
           for (Object item : myListModel.getItems()) {
-            if (Objects.hashCode(item) == ((Integer)prevSelection).intValue()) {
+            Object identity = getIdentity(item);
+            if (Objects.hashCode(identity) == ((Integer)prevSelection).intValue()) {
               myResultsList.setSelectedValue(item, true);
               manager.savePrevSelection(contributorID, null);
               break;
