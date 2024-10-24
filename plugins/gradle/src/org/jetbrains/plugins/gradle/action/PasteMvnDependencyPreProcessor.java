@@ -35,30 +35,45 @@ public final class PasteMvnDependencyPreProcessor implements CopyPastePreProcess
   public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
     if (isApplicable(file) && isMvnDependency(text)) {
       GradleActionsUsagesCollector.trigger(project, GradleActionsUsagesCollector.PASTE_MAVEN_DEPENDENCY);
-      return toGradleDependency(text);
+      boolean isKotlinDsl = isKotlinBuildScriptFile(file.getName());
+      return toGradleDependency(text, isKotlinDsl);
     }
     return text;
   }
 
   private boolean isApplicable(PsiFile file) {
-    return file.getName().endsWith('.' + GradleConstants.EXTENSION);
+    return file.getName().endsWith('.' + GradleConstants.EXTENSION) || isKotlinBuildScriptFile(file.getName());
+  }
+
+  private static boolean isKotlinBuildScriptFile(String filename) {
+    return filename.endsWith('.' + GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION);
   }
 
   private static @NotNull String formatGradleDependency(@NotNull String groupId,
                                                         @NotNull String artifactId,
                                                         @NotNull String version,
                                                         @NotNull String scope,
-                                                        @NotNull String classifier) {
+                                                        @NotNull String classifier,
+                                                        boolean isKotlinDsl) {
     String gradleClassifier = classifier.isEmpty() ? "" : ":" + classifier;
-    return scope + " '" + groupId + ":" + artifactId + ":" + version + gradleClassifier + "'";
+    String gradleVersion = version.isEmpty() ? "" : ":" + version;
+    StringBuilder dependency = new StringBuilder()
+      .append(scope)
+      .append(isKotlinDsl ? "(\"" : " '")
+      .append(groupId).append(':').append(artifactId)
+      .append(gradleVersion)
+      .append(gradleClassifier)
+      .append(isKotlinDsl ? "\")" : "'");
+
+    return dependency.toString();
   }
 
   @ApiStatus.Internal
-  public static @NotNull String toGradleDependency(@NotNull String mavenDependency) {
+  public static @NotNull String toGradleDependency(@NotNull String mavenDependency, boolean isKotlinDsl) {
     try {
       DocumentBuilder builder = JavaXmlDocumentKt.createDocumentBuilder();
       Document document = builder.parse(new InputSource(new StringReader(mavenDependency)));
-      String gradleDependency = extractGradleDependency(document);
+      String gradleDependency = extractGradleDependency(document, isKotlinDsl);
       return gradleDependency != null ? gradleDependency : mavenDependency;
     }
     catch (SAXException | IOException ignored) {
@@ -68,17 +83,17 @@ public final class PasteMvnDependencyPreProcessor implements CopyPastePreProcess
   }
 
   @Nullable
-  private static String extractGradleDependency(Document document) {
+  private static String extractGradleDependency(Document document, boolean isKotlinDsl) {
     String groupId = getGroupId(document);
     String artifactId = getArtifactId(document);
     String version = getVersion(document);
     String scope = getScope(document);
     String classifier = getClassifier(document);
 
-    if (groupId.isEmpty() || artifactId.isEmpty() || version.isEmpty()) {
+    if (groupId.isEmpty() || artifactId.isEmpty()) {
       return null;
     }
-    return formatGradleDependency(groupId, artifactId, version, scope, classifier);
+    return formatGradleDependency(groupId, artifactId, version, scope, classifier, isKotlinDsl);
   }
 
   @NotNull
