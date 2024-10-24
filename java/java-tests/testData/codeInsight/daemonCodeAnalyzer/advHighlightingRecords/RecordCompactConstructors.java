@@ -9,7 +9,7 @@ record NonPublic(int x) {
   }
 }
 record Throws(int x) {
-  public Throws<error descr="Identifier expected"> </error><error descr="Unexpected token">throws</error> <error descr="Invalid method declaration; return type required">Throwable</error> {}
+  public Throws <error descr="'throws' not allowed on compact constructor">throws</error> Throwable {}
 }
 record Generic() {
   public <error descr="Compact constructor cannot have type parameters"><T></error> Generic {}

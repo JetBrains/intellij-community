@@ -333,14 +333,15 @@ public class BasicDeclarationParser {
       if (type == null) {
         pos.rollbackTo();
       }
-      else if (builder.getTokenType() == JavaTokenType.LPARENTH || builder.getTokenType() == JavaTokenType.LBRACE) {  // constructor
+      else if (builder.getTokenType() == JavaTokenType.LPARENTH ||
+               builder.getTokenType() == JavaTokenType.LBRACE ||
+               builder.getTokenType() == JavaTokenType.THROWS_KEYWORD) {  // constructor
         if (context == BaseContext.CODE_BLOCK) {
           declaration.rollbackTo();
           return null;
         }
 
         pos.rollbackTo();
-
         if (typeParams == null) {
           emptyElement(builder, myJavaElementTypeContainer.TYPE_PARAMETER_LIST);
         }
@@ -357,6 +358,11 @@ public class BasicDeclarationParser {
         }
         else if (builder.getTokenType() == JavaTokenType.LBRACE) { // compact constructor
           emptyElement(builder, myJavaElementTypeContainer.THROWS_LIST);
+          return parseMethodBody(builder, declaration, false);
+        }
+        else if (builder.getTokenType() == JavaTokenType.THROWS_KEYWORD) {
+          myParser.getReferenceParser()
+            .parseReferenceList(builder, JavaTokenType.THROWS_KEYWORD, myJavaElementTypeContainer.THROWS_LIST, JavaTokenType.COMMA);
           return parseMethodBody(builder, declaration, false);
         }
         else {
