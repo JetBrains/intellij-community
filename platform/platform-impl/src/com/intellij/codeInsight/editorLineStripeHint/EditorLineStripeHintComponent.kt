@@ -30,6 +30,7 @@ class EditorLineStripeHintComponent(
   val editor: Editor,
   panelRenderer: () -> List<List<EditorLineStripeInlayRenderer>>,
   val stripeColor: JBColor,
+  lifetime: Int = 4,
 ) : JBPanel<JBPanel<*>>(), Disposable {
   @Suppress("UseJBColor")
   val gradientStartColor: Color = run {
@@ -38,7 +39,7 @@ class EditorLineStripeHintComponent(
   }
 
   private val isInstalled = AtomicBoolean(false)
-  private val lifetime: AtomicInteger = AtomicInteger(4)
+  private val lifetime: AtomicInteger = AtomicInteger(lifetime)
 
   private val batches: List<List<Component>>
 
