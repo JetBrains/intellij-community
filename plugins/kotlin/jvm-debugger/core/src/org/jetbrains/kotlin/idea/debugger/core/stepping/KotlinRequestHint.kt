@@ -3,15 +3,13 @@
 package org.jetbrains.kotlin.idea.debugger.core.stepping
 
 import com.intellij.debugger.DebuggerManagerEx
-import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.*
 import com.intellij.debugger.engine.DebugProcess.JAVA_STRATUM
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.util.Range
-import com.jetbrains.jdi.ClassTypeImpl
+import com.sun.jdi.ClassType
 import com.sun.jdi.Location
 import com.sun.jdi.VMDisconnectedException
 import com.sun.jdi.request.StepRequest
@@ -313,7 +311,7 @@ private fun needTechnicalStepInto(context: SuspendContextImpl): Boolean {
     }
 
     if (location.method()?.name() == "invoke" &&
-        (location.declaringType() as? ClassTypeImpl)?.superclass()?.name() == "kotlin.coroutines.jvm.internal.SuspendLambda") {
+        (location.declaringType() as? ClassType)?.superclass()?.name() == "kotlin.coroutines.jvm.internal.SuspendLambda") {
         return true
     }
 
