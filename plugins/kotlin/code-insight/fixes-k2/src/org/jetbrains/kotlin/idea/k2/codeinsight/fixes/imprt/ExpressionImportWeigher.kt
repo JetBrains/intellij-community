@@ -131,6 +131,7 @@ internal class CallExpressionImportWeigher(
         when {
             symbol is KaCallableSymbol -> calculateWeight(symbol, presentReceiverTypes, valueArgumentTypes)
             symbol is KaClassSymbol -> calculateWeight(symbol, valueArgumentTypes)
+            symbol is KaTypeAliasSymbol -> -1
             else -> 0
         }
     }

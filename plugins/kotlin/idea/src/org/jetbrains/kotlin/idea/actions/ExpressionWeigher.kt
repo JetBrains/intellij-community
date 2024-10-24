@@ -139,6 +139,7 @@ internal class CallExpressionWeigher(private val element: KtNameReferenceExpress
         when (descriptor) {
             is CallableMemberDescriptor -> calculateWeight(descriptor, argumentKotlinTypes)
             is ClassDescriptor -> calculateWeight(descriptor, argumentKotlinTypes)
+            is TypeAliasDescriptor -> -1
             else -> 0
         }
 
