@@ -5,7 +5,6 @@ import re
 import sys
 import textwrap
 
-import six
 from six import text_type, u
 
 ENCODING = 'utf-8'
@@ -264,51 +263,11 @@ def format_numpy(docstring):
     return format_rest(transformed)
 
 
-def format_epytext(docstring):
-    if six.PY3:
-        return u('Epydoc is not compatible with Python 3 interpreter')
-
-    import epydoc.markup.epytext
-    from epydoc.markup import DocstringLinker
-    from epydoc.markup.epytext import parse_docstring, ParseError, _colorize
-
-    def _add_para(doc, para_token, stack, indent_stack, errors):
-        """Colorize the given paragraph, and add it to the DOM tree."""
-        para = _colorize(doc, para_token, errors)
-        if para_token.inline:
-            para.attribs['inline'] = True
-        stack[-1].children.append(para)
-
-    epydoc.markup.epytext._add_para = _add_para
-    ParseError.is_fatal = lambda self: False
-
-    errors = []
-
-    class EmptyLinker(DocstringLinker):
-        def translate_indexterm(self, indexterm):
-            return ""
-
-        def translate_identifier_xref(self, identifier, label=None):
-            return identifier
-
-    docstring = parse_docstring(docstring, errors)
-    docstring, fields = docstring.split_fields()
-    html = docstring.to_html(EmptyLinker())
-
-    if errors and not html:
-        # It's not possible to recover original stacktraces of the errors
-        error_lines = '\n'.join(text_type(e) for e in errors)
-        raise Exception('Error parsing docstring. Probable causes:\n' + error_lines)
-
-    return html
-
-
 def format_body(docstring_format, input_body):
     formatter = {
         'rest': format_rest,
         'google': format_google,
         'numpy': format_numpy,
-        'epytext': format_epytext
     }.get(docstring_format, format_rest)
     return formatter(input_body)
 

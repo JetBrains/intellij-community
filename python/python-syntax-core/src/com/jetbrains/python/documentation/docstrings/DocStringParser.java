@@ -30,7 +30,6 @@ public final class DocStringParser {
   public static StructuredDocString parseDocString(@NotNull DocStringFormat format, @NotNull Substring content) {
     return switch (format) {
       case REST -> new SphinxDocString(content);
-      case EPYTEXT -> new EpydocString(content);
       case GOOGLE -> new GoogleCodeStyleDocString(content);
       case NUMPY -> new NumpyDocString(content);
       case PLAIN -> new PlainDocString(content);
@@ -50,9 +49,6 @@ public final class DocStringParser {
    */
   @NotNull
   public static DocStringFormat guessDocStringFormat(@NotNull String text) {
-    if (isLikeEpydocDocString(text)) {
-      return DocStringFormat.EPYTEXT;
-    }
     if (isLikeSphinxDocString(text)) {
       return DocStringFormat.REST;
     }
@@ -105,15 +101,6 @@ public final class DocStringParser {
            text.contains(":raise ") || text.contains(":raises ") || text.contains(":except ") || text.contains(":exception ") ||
            text.contains(":rtype") || text.contains(":type") ||
            text.contains(":var") || text.contains(":ivar") || text.contains(":cvar");
-  }
-
-  public static boolean isLikeEpydocDocString(@NotNull String text) {
-    return text.contains("@param ") ||
-           text.contains("@kwarg ") || text.contains("@keyword ") || text.contains("@kwparam ") ||
-           text.contains("@raise ") || text.contains("@raises ") || text.contains("@except ") || text.contains("@exception ") ||
-           text.contains("@return:") ||
-           text.contains("@rtype") || text.contains("@type") ||
-           text.contains("@var") || text.contains("@ivar") || text.contains("@cvar");
   }
 
   public static boolean isLikeGoogleDocString(@NotNull String text) {
