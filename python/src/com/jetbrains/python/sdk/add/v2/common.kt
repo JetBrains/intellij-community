@@ -18,10 +18,7 @@ import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
-import com.jetbrains.python.sdk.LOGGER
-import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.installSdkIfNeeded
+import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
 import com.jetbrains.python.sdk.poetry.POETRY_ICON
 import com.jetbrains.python.statistics.InterpreterTarget
@@ -119,6 +116,6 @@ internal suspend fun setupSdkIfDetected(interpreter: PythonSelectableInterpreter
                                              false,
                                              null, // todo create additional data for target
                                              null) ?: return null
-  addSdk(newSdk)
+  newSdk.persist()
   return newSdk
 }

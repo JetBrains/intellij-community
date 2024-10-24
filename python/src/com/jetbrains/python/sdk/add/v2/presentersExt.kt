@@ -18,6 +18,7 @@ import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.excludeInnerVirtualEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
+import com.jetbrains.python.sdk.persist
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
@@ -105,7 +106,7 @@ suspend fun PythonAddInterpreterModel.selectCondaEnvironment(base: Boolean): Res
   }
 
   (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
-  addSdk(sdk)
+  sdk.persist()
   return Result.success(sdk)
 }
 

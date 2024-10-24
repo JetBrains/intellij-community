@@ -67,7 +67,7 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
                              model.myProjectPathFlows.projectPathWithDefault.first().toString(),
                              homePath,
                              false)!!
-    addSdk(newSdk)
+    newSdk.persist()
     model.addInterpreter(newSdk)
     return Result.success(newSdk)
   }
