@@ -86,7 +86,9 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
     invalidationListeners.addListener(logsListener)
   }
 
-  // TODO docs
+  /**
+   * Frontend always starts a session. Backend never starts a session. Instead, the backend will send a notification to the frontend.
+   */
   @ApiStatus.Internal
   @ApiStatus.NonExtendable
   protected abstract fun startSessionOrNull(
