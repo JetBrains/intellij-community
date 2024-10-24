@@ -149,7 +149,10 @@ internal class TrustedProjectStartupDialog(
 
                 if (trustAction != null) {
                   val trustButton = getButton(trustAction!!)
-                  val text = if (it.isSelected) IdeBundle.message("untrusted.project.dialog.trust.folder.button", getTrustFolder(it.isSelected).name) else trustButtonText
+                  val text = if (it.isSelected) {
+                    val truncatedParentFolderName = StringUtil.shortenTextWithEllipsis(getTrustFolder(it.isSelected).name, 18, 0, true)
+                    IdeBundle.message("untrusted.project.dialog.trust.folder.button", truncatedParentFolderName)
+                  } else trustButtonText
                   trustButton?.text = text
                 }
                 val trimmedFolderName = StringUtil.shortenTextWithEllipsis(getTrustFolder(it.isSelected).name, 18, 0, true)
