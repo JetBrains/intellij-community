@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.ProjectScopeImpl
 import git4idea.i18n.GitBundle
+import git4idea.ignore.GitRepositoryIgnoredFilesHolder
 import git4idea.index.vfs.filePath
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.VisibleForTesting
 
 internal class GitTrackedSearchScope(
   private val project: Project,
-  private val rootToUntrackedFiles: Map<VirtualFile, GitUntrackedFilesHolder>,
+  private val rootToFilesHolders: Map<VirtualFile, Pair<GitUntrackedFilesHolder, GitRepositoryIgnoredFilesHolder>>,
 ) : ProjectScopeImpl(project, FileIndexFacade.getInstance(project)) {
   @Nls
   override fun getDisplayName(): String = GitBundle.message("search.scope.project.git.tracked")
@@ -28,8 +29,8 @@ internal class GitTrackedSearchScope(
   fun isTracked(file: VirtualFile): Boolean {
     val filePath = file.filePath()
     val gitRoot = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file) ?: return false
-    val untrackedFilesHolder = rootToUntrackedFiles[gitRoot] ?: return false
-    return !untrackedFilesHolder.containsUntrackedFile(filePath)
+    val (untrackedFilesHolder, ignoredFilesHolder) = rootToFilesHolders[gitRoot] ?: return false
+    return !untrackedFilesHolder.containsUntrackedFile(filePath) && !ignoredFilesHolder.containsFile(filePath)
   }
 
   companion object {
@@ -39,19 +40,19 @@ internal class GitTrackedSearchScope(
     internal fun getSearchScope(project: Project): GitTrackedSearchScope? {
       val repositories = GitRepositoryManager.getInstance(project).repositories
       if (repositories.isEmpty()) return null
-      val repoToUntrackedFiles = getUntrackedFilesMapping(repositories) ?: return null
-      return GitTrackedSearchScope(project, repoToUntrackedFiles)
+      val rootToFilesHolders = getFilesHoldersMapping(repositories) ?: return null
+      return GitTrackedSearchScope(project, rootToFilesHolders)
     }
 
-    private fun getUntrackedFilesMapping(repositories: List<GitRepository>): Map<VirtualFile, GitUntrackedFilesHolder>? =
+    private fun getFilesHoldersMapping(repositories: List<GitRepository>): Map<VirtualFile, Pair<GitUntrackedFilesHolder, GitRepositoryIgnoredFilesHolder>>? =
       repositories.associate { repo ->
-        if (!repo.untrackedFilesHolder.isInitialized) {
+        if (!repo.untrackedFilesHolder.isInitialized || !repo.ignoredFilesHolder.initialized) {
           if (LOG.isDebugEnabled) {
             LOG.debug("Untracked files holder is not initialized for $repo")
           }
           return null
         }
-        repo.root to repo.untrackedFilesHolder
+        repo.root to Pair(repo.untrackedFilesHolder, repo.ignoredFilesHolder)
       }
   }
 }
