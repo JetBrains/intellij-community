@@ -217,7 +217,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
     val causeThreads = infos.mapNotNull { getCauseThread(it) }
     val jitProblem = performanceWatcher.jitProblem
     val allInEdt = causeThreads.all { ThreadDumper.isEDT(it) }
-    val root = buildTree(threadInfos = causeThreads, time = dumpTask.dumpInterval.toLong())
+    val root = buildTree(threadInfos = causeThreads, time = dumpTask.dumpInterval)
     val classLoadingRatio = countClassLoading(causeThreads) * 100 / causeThreads.size
     val commonStackNode = root.findDominantCommonStack((causeThreads.size * dumpTask.dumpInterval * COMMON_SUB_STACK_WEIGHT).toLong())
     var commonStack = commonStackNode?.getStack()
@@ -273,12 +273,12 @@ ${if (finished) "" else if (appClosing) "IDE is closing. " else "IDE KILLED! "}S
 
 private class CallTreeNode(private val stackTraceElement: StackTraceElement?,
                            private val parent: CallTreeNode?,
-                           @JvmField var time: Long,
+                           @JvmField var time: Int,
                            @JvmField val threadInfo: ThreadInfo?) {
   private val children = SmartList<CallTreeNode>()
   private val depth: Int = if (parent == null) 0 else parent.depth + 1
 
-  fun addCallee(e: StackTraceElement?, time: Long, threadInfo: ThreadInfo?): CallTreeNode {
+  fun addCallee(e: StackTraceElement?, time: Int, threadInfo: ThreadInfo?): CallTreeNode {
     for (child in children) {
       if (compareStackTraceElements(child.stackTraceElement!!, e!!)) {
         child.time += time
@@ -340,9 +340,9 @@ private class CallTreeNode(private val stackTraceElement: StackTraceElement?,
   }
 }
 
-private val TIME_COMPARATOR: Comparator<CallTreeNode> = Comparator.comparingLong<CallTreeNode> { it.time }.reversed()
+private val TIME_COMPARATOR: Comparator<CallTreeNode> = Comparator.comparingInt<CallTreeNode> { it.time }.reversed()
 
-private fun buildTree(threadInfos: List<ThreadInfo>, time: Long): CallTreeNode {
+private fun buildTree(threadInfos: List<ThreadInfo>, time: Int): CallTreeNode {
   val root = CallTreeNode(null, null, 0, null)
   for (thread in threadInfos) {
     var node = root
