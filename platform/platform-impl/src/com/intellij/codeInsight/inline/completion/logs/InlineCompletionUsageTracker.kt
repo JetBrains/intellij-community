@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.createAdditio
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.util.application
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -86,6 +87,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     val EXPLICIT_SWITCHING_VARIANTS_TIMES: EventField<Int> = EventFields.Int("explicit_switching_variants_times", "How many times the user was switching between completion variants (we only have 1 at the moment)")
     val SELECTED_INDEX: EventField<Int> = EventFields.Int("selected_index")
 
+    @Serializable
     enum class FinishType {
       SELECTED,
       TYPED,
