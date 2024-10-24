@@ -266,7 +266,7 @@ internal class TrustedProjectStartupDialog(
   }
 
   fun getWidowsDefenderPathsToExclude(): List<Path> {
-    return if (windowsDefender.get()) getIdePaths().plus(getTrustFolder(trustAll.get())) else emptyList()
+    return if (windowsDefender.get()) listOf(*getIdePaths().toTypedArray(), getTrustFolder(trustAll.get())) else emptyList()
   }
 
   fun getOpenChoice(): OpenUntrustedProjectChoice = userChoice
