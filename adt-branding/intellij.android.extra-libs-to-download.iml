@@ -3,5 +3,6 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <orderEntry type="library" scope="RUNTIME" name="eclipse.lsp4j.debug" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="eclipse.lsp4j.jsonrpc.debug" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="jetbrains.kotlin.compose.compiler.plugin" level="project" />
   </component>
 </module>
