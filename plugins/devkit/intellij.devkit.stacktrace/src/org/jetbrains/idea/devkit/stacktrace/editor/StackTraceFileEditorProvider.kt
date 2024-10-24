@@ -14,7 +14,7 @@ import com.intellij.unscramble.UnscrambleUtils
  */
 class StackTraceFileEditorProvider : WeighedFileEditorProvider() {
   override fun accept(project: Project, file: VirtualFile): Boolean {
-    return file.extension == "txt" && UnscrambleUtils.isStackTrace(loadText(file))
+    return file.extension == "txt" && file.length < 10_000 && UnscrambleUtils.isStackTrace(loadText(file))
   }
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor = StackTraceFileEditor(project, file)
