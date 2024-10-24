@@ -185,6 +185,7 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
       GradleTaskManager.runCustomTask(
         project, GradleBundle.message("gradle.dependency.analyzer.loading"),
         GradleDependencyReportTask::class.java,
+        listOf("--no-configuration-cache"),
         directoryToRunTask,
         fullGradlePath,
         taskConfiguration,
