@@ -20,5 +20,6 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="library" name="pty4j" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
   </component>
 </module>

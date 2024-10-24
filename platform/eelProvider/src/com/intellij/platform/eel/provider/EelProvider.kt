@@ -1,12 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("EelProviderUtil")
+
 package com.intellij.platform.eel.provider
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.util.*
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.impl.local.LocalPosixEelApiImpl
@@ -15,10 +18,40 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
+private val CannotGuessProjectDirLoggingKey = Key.create<MutableSet<String>>("Eel.CannotGuessProjectDirLoggingKey")
+
+private fun Project.guessProjectDirAndLogWarn(callLocation: String): VirtualFile? {
+  val dir = guessProjectDir()
+
+  if (dir == null) {
+    val shouldLog = (if (this is UserDataHolderEx) {
+      getOrCreateUserData(CannotGuessProjectDirLoggingKey) { mutableSetOf<String>() }
+    }
+    else getOrCreateUserDataUnsafe(CannotGuessProjectDirLoggingKey) { mutableSetOf<String>() }).add(callLocation)
+
+    if (shouldLog) {
+      LOG.warn("$callLocation: Cannot guess project dir for $this")
+    }
+  }
+
+  return dir
+}
+
+private fun Project?.computeProjectPath(callLocation: String): Path? {
+  if (this == null || this.isDefault) return null
+
+  val projectDir = guessProjectDirAndLogWarn(callLocation)
+
+  return try {
+    projectDir?.toNioPath()
+  }
+  catch (e: UnsupportedOperationException) {
+    null
+  }
+}
+
 suspend fun Project?.getEelApi(): EelApi {
-  if (this == null) return localEel
-  val path = basePath ?: throw IllegalStateException("Cannot find base dir for project")
-  return Path.of(path).getEelApi()
+  return computeProjectPath("Project?.getEelApi")?.getEelApi() ?: localEel
 }
 
 @RequiresBlockingContext
@@ -28,9 +61,7 @@ fun Project?.getEelApiBlocking(): EelApi {
 }
 
 fun Project?.getEelApiKey(): EelApiKey {
-  if (this == null) return LocalEelKey
-  val path = basePath ?: throw IllegalStateException("Cannot find base dir for project")
-  return Path.of(path).getEelApiKey()
+  return computeProjectPath("Project?.getEelApiKey")?.getEelApiKey() ?: LocalEelKey
 }
 
 private val LOG by lazy { logger<EelProvider>() }
