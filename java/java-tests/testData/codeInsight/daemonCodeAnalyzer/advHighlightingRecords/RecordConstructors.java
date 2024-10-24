@@ -80,3 +80,16 @@ record DelegateInitializesField(int n) {
     System.out.println(n);
   }
 }
+record BrokenRecord(int x, int y) {
+  BrokenRecord(int x, int y) {
+    this.x = x;
+    this.y = y;
+            <error descr="Unexpected token">.</error>
+  }
+}
+class NonRecord {
+  final int a;
+  <error descr="Parameter list expected">NonRecord</error> {
+    a = 10;
+  }
+}

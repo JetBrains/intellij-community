@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -175,9 +175,9 @@ public final class HighlightControlFlowUtil {
         List<PsiMethod> redirectedConstructors = JavaHighlightUtil.getChainedConstructors(constructor);
         for (PsiMethod redirectedConstructor : redirectedConstructors) {
           PsiCodeBlock body = redirectedConstructor.getBody();
-          if (body != null && variableDefinitelyAssignedIn(field, body)) continue nextConstructor;
+          if (body != null && variableDefinitelyAssignedIn(field, body, true)) continue nextConstructor;
         }
-        if (!ctrBody.isValid() || variableDefinitelyAssignedIn(field, ctrBody)) {
+        if (!ctrBody.isValid() || variableDefinitelyAssignedIn(field, ctrBody, true)) {
           continue;
         }
         return false;
@@ -190,7 +190,7 @@ public final class HighlightControlFlowUtil {
                                                               boolean isFieldStatic,
                                                               PsiClassInitializer @NotNull [] initializers) {
     return ContainerUtil.find(initializers, initializer -> initializer.hasModifierProperty(PsiModifier.STATIC) == isFieldStatic
-                                                           && variableDefinitelyAssignedIn(field, initializer.getBody())) != null;
+                                                           && variableDefinitelyAssignedIn(field, initializer.getBody(), true)) != null;
   }
 
   private static boolean isFieldInitializedInOtherFieldInitializer(@NotNull PsiClass aClass,
@@ -201,7 +201,7 @@ public final class HighlightControlFlowUtil {
     for (PsiField psiField : fields) {
       if (psiField != field
           && psiField.hasModifierProperty(PsiModifier.STATIC) == fieldStatic
-          && variableDefinitelyAssignedIn(field, psiField)
+          && variableDefinitelyAssignedIn(field, psiField, true)
           && condition.test(psiField)) {
         return true;
       }
@@ -214,8 +214,7 @@ public final class HighlightControlFlowUtil {
     JavaHighlightUtil.visitConstructorChain(constructor, info);
     if (info.recursivelyCalledConstructor == null) return false;
     // our constructor is reached from some other constructor by constructor chain
-    return info.visitedConstructors.indexOf(info.recursivelyCalledConstructor) <=
-           info.visitedConstructors.indexOf(constructor);
+    return info.visitedConstructors.indexOf(info.recursivelyCalledConstructor) <= info.visitedConstructors.indexOf(constructor);
   }
 
   public static boolean isAssigned(@NotNull PsiParameter parameter) {
@@ -246,22 +245,26 @@ public final class HighlightControlFlowUtil {
    * @return true if variable assigned (maybe more than once)
    */
   public static boolean variableDefinitelyAssignedIn(@NotNull PsiVariable variable, @NotNull PsiElement context) {
+    return variableDefinitelyAssignedIn(variable, context, false);
+  }
+
+  private static boolean variableDefinitelyAssignedIn(@NotNull PsiVariable variable,
+                                                      @NotNull PsiElement context,
+                                                      boolean resultOnIncompleteCode) {
     try {
-      ControlFlow controlFlow = getControlFlow(context);
-      return ControlFlowUtil.isVariableDefinitelyAssigned(variable, controlFlow);
+      return ControlFlowUtil.isVariableDefinitelyAssigned(variable, getControlFlow(context));
     }
     catch (AnalysisCanceledException e) {
-      return false;
+      return resultOnIncompleteCode;
     }
   }
 
   private static boolean variableDefinitelyNotAssignedIn(@NotNull PsiVariable variable, @NotNull PsiElement context) {
     try {
-      ControlFlow controlFlow = getControlFlow(context);
-      return ControlFlowUtil.isVariableDefinitelyNotAssigned(variable, controlFlow);
+      return ControlFlowUtil.isVariableDefinitelyNotAssigned(variable, getControlFlow(context));
     }
     catch (AnalysisCanceledException e) {
-      return false;
+      return true;
     }
   }
 
@@ -276,8 +279,7 @@ public final class HighlightControlFlowUtil {
     PsiCodeBlock body = canonicalConstructor.getBody();
     if (body == null) return null;
     PsiField field = JavaPsiRecordUtil.getFieldForComponent(component);
-    if (field == null) return null;
-    if (variableDefinitelyAssignedIn(field, body)) return null;
+    if (field == null || variableDefinitelyAssignedIn(field, body, true)) return null;
     String description = JavaErrorBundle.message("record.component.not.initialized", field.getName());
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(description);
   }
@@ -360,7 +362,7 @@ public final class HighlightControlFlowUtil {
             //if (startOffset < redirectedConstructor.getTextRange().getStartOffset()) continue;
             if (JavaPsiRecordUtil.isCompactConstructor(redirectedConstructor)) return null;
             PsiCodeBlock body = redirectedConstructor.getBody();
-            if (body != null && variableDefinitelyAssignedIn(variable, body)) {
+            if (body != null && variableDefinitelyAssignedIn(variable, body, true)) {
               return null;
             }
           }
@@ -430,8 +432,7 @@ public final class HighlightControlFlowUtil {
             // variable referenced in field initializer or in class initializer
             boolean shouldCheckInitializerOrder = block == null || block.getParent() instanceof PsiClassInitializer;
             if (shouldCheckInitializerOrder && startOffset < initializer.getTextRange().getStartOffset()) continue;
-            if (initializer.hasModifierProperty(PsiModifier.STATIC)
-                == variable.hasModifierProperty(PsiModifier.STATIC)) {
+            if (initializer.hasModifierProperty(PsiModifier.STATIC) == variable.hasModifierProperty(PsiModifier.STATIC)) {
               if (variableDefinitelyAssignedIn(variable, body)) return null;
             }
           }
@@ -569,9 +570,8 @@ public final class HighlightControlFlowUtil {
 
     if (!isFieldStatic) {
       // constructor that delegates to another constructor cannot assign final fields
-      if (enclosingConstructorOrInitializer instanceof PsiMethod) {
-        PsiMethodCallExpression chainedCall =
-          JavaPsiConstructorUtil.findThisOrSuperCallInConstructor((PsiMethod)enclosingConstructorOrInitializer);
+      if (enclosingConstructorOrInitializer instanceof PsiMethod method) {
+        PsiMethodCallExpression chainedCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
         if (JavaPsiConstructorUtil.isChainedConstructorCall(chainedCall)) {
           return true;
         }
@@ -676,7 +676,7 @@ public final class HighlightControlFlowUtil {
 
   private static boolean canWriteToFinal(@NotNull PsiVariable variable,
                                          @NotNull PsiExpression expression,
-                                         @NotNull  PsiReferenceExpression reference,
+                                         @NotNull PsiReferenceExpression reference,
                                          @NotNull PsiFile containingFile) {
     if (variable.hasInitializer()) {
       return variable instanceof PsiField field && !PsiAugmentProvider.canTrustFieldInitializer(field);
@@ -686,12 +686,15 @@ public final class HighlightControlFlowUtil {
     if (variable instanceof PsiField field) {
       // if inside some field initializer
       if (HighlightUtil.findEnclosingFieldInitializer(expression) != null) return true;
+      PsiClass containingClass = field.getContainingClass();
+      if (containingClass == null) return true;
       // assignment from within inner class is illegal always
-      if (scope != null && !containingFile.getManager().areElementsEquivalent(scope, field.getContainingClass())) return false;
+      if (scope != null && !containingFile.getManager().areElementsEquivalent(scope, containingClass)) return false;
       PsiMember enclosingCtrOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expression);
       return enclosingCtrOrInitializer != null &&
-             !(enclosingCtrOrInitializer instanceof PsiMethod &&
-               JavaPsiRecordUtil.isCompactConstructor((PsiMethod)enclosingCtrOrInitializer)) &&
+             !(enclosingCtrOrInitializer instanceof PsiMethod method &&
+               JavaPsiRecordUtil.isCompactConstructor(method) &&
+               containingClass.isRecord()) &&
              isSameField(enclosingCtrOrInitializer, field, reference, containingFile);
     }
     if (variable instanceof PsiLocalVariable) {
