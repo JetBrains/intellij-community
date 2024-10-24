@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.debugger
 
 import com.intellij.testFramework.HeavyPlatformTestCase
 import org.junit.Assert
+import java.lang.reflect.Modifier
 
 class PlatformSupportClassesNameTest : HeavyPlatformTestCase() {
   fun testApplicationDebugSupportMethodExists() {
@@ -26,9 +27,10 @@ class PlatformSupportClassesNameTest : HeavyPlatformTestCase() {
 
   fun testCancellationStatusFields() {
     val clazz = Class.forName("com.intellij.openapi.progress.Cancellation\$DebugNonCancellableState")
-    val fields = clazz.declaredFields.joinToString("\n") { "${it.type} ${it.name}" }
+    val fields = clazz.declaredFields
+      .filter { (it.modifiers and Modifier.STATIC) == 0 }
+      .joinToString("\n") { "${it.type} ${it.name}" }
     assertEquals("""
-      boolean isDebugEnabled
       boolean inNonCancelableSection
     """.trimIndent(), fields)
   }
