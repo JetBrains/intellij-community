@@ -93,7 +93,7 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
     List<PsiClass> list = null;
     String packageName = psiPackage.getQualifiedName();
     for (PsiDirectory dir : psiPackage.getDirectories(scope)) {
-      PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(dir);
+      PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(dir, scope);
       if (classes.length == 0) continue;
       if (list == null) list = new ArrayList<>();
       for (PsiClass aClass : classes) {
