@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.provider.EelApiKey
 import com.intellij.platform.eel.provider.EelProvider
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -81,6 +82,13 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
         )
       }
     }
+
+    override fun getEelApiKey(path: Path): EelApiKey? =
+      service<IjentWslNioFsToggler>().strategy?.enabledInDistros
+        ?.find { distro -> distro.getUNCRootPath().isSameFileAs(path.root) }
+        ?.let { WslEelKey(it.id) }
+
+    private data class WslEelKey(val key: String) : EelApiKey()
   }
 
   private val strategy = run {
