@@ -1,21 +1,24 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.logger
 
-import com.intellij.application.subscribe
 import com.intellij.internal.statistic.eventLog.*
 import com.intellij.internal.statistic.eventLog.EventLogConfigOptionsService.EventLogThresholdConfigOptionsListener
 import com.intellij.internal.statistic.utils.EventRateThrottleResult
 import com.intellij.internal.statistic.utils.EventsIdentityWindowThrottle
 import com.intellij.internal.statistic.utils.EventsRateWindowThrottle
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import com.jetbrains.fus.reporting.model.lion3.LogEventAction
 import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
+import kotlinx.coroutines.CoroutineScope
 
 internal class StatisticsEventLogThrottleWriter(configOptionsService: EventLogConfigOptionsService,
                                                 private val recorderId: String,
                                                 private val recorderVersion: String,
-                                                private val delegate: StatisticsEventLogWriter) : StatisticsEventLogWriter {
+                                                private val delegate: StatisticsEventLogWriter,
+                                                coroutineScope: CoroutineScope) : StatisticsEventLogWriter {
   private val ourLock: Any = Object()
 
   /**
@@ -37,7 +40,7 @@ internal class StatisticsEventLogThrottleWriter(configOptionsService: EventLogCo
     val groupAlertThreshold = getOrDefault(configOptions.groupAlertThreshold, 6000)
     ourGroupThrottle = EventsIdentityWindowThrottle(groupThreshold, groupAlertThreshold, 60L * 60 * 1000)
 
-    EventLogConfigOptionsService.TOPIC.subscribe(this, object : EventLogThresholdConfigOptionsListener(recorderId) {
+    ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(EventLogConfigOptionsService.TOPIC, object : EventLogThresholdConfigOptionsListener(recorderId) {
       override fun onThresholdChanged(newValue: Int) {
         if (newValue > 0) {
           synchronized(ourLock) {
