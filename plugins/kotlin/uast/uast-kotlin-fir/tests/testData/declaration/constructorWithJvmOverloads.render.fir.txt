@@ -6,9 +6,13 @@ public final class AllOptionalJvmOverloads {
     @kotlin.jvm.JvmOverloads
     public fun AllOptionalJvmOverloads(@org.jetbrains.annotations.NotNull foo: int, @org.jetbrains.annotations.NotNull bar: int) = UastEmptyExpression
     @kotlin.jvm.JvmOverloads
-    public fun AllOptionalJvmOverloads(@org.jetbrains.annotations.NotNull foo: int) = UastEmptyExpression
+    public fun AllOptionalJvmOverloads(@org.jetbrains.annotations.NotNull foo: int) {
+        UIdentifier (Identifier (AllOptionalJvmOverloads))(foo, 0)
+    }
     @kotlin.jvm.JvmOverloads
-    public fun AllOptionalJvmOverloads() = UastEmptyExpression
+    public fun AllOptionalJvmOverloads() {
+        UIdentifier (Identifier (AllOptionalJvmOverloads))(0, 0)
+    }
 }
 
 public final class AllOptionalNoJvmOverloads {
@@ -24,7 +28,9 @@ public final class SomeOptionalJvmOverloads {
     @kotlin.jvm.JvmOverloads
     public fun SomeOptionalJvmOverloads(@org.jetbrains.annotations.NotNull foo: int, @org.jetbrains.annotations.NotNull bar: int) = UastEmptyExpression
     @kotlin.jvm.JvmOverloads
-    public fun SomeOptionalJvmOverloads(@org.jetbrains.annotations.NotNull foo: int) = UastEmptyExpression
+    public fun SomeOptionalJvmOverloads(@org.jetbrains.annotations.NotNull foo: int) {
+        UIdentifier (Identifier (SomeOptionalJvmOverloads))(foo, 0)
+    }
 }
 
 public final class SomeOptionalNoJvmOverloads {
