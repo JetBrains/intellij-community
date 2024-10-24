@@ -1,14 +1,15 @@
 package com.jetbrains.performancePlugin.remotedriver.jcef
 
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.jcef.JBCefBrowserBase
 import com.intellij.ui.jcef.JBCefJSQuery
+import kotlinx.coroutines.job
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
 import java.awt.Component
 import java.util.function.Function
 import javax.swing.JComponent
-import kotlin.coroutines.resumeWithException
 
 private const val JB_BROWSER_KEY = "JBCefBrowser.instance"
 
@@ -58,17 +59,22 @@ internal class JcefComponentWrapper(private val component: Component) {
     return jbCefBrowser
   }
 
-  private class JsExecutor(jbCefBrowser: JBCefBrowserBase) {
-    private val cefBrowser = jbCefBrowser.cefBrowser
-    private val jsResultQuery = JBCefJSQuery.create(jbCefBrowser)
+  private class JsExecutor(private val jbCefBrowser: JBCefBrowserBase) {
 
     fun runJs(js: String) {
-      cefBrowser.executeJavaScript(js, cefBrowser.url, 0)
+      jbCefBrowser.cefBrowser.run {
+        executeJavaScript(js, url, 0)
+      }
     }
 
     suspend fun callJs(js: String, executeTimeoutMs: Long = 3000): String =
       withTimeout(executeTimeoutMs) {
         suspendCancellableCoroutine { continuation ->
+          val jsResultQuery = JBCefJSQuery.create(jbCefBrowser)
+          coroutineContext.job.invokeOnCompletion {
+            Disposer.dispose(jsResultQuery)
+          }
+
           val handler = object : Function<String, JBCefJSQuery.Response?> {
             override fun apply(result: String): JBCefJSQuery.Response? {
               jsResultQuery.removeHandler(this)
@@ -81,12 +87,9 @@ internal class JcefComponentWrapper(private val component: Component) {
 
           continuation.invokeOnCancellation {
             jsResultQuery.removeHandler(handler)
-            continuation.resumeWithException(IllegalStateException("""
-            |No result from script '$js' in embedded browser in ${executeTimeoutMs}ms.
-            |Check logs in the browsers devTools(`ide.browser.jcef.contextMenu.devTools.enabled` key in the Registry...)""".trimMargin()))
           }
 
-          cefBrowser.executeJavaScript(jsResultQuery.inject(js), cefBrowser.url, 0)
+          runJs(jsResultQuery.inject(js))
         }
       }
   }
