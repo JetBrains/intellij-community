@@ -468,7 +468,7 @@ public class Maven40ProjectResolver {
   private void loadExtensions(MavenProject project, List<Exception> exceptions) {
     ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
     Collection<AbstractMavenLifecycleParticipant> lifecycleParticipants =
-      myEmbedder.getLifecycleParticipants(Collections.singletonList(project));
+      myEmbedder.getExtensionComponents(Collections.singletonList(project), AbstractMavenLifecycleParticipant.class);
     if (!lifecycleParticipants.isEmpty()) {
       LegacySupport legacySupport = myEmbedder.getComponent(LegacySupport.class);
       MavenSession session = legacySupport.getSession();
@@ -541,7 +541,7 @@ public class Maven40ProjectResolver {
 
     ProjectBuildingRequest projectBuildingRequest = request.getProjectBuildingRequest();
     projectBuildingRequest.setRepositorySession(session.getRepositorySession());
-    projectBuildingRequest.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
+    projectBuildingRequest.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_STRICT); // to process extensions
     projectBuildingRequest.setActiveProfileIds(request.getActiveProfiles());
     projectBuildingRequest.setInactiveProfileIds(request.getInactiveProfiles());
     projectBuildingRequest.setResolveDependencies(false);

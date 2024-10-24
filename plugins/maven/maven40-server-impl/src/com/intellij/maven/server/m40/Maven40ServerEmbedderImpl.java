@@ -641,7 +641,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   private void notifyAfterSessionStart(MavenSession mavenSession) {
     try {
-      for (AbstractMavenLifecycleParticipant listener : getLifecycleParticipants(Collections.emptyList())) {
+      for (AbstractMavenLifecycleParticipant listener : getExtensionComponents(Collections.emptyList(), AbstractMavenLifecycleParticipant.class)) {
         listener.afterSessionStart(mavenSession);
       }
     }
@@ -651,44 +651,52 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   /**
-   * adapted from {@link DefaultMaven#getLifecycleParticipants(Collection)}
+   * adapted from {@link DefaultMaven#getExtensionComponents(Collection, Class)} as of 10.01.2024
    */
-  public Collection<AbstractMavenLifecycleParticipant> getLifecycleParticipants(Collection<MavenProject> projects) {
-    Collection<AbstractMavenLifecycleParticipant> lifecycleListeners = new LinkedHashSet<>();
+  public <T> Collection<T> getExtensionComponents(Collection<MavenProject> projects, Class<T> role) {
+    Collection<T> foundComponents = new LinkedHashSet<>();
 
-    ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
     try {
-      try {
-        lifecycleListeners.addAll(getContainer().lookupList(AbstractMavenLifecycleParticipant.class));
-      }
-      catch (ComponentLookupException e) {
-        // this is just silly, lookupList should return an empty list!
-        warn("Failed to lookup lifecycle participants", e);
-      }
+      foundComponents.addAll(getContainer().lookupList(role));
+    } catch (ComponentLookupException e) {
+      // this is just silly, lookupList should return an empty list!
+      warn("Failed to lookup " + role, e);
+    }
 
-      Collection<ClassLoader> scannedRealms = new HashSet<>();
+    foundComponents.addAll(getProjectScopedExtensionComponents(projects, role));
 
+    return foundComponents;
+  }
+
+  protected <T> Collection<T> getProjectScopedExtensionComponents(Collection<MavenProject> projects, Class<T> role) {
+    if (projects == null) {
+      return Collections.emptyList();
+    }
+
+    Collection<T> foundComponents = new LinkedHashSet<>();
+    Collection<ClassLoader> scannedRealms = new HashSet<>();
+
+    Thread currentThread = Thread.currentThread();
+    ClassLoader originalContextClassLoader = currentThread.getContextClassLoader();
+    try {
       for (MavenProject project : projects) {
         ClassLoader projectRealm = project.getClassRealm();
 
         if (projectRealm != null && scannedRealms.add(projectRealm)) {
-          Thread.currentThread().setContextClassLoader(projectRealm);
+          currentThread.setContextClassLoader(projectRealm);
 
           try {
-            lifecycleListeners.addAll(getContainer().lookupList(AbstractMavenLifecycleParticipant.class));
-          }
-          catch (ComponentLookupException e) {
+            foundComponents.addAll(getContainer().lookupList(role));
+          } catch (ComponentLookupException e) {
             // this is just silly, lookupList should return an empty list!
-            warn("Failed to lookup lifecycle participants", e);
+            warn("Failed to lookup " + role, e);
           }
         }
       }
+      return foundComponents;
+    } finally {
+      currentThread.setContextClassLoader(originalContextClassLoader);
     }
-    finally {
-      Thread.currentThread().setContextClassLoader(originalClassLoader);
-    }
-
-    return lifecycleListeners;
   }
 
   private static void warn(String message, Throwable e) {
@@ -698,19 +706,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   private PlexusContainer getContainer() {
     return myContainer;
   }
-
-  @NotNull
-  private MavenSession createMavenSession(MavenExecutionRequest request, DefaultMaven maven) {
-    DefaultSessionFactory factory = getComponent(DefaultSessionFactory.class);
-    RepositorySystem repositorySystem = getComponent(RepositorySystem.class);
-    RepositorySystemSession repositorySession = maven.newRepositorySession(request);
-    request.getProjectBuildingRequest().setRepositorySession(repositorySession);
-    MavenSession session = new MavenSession(getContainer(), repositorySession, request, new DefaultMavenExecutionResult());
-    DefaultSessionFactory defaultSessionFactory = getComponent(DefaultSessionFactory.class);
-    session.setSession(defaultSessionFactory.newSession(session));
-    return session;
-  }
-
 
   @Override
   public MavenServerResponse<ArrayList<PluginResolutionResponse>> resolvePlugins(@NotNull LongRunningTaskInput longRunningTaskInput,
