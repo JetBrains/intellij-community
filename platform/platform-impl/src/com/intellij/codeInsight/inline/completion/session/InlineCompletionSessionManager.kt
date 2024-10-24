@@ -4,6 +4,7 @@ package com.intellij.codeInsight.inline.completion.session
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
+import com.intellij.codeInsight.inline.completion.elements.InlineCompletionSkipTextElement
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
 import com.intellij.openapi.Disposable
@@ -132,7 +133,7 @@ abstract class InlineCompletionSessionManager(private val editor: Editor) {
     }
 
     check(!session.context.isDisposed)
-    if (!session.context.textToInsert().isEmpty()) {
+    if (!session.isEmpty()) {
       return UpdateSessionResult.Succeeded
     }
 
@@ -152,6 +153,10 @@ abstract class InlineCompletionSessionManager(private val editor: Editor) {
    */
   private fun InlineCompletionEvent.mayMutateCaretPosition(): Boolean {
     return this !is InlineCompletionEvent.InlineLookupEvent
+  }
+
+  private fun InlineCompletionSession.isEmpty(): Boolean {
+    return context.state.elements.none { it.element !is InlineCompletionSkipTextElement && it.element.text.isNotEmpty() }
   }
 
   @ApiStatus.Internal
