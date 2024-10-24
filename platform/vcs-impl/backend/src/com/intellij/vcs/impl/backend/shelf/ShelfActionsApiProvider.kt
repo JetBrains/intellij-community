@@ -19,23 +19,24 @@ class ShelfActionsApiProvider : RemoteApiProvider {
 class BackendShelfActionsApi : RemoteShelfActionsApi {
 
   override suspend fun unshelve(projectRef: SharedRef<ProjectEntity>, changeListDto: List<ChangeListDto>, withDialog: Boolean) {
-    val project = projectRef.asProject()
-
-    val executor = ShelfRemoteActionExecutor.getInstance(project)
-    executor.unshelve(changeListDto, withDialog)
+    getShelfRemoteActionExecutor(projectRef).unshelve(changeListDto, withDialog)
   }
 
   override suspend fun createPatchForShelvedChanges(projectRef: SharedRef<ProjectEntity>, changeListDto: List<ChangeListDto>, silentClipboard: Boolean) {
-    val project = projectRef.asProject()
-
-    val executor = ShelfRemoteActionExecutor.getInstance(project)
-    executor.createPatchForShelvedChanges(changeListDto, silentClipboard)
+    getShelfRemoteActionExecutor(projectRef).createPatchForShelvedChanges(changeListDto, silentClipboard)
   }
 
   override suspend fun compareWithLocal(projectRef: SharedRef<ProjectEntity>, changeListsDto: List<ChangeListDto>) {
+    getShelfRemoteActionExecutor(projectRef).compareWithLocal(changeListsDto)
+  }
+
+  override suspend fun importShelvesFromPatches(projectRef: SharedRef<ProjectEntity>) {
+    getShelfRemoteActionExecutor(projectRef).exportPatches()
+  }
+
+  private suspend fun getShelfRemoteActionExecutor(projectRef: SharedRef<ProjectEntity>): ShelfRemoteActionExecutor {
     val project = projectRef.asProject()
 
-    val executor = ShelfRemoteActionExecutor.getInstance(project)
-    executor.compareWithLocal(changeListsDto)
+    return ShelfRemoteActionExecutor.getInstance(project)
   }
 }

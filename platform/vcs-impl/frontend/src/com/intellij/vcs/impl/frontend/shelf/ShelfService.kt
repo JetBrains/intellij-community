@@ -46,6 +46,15 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
     }
   }
 
+  fun importPatches() {
+    cs.launch {
+      withKernel {
+        val projectRef = project.asEntity().sharedRef()
+        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).importShelvesFromPatches(projectRef)
+      }
+    }
+  }
+
   fun createPatch(changeLists: List<ChangeList>, silentClipboard: Boolean) {
     cs.launch {
       withKernel {

@@ -5,12 +5,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction
-import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor
-import com.intellij.openapi.vcs.changes.shelf.*
+import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
+import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManagerListener
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.GroupingPolicyFactoryHolder
 import com.intellij.platform.kernel.withKernel
@@ -20,10 +19,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update.Companion.create
 import com.intellij.vcs.impl.backend.shelf.diff.BackendShelveEditorDiffPreview
 import com.intellij.vcs.impl.shared.changes.GroupingUpdatePlaces
-import com.intellij.vcs.impl.shared.rhizome.GroupingItemEntity
-import com.intellij.vcs.impl.shared.rhizome.GroupingItemsEntity
-import com.intellij.vcs.impl.shared.rhizome.NodeEntity
-import com.intellij.vcs.impl.shared.rhizome.ShelvesTreeRootEntity
+import com.intellij.vcs.impl.shared.rhizome.*
 import com.intellij.vcs.impl.shared.rpc.ChangeListDto
 import com.jetbrains.rhizomedb.entity
 import fleet.kernel.SharedRef
@@ -33,7 +29,6 @@ import fleet.kernel.sharedRef
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.swing.tree.TreePath
 
 @Service(Service.Level.PROJECT)
@@ -51,13 +46,13 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
 
   private val diffPreview = BackendShelveEditorDiffPreview(tree, cs, project)
 
-  private fun updateTreeModel() {
+  private fun updateTreeModel(afterUpdate: () -> Unit = {}) {
     tree.invalidateDataAndRefresh {
-      updateDbModel()
+      updateDbModel(afterUpdate)
     }
   }
 
-  fun updateDbModel() {
+  fun updateDbModel(afterUpdate: () -> Unit = {}) {
     cs.launch {
       val root = tree.model.root as ChangesBrowserNode<*>
       withKernel {
@@ -79,6 +74,7 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
           }
         }
       }
+      afterUpdate()
     }
   }
 
@@ -133,8 +129,8 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
     }
   }
 
-  fun scheduleTreeUpdate() {
-    updateQueue.queue(create("update") { updateTreeModel() })
+  fun scheduleTreeUpdate(callback: () -> Unit = {}) {
+    updateQueue.queue(create("update") { updateTreeModel(callback) })
   }
 
   fun saveGroupings() {
@@ -149,6 +145,25 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
             shelveChangesManager.grouping.forEach {
               val groupingItem = entity(GroupingItemEntity.Name, it) ?: return@forEach
               shelfTreeGroup.add(GroupingItemsEntity.Items, groupingItem)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  fun selectChangeListInTree(changeList: ShelvedChangeList) {
+    cs.launch {
+      val nodeToSelect = TreeUtil.findNodeWithObject(tree.model.root as ChangesBrowserNode<*>, changeList) as? ChangesBrowserNode<*>
+                         ?: return@launch
+      val nodeRef = nodeToSelect.getUserData(ENTITY_ID_KEY) ?: return@launch
+      withKernel {
+        change {
+          shared {
+            val changeListEntity = nodeRef.deref() as? ShelvedChangeListEntity ?: return@shared
+            SelectShelveChangeEntity.new {
+              it[SelectShelveChangeEntity.ChangeList] = changeListEntity
+              it[SelectShelveChangeEntity.Project] = project.asEntity()
             }
           }
         }

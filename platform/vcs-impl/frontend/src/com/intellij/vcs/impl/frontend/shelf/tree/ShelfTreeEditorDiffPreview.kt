@@ -59,9 +59,12 @@ class ShelfTreeEditorDiffPreview(tree: ShelfTree, private val cs: CoroutineScope
   private fun selectNodeInTree(it: SelectShelveChangeEntity) {
     val rootNode = tree.model.root as DefaultMutableTreeNode
     val changeListNode = TreeUtil.findNodeWithObject(rootNode, it.changeList) ?: return
-    val changeNode = TreeUtil.findNodeWithObject(changeListNode, it.change) ?: return
+    val nodeToSelect = it.change?.let { change ->
+      TreeUtil.findNodeWithObject(changeListNode, change)
+    } ?: changeListNode
+
     cs.launch(Dispatchers.EDT) {
-      TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(changeNode), false)
+      TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(nodeToSelect), false)
     }
   }
 }

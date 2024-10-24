@@ -86,6 +86,17 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
     }
   }
 
+  suspend fun exportPatches() {
+    val changeLists = withContext(Dispatchers.EDT) {
+      ImportIntoShelfAction.importPatchesToShelf(project)
+    }
+    if (changeLists.isEmpty()) return
+
+    shelfTreeHolder.scheduleTreeUpdate {
+      shelfTreeHolder.selectChangeListInTree(changeLists.first())
+    }
+  }
+
   companion object {
     fun getInstance(project: Project): ShelfRemoteActionExecutor = project.service<ShelfRemoteActionExecutor>()
   }

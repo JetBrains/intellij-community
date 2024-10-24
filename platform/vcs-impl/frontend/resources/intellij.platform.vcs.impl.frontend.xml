@@ -43,6 +43,7 @@
       <action id="Frontend.ChangesView.Shelf.CreatePatchFromChanges.Clipboard" class="com.intellij.vcs.impl.frontend.changes.actions.CreatePatchForShelvedChangeActionClipboard"
               icon="AllIcons.Vcs.Patch"/>
       <action id="Frontend.Vcs.CompareWithLocal" class="com.intellij.vcs.impl.frontend.shelf.actions.CompareWithLocalAction"/>
+      <action id="Frontend.ChangesView.Shelf.ImportFromPatches" class="com.intellij.vcs.impl.frontend.shelf.actions.ImportShelvesFromPatchesAction"/>
     </group>
   </actions>
 </idea-plugin>

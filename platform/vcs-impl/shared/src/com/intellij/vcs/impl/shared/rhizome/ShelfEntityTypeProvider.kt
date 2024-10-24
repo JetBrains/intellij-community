@@ -126,12 +126,12 @@ data class FilePathNodeEntity(override val eid: EID) : NodeEntity {
 
 data class SelectShelveChangeEntity(override val eid: EID) : Entity {
   val changeList: ShelvedChangeListEntity by ChangeList
-  val change: ShelvedChangeEntity by Change
+  val change: ShelvedChangeEntity? by Change
   val project: ProjectEntity by Project
 
   companion object : DurableEntityType<SelectShelveChangeEntity>(SelectShelveChangeEntity::class.java.name, "com.intellij", ::SelectShelveChangeEntity) {
     val ChangeList = requiredRef<ShelvedChangeListEntity>("ChangeList")
-    val Change = requiredRef<ShelvedChangeEntity>("Change")
+    val Change = optionalRef<ShelvedChangeEntity>("Change")
     val Project = requiredRef<ProjectEntity>("project")
   }
 }
