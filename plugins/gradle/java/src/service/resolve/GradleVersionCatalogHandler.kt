@@ -14,19 +14,17 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface GradleVersionCatalogHandler {
+  @Deprecated("Doesn't work for included builds of a composite build", ReplaceWith("getVersionCatalogFiles(module)"))
   fun getExternallyHandledExtension(project: Project) : Set<String>
 
+  @Deprecated("Doesn't work for included builds of a composite build", ReplaceWith("getVersionCatalogFiles(module)"))
   fun getVersionCatalogFiles(project: Project) : Map</*catalog name*/ String, /*catalog file*/ VirtualFile>
   fun getVersionCatalogFiles(module: Module) : Map</*catalog name*/ String, /*catalog file*/ VirtualFile>
 
   fun getAccessorClass(context: PsiElement, catalogName: String) : PsiClass?
 }
 
-@Deprecated(
-  "Doesn't work for linked projects in a composite build. It only provides version catalogs for a build in a root project directory.",
-  ReplaceWith("getVersionCatalogFiles(module)"),
-  DeprecationLevel.WARNING,
-)
+@Deprecated("Doesn't work for included builds of a composite build", ReplaceWith("getVersionCatalogFiles(module)"))
 fun getVersionCatalogFiles(project: Project) : Map<String, VirtualFile> {
   val container = mutableMapOf<String, VirtualFile>()
   for (extension in EP_NAME.extensionList) {
@@ -48,6 +46,7 @@ fun getVersionCatalogFiles(module: Module) : Map<String, VirtualFile> {
   return container
 }
 
+@Deprecated("Doesn't work for included builds of a composite build", ReplaceWith("getVersionCatalogFiles(module)"))
 fun getGradleStaticallyHandledExtensions(project: Project) : Set<String> {
   val container = mutableSetOf<String>()
   for (extension in EP_NAME.extensionList) {

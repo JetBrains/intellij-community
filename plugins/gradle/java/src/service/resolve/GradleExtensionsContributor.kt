@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.service.resolve
 //import org.jetbrains.plugins.gradle.service.resolve.static.getStaticallyHandledExtensions
 import com.intellij.icons.AllIcons
 import com.intellij.lang.properties.IProperty
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
@@ -101,16 +102,12 @@ class GradleExtensionsContributor : NonCodeMembersContributor() {
     }
 
     fun processPropertiesFromCatalog(name: String?, place: PsiElement, processor: PsiScopeProcessor, state: ResolveState) : Set<String>? {
-      val staticExtensions = getGradleStaticallyHandledExtensions(place.project)
-      val names = if (name == null) staticExtensions else listOf(name).filter { it in staticExtensions }
-      val properties = mutableSetOf<String>()
-      for (extName in names) {
-        val accessor = getVersionCatalogAccessor(place, extName) ?: continue
-        if (!processor.execute(StaticVersionCatalogProperty(place, extName, accessor), state)) {
-          return null
-        }
+      if (!isNameOfVersionCatalog(name, place)) return emptySet()
+      val accessor = getVersionCatalogAccessor(place, name!!) ?: return emptySet()
+      if (!processor.execute(StaticVersionCatalogProperty(place, name, accessor), state)) {
+        return null // to stop processing
       }
-      return properties
+      return setOf(name)
     }
 
     fun getExtensionsFor(psiElement: PsiElement): GradleExtensionsData? {
@@ -121,5 +118,11 @@ class GradleExtensionsContributor : NonCodeMembersContributor() {
     }
 
     internal const val PROPERTIES_FILE_ORIGINAL_INFO : String = "by gradle.properties"
+
+    private fun isNameOfVersionCatalog(catalogName: String?, place: PsiElement): Boolean {
+      catalogName ?: return false
+      val module = ModuleUtilCore.findModuleForPsiElement(place) ?: return false
+      return getVersionCatalogFiles(module).contains(catalogName)
+    }
   }
 }
