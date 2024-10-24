@@ -2,6 +2,7 @@
 package com.intellij.ide.trustedProjects
 
 import com.intellij.diagnostic.WindowsDefenderExcludeUtil
+import com.intellij.diagnostic.WindowsDefenderStatisticsCollector
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.OpenUntrustedProjectChoice
@@ -266,7 +267,11 @@ internal class TrustedProjectStartupDialog(
   }
 
   fun getWidowsDefenderPathsToExclude(): List<Path> {
-    return if (windowsDefender.get()) listOf(*getIdePaths().toTypedArray(), getTrustFolder(trustAll.get())) else emptyList()
+    return if (windowsDefender.get()) {
+      WindowsDefenderStatisticsCollector.excludedFromTrustDialog(trustAll.get())
+      listOf(*getIdePaths().toTypedArray(), getTrustFolder(trustAll.get()))
+    }
+    else emptyList()
   }
 
   fun getOpenChoice(): OpenUntrustedProjectChoice = userChoice
