@@ -2524,6 +2524,7 @@ com.intellij.modcommand.ModCommand
 - s:updateInspectionOption(com.intellij.psi.PsiElement,com.intellij.codeInspection.InspectionProfileEntry,java.util.function.Consumer):com.intellij.modcommand.ModCommand
 com.intellij.modcommand.ModCommandAction
 - com.intellij.codeInsight.intention.CommonIntentionAction
+- com.intellij.openapi.project.PossiblyDumbAware
 - sf:EMPTY_ARRAY:com.intellij.modcommand.ModCommandAction[]
 - asIntention():com.intellij.codeInsight.intention.IntentionAction
 - asModCommandAction():com.intellij.modcommand.ModCommandAction
