@@ -111,15 +111,25 @@ class JCefUI(data: ComponentData) : UiComponent(data) {
       jcefWorker.callJs("!!window.elementFinder", 3_000)
     }.toBoolean()
     if (!isElementFinderInjected) {
-      jcefWorker.runJs(initScript)
+      jcefWorker.runJs(INIT_SCRIPT)
     }
   }
 
-  /**
-   * JavaScript functions we need on the browser side.
-   */
-  @Language("JavaScript")
-  private val initScript = """
+  @Serializable
+  data class Location(val x: Double, val y: Double, val width: Double, val height: Double)
+
+  @Serializable
+  data class ElementData(val tag: String, val html: String, val location: Location, val xpath: String)
+
+  @Serializable
+  data class ElementDataList(val elements: List<ElementData>)
+
+  companion object {
+    /**
+     * JavaScript functions we need on the browser side.
+     */
+    @Language("JavaScript")
+    private const val INIT_SCRIPT = """
     window.elementFinder = {};
 
     function Element(element) {
@@ -166,15 +176,7 @@ class JCefUI(data: ComponentData) : UiComponent(data) {
       }
     };
   """
-
-  @Serializable
-  data class Location(val x: Double, val y: Double, val width: Double, val height: Double)
-
-  @Serializable
-  data class ElementData(val tag: String, val html: String, val location: Location, val xpath: String)
-
-  @Serializable
-  data class ElementDataList(val elements: List<ElementData>)
+  }
 }
 
 @Remote("com.jetbrains.performancePlugin.remotedriver.jcef.JcefComponentWrapper", plugin = REMOTE_ROBOT_MODULE_ID)
