@@ -11,6 +11,7 @@ import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.env.PyEnvTestSettings
 import com.jetbrains.extensions.failure
 import com.jetbrains.python.packaging.findCondaExecutableRelativeToEnv
+import com.jetbrains.python.sdk.PythonBinary
 import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
@@ -20,13 +21,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
-
-
-/**
- * file i.e `/usr/bin/python3` or `c:\pythons\python.exe`
- */
-typealias PathToPythonBinary = Path
-
 
 /**
  * Gradle script installs two types of python: conda and vanilla. Env could be obtained by [getTestEnvironment] which also provides closable
@@ -59,12 +53,12 @@ sealed class PythonType<T : Any>(private val tag: @NonNls String) {
     ?: failure("No python found. See ${PyEnvTestSettings::class} class for more info")
 
 
-  protected abstract suspend fun pythonPathToEnvironment(pythonBinary: PathToPythonBinary, envDir: Path): Pair<T, AutoCloseable>
+  protected abstract suspend fun pythonPathToEnvironment(pythonBinary: PythonBinary, envDir: Path): Pair<T, AutoCloseable>
 
 
-  data object VanillaPython3 : PythonType<PathToPythonBinary>("python3") {
+  data object VanillaPython3 : PythonType<PythonBinary>("python3") {
     // Python is directly executable
-    override suspend fun pythonPathToEnvironment(pythonBinary: PathToPythonBinary, envDir: Path): Pair<PathToPythonBinary, AutoCloseable> {
+    override suspend fun pythonPathToEnvironment(pythonBinary: PythonBinary, envDir: Path): Pair<PythonBinary, AutoCloseable> {
       val disposable = Disposer.newDisposable("Python tests disposable for VfsRootAccess")
       // We might have python installation outside the project root, but we still need to have access to it.
       VfsRootAccess.allowRootAccess(disposable, pythonBinary.parent.toString())
@@ -77,7 +71,7 @@ sealed class PythonType<T : Any>(private val tag: @NonNls String) {
 
   data object Conda : PythonType<PyCondaEnv>("conda") {
 
-    override suspend fun pythonPathToEnvironment(pythonBinary: PathToPythonBinary, envDir: Path): Pair<PyCondaEnv, AutoCloseable> {
+    override suspend fun pythonPathToEnvironment(pythonBinary: PythonBinary, envDir: Path): Pair<PyCondaEnv, AutoCloseable> {
       // First, find python binary, then calculate conda from it as env stores "conda" as a regular env
       val condaPath = findCondaExecutableRelativeToEnv(pythonBinary) ?: error("Conda root $pythonBinary doesn't have conda binary")
 
