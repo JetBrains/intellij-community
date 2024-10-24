@@ -1,5 +1,8 @@
 package com.intellij.notebooks.visualization.outputs.impl
 
+import com.intellij.notebooks.ui.visualization.notebookAppearance
+import com.intellij.notebooks.visualization.outputs.hoveredCollapsingComponentRect
+import com.intellij.notebooks.visualization.r.inlays.ResizeController
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColors
@@ -10,15 +13,13 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.intellij.notebooks.ui.visualization.notebookAppearance
-import com.intellij.notebooks.visualization.outputs.hoveredCollapsingComponentRect
-import com.intellij.notebooks.visualization.r.inlays.ResizeController
 import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.Font
 import java.awt.Graphics
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.lang.Integer.max
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -37,6 +38,7 @@ open class CollapsingComponent(
         customHeight = height - insets.run { top + bottom }
       }
       customHeight += dy
+      customHeight = max(customHeight, editor.lineHeight) // We will not allow resizing component below editor line height, because it impossible to resize it back.
       setSize(width, customHeight)
       mainComponent.revalidate()
     }.apply {

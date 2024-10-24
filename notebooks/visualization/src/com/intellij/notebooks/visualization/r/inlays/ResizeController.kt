@@ -94,17 +94,15 @@ class ResizeController(
     resizeState = ResizeState.RESIZING
   }
 
-  override fun mouseDragged(e: MouseEvent?) {
-    if (prevPoint == null) {
-      return
-    }
+  override fun mouseDragged(e: MouseEvent) {
+    val prevPoint = prevPoint ?: return
 
-    val locationOnScreen = e!!.locationOnScreen
+    val locationOnScreen = e.locationOnScreen
 
-    val dy = if (scaleMode == ScaleMode.N) locationOnScreen.y - prevPoint!!.y else 0
+    val dy = if (scaleMode == ScaleMode.N) locationOnScreen.y - prevPoint.y else 0
 
     deltaSize(0, dy)
-    prevPoint = locationOnScreen
+    this.prevPoint = locationOnScreen
   }
 
   private fun mouseInResizeArea(e: MouseEvent) = e.point.y > component.height - component.insets.bottom
