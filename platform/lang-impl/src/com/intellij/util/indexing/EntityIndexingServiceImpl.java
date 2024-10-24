@@ -314,7 +314,7 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     }
     List<ExcludeUrlEntity> newEntityExcludedRoots = newEntity.getExcludedRoots();
     for (ExcludeUrlEntity excludedRoot : oldEntity.getExcludedRoots()) {
-      if (!newEntityExcludedRoots.contains(excludedRoot.getUrl())) return true;
+      if (!newEntityExcludedRoots.contains(excludedRoot)) return true;
     }
     return false;
   }
