@@ -161,7 +161,8 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
 
   override fun processEvent(managerCommand: DebuggerCommandImpl) {
     assertIsManagerThread()
-    myCurrentCommands.get().push(managerCommand)
+    val threadCommands = myCurrentCommands.get()
+    threadCommands.push(managerCommand)
     try {
       if (myEvents.isClosed) {
         managerCommand.notifyCancelled()
@@ -187,7 +188,7 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
       LOG.error(e)
     }
     finally {
-      myCurrentCommands.get().pop()
+      threadCommands.pop()
     }
   }
 
