@@ -5975,14 +5975,6 @@ f:com.intellij.ide.browsers.impl.WebBrowserServiceImpl$Companion
 - f:getDebuggableUrl(com.intellij.psi.PsiElement):com.intellij.util.Url
 - f:getDebuggableUrls(com.intellij.psi.PsiElement):java.util.Collection
 - f:getProviders(com.intellij.ide.browsers.OpenInBrowserRequest):kotlin.sequences.Sequence
-a:com.intellij.ide.cloudConfig.CloudConfigProvider
-- <init>():V
-- a:getLafClassName():java.lang.String
-- s:getProvider():com.intellij.ide.cloudConfig.CloudConfigProvider
-- a:importFinished(java.nio.file.Path):V
-- a:importSettingsSilently(java.nio.file.Path):Z
-- a:initConfigsPanel(javax.swing.ButtonGroup,javax.swing.JRadioButton):V
-- s:setProvider(com.intellij.ide.cloudConfig.CloudConfigProvider):V
 f:com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider
 - com.intellij.openapi.application.IdeUrlTrackingParametersProvider
 - <init>():V
