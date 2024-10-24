@@ -41,12 +41,14 @@ import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcom
 import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeCollector.RunConfigurationResult
 import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeCollector.ScriptResult
 import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeCollector.logWelcomeRunConfiguration
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.xdebugger.XDebuggerUtil
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonRunConfigurationProducer
 import com.jetbrains.python.sdk.pythonSdk
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.concurrency.CancellablePromise
 import java.util.concurrent.Callable
@@ -199,7 +201,7 @@ internal object PyWelcome {
 
     val psiFile = PsiManager.getInstance(project).findFile(file) ?: error("File $file was just created, but not found in PSI")
 
-    writeText(project, psiFile)?.also { line ->
+    writeText(psiFile)?.also { line ->
       PyWelcomeCollector.logWelcomeScript(project, ScriptResult.CREATED)
 
       XDebuggerUtil.getInstance().toggleLineBreakpoint(project, file, line)
@@ -208,7 +210,10 @@ internal object PyWelcome {
     return psiFile
   }
 
-  private fun writeText(project: Project, psiFile: PsiFile): Int? {
+
+  @RequiresWriteLock
+  internal fun writeText(psiFile: PsiFile): Int? {
+    val project = psiFile.project
     val document = PsiDocumentManager.getInstance(project).getDocument(psiFile)
     if (document == null) {
       LOG.warn("Unable to get document for ${psiFile.virtualFile}")
