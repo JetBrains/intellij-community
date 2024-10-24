@@ -18,12 +18,12 @@ import java.nio.file.Path
  */
 suspend fun createSdk(
   pythonBinaryPath: VirtualFile,
-  projectPath: Path,
+  projectPath: Path?,
   existingSdks: Array<Sdk>,
 ): Sdk {
   val newSdk = withContext(Dispatchers.IO) {
     // "suggest name" calls external process and can't be called from EDT
-    val suggestedName = /*suggestedSdkName ?:*/ suggestAssociatedSdkName(pythonBinaryPath.path, projectPath.toString())
+    val suggestedName = /*suggestedSdkName ?:*/ suggestAssociatedSdkName(pythonBinaryPath.path, projectPath?.toString())
     SdkConfigurationUtil.setupSdk(existingSdks, pythonBinaryPath,
                                   PythonSdkType.getInstance(),
                                   null, suggestedName)
