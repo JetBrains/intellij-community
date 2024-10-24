@@ -935,10 +935,6 @@ f:com.intellij.codeInsight.intention.EmptyIntentionAction
 - getText():java.lang.String
 - hashCode():I
 - isAvailable(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
-f:com.intellij.codeInsight.intention.QuickFixes
-- sf:EMPTY_ACTION:com.intellij.codeInspection.IntentionAndQuickFixAction
-- sf:EMPTY_FIX:com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
-- <init>():V
 c:com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
 - com.intellij.codeInsight.intention.AbstractEmptyIntentionAction
 - com.intellij.codeInsight.intention.CustomizableIntentionAction
