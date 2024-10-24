@@ -1698,6 +1698,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/smartStepIntoConstructor.kt");
         }
 
+        @TestMetadata("smartStepIntoConstructorWithValueClassParam.kt")
+        public void testSmartStepIntoConstructorWithValueClassParam() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoConstructorWithValueClassParam.kt");
+        }
+
         @TestMetadata("smartStepIntoDeferredLambdas.kt")
         public void testSmartStepIntoDeferredLambdas() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoDeferredLambdas.kt");

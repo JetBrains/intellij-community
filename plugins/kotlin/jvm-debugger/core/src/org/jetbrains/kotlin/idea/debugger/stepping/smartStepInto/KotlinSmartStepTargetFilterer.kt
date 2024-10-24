@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
 import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.JVMNameUtil
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.asJava.LightClassUtil
+import org.jetbrains.kotlin.fileClasses.internalNameWithoutInnerClasses
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
 import org.jetbrains.kotlin.idea.debugger.base.util.fqnToInternalName
 import org.jetbrains.kotlin.idea.debugger.base.util.internalNameToFqn
@@ -80,6 +82,7 @@ class KotlinSmartStepTargetFilterer(
             .handleMangling(methodInfo)
             .handleValueClassMethods(methodInfo)
             .handleDefaultArgs()
+            .handleDefaultConstructorMarker()
             .handleDefaultInterfaces()
             .handleAccessMethods()
             .handleInvokeSuspend(methodInfo)
@@ -123,7 +126,7 @@ class KotlinSmartStepTargetFilterer(
 
     context(KaSession)
     private fun primaryConstructorMatches(declaration: KtClass, owner: String, name: String, signature: String): Boolean {
-        if (name != "<init>" || signature != "()V") return false
+        if (name != JVMNameUtil.CONSTRUCTOR_NAME || signature != "()V") return false
         val symbol = declaration.symbol as? KaClassSymbol ?: return false
         val internalClassName = symbol.getJvmInternalName()
         return owner == internalClassName
@@ -185,6 +188,16 @@ private fun BytecodeSignature.handleDefaultArgs(): BytecodeSignature {
         name = name.substringBefore(JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX),
         signature = buildSignature(signature, parametersCount - sourceParametersCount, fromStart = false)
     )
+}
+
+private fun BytecodeSignature.handleDefaultConstructorMarker(): BytecodeSignature {
+    if (name != JVMNameUtil.CONSTRUCTOR_NAME) return this
+    val type = Type.getType(signature)
+    val defaultMarkerDescriptor = KotlinDebuggerConstants.DEFAULT_CONSTRUCTOR_MARKER_FQ_NAME
+        .internalNameWithoutInnerClasses
+        .internalNameToReferenceTypeName()
+    if (type.argumentTypes.lastOrNull()?.descriptor != defaultMarkerDescriptor) return this
+    return copy(signature = buildSignature(signature, dropCount = 1, fromStart = false))
 }
 
 private fun BytecodeSignature.handleDefaultInterfaces(): BytecodeSignature {

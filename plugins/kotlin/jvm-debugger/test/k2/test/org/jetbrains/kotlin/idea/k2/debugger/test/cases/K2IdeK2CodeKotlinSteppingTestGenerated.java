@@ -1698,6 +1698,11 @@ public abstract class K2IdeK2CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/custom/smartStepIntoConstructor.kt");
         }
 
+        @TestMetadata("smartStepIntoConstructorWithValueClassParam.kt")
+        public void testSmartStepIntoConstructorWithValueClassParam() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoConstructorWithValueClassParam.kt");
+        }
+
         @TestMetadata("smartStepIntoDeferredLambdas.kt")
         public void testSmartStepIntoDeferredLambdas() throws Exception {
             runTest("../testData/stepping/custom/smartStepIntoDeferredLambdas.kt");

@@ -241,7 +241,7 @@ fun Method.isSyntheticMethodForDefaultParameters(): Boolean {
     if (size < 3) return false
     // We should check not only the marker parameter, as it is present also
     // for object constructor and sealed class constructor
-    return arguments[size - 2] == "int" && arguments[size - 1] == "kotlin.jvm.internal.DefaultConstructorMarker"
+    return arguments[size - 2] == "int" && arguments[size - 1] == KotlinDebuggerConstants.DEFAULT_CONSTRUCTOR_MARKER_FQ_NAME.asString()
 }
 
 private fun isInlineFunctionFromLibrary(positionManager: PositionManager, location: Location, token: LocationToken): Boolean {

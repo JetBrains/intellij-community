@@ -31,4 +31,5 @@ object KotlinDebuggerConstants {
     const val INLINE_SCOPE_NUMBER_SEPARATOR = '\\'
 
     val INLINE_ONLY_ANNOTATION_FQ_NAME = FqName("kotlin.internal.InlineOnly")
+    val DEFAULT_CONSTRUCTOR_MARKER_FQ_NAME = FqName("kotlin.jvm.internal.DefaultConstructorMarker")
 }
