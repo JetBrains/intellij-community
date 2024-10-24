@@ -86,16 +86,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     scrambleMainJar = false
     buildSourcesArchive = true
 
-    // Software Bill of Materials (SBOM).
-    sbomOptions.creator = "Organization: Google LLC"
-    sbomOptions.documentNamespace = "https://spdx.google/AndroidStudio-0794716c-a8f8-40ad-9bd0-90ce3dbaaf2a"
-    sbomOptions.license = SoftwareBillOfMaterials.Options.DistributionLicense(
-      name = "Google",
-      text = "NOASSERTION",
-      copyrightText = "Copyright 2023 Google LLC and contributors",
-      url = null,
-    )
-
     allLibraryLicenses += AndroidStudioLibraryLicenses.LICENSES_LIST
     includeIntoSourcesArchiveFilter = BiPredicate { _, _ -> true }
     customJvmMemoryOptions = customJvmMemoryOptions.plus(arrayOf("-Xms" to "256m", "-Xmx" to "2048m"))
