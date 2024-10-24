@@ -1,7 +1,7 @@
 {
   "language": "Java",
   "projectPath": "../../ml-eval/keycloak",
-  "outputDir": "ml-eval-function-calling-java-output",
+  "outputDir": "ml-eval-self-identification-java-output",
   "strategy": {
     "callsPerSession": 10,
     "essentialEntities": [
