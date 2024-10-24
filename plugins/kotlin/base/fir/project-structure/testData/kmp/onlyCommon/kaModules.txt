@@ -23,9 +23,9 @@ KaLibraryModule:
     <empty>
 
 KaLibraryModule:
-  description: Library org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.0.20-dev-2651
+  description: Library org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729
   targetPlatform: JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)
-  libraryName: org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.0.20-dev-2651
+  libraryName: org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729
   isSdk: false
   regularDependencies:
     KaLibraryModule(SDK)
@@ -41,7 +41,7 @@ KaLibraryModule:
   isSdk: false
   regularDependencies:
     KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.0.20-dev-2651)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729)
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -67,7 +67,7 @@ KaSourceModule:
   stableModuleName: <Common>
   regularDependencies:
     KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.0.20-dev-2651)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729)
     KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
   friendDependencies:
     <empty>
