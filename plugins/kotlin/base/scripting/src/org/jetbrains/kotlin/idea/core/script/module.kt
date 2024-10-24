@@ -55,7 +55,7 @@ fun getUpdatedStorage(
                 ?.let { dependenciesData.sdks[it] }
                 ?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
 
-        val libraryDependencies = toVfsRoots(configuration.dependenciesClassPath)
+        val libraryDependencies = toVfsRoots(configuration.dependenciesClassPath).sortedBy { it.name }
             .map { updatedFactory.get(it, source) }
 
         val allDependencies = listOfNotNull(sdkDependency) + libraryDependencies
