@@ -2302,11 +2302,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
           //updater.assertNoDuplicates(myFile, getErrorsFromMarkup(markupModel), "errors from markup ");
           WriteCommandAction.runWriteCommandAction(getProject(), () -> {
             assertFalse(myDaemonCodeAnalyzer.isRunning());
-            long stamp = myEditor.getDocument().getModificationStamp();
+            long docStamp = myEditor.getDocument().getModificationStamp();
             char charToType = finalText.charAt(o);
             type(charToType);
-            assertNotSame(String.valueOf(charToType), stamp, myEditor.getDocument().getModificationStamp());
-            assertFalse(myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile));
+            if (docStamp != myEditor.getDocument().getModificationStamp()) { // condition could be false when type handler does overtype ')' with already existing ')'
+              assertFalse(myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile));
+            }
           });
           //updater.assertNoDuplicates(myFile, getErrorsFromMarkup(markupModel), "errors from markup ");
           TestTimeOut t = TestTimeOut.setTimeout(30, TimeUnit.SECONDS);
@@ -2318,7 +2319,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
           while (!myDaemonCodeAnalyzer.isRunning() && !myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile)/*in case the highlighting has already finished miraculously by now*/) {
             Thread.yield();
             UIUtil.dispatchAllInvocationEvents();
-            if (t.timedOut()) throw new RuntimeException(new TimeoutException());
+            if (t.timedOut()) {
+              throw new RuntimeException(new TimeoutException());
+            }
           }
           if (afterWaitForDaemon != null) {
             afterWaitForDaemon.run();
