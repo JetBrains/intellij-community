@@ -378,6 +378,11 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
             // According to the Javadoc, this method must follow symlinks.
             .stat(ensurePathIsAbsolute(path.eelPath), EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW)
             .getOrThrowFileSystemException()
+
+          if (ijentFs.user.uid == 0) {
+            return@fsBlocking
+          }
+
           // Inspired by sun.nio.fs.UnixFileSystemProvider#checkAccess
           val filePermissionBranch = when {
             ijentFs.user.uid == fileInfo.permissions.owner -> OWNER
