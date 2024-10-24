@@ -11,10 +11,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Set;
 
 public abstract class DefaultVcsRootPolicy {
-  @NotNull protected final Project myProject;
+  protected final @NotNull Project myProject;
 
   protected DefaultVcsRootPolicy(@NotNull Project project) {
     myProject = project;
@@ -28,11 +27,9 @@ public abstract class DefaultVcsRootPolicy {
    * Return roots that belong to the project (ex: all content roots).
    * If 'Project' mapping is configured, all vcs roots for these roots will be put to the mappings.
    */
-  @NotNull
-  public abstract Collection<VirtualFile> getDefaultVcsRoots();
+  public abstract @NotNull Collection<VirtualFile> getDefaultVcsRoots();
 
-  @Nls
-  public String getProjectConfigurationMessage() {
+  public @Nls String getProjectConfigurationMessage() {
     boolean isDirectoryBased = ProjectKt.isDirectoryBased(myProject);
     if (isDirectoryBased) {
       String fileName = ProjectKt.getStateStore(myProject).getDirectoryStorePath().getFileName().toString();
