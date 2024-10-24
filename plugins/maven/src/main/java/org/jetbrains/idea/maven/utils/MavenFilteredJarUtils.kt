@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils
 
-import com.intellij.util.text.nullize
 import org.jdom.Element
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -18,14 +17,7 @@ class MavenFilteredJarUtils {
       val result = HashMap<String, MavenFilteredJarConfiguration>()
       val plugin = mavenProject.findPlugin("org.apache.maven.plugins", "maven-jar-plugin");
       if (plugin == null) return emptyList()
-      for (e in GOALS) {
-        var configuration = plugin.getGoalConfiguration(e.key)
-        if (configuration != null) {
-          loadConfiguration(mavenProjectsManager, mavenProject, configuration, e.key)?.also {
-            result[it.name] = it
-          }
-        }
-      }
+
       plugin.executions.forEach { exec ->
         exec.goals.forEach { g ->
           val configuration = exec.configurationElement
@@ -45,6 +37,8 @@ class MavenFilteredJarUtils {
       val excludes = findChildrenValuesByPath(element, "excludes", "exclude").toMutableList()
       if (excludes.isEmpty() && includes.isEmpty()) return null //no configurations if jar is not filtered
       val classifier = element.getChildTextTrim("classifier") ?: GOALS[goal] ?: ""
+      if (classifier.isEmpty()) return null // skip for default classifier
+
       val excludeDefaults: Boolean
       if ("false".equals(element.getChildTextTrim("addDefaultExcludes"), true)) {
         excludeDefaults = false
@@ -68,7 +62,7 @@ class MavenFilteredJarUtils {
       configuration.isTest = tests
       configuration.originalOutput = if (tests) mavenProject.testOutputDirectory else mavenProject.outputDirectory;
       configuration.jarOutput = configuration.originalOutput + "-jar-" + classifier
-      configuration.name = mavenProject.mavenId.toString() + (classifier.nullize(true)?.map { "-$it" } ?: "")
+      configuration.name = mavenProject.mavenId.toString() + "-" + classifier
       return configuration
     }
 

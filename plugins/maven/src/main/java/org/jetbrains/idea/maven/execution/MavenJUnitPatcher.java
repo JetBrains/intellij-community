@@ -12,6 +12,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
@@ -21,6 +22,7 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenArtifact;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectSettings;
@@ -70,51 +72,99 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
     replaceFilteredJarDirectories(projectsManager, module, javaParameters, mavenProject);
   }
 
+  record DependenciesWithClassifiers(MavenId id, List<String> classifiers) {
+  }
+
+  record ReplaceInfo(List<MavenFilteredJarConfiguration> configurations, boolean append) {
+  }
+
+  private static List<DependenciesWithClassifiers> groupByClassifiers(@NotNull List<MavenArtifact> dependencies) {
+    var map = new LinkedHashMap<MavenId, List<String>>();
+    dependencies.forEach(d -> {
+      map.compute(d.getMavenId(), (i, l) -> {
+        if (l == null) {
+          return new SmartList<>(d.getClassifier());
+        }
+        else {
+          l.add(d.getClassifier());
+          return l;
+        }
+      });
+    });
+    return ContainerUtil.map(map.entrySet(), e -> new DependenciesWithClassifiers(e.getKey(), e.getValue()));
+  }
+
+
   private static void replaceFilteredJarDirectories(MavenProjectsManager projectsManager,
                                                     @NotNull Module module,
                                                     JavaParameters parameters,
                                                     MavenProject project) {
     if (!Registry.is("maven.build.additional.jars")) return;
-    //todo: We do dependency traversing every time, we need another structure in project tree for this to retrieve this data in a fast way
-    Set<MavenArtifact> visited = new HashSet<>();
-    ArrayDeque<MavenArtifact> queue = new ArrayDeque<>(project.getDependencies());
-    List<MavenFilteredJarConfiguration> toReplace = new ArrayList<>();
-    while (!queue.isEmpty()) {
-      var dependency = queue.poll();
-      var depProject = projectsManager.findProject(dependency);
-      if (depProject == null) continue;
-      if (!visited.add(dependency)) continue;
-      MavenFilteredJarConfiguration jarConfiguration =
-        findFilteredJarConfig(projectsManager, depProject, dependency.getClassifier());
-      if (jarConfiguration != null) {
-        LOG.debug(
-          "found additional jar configuration for " + dependency + ", classpath will be replaced in tests for module " + module.getName());
-        toReplace.add(jarConfiguration);
-      }
-      queue.addAll(depProject.getDependencies());
-    }
+    List<ReplaceInfo> fixClassPath = getClassPathReplaceInfos(projectsManager, project);
 
-    if (toReplace.isEmpty()) return;
-    //do not expect a lot of MavenFilteredJarConfiguration here, O(n^2) should be fine
+    replaceClassPath(module, parameters, fixClassPath);
+  }
+
+  private static void replaceClassPath(@NotNull Module module, JavaParameters parameters, List<ReplaceInfo> fixClassPath) {
+    if (fixClassPath.isEmpty()) return;
     String[] paths = ArrayUtil.toStringArray(parameters.getClassPath().getPathList());
-    boolean replaced = false;
-    for (int i = 0; i < paths.length; i++) {
-      String path = paths[i];
-      MavenFilteredJarConfiguration config = ContainerUtil.find(toReplace, c -> FileUtil.pathsEqual(path, c.originalOutput));
-      if (config != null) {
-        paths[i] = config.jarOutput;
-        replaced = true;
+    ArrayList<String> resultingPath = new ArrayList<>(paths.length);
+    boolean pathFixed = false;
+    Map<String, ReplaceInfo> configurationMap = new HashMap<>();
+    fixClassPath.forEach(ri -> configurationMap.put(FileUtil.toCanonicalPath(ri.configurations.get(0).originalOutput), ri));
+
+    for (String path : paths) {
+      ReplaceInfo replaceInfo = configurationMap.get(FileUtil.toCanonicalPath(path));
+      if (replaceInfo != null) {
+        pathFixed = true;
+        if (replaceInfo.append) {
+          resultingPath.add(path);
+        }
+        resultingPath.addAll(ContainerUtil.map(replaceInfo.configurations, c -> c.jarOutput));
+      }
+      else {
+        resultingPath.add(path);
       }
     }
-    if (!replaced) {
+    if (!pathFixed) {
       LOG.warn(
-        "expected to replace " + toReplace.size() + " dependencies in running module " + module.getName() + ", but replaced 0");
+        "expected to replace " + fixClassPath.size() + " dependencies in running module " + module.getName() + ", but replaced 0");
     }
     else {
       parameters.getClassPath().clear();
-      parameters.getClassPath().addAll(Arrays.asList(paths));
+      parameters.getClassPath().addAll(resultingPath);
     }
   }
+
+  private static @NotNull List<ReplaceInfo> getClassPathReplaceInfos(MavenProjectsManager projectsManager, MavenProject project) {
+    Set<MavenId> visited = new HashSet<>();
+
+
+    ArrayDeque<DependenciesWithClassifiers> queue = new ArrayDeque<>(groupByClassifiers(project.getDependencies()));
+
+    List<ReplaceInfo> fixClassPath = new ArrayList<>();
+    while (!queue.isEmpty()) {
+      var dependencies = queue.poll();
+      var depProject = projectsManager.findProject(dependencies.id);
+      if (depProject == null) continue;
+      if (!visited.add(dependencies.id)) continue;
+      List<MavenFilteredJarConfiguration> configurations =
+        ContainerUtil.mapNotNull(dependencies.classifiers, classifier -> findFilteredJarConfig(projectsManager, depProject, classifier));
+      if (!configurations.isEmpty()) {
+        fixClassPath.add(new ReplaceInfo(configurations, needAppendClasspath(dependencies.classifiers)));
+      }
+      queue.addAll(groupByClassifiers(project.getDependencies()));
+    }
+    return fixClassPath;
+  }
+
+  private static boolean needAppendClasspath(List<String> classifiers) {
+    for (String c : classifiers) {
+      if (c == null || c.isEmpty()) return true;
+    }
+    return false;
+  }
+
 
   private static @Nullable MavenFilteredJarConfiguration findFilteredJarConfig(MavenProjectsManager projectsManager,
                                                                                MavenProject mavenProject, String classifier) {
