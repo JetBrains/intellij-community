@@ -61,10 +61,6 @@ internal open class SamplingTask(@JvmField internal val dumpInterval: Int, maxDu
 
   protected open suspend fun dumpedThreads(threadDump: ThreadDump) {}
 
-  fun isValid(dumpingDuration: Long): Boolean {
-    return threadInfos.size >= 10L.coerceAtLeast(maxDumps.toLong().coerceAtMost(dumpingDuration / dumpInterval / 2))
-  }
-
   open fun stop() {
     job?.cancel()
   }

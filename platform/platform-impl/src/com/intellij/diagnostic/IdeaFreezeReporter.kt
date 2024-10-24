@@ -31,8 +31,6 @@ import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.coroutineContext
-import kotlin.math.max
-import kotlin.math.min
 
 private val FREEZE_NOTIFIER_EP: ExtensionPointName<FreezeNotifier> = ExtensionPointName("com.intellij.diagnostic.freezeNotifier")
 
@@ -167,23 +165,17 @@ internal class IdeaFreezeReporter : PerformanceListener {
       return
     }
 
-    val dumps = ArrayList(currentDumps) // defensive copy
-
     if (Registry.`is`("freeze.reporter.enabled", false)) {
-      val performanceWatcher = PerformanceWatcher.getInstance()
-      // check that we have at least half of the dumps required
       if ((durationMs / 1000).toInt() > FREEZE_THRESHOLD && !stacktraceCommonPart.isNullOrEmpty()) {
-        val dumpingDurationMs = durationMs - performanceWatcher.unresponsiveInterval
-        val dumpsCount = min(performanceWatcher.maxDumpDuration.toLong(), dumpingDurationMs / 2) / performanceWatcher.dumpInterval
-        if (dumpTask.isValid(dumpingDurationMs) || dumps.size >= max(3, dumpsCount)) {
+        val dumps = ArrayList(currentDumps) // defensive copy
+        if (dumpTask.isValid() && dumps.size >= 2) {
           val attachments = ArrayList<Attachment>()
           addDumpsAttachments(from = dumps, textMapper = { it.rawDump }, container = attachments)
           if (reportDir != null) {
             EP_NAME.forEachExtensionSafe { attachments.addAll(it.getAttachments(reportDir)) }
           }
 
-          val loggingEvent = createEvent(dumpTask, durationMs, attachments, reportDir, performanceWatcher, finished = true)
-
+          val loggingEvent = createEvent(dumpTask, durationMs, attachments, reportDir, PerformanceWatcher.getInstance(), finished = true)
           report(loggingEvent)
 
           if (reportDir != null && loggingEvent != null && dumps.isNotEmpty()) {
@@ -197,6 +189,15 @@ internal class IdeaFreezeReporter : PerformanceListener {
 
     this.dumpTask = null
     reset()
+  }
+
+  /**
+   * In Diogen, we check that there is at least one method in report.txt which also exists in threadDumps in the thread responsible for
+   * a freeze that lasts 1+ second.
+   * And we add [SamplingTask.dumpInterval] to each method in [buildTree].
+   */
+  private fun SamplingTask.isValid(): Boolean {
+    return threadInfos.size > (1000 / dumpInterval)
   }
 
   private fun reset() {
