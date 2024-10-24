@@ -582,6 +582,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     MouseEvent.MOUSE_PRESSED == e.id ||
     MouseEvent.MOUSE_RELEASED == e.id ||
     MouseEvent.MOUSE_CLICKED == e.id ||
+    MouseEvent.MOUSE_DRAGGED == e.id ||
     e is FocusEvent ||
     e is WindowEvent && e.id != WindowEvent.WINDOW_CLOSED
 
