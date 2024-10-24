@@ -134,7 +134,8 @@ internal class TrustedProjectStartupDialog(
             text(message)
           }
           row {
-            checkBox(IdeBundle.message("untrusted.project.warning.trust.location.checkbox", projectPath.parent.name))
+            val trimmedFolderName =  StringUtil.shortenTextWithEllipsis(projectPath.parent.name, 40, 0, true)
+            checkBox(IdeBundle.message("untrusted.project.warning.trust.location.checkbox", trimmedFolderName))
               .bindSelected(trustAll)
               .apply {
                 component.toolTipText = null
