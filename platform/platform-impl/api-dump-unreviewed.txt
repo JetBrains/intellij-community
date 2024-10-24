@@ -775,6 +775,8 @@ com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 - a:toRequest():com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$DirectCall
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent
+- <init>(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):V
+- b:<init>(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getCaret():com.intellij.openapi.editor.Caret
 - f:getContext():com.intellij.openapi.actionSystem.DataContext
 - f:getEditor():com.intellij.openapi.editor.Editor
@@ -791,10 +793,12 @@ com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InlineLookupEve
 f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$LookupCancelled
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InlineLookupEvent
+- <init>(com.intellij.codeInsight.lookup.LookupEvent):V
 - getEvent():com.intellij.codeInsight.lookup.LookupEvent
 f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$LookupChange
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InlineLookupEvent
+- <init>(com.intellij.codeInsight.lookup.LookupEvent):V
 - getEvent():com.intellij.codeInsight.lookup.LookupEvent
 - toRequest():com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 com.intellij.codeInsight.inline.completion.InlineCompletionEventAdapter
