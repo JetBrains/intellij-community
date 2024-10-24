@@ -35,6 +35,9 @@
                  description="Whether to show the inline (grey text) completion in the New Terminal"/>
     <registryKey key="terminal.new.ui.autocompletion" defaultValue="true"
                  description="Whether to run autocompletion in the New Terminal"/>
+    <registryKey key="terminal.classic.refresh.vfs.on.shell.command.finished" defaultValue="true"
+                 description="Refresh VFS when shell commands are finished in the Classic Terminal.
+                  May not work 100% reliably as it uses heuristics to determine when command is finished."/>
 
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.RunAnythingTerminalBridge"/>
