@@ -10,17 +10,11 @@ public final class Test {
     }
     @kotlin.jvm.JvmOverloads
     public final fun foo(@org.jetbrains.annotations.NotNull p1: double) : void {
-        if (x > p1.toInt()) {
-            println(p1)
-        }
-        println(p2)
+        UIdentifier (Identifier (foo))(p1, "pi")
     }
     @kotlin.jvm.JvmOverloads
     public final fun foo() : void {
-        if (x > p1.toInt()) {
-            println(p1)
-        }
-        println(p2)
+        UIdentifier (Identifier (foo))(null, "pi")
     }
     @kotlin.jvm.JvmOverloads
     public final fun bar(@org.jetbrains.annotations.NotNull p1: double, @org.jetbrains.annotations.NotNull p2: java.lang.String) : java.lang.String {
@@ -32,19 +26,11 @@ public final class Test {
     }
     @kotlin.jvm.JvmOverloads
     public final fun bar(@org.jetbrains.annotations.NotNull p1: double) : java.lang.String {
-        return buildString({
-            append(p1)
-            append(" | ")
-            return append(p2)
-        })
+        return UIdentifier (Identifier (bar))(p1, "K2")
     }
     @kotlin.jvm.JvmOverloads
     public final fun bar() : java.lang.String {
-        return buildString({
-            append(p1)
-            append(" | ")
-            return append(p2)
-        })
+        return UIdentifier (Identifier (bar))(null, "K2")
     }
     public final fun getX() : int = UastEmptyExpression
     public final fun getY() : java.lang.String = UastEmptyExpression
@@ -58,16 +44,10 @@ public final class Test {
     }
     @kotlin.jvm.JvmOverloads
     public fun Test(@org.jetbrains.annotations.NotNull x: long) {
-        Test(x.toInt(), y)
-        if (x > 0) {
-            println(x)
-        }
+        UIdentifier (Identifier (Test))(x, "42")
     }
     @kotlin.jvm.JvmOverloads
     public fun Test() {
-        Test(x.toInt(), y)
-        if (x > 0) {
-            println(x)
-        }
+        UIdentifier (Identifier (Test))(null, "42")
     }
 }

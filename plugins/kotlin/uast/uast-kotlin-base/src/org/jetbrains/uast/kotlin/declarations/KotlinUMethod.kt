@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.utils.SmartList
+import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
 
@@ -98,9 +99,42 @@ open class KotlinUMethod(
             KotlinUIdentifier({ nameIdentifier }, identifierSourcePsi, this)
         }
 
+    internal var jvmOverload: UMethod? = null
+
+    protected fun buildTrampolineForJvmOverload(): UExpression? {
+        if (jvmOverload == null) return null
+        var currentMethodParameterIndex = 0
+        val callArguments = mutableListOf<String>()
+        for (uParam in jvmOverload!!.uastParameters) {
+            val currentMethodParameter = uastParameters.getOrNull(currentMethodParameterIndex++)
+            if (currentMethodParameter?.name == uParam.name) {
+                callArguments.add(currentMethodParameter.name)
+            } else {
+                callArguments.addIfNotNull(uParam.uastInitializer?.sourcePsi?.text)
+            }
+        }
+        val trampolineText =
+            buildString {
+                if (!isConstructor && returnType != PsiTypes.voidType()) {
+                    append("return ")
+                }
+                append(jvmOverload!!.name)
+                callArguments.joinTo(this, prefix = "(", postfix = ")", separator = ", ")
+            }
+        val trampoline = KtPsiFactory.contextual(sourcePsi ?: javaPsi).createExpression(trampolineText)
+        return KotlinLazyUBlockExpression(this) { uastParent ->
+            listOf(
+                baseResolveProviderService.baseKotlinConverter.convertOrEmpty(trampoline, uastParent)
+            )
+        }
+    }
+
     override val uastBody: UExpression?
         get() = uastBodyPart.getOrBuild {
             if (kotlinOrigin?.canAnalyze() != true) return@getOrBuild null // EA-137193
+
+            buildTrampolineForJvmOverload()?.let { return it }
+
             val bodyExpression = when (sourcePsi) {
                 is KtFunction -> sourcePsi.bodyExpression
                 is KtPropertyAccessor -> sourcePsi.bodyExpression
