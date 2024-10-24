@@ -14,12 +14,7 @@ fun <T> ChangeScope.unshared(f: SharedChangeScope.() -> T): T {
   return SharedChangeScope(this).f()
 }
 
-class SharedChangeScope internal constructor(private val changeScope: ChangeScope) : ChangeScope by changeScope {
-  fun <T : SharedEntity> new(key: Any, c: KClass<T>, constructor: T.() -> Unit): T =
-    withKey(key) {
-      new(c, constructor = constructor)
-    }
-}
+class SharedChangeScope internal constructor(private val changeScope: ChangeScope) : ChangeScope by changeScope
 
 internal interface Shared {
   companion object : ChangeScopeKey<Shared>
@@ -50,7 +45,3 @@ fun <T> SharedChangeScope.withKey(key: Any, body: SharedChangeScope.() -> T): T 
  * */
 fun <T> ChangeScope.shared(f: SharedChangeScope.() -> T): T =
   requireNotNull(meta[Shared]).shared(f)
-
-
-fun <T : SharedEntity> ChangeScope.newShared(c: KClass<T>, constructor: T.() -> Unit = {}): T =
-  new(c, SharedPart, constructor)
