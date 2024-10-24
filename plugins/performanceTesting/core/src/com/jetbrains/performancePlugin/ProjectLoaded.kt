@@ -366,14 +366,30 @@ private fun reportScriptError(errorMessage: AbstractMessage) {
     Files.writeString(errorDir.resolve("message.txt"), causeMessage)
     Files.writeString(errorDir.resolve("stacktrace.txt"), errorMessage.throwableText)
     val attachments = errorMessage.allAttachments
+    val nameConflicts = attachments.groupBy { it.name }.filter { it.value.size > 1 }.keys
+
     for (j in attachments.indices) {
       val attachment = attachments[j]
-      writeAttachmentToErrorDir(attachment, errorDir.resolve("$j-${attachment.name}"))
+      val fileName = if (attachment.name in nameConflicts) {
+        addSuffixBeforeExtension(attachment.name, "-$j")
+      } else {
+        attachment.name
+      }
+      writeAttachmentToErrorDir(attachment, errorDir.resolve(fileName))
     }
     return
   }
 
   LOG.error("Too many errors have been reported during script execution. See $scriptErrorsDir")
+}
+
+private fun addSuffixBeforeExtension(fileName: String, suffix: String): String {
+  val lastDotIndex = fileName.lastIndexOf('.')
+  return if (lastDotIndex != -1) {
+    fileName.substring(0, lastDotIndex) + suffix + fileName.substring(lastDotIndex)
+  } else {
+    fileName + suffix
+  }
 }
 
 private fun writeAttachmentToErrorDir(attachment: Attachment, path: Path) {
