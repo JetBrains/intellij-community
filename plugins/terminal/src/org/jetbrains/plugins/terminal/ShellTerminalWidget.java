@@ -210,7 +210,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
 
     ProcessTtyConnector processTtyConnector = getProcessTtyConnector(connector);
     if (processTtyConnector != null) {
-      return TerminalUtil.hasRunningCommands(processTtyConnector);
+      return TerminalUtil.hasRunningCommands((TtyConnector)processTtyConnector);
     }
     throw new IllegalStateException("Cannot determine if there are running processes for " + connector.getClass()); //NON-NLS
   }
@@ -368,10 +368,10 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   }
 
   public static @Nullable ShellTerminalWidget asShellJediTermWidget(@NotNull TerminalWidget widget) {
-    return ObjectUtils.tryCast(JBTerminalWidget.asJediTermWidget(widget), ShellTerminalWidget.class);
+    return ObjectUtils.tryCast(asJediTermWidget(widget), ShellTerminalWidget.class);
   }
 
   public static @NotNull ShellTerminalWidget toShellJediTermWidgetOrThrow(@NotNull TerminalWidget widget) {
-    return (ShellTerminalWidget)Objects.requireNonNull(JBTerminalWidget.asJediTermWidget(widget));
+    return (ShellTerminalWidget)Objects.requireNonNull(asJediTermWidget(widget));
   }
 }
