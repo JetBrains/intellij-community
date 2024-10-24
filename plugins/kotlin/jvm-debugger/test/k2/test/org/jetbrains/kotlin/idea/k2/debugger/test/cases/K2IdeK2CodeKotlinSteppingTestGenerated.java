@@ -394,6 +394,11 @@ public abstract class K2IdeK2CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/stepOut/inapplicableFieldWatchpoints.kt");
         }
 
+        @TestMetadata("stepOutConstructorWithValueClassParam.kt")
+        public void testStepOutConstructorWithValueClassParam() throws Exception {
+            runTest("../testData/stepping/stepOut/stepOutConstructorWithValueClassParam.kt");
+        }
+
         @TestMetadata("stepOutFromInlineFunctionThenResume.kt")
         public void testStepOutFromInlineFunctionThenResume() throws Exception {
             runTest("../testData/stepping/stepOut/stepOutFromInlineFunctionThenResume.kt");
@@ -842,6 +847,11 @@ public abstract class K2IdeK2CodeKotlinSteppingTestGenerated extends AbstractK2I
             @TestMetadata("stepOverCatchClause.kt")
             public void testStepOverCatchClause() throws Exception {
                 runTest("../testData/stepping/stepOver/stepOverCatchClause.kt");
+            }
+
+            @TestMetadata("stepOverConstructorWithValueClassParam.kt")
+            public void testStepOverConstructorWithValueClassParam() throws Exception {
+                runTest("../testData/stepping/stepOver/stepOverConstructorWithValueClassParam.kt");
             }
 
             @TestMetadata("stepOverDeclarationInInlineFun.kt")
