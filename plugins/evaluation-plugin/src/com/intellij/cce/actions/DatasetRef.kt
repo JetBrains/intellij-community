@@ -1,11 +1,11 @@
 package com.intellij.cce.actions
 
 import com.intellij.cce.util.httpGet
-import com.intellij.cce.workspace.storages.storage.ActionsSingleFileStorage
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import kotlin.io.path.exists
+
 
 sealed interface DatasetRef {
 
@@ -16,6 +16,7 @@ sealed interface DatasetRef {
   companion object {
     private const val EXISTING_PROTOCOL = "existing:"
     private const val REMOTE_PROTOCOL = "remote:"
+    private const val AI_PLATFORM_PROTOCOL = "ai_platform:"
 
     fun parse(ref: String): DatasetRef {
       if (ref.startsWith(EXISTING_PROTOCOL)) {
@@ -24,6 +25,10 @@ sealed interface DatasetRef {
 
       if (ref.startsWith(REMOTE_PROTOCOL)) {
         return RemoteFileRef(ref.substring(REMOTE_PROTOCOL.length))
+      }
+
+      if (ref.startsWith(AI_PLATFORM_PROTOCOL)) {
+        return AiPlatformFileRef(ref.substring(AI_PLATFORM_PROTOCOL.length))
       }
 
       if (ref.contains(":")) {
@@ -85,4 +90,8 @@ internal data class RemoteFileRef(private val url: String) : DatasetRef {
     val path = datasetContext.path(name)
     path.toFile().writeText(content)
   }
+}
+
+internal data class AiPlatformFileRef(override val name: String): DatasetRef {
+  override fun prepare(datasetContext: DatasetContext) { }
 }
