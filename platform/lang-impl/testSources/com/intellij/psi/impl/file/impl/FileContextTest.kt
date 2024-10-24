@@ -126,12 +126,12 @@ private fun CodeInsightContext.asText() = when (this) {
   else -> this.toString()
 }
 
-internal fun TestFixture<Project>.withSharedSourceEnabled(): TestFixture<Project> = testFixture("shared-source-enabling-fixture") {
+fun TestFixture<Project>.withSharedSourceEnabled(): TestFixture<Project> = testFixture("shared-source-enabling-fixture") {
   MultiverseTestEnabler.enableSharedSourcesForTheNextProject()
   initialized(this@withSharedSourceEnabled.init()) {}
 }
 
-internal fun sharedSourceRootFixture(vararg moduleFixtures: TestFixture<Module>): TestFixture<PsiDirectory> = testFixture("shared-source-root-fixture") {
+fun sharedSourceRootFixture(vararg moduleFixtures: TestFixture<Module>): TestFixture<PsiDirectory> = testFixture("shared-source-root-fixture") {
   require(moduleFixtures.isNotEmpty())
 
   for (fixture in moduleFixtures) {
