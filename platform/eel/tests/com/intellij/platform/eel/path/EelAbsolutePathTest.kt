@@ -33,7 +33,7 @@ class EelAbsolutePathTest {
 
     for (rawPath in (unixPaths + windowsPaths)) {
       add(dynamicTest(rawPath) {
-        val eelPath = EelPath.Absolute.parse(rawPath, null)
+        val eelPath = EelPath.Absolute.parse(null, rawPath)
         eelPath.toString() shouldBe rawPath
       })
     }

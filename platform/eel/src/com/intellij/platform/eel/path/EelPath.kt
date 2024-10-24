@@ -182,9 +182,20 @@ sealed interface EelPath {
   interface Absolute : EelPath, Comparable<Absolute> {
     companion object {
       @JvmStatic
+      @Throws(EelPathException::class)
       fun parse(raw: String, os: OS?): Absolute =
-        ArrayListEelAbsolutePath.parseOrNull(raw, os)
-        ?: throw EelPathException(raw, "Not an absolute path")
+        ArrayListEelAbsolutePath.parseOrNull(raw, os) ?: throw EelPathException(raw, "Invalid absolute path")
+
+      @JvmStatic
+      @Throws(EelPathException::class)
+      fun parse(os: OS?, raw: String, vararg otherRaw: String): Absolute {
+        var result: Absolute = parse(raw, os)
+        for (segment in otherRaw) {
+          val relativePath = Relative.parse(segment)
+          result = result.resolve(relativePath)
+        }
+        return result
+      }
 
       @JvmStatic
       @Throws(EelPathException::class)
@@ -244,9 +255,6 @@ sealed interface EelPath {
 }
 
 operator fun EelPath.div(part: String): EelPath = resolve(EelPath.Relative.parse(part))
-
-@Throws(InvalidPathException::class)
-fun <P : EelPath, E : EelPathError> EelResult<P, E>.getOrThrow(): P = getOrThrow { throw InvalidPathException(it.raw, it.reason) }
 
 val EelPlatform.pathOs: OS
   get() = when (this) {

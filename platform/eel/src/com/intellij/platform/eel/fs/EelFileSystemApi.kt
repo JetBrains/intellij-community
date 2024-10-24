@@ -24,7 +24,7 @@ val EelFileSystemApi.pathSeparator: String
   }
 
 fun EelFileSystemApi.getPath(string: String, vararg other: String): EelPath.Absolute {
-  return if (other.isEmpty()) return EelPath.Absolute.parse(string, pathOs) else EelPath.Absolute.build(listOf(string, *other), pathOs)
+  return EelPath.Absolute.parse(pathOs, string, *other)
 }
 
 // TODO Integrate case-(in)sensitiveness into the interface.
