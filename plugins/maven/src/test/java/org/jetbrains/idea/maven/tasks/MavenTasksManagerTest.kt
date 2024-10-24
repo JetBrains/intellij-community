@@ -15,6 +15,7 @@ import org.junit.Test
 class MavenTasksManagerTest : MavenCompilingTestCase() {
   @Test
   fun `test run execute before build tasks`() = runBlocking {
+    createProjectSubDirs(".mvn") // for Maven to detect root project
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -110,6 +111,7 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
 
   @Test
   fun `test group tasks by goal` () = runBlocking {
+    createProjectSubDirs(".mvn") // for Maven to detect root project
     val p = createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>

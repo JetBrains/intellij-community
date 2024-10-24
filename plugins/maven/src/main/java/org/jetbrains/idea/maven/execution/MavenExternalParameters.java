@@ -123,6 +123,10 @@ public final class MavenExternalParameters {
       params.getVMParametersList().addProperty("jansi.passthrough", "true");
     }
 
+    if (StringUtil.compareVersionNumbers(mavenVersion, "4") >= 0) {
+      params.getVMParametersList().addProperty("maven.mainClass", "org.apache.maven.cli.MavenCli");
+    }
+
     String vmOptions = getRunVmOptions(runnerSettings, project, parameters.getWorkingDirPath());
     vmOptions = expandPathAndMacros(vmOptions, null, project);
     addVMParameters(params.getVMParametersList(), mavenHome, vmOptions);
