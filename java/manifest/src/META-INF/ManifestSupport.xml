@@ -4,6 +4,7 @@
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="Manifest" implementationClass="org.jetbrains.lang.manifest.ManifestFileType" fileNamesCaseInsensitive="manifest.mf" fieldName="INSTANCE" language="Manifest"/>
+    <lang.foldingBuilder language="Manifest" implementationClass="org.jetbrains.lang.manifest.folding.ManifestFoldingBuilder" />
     <lang.parserDefinition language="Manifest" implementationClass="org.jetbrains.lang.manifest.parser.ManifestParserDefinition"/>
     <lang.syntaxHighlighterFactory language="Manifest" implementationClass="org.jetbrains.lang.manifest.highlighting.ManifestSyntaxHighlighterFactory"/>
     <annotator language="Manifest" implementationClass="org.jetbrains.lang.manifest.highlighting.HeaderAnnotator"/>
