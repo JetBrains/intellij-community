@@ -1073,10 +1073,6 @@ fun <T : CommandChain> T.waitInlineCompletionWarmup(): T = apply {
   addCommand("${CMD_PREFIX}waitInlineCompletion WARMUP")
 }
 
-fun <T : CommandChain> T.clearLLMInlineCompletionCache(): T = apply {
-  addCommand("${CMD_PREFIX}clearLLMInlineCompletionCache")
-}
-
 fun <T : CommandChain> T.waitForVcsLogUpdate(): T = apply {
   addCommand("${CMD_PREFIX}waitForVcsLogUpdate")
 }
