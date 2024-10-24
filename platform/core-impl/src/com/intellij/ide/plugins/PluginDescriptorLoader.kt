@@ -38,9 +38,12 @@ import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
+import java.util.jar.JarInputStream
 import java.util.zip.ZipFile
+import java.util.zip.ZipInputStream
 import javax.xml.stream.XMLStreamException
 import kotlin.Throws
+import kotlin.io.path.inputStream
 
 private val LOG: Logger
   get() = PluginManagerCore.logger
@@ -1312,3 +1315,48 @@ private fun loadDescriptorFromResource(
 }
 
 private fun forceUseCoreClassloader() = java.lang.Boolean.getBoolean("idea.force.use.core.classloader")
+
+/** Unlike [readBasicDescriptorDataFromArtifact], this method loads only basic data (plugin ID, name, etc.) */
+@Throws(IOException::class)
+@RequiresBackgroundThread
+fun readBasicDescriptorDataFromArtifact(file: Path): IdeaPluginDescriptorImpl? {
+  val fileName = file.fileName.toString()
+  if (fileName.endsWith(".jar", ignoreCase = true)) {
+    file.inputStream().buffered().use { stream ->
+      return readDescriptorFromJarStream(stream, file)
+    }
+  }
+  else if (fileName.endsWith(".zip", ignoreCase = true)) {
+    ZipInputStream(file.inputStream().buffered()).use { stream ->
+      val pattern = Regex("[^/]+/lib/[^/]+\\.jar")
+      while (true) {
+        val entry = stream.nextEntry ?: break
+        if (entry.name.matches(pattern)) {
+          val descriptor = readDescriptorFromJarStream(stream, file)
+          if (descriptor != null) return descriptor
+        }
+      }
+    }
+  }
+  return null
+}
+
+@Throws(IOException::class)
+private fun readDescriptorFromJarStream(input: InputStream, path: Path): IdeaPluginDescriptorImpl? {
+  val stream = JarInputStream(input)
+  while (true) {
+    val entry = stream.nextJarEntry ?: break
+    if (entry.name == PluginManagerCore.PLUGIN_XML_PATH) {
+      try {
+        val raw = readBasicDescriptorData(stream)
+        if (raw != null) {
+          return IdeaPluginDescriptorImpl(raw, path, isBundled = false, id = null, moduleName = null)
+        }
+      }
+      catch (e: XMLStreamException) {
+        throw IOException(e)
+      }
+    }
+  }
+  return null
+}
