@@ -1,4 +1,9 @@
 <idea-plugin>
+  <applicationListeners>
+    <listener class="org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptDefinitionStatusBarWidgetListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </applicationListeners>
+
   <extensionPoints>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scriptReloadActionAvailability"
@@ -63,6 +68,10 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <statusBarWidgetFactory id="kotlin.script.definition"
+                            implementation="org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptDefinitionStatusBarWidgetFactory"
+                            order="first"/>
+
     <projectConfigurable groupId="language"
                          bundle="messages.KotlinBundle"
                          key="kotlin.scripting.configurable"
