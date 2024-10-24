@@ -38,6 +38,26 @@ public abstract class K1AddImportActionTestGenerated extends AbstractK1AddImport
             runTest("testData/idea/actions/kotlinAddImportAction/extensions/BothAnnotated.kt");
         }
 
+        @TestMetadata("CompanionObject.kt")
+        public void testCompanionObject() throws Exception {
+            runTest("testData/idea/actions/kotlinAddImportAction/extensions/CompanionObject.kt");
+        }
+
+        @TestMetadata("ConstructorCall.kt")
+        public void testConstructorCall() throws Exception {
+            runTest("testData/idea/actions/kotlinAddImportAction/extensions/ConstructorCall.kt");
+        }
+
+        @TestMetadata("InterfaceType.kt")
+        public void testInterfaceType() throws Exception {
+            runTest("testData/idea/actions/kotlinAddImportAction/extensions/InterfaceType.kt");
+        }
+
+        @TestMetadata("InterfaceTypeNoAnnotation.kt")
+        public void testInterfaceTypeNoAnnotation() throws Exception {
+            runTest("testData/idea/actions/kotlinAddImportAction/extensions/InterfaceTypeNoAnnotation.kt");
+        }
+
         @TestMetadata("NoExtension.kt")
         public void testNoExtension() throws Exception {
             runTest("testData/idea/actions/kotlinAddImportAction/extensions/NoExtension.kt");
@@ -51,6 +71,11 @@ public abstract class K1AddImportActionTestGenerated extends AbstractK1AddImport
         @TestMetadata("NotAnnotatedContainer.kt")
         public void testNotAnnotatedContainer() throws Exception {
             runTest("testData/idea/actions/kotlinAddImportAction/extensions/NotAnnotatedContainer.kt");
+        }
+
+        @TestMetadata("ObjectType.kt")
+        public void testObjectType() throws Exception {
+            runTest("testData/idea/actions/kotlinAddImportAction/extensions/ObjectType.kt");
         }
     }
 
