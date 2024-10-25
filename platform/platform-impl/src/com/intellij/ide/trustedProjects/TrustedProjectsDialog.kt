@@ -5,6 +5,7 @@ package com.intellij.ide.trustedProjects
 
 import com.intellij.diagnostic.WindowsDefenderChecker
 import com.intellij.diagnostic.WindowsDefenderExcludeUtil
+import com.intellij.diagnostic.WindowsDefenderStatisticsCollector
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.OpenUntrustedProjectChoice
 import com.intellij.ide.impl.TRUSTED_PROJECTS_HELP_TOPIC
@@ -92,6 +93,7 @@ object TrustedProjectsDialog {
     if (isWinDefenderEnabled && openChoice == OpenUntrustedProjectChoice.TRUST_AND_OPEN) {
       WindowsDefenderExcludeUtil.markPathAsShownDefender(projectRoot)
       if (windowDefenderPathsToExclude.isNotEmpty()) {
+        WindowsDefenderStatisticsCollector.excludedFromTrustDialog(dialog.isTrustAll())
         if (project != null) {
           val checker = serviceAsync<WindowsDefenderChecker>()
           WindowsDefenderExcludeUtil.updateDefenderConfig(checker, project, windowDefenderPathsToExclude)

@@ -36,8 +36,8 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
     if (pathsToExclude.isNotEmpty()) {
       WindowsDefenderExcludeUtil.updateDefenderConfig(checker, project, pathsToExclude) { WindowsDefenderExcludeUtil.clearPathsToExclude() }
     }
-    if (project.basePath != null && WindowsDefenderExcludeUtil.isDefenderShown(Path(project.basePath!!))) return
-    if (checker.isStatusCheckIgnored(project)) {
+    val projectPath = project.basePath
+    if (checker.isStatusCheckIgnored(project) || (projectPath != null && WindowsDefenderExcludeUtil.isDefenderShown(Path(projectPath)))) {
       LOG.info("status check is disabled")
       WindowsDefenderStatisticsCollector.protectionCheckSkipped(project)
       return
@@ -67,7 +67,7 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
     val auto = DiagnosticBundle.message("exclude.folders")
     val manual = DiagnosticBundle.message("defender.config.manual")
     Notification(NOTIFICATION_GROUP, DiagnosticBundle.message("notification.group.defender.config"), DiagnosticBundle.message("defender.config.prompt", pathList, auto, manual), NotificationType.INFORMATION)
-      .addAction(createSimpleExpiring(auto) { WindowsDefenderExcludeUtil.updateDefenderConfig(checker, project, paths) })
+      .addAction(createSimpleExpiring(auto) { WindowsDefenderExcludeUtil.updateDefenderConfig(checker, project, paths, true) })
       .addAction(createSimpleExpiring(DiagnosticBundle.message("defender.config.suppress1")) { suppressCheck(checker, project, globally = false) })
       .addAction(createSimpleExpiring(DiagnosticBundle.message("defender.config.suppress2")) { suppressCheck(checker, project, globally = true) })
       .addAction(Separator.getInstance())
