@@ -823,6 +823,9 @@
     <vcs.commitMessageProvider implementation="git4idea.commit.GitTemplateCommitMessageProvider" order="first"/>
     <jbProtocolRevisionResolver implementation="git4idea.GitNavigateRevisionResolver"/>
 
+    <postStartupActivity implementation="git4idea.commit.GitMergeCommitMessageActivity"/>
+    <vcs.defaultCommitMessagePolicy implementation="git4idea.commit.GitMergeCommitMessagePolicy"/>
+
     <toolbarQuickAction implementationClass="git4idea.ui.toolbar.UpdateQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
     <toolbarQuickAction implementationClass="git4idea.ui.toolbar.CommitQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
     <toolbarQuickAction implementationClass="git4idea.ui.toolbar.PushQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>

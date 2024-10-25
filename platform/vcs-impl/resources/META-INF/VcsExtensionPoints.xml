@@ -241,5 +241,7 @@
     <extensionPoint name="vcs.codeVisionLanguageContext" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.VcsCodeVisionLanguageContext"/>
     </extensionPoint>
+
+    <extensionPoint name="vcs.defaultCommitMessagePolicy" interface="com.intellij.vcs.commit.DefaultCommitMessagePolicy" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

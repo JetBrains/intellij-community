@@ -345,20 +345,18 @@ private object Spec {
 private class ChunkCommitMessagePolicy(
   project: Project,
   commitMessageUi: CommitMessageUi,
-) : AbstractCommitMessagePolicy(project, commitMessageUi, false) {
+) : AbstractCommitMessagePolicy(project, commitMessageUi) {
   override val clearMessageAfterCommit = true
 
-  override fun getInitialMessage(): String? = getCommitMessage()
+  override val delayedMessagesProvidersSupport = null
+
+  override fun getInitialMessage() = CommitMessage(vcsConfiguration.tempChunkCommitMessage)
 
   override fun cleanupStoredMessage() {
     saveTempChunkCommitMessage("")
   }
 
   override fun dispose() {
-  }
-
-  private fun getCommitMessage(): String {
-    return vcsConfiguration.tempChunkCommitMessage
   }
 
   fun saveTempChunkCommitMessage(commitMessage: String) {

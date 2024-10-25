@@ -4,16 +4,20 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.ui.CommitMessageProvider
 
 internal class SingleChangeListCommitMessagePolicy(
   project: Project,
   ui: SingleChangeListCommitWorkflowUi,
   private val initialCommitMessage: String?,
   initialChangeList: LocalChangeList,
-) : ChangeListCommitMessagePolicy(project, ui.commitMessageUi, initialChangeList, false) {
-  override fun getInitialMessage(): String? = initialCommitMessage ?: super.getInitialMessage()
+) : ChangeListCommitMessagePolicy(project, ui.commitMessageUi, initialChangeList,) {
+  override val delayedMessagesProvidersSupport = null
+
+  override fun getInitialMessage(): CommitMessage? =
+    initialCommitMessage?.let { CommitMessage(it) } ?: super.getInitialMessage()
 
   override fun dispose() {
-    editCurrentChangeListComment(commitMessageUi.text)
+    saveMessageToChangeListDescription()
   }
 }
