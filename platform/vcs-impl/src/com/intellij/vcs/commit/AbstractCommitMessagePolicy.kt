@@ -8,6 +8,10 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.ui.CommitMessageProvider
 
+/**
+ * @see [CommitMessageProvider]
+ * @see [DelayedCommitMessageProvider]
+ */
 abstract class AbstractCommitMessagePolicy(
   protected val project: Project,
   protected val commitMessageUi: CommitMessageUi,
@@ -26,7 +30,20 @@ abstract class AbstractCommitMessagePolicy(
 
   abstract fun getInitialMessage(): String?
 
-  abstract fun onBeforeCommit()
+  /**
+   * Called before execution of the commit session.
+   * Used for persisting of the commit message to the commits messages history (see [VcsConfiguration.getRecentMessages]).
+   *
+   * Extensible via [onBeforeCommit]
+   */
+  fun onBeforeCommit() {
+    val currentMessage = commitMessageUi.text
+    vcsConfiguration.saveCommitMessage(currentMessage)
+
+    onBeforeCommit(currentMessage)
+  }
+
+  protected open fun onBeforeCommit(currentMessage: String) {}
 
   abstract fun onAfterCommit()
 
@@ -56,12 +73,30 @@ abstract class ChangeListCommitMessagePolicy(
   protected val changeListManager: ChangeListManager get() = ChangeListManager.getInstance(project)
   protected var currentChangeList: LocalChangeList = initialChangeList
 
+  /**
+   * Called when a new changelist is selected or the current changelist is updated
+   */
   fun onChangelistChanged(newChangeList: LocalChangeList) {
     val oldChangeList = currentChangeList
     currentChangeList = newChangeList
     if (oldChangeList.id != newChangeList.id) {
-      onChangelistChanged(oldChangeList, newChangeList)
+      val commitMessage = commitMessageUi.text
+      changeListManager.editComment(oldChangeList.name, commitMessage)
+      commitMessageUi.text = getMessageForNewChangeList()
     }
+  }
+
+  /**
+   * @return new commit message after [currentChangeList] having new [LocalChangeList.getId] was set
+   */
+  protected abstract fun getMessageForNewChangeList(): String
+
+  override fun onBeforeCommit(currentMessage: String) {
+    editCurrentChangeListComment(currentMessage)
+  }
+
+  protected fun editCurrentChangeListComment(newComment: String) {
+    changeListManager.editComment(currentChangeList.name, newComment)
   }
 
   protected fun getCommitMessageForCurrentList(): String? {
@@ -73,6 +108,4 @@ abstract class ChangeListCommitMessagePolicy(
 
     return if (!currentChangeList.hasDefaultName()) currentChangeList.name else null
   }
-
-  protected abstract fun onChangelistChanged(oldChangeList: LocalChangeList, newChangeList: LocalChangeList)
 }

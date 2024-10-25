@@ -13,11 +13,6 @@ class GitStageCommitMessagePolicy(
 ) : AbstractCommitMessagePolicy(project, commitMessageUi, true) {
   override fun getInitialMessage(): String? = getCommitMessage()
 
-  override fun onBeforeCommit() {
-    val commitMessage = commitMessageUi.text
-    vcsConfiguration.saveCommitMessage(commitMessage)
-  }
-
   override fun onAfterCommit() {
     commitMessageUi.text = getCommitMessage()
   }

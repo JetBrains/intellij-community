@@ -349,11 +349,6 @@ private class ChunkCommitMessagePolicy(
 
   override fun getInitialMessage(): String? = getCommitMessage()
 
-  override fun onBeforeCommit() {
-    val commitMessage = commitMessageUi.text
-    vcsConfiguration.saveCommitMessage(commitMessage)
-  }
-
   override fun onAfterCommit() {
     saveTempChunkCommitMessage("")
     commitMessageUi.text = getCommitMessage()

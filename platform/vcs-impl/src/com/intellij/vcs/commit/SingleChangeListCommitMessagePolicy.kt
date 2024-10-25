@@ -11,8 +11,6 @@ internal class SingleChangeListCommitMessagePolicy(
   private val initialCommitMessage: String?,
   initialChangeList: LocalChangeList,
 ) : ChangeListCommitMessagePolicy(project, ui.commitMessageUi, initialChangeList, false) {
-  private val messagesToSave = mutableMapOf<String, String>()
-
   override fun getInitialMessage(): String? {
     if (clearInitialCommitMessage || initialCommitMessage != null) return initialCommitMessage
 
@@ -20,14 +18,7 @@ internal class SingleChangeListCommitMessagePolicy(
     return commitMessage ?: vcsConfiguration.LAST_COMMIT_MESSAGE
   }
 
-  override fun onChangelistChanged(oldChangeList: LocalChangeList, newChangeList: LocalChangeList) {
-    if (clearInitialCommitMessage) return
-    if (oldChangeList.name == newChangeList.name) return
-
-    messagesToSave[oldChangeList.name] = commitMessageUi.text
-
-    commitMessageUi.text = getCommitMessageForCurrentList().orEmpty()
-  }
+  override fun getMessageForNewChangeList(): String = getCommitMessageForCurrentList().orEmpty()
 
   override fun onAfterCommit() {
     val isChangeListFullyIncluded = currentChangeList.changes.size == ui.getIncludedChanges().size
@@ -37,31 +28,7 @@ internal class SingleChangeListCommitMessagePolicy(
     }
   }
 
-  override fun onBeforeCommit() {
-    onDialogClosed(true)
-  }
-
   override fun dispose() {
-    onDialogClosed(false)
-  }
-
-  private fun onDialogClosed(onBeforeCommit: Boolean) {
-    val currentMessage = commitMessageUi.text
-
-    messagesToSave[currentChangeList.name] = currentMessage
-
-    if (onBeforeCommit) {
-      vcsConfiguration.saveCommitMessage(currentMessage)
-
-      val isChangeListFullyIncluded = currentChangeList.changes.size == ui.getIncludedChanges().size
-      if (!isChangeListFullyIncluded) {
-        // keep original changelist description
-        messagesToSave.remove(currentChangeList.name)
-      }
-    }
-
-    for ((changeListName, description) in messagesToSave) {
-      changeListManager.editComment(changeListName, description)
-    }
+    editCurrentChangeListComment(commitMessageUi.text)
   }
 }
