@@ -213,32 +213,6 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
-  public void testEpydocReturnType() {
-    doTest("str",
-           """
-             def foo(*args):
-                 '''@rtype: C{str}'''
-                 return args[0]expr = foo('')""");
-  }
-
-  public void testEpydocParamType() {
-    doTest("str",
-           """
-             def foo(s):
-                 '''@type s: C{str}'''
-                 expr = s""");
-  }
-
-  public void testEpydocIvarType() {
-    doTest("int",
-           """
-             class C:
-                 s = None
-                 '''@type: C{int}'''
-                 def foo(self):
-                     expr = self.s""");
-  }
-
   public void testRestParamType() {
     doTest("int",
            """

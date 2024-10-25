@@ -2,10 +2,10 @@
 def foo(a):
   """
   <caret>
-  @param a:
-  @type a:
-  @return:
-  @rtype:
+  :param a:
+  :type a:
+  :return:
+  :rtype:
   """
   pass
 
