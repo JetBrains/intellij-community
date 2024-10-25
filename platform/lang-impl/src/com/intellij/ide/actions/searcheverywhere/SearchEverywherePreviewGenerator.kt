@@ -3,7 +3,6 @@ package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.find.impl.SearchEverywhereItem
 import com.intellij.find.impl.getUsageInfo
-import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
@@ -13,7 +12,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.usageView.UsageInfo
@@ -35,37 +33,35 @@ internal class SearchEverywherePreviewGenerator(val project: Project,
   }
 
   private suspend fun schedulePreviewSync(selectedValue: Any) {
-    withBackgroundProgress(project, IdeBundle.message("search.everywhere.preview.showing"), true) {
-      val usageInfo = readAction {
-        findFirstChild(selectedValue)
-      }
+    val usageInfo = readAction {
+      findFirstChild(selectedValue)
+    }
 
-      val usages: MutableList<UsageInfo2UsageAdapter> = ArrayList()
-      if (usageInfo != null) {
-        usages.add(UsageInfo2UsageAdapter(usageInfo))
+    val usages: MutableList<UsageInfo2UsageAdapter> = ArrayList()
+    if (usageInfo != null) {
+      usages.add(UsageInfo2UsageAdapter(usageInfo))
+    }
+    else {
+      if (selectedValue is UsageInfo2UsageAdapter) {
+        usages.add(selectedValue)
       }
-      else {
-        if (selectedValue is UsageInfo2UsageAdapter) {
-          usages.add(selectedValue)
-        }
-        else if (selectedValue is SearchEverywhereItem) {
-          usages.add(selectedValue.usage)
-        }
+      else if (selectedValue is SearchEverywhereItem) {
+        usages.add(selectedValue.usage)
       }
+    }
 
-      getUsageInfo(usages, project).thenAccept { infos: List<UsageInfo> ->
-        val usageInfos: List<UsageInfo>? = if (!infos.isEmpty()) infos else null
-        ReadAction.nonBlocking<Boolean> { isOneAndOnlyOnePsiFileInUsages(usageInfos) }
-          .finishOnUiThread(ModalityState.nonModal()) { _: Boolean? ->
-            if (currentSelectedValueComputable.compute() != selectedValue) return@finishOnUiThread;
-            updatePreviewPanel.accept(usageInfos)
-          }
-          .coalesceBy(this)
-          .submit(AppExecutorUtil.getAppExecutorService())
-      }.exceptionally { throwable: Throwable? ->
-        Logger.getInstance(SearchEverywhereUI::class.java).error(throwable)
-        null
-      }
+    getUsageInfo(usages, project).thenAccept { infos: List<UsageInfo> ->
+      val usageInfos: List<UsageInfo>? = if (!infos.isEmpty()) infos else null
+      ReadAction.nonBlocking<Boolean> { isOneAndOnlyOnePsiFileInUsages(usageInfos) }
+        .finishOnUiThread(ModalityState.nonModal()) { _: Boolean? ->
+          if (currentSelectedValueComputable.compute() != selectedValue) return@finishOnUiThread
+          updatePreviewPanel.accept(usageInfos)
+        }
+        .coalesceBy(this)
+        .submit(AppExecutorUtil.getAppExecutorService())
+    }.exceptionally { throwable: Throwable? ->
+      Logger.getInstance(SearchEverywhereUI::class.java).error(throwable)
+      null
     }
   }
 
