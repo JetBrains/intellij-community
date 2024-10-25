@@ -1,12 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.impl.frontend.changes
 
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 
-abstract class ChangesTreeEditorDiffPreview<T: ChangesTree>(protected val tree: T) {
+abstract class ChangesTreeEditorDiffPreview<T : ChangesTree>(protected val tree: T) {
   init {
     tree.setEnterKeyHandler { handleEnterKey(it) }
     tree.setDoubleClickHandler { handleDoubleClick(it) }
@@ -44,3 +45,5 @@ abstract class ChangesTreeEditorDiffPreview<T: ChangesTree>(protected val tree: 
 
   abstract fun performDiffAction(): Boolean
 }
+
+val EDITOR_TAB_DIFF_PREVIEW: DataKey<ChangesTreeEditorDiffPreview<*>> = DataKey.create("EditorTabDiffPreview")
