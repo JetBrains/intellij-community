@@ -59,6 +59,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import static java.lang.Math.abs;
+import static java.lang.Math.min;
 
 public class PopupFactoryImpl extends JBPopupFactory {
 
@@ -959,7 +960,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
              : EmptyIcon.create(maxIconWidth, maxIconHeight);
     }
 
-    float scale = (float)Math.min(maxIconWidth, maxIconHeight) / Math.min(icon.getIconWidth(), icon.getIconHeight());
-    return scale == 1 ? icon : CustomIconUtilKt.scaleIconOrLoadCustomVersion(icon, scale);
+    float currentScale = icon instanceof ScalableIcon scalableIcon ? scalableIcon.getScale() : 1.0f;
+    float neededScale = (float)min(maxIconWidth, maxIconHeight) / min(icon.getIconWidth(), icon.getIconHeight()) * currentScale;
+    return abs(currentScale - neededScale) < 0.01f ? icon : CustomIconUtilKt.scaleIconOrLoadCustomVersion(icon, neededScale);
   }
 }
