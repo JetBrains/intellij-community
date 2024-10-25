@@ -3,11 +3,13 @@ package com.intellij.openapi.editor;
 
 import com.intellij.ui.WidthBasedLayout;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
+@ApiStatus.Internal
 public final class CombinedPopupLayout implements LayoutManager {
 
   private static final int MAX_POPUP_WIDTH = 950;
