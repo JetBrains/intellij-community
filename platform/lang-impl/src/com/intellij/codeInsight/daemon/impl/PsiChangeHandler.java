@@ -171,7 +171,10 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
     // mark file dirty just in case
     PsiFile psiFile = event.getFile();
     if (psiFile != null) {
-      myFileStatusMap.markFileScopeDirtyDefensively(psiFile, event);
+      Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(psiFile);
+      if (document != null) {
+        myFileStatusMap.markFileScopeDirtyDefensively(document, event);
+      }
     }
   }
 

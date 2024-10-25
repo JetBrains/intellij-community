@@ -228,7 +228,7 @@ public final class FileStatusMap implements Disposable {
   /**
    * @return null for up-to-date file, whole file for untouched or entirely dirty file, range(usually code block) for the dirty region (optimization)
    */
-  public @Nullable TextRange getFileDirtyScope(@NotNull Document document, @NotNull PsiFile file, int passId) {
+  public @Nullable TextRange getFileDirtyScope(@NotNull Document document, @NotNull PsiFile psiFile, int passId) {
     RangeMarker marker;
     synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
@@ -248,7 +248,7 @@ public final class FileStatusMap implements Disposable {
       return null;
     }
     if (marker == WHOLE_FILE_DIRTY_MARKER) {
-      return file.getTextRange();
+      return psiFile.getTextRange();
     }
     return marker.isValid() ? marker.getTextRange() : new TextRange(0, document.getTextLength());
   }
@@ -257,14 +257,12 @@ public final class FileStatusMap implements Disposable {
     if (!status.dirtyScopes.containsKey(passId)) throw new IllegalStateException("Unknown pass " + passId);
   }
 
-  void markFileScopeDirtyDefensively(@NotNull PsiFile file, @NotNull @NonNls Object reason) {
+  void markFileScopeDirtyDefensively(@NotNull Document document, @NotNull @NonNls Object reason) {
     assertAllowModifications();
-    log("Mark dirty file defensively: ",file.getName(),reason);
+    log("Mark dirty file defensively: ",document,reason);
     // mark the whole file dirty in case no subsequent PSI events will come, but file requires re-highlighting nevertheless
     // e.g., in the case of quick typing/backspacing char
-    synchronized(myDocumentToStatusMap){
-      Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
-      if (document == null) return;
+    synchronized(myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null) return; // all dirty already
       status.defensivelyMarked = true;
