@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options
 
 import com.intellij.configurationStore.CURRENT_NAME_CONVERTER
@@ -10,7 +10,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.jdom.Parent
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 
 interface ExternalizableScheme : Scheme {
@@ -19,11 +18,8 @@ interface ExternalizableScheme : Scheme {
 
 abstract class SchemeManagerFactory {
   companion object {
-    @JvmStatic
-    fun getInstance() = service<SchemeManagerFactory>()
-
-    @JvmStatic
-    fun getInstance(project: Project) = project.service<SchemeManagerFactory>()
+    @JvmStatic fun getInstance(): SchemeManagerFactory = service<SchemeManagerFactory>()
+    @JvmStatic fun getInstance(project: Project): SchemeManagerFactory = project.service<SchemeManagerFactory>()
   }
 
   /**
@@ -31,19 +27,13 @@ abstract class SchemeManagerFactory {
    */
   @JvmOverloads
   fun <SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> create(
-    @NonNls directoryName: String,
+    directoryName: String,
     processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>,
     presentableName: String? = null,
     directoryPath: Path? = null,
-    settingsCategory: SettingsCategory = SettingsCategory.OTHER
-  ): SchemeManager<SCHEME> {
-    return create(directoryName = directoryName,
-                  processor = processor,
-                  presentableName = presentableName,
-                  roamingType = RoamingType.DEFAULT,
-                  directoryPath = directoryPath,
-                  settingsCategory = settingsCategory)
-  }
+    settingsCategory: SettingsCategory = SettingsCategory.OTHER,
+  ): SchemeManager<SCHEME> =
+    create(directoryName, processor, presentableName, RoamingType.DEFAULT, directoryPath = directoryPath, settingsCategory = settingsCategory)
 
   @ApiStatus.Internal
   abstract fun <SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> create(
@@ -58,8 +48,7 @@ abstract class SchemeManagerFactory {
     settingsCategory: SettingsCategory = SettingsCategory.OTHER
   ): SchemeManager<SCHEME>
 
-  open fun dispose(schemeManager: SchemeManager<*>) {
-  }
+  open fun dispose(schemeManager: SchemeManager<*>) { }
 }
 
 enum class SchemeState {
@@ -79,29 +68,25 @@ abstract class SchemeProcessor<SCHEME: Scheme, in MUTABLE_SCHEME: SCHEME> {
   /**
    * Called on an external scheme add or change file events.
    */
-  open fun onSchemeAdded(scheme: MUTABLE_SCHEME) {
-  }
+  open fun onSchemeAdded(scheme: MUTABLE_SCHEME) { }
 
-  open fun onSchemeDeleted(scheme: MUTABLE_SCHEME) {
-  }
+  open fun onSchemeDeleted(scheme: MUTABLE_SCHEME) { }
 
-  open fun onCurrentSchemeSwitched(oldScheme: SCHEME?, newScheme: SCHEME?, processChangeSynchronously: Boolean) {
-  }
+  open fun onCurrentSchemeSwitched(oldScheme: SCHEME?, newScheme: SCHEME?, processChangeSynchronously: Boolean) { }
 
   /**
-   * If scheme implements [com.intellij.configurationStore.SerializableScheme], this method will be called only if [com.intellij.configurationStore.SerializableScheme.getSchemeState] returns `null`
+   * If scheme implements [com.intellij.configurationStore.SerializableScheme],
+   * this method will be called only if [com.intellij.configurationStore.SerializableScheme.getSchemeState] returns `null`.
    */
   open fun getState(scheme: SCHEME): SchemeState = SchemeState.POSSIBLY_CHANGED
 
   /**
    * May be called from any thread - EDT is not guaranteed.
    */
-  open fun beforeReloaded(schemeManager: SchemeManager<SCHEME>) {
-  }
+  open fun beforeReloaded(schemeManager: SchemeManager<SCHEME>) { }
 
   /**
    * May be called from any thread - EDT is not guaranteed.
    */
-  open fun reloaded(schemeManager: SchemeManager<SCHEME>, schemes: Collection<SCHEME>) {
-  }
+  open fun reloaded(schemeManager: SchemeManager<SCHEME>, schemes: Collection<SCHEME>) { }
 }

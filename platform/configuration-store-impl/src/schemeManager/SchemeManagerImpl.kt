@@ -193,7 +193,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
           }
         }
         else -> {
-          val classLoader = if (requestor is ClassLoader) requestor else requestor!!.javaClass.classLoader
+          val classLoader = requestor as? ClassLoader ?: requestor!!.javaClass.classLoader
           bytes = ResourceUtil.getResourceAsBytes(resourceName.removePrefix("/"), classLoader)
           if (bytes == null) {
             LOG.error("Cannot read scheme from $resourceName")
@@ -285,7 +285,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
 
   override fun reload(retainFilter: ((scheme: T) -> Boolean)?) {
     processor.beforeReloaded(this)
-    // we must not remove non-persistent (e.g., predefined) schemes, because we cannot load it (obviously)
+    // we must not remove non-persistent (e.g., predefined) schemes, because we cannot load them
     // do not schedule the scheme file removing because we just need to update our runtime state, not state on disk
     removeExternalizableSchemesFromRuntimeState()
     processor.reloaded(this, loadSchemes())
@@ -479,7 +479,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
                   nameGenerator.isUnique(currentFileNameWithoutExtension)
     if (providerPath == null) {
       if (renamed) {
-        externalInfo!!.scheduleDelete(filesToDelete, "renamed")
+        externalInfo.scheduleDelete(filesToDelete, "renamed")
       }
 
       var dir = if (isUpdateVfs) getVirtualDirectory() else null
@@ -506,7 +506,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     }
     else {
       if (renamed) {
-        externalInfo!!.scheduleDelete(filesToDelete, "renamed")
+        externalInfo.scheduleDelete(filesToDelete, "renamed")
       }
       provider!!.write(providerPath, byteOut.toByteArray(), roamingType)
     }

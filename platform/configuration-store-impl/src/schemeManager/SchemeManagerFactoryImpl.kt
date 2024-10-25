@@ -26,6 +26,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 
+@Suppress("CanUnescapeDollarLiteral")
 const val ROOT_CONFIG: String = "\$ROOT_CONFIG\$"
 
 internal typealias FileChangeSubscriber = (schemeManager: SchemeManagerImpl<*, *>) -> Unit
