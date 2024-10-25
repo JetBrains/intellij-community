@@ -8,6 +8,7 @@ import com.intellij.ide.actionMacro.ActionMacro;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.customization.ActionUrl;
+import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.idea.ActionsBundle;
@@ -768,15 +769,13 @@ public final class ActionsTreeUtil {
   }
 
   private static AnAction @NotNull [] getActions(@NotNull ActionGroup group) {
-    try {
-      if (group instanceof DefaultActionGroup g) {
-        return g.getChildActionsOrStubs();
-      }
-      else {
-        return AnAction.EMPTY_ARRAY;
-      }
+    if (group instanceof DefaultActionGroup g) {
+      return g.getChildActionsOrStubs();
     }
-    catch (Throwable e) {
+    else if (group instanceof CustomisedActionGroup g) {
+      return g.getDefaultChildrenOrStubs();
+    }
+    else {
       return AnAction.EMPTY_ARRAY;
     }
   }
