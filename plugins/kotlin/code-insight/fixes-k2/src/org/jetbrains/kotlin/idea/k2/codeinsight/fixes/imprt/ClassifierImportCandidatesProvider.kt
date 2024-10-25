@@ -3,7 +3,10 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
 import com.intellij.psi.PsiClass
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinAnnotationTypeNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinCallableReferencePositionContext
@@ -14,9 +17,9 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
 internal open class ClassifierImportCandidatesProvider(
-    override val positionContext: KotlinNameReferencePositionContext,
-    indexProvider: KtSymbolFromIndexProvider,
-) : ImportCandidatesProvider(indexProvider) {
+    positionContext: KotlinNameReferencePositionContext,
+) : ImportCandidatesProvider(positionContext) {
+
     protected open fun acceptsKotlinClass(kotlinClass: KtClassLikeDeclaration): Boolean =
         !kotlinClass.isImported() && kotlinClass.canBeImported()
 
@@ -33,7 +36,9 @@ internal open class ClassifierImportCandidatesProvider(
     }
 
     context(KaSession)
-    override fun collectCandidates(): List<KaClassLikeSymbol> {
+    override fun collectCandidates(
+        indexProvider: KtSymbolFromIndexProvider,
+    ): List<KaClassLikeSymbol> {
         if (positionContext.explicitReceiver != null) return emptyList()
 
         val unresolvedName = positionContext.getName()
@@ -47,9 +52,9 @@ internal open class ClassifierImportCandidatesProvider(
 }
 
 internal class AnnotationImportCandidatesProvider(
-    override val positionContext: KotlinAnnotationTypeNameReferencePositionContext,
-    indexProvider: KtSymbolFromIndexProvider,
-) : ClassifierImportCandidatesProvider(positionContext, indexProvider) {
+    positionContext: KotlinAnnotationTypeNameReferencePositionContext,
+) : ClassifierImportCandidatesProvider(positionContext) {
+
     override fun acceptsKotlinClass(kotlinClass: KtClassLikeDeclaration): Boolean {
         val isPossiblyAnnotation = when (kotlinClass) {
             is KtTypeAlias -> true
@@ -69,9 +74,9 @@ internal class AnnotationImportCandidatesProvider(
 }
 
 internal class ConstructorReferenceImportCandidatesProvider(
-    override val positionContext: KotlinCallableReferencePositionContext,
-    indexProvider: KtSymbolFromIndexProvider,
-) : ClassifierImportCandidatesProvider(positionContext, indexProvider) {
+    positionContext: KotlinCallableReferencePositionContext,
+) : ClassifierImportCandidatesProvider(positionContext) {
+
     override fun acceptsKotlinClass(kotlinClass: KtClassLikeDeclaration): Boolean {
         val possiblyHasAcceptableConstructor = when (kotlinClass) {
             is KtTypeAlias -> true

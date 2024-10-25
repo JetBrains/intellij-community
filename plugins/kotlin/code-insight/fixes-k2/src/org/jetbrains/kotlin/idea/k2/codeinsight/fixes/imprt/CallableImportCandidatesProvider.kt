@@ -19,9 +19,9 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 
 
 internal open class CallableImportCandidatesProvider(
-    override val positionContext: KotlinNameReferencePositionContext,
-    indexProvider: KtSymbolFromIndexProvider,
-) : ImportCandidatesProvider(indexProvider) {
+    positionContext: KotlinNameReferencePositionContext,
+) : ImportCandidatesProvider(positionContext) {
+
     protected open fun acceptsKotlinCallable(kotlinCallable: KtCallableDeclaration): Boolean =
         !kotlinCallable.isImported() && kotlinCallable.canBeImported()
 
@@ -29,7 +29,9 @@ internal open class CallableImportCandidatesProvider(
         !javaCallable.isImported() && javaCallable.canBeImported()
 
     context(KaSession)
-    override fun collectCandidates(): List<KaCallableSymbol> {
+    override fun collectCandidates(
+        indexProvider: KtSymbolFromIndexProvider,
+    ): List<KaCallableSymbol> {
         val unresolvedName = positionContext.getName()
         val explicitReceiver = positionContext.explicitReceiver
         val fileSymbol = getFileSymbol()
@@ -60,9 +62,9 @@ internal open class CallableImportCandidatesProvider(
 
 
 internal class InfixCallableImportCandidatesProvider(
-    override val positionContext: KotlinInfixCallPositionContext,
-    indexProvider: KtSymbolFromIndexProvider,
-) : CallableImportCandidatesProvider(positionContext, indexProvider) {
+    positionContext: KotlinInfixCallPositionContext,
+) : CallableImportCandidatesProvider(positionContext) {
+
     override fun acceptsKotlinCallable(kotlinCallable: KtCallableDeclaration): Boolean =
         kotlinCallable.hasModifier(KtTokens.INFIX_KEYWORD) && super.acceptsKotlinCallable(kotlinCallable)
 
@@ -72,11 +74,13 @@ internal class InfixCallableImportCandidatesProvider(
 
 internal class DelegateMethodImportCandidatesProvider(
     private val unresolvedDelegateFunction: UnresolvedDelegateFunction,
-    override val positionContext: KotlinNameReferencePositionContext,
-    indexProvider: KtSymbolFromIndexProvider
-) : CallableImportCandidatesProvider(positionContext, indexProvider) {
+    positionContext: KotlinNameReferencePositionContext,
+) : CallableImportCandidatesProvider(positionContext) {
 
-    context(KaSession) override fun collectCandidates(): List<KaCallableSymbol> {
+    context(KaSession)
+    override fun collectCandidates(
+        indexProvider: KtSymbolFromIndexProvider,
+    ): List<KaCallableSymbol> {
         val functionName = OperatorNameConventions.GET_VALUE.takeIf {
             unresolvedDelegateFunction.expectedFunctionSignature.startsWith(OperatorNameConventions.GET_VALUE.asString() + "(")
         } ?: OperatorNameConventions.SET_VALUE.takeIf {

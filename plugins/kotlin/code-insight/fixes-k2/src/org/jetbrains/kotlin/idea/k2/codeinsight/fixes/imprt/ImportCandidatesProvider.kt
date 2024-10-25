@@ -21,9 +21,8 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.resolve.ImportPath
 
 internal abstract class ImportCandidatesProvider(
-    protected val indexProvider: KtSymbolFromIndexProvider,
+    protected val positionContext: KotlinNameReferencePositionContext,
 ) {
-    protected abstract val positionContext: KotlinNameReferencePositionContext
 
     private val file: KtFile get() = positionContext.nameExpression.containingKtFile
     private val fileImports: List<ImportPath> by lazy { file.importDirectives.mapNotNull { it.importPath } }
@@ -64,5 +63,7 @@ internal abstract class ImportCandidatesProvider(
         this is KotlinTypeNameReferencePositionContext || this is KDocLinkNamePositionContext
 
     context(KaSession)
-    abstract fun collectCandidates(): List<KaDeclarationSymbol>
+    abstract fun collectCandidates(
+        indexProvider: KtSymbolFromIndexProvider,
+    ): List<KaDeclarationSymbol>
 }
