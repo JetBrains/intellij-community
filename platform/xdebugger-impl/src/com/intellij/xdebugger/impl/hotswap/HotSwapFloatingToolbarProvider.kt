@@ -41,6 +41,7 @@ private val addHideAction: Boolean by lazy {
   HotSwapUiExtension.computeSafeIfAvailable { it.shouldAddHideButton } != false
 }
 
+@Suppress("DialogTitleCapitalization")
 private fun createHelpTooltip(): HelpTooltip =
   HotSwapUiExtension.computeSafeIfAvailable { it.createTooltip() }
   ?: HelpTooltip()
