@@ -4,64 +4,64 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
-import com.intellij.ui.TextAccessor
 
-internal class SingleChangeListCommitMessagePolicy(project: Project, initialCommitMessage: String?) :
-  AbstractCommitMessagePolicy(project) {
-
-  private var lastKnownComment: String? = initialCommitMessage
+internal class SingleChangeListCommitMessagePolicy(
+  project: Project,
+  private val ui: SingleChangeListCommitWorkflowUi,
+  private val initialCommitMessage: String?,
+  initialChangeList: LocalChangeList,
+) : ChangeListCommitMessagePolicy(project, ui.commitMessageUi, initialChangeList, false) {
   private val messagesToSave = mutableMapOf<String, String>()
 
-  fun init(changeList: LocalChangeList): String? {
-    if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE || lastKnownComment != null) return lastKnownComment
+  override fun getInitialMessage(): String? {
+    if (clearInitialCommitMessage || initialCommitMessage != null) return initialCommitMessage
 
-    val commitMessage = getCommitMessageForList(changeList)?.takeIf { it.isNotBlank() }
+    val commitMessage = getCommitMessageForCurrentList()?.takeIf { it.isNotBlank() }
     return commitMessage ?: vcsConfiguration.LAST_COMMIT_MESSAGE
   }
 
-  /**
-   * Ex: via "Commit Message History" action
-   */
-  fun onCommitMessageReset(text: String?) {
-    lastKnownComment = text
-  }
-
-  fun onChangelistChanged(oldChangeList: LocalChangeList, newChangeList: LocalChangeList, currentMessage: TextAccessor) {
-    if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return
+  override fun onChangelistChanged(oldChangeList: LocalChangeList, newChangeList: LocalChangeList) {
+    if (clearInitialCommitMessage) return
     if (oldChangeList.name == newChangeList.name) return
 
-    messagesToSave[oldChangeList.name] = currentMessage.text
+    messagesToSave[oldChangeList.name] = commitMessageUi.text
 
-    currentMessage.text = getCommitMessageForList(newChangeList) ?: lastKnownComment
+    commitMessageUi.text = getCommitMessageForCurrentList().orEmpty()
   }
 
-  fun onDialogClosed(commitState: ChangeListCommitState, onBeforeCommit: Boolean) {
-    val changeList = commitState.changeList
-    val currentMessage = commitState.commitMessage
+  override fun onAfterCommit() {
+    val isChangeListFullyIncluded = currentChangeList.changes.size == ui.getIncludedChanges().size
+    val isDefaultNameChangeList = currentChangeList.hasDefaultName()
+    if (isDefaultNameChangeList && isChangeListFullyIncluded) {
+      ChangeListManager.getInstance(project).editComment(currentChangeList.name, "")
+    }
+  }
 
-    messagesToSave[changeList.name] = currentMessage
+  override fun onBeforeCommit() {
+    onDialogClosed(true)
+  }
+
+  override fun dispose() {
+    onDialogClosed(false)
+  }
+
+  private fun onDialogClosed(onBeforeCommit: Boolean) {
+    val currentMessage = commitMessageUi.text
+
+    messagesToSave[currentChangeList.name] = currentMessage
 
     if (onBeforeCommit) {
       vcsConfiguration.saveCommitMessage(currentMessage)
 
-      val isChangeListFullyIncluded = changeList.changes.size == commitState.changes.size
+      val isChangeListFullyIncluded = currentChangeList.changes.size == ui.getIncludedChanges().size
       if (!isChangeListFullyIncluded) {
         // keep original changelist description
-        messagesToSave.remove(changeList.name)
+        messagesToSave.remove(currentChangeList.name)
       }
     }
 
     for ((changeListName, description) in messagesToSave) {
       changeListManager.editComment(changeListName, description)
-    }
-  }
-
-  fun onAfterCommit(commitState: ChangeListCommitState) {
-    val changeList = commitState.changeList
-    val isChangeListFullyIncluded = changeList.changes.size == commitState.changes.size
-    val isDefaultNameChangeList = changeList.hasDefaultName()
-    if (isDefaultNameChangeList && isChangeListFullyIncluded) {
-      ChangeListManager.getInstance(project).editComment(changeList.name, "")
     }
   }
 }

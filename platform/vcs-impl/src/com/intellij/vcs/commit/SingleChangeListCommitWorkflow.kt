@@ -82,15 +82,19 @@ class SingleChangeListCommitWorkflow(
 
 abstract class CommitChangeListDialogWorkflow(
   project: Project,
-  initialCommitMessage: String?,
+  private val initialCommitMessage: String?,
   val initiallyIncluded: Collection<Any>
 ) : AbstractCommitWorkflow(project) {
 
   abstract val isPartialCommitEnabled: Boolean
 
-  internal val commitMessagePolicy: SingleChangeListCommitMessagePolicy = SingleChangeListCommitMessagePolicy(project, initialCommitMessage)
+  internal lateinit var commitMessagePolicy: SingleChangeListCommitMessagePolicy
 
   lateinit var commitState: ChangeListCommitState
+
+  fun initCommitMessagePolicy(ui: SingleChangeListCommitWorkflowUi, initialChangeList: LocalChangeList) {
+    commitMessagePolicy = SingleChangeListCommitMessagePolicy(project, ui, initialCommitMessage, initialChangeList)
+  }
 
   override fun addCommonResultHandlers(sessionInfo: CommitSessionInfo, committer: Committer) {
     super.addCommonResultHandlers(sessionInfo, committer)
@@ -101,6 +105,6 @@ abstract class CommitChangeListDialogWorkflow(
 private class ChangeListDescriptionCleaner(val commitMessagePolicy: SingleChangeListCommitMessagePolicy,
                                            val commitState: ChangeListCommitState) : CommitterResultHandler {
   override fun onSuccess() {
-    commitMessagePolicy.onAfterCommit(commitState)
+    commitMessagePolicy.onAfterCommit()
   }
 }

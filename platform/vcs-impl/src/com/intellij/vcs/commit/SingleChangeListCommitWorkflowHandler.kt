@@ -27,12 +27,7 @@ class SingleChangeListCommitWorkflowHandler(
     CommitWorkflowUiStateListener,
     SingleChangeListCommitWorkflowUi.ChangeListListener {
 
-  override val commitPanel: CheckinProjectPanel = object : CommitProjectPanelAdapter(this) {
-    override fun setCommitMessage(currentDescription: String?) {
-      commitMessagePolicy.onCommitMessageReset(currentDescription)
-      super.setCommitMessage(currentDescription)
-    }
-  }
+  override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
 
   @ApiStatus.Internal
   override val amendCommitHandler: AmendCommitHandlerImpl = AmendCommitHandlerImpl(this)
@@ -46,6 +41,9 @@ class SingleChangeListCommitWorkflowHandler(
   init {
     Disposer.register(this, Disposable { workflow.disposeCommitOptions() })
     Disposer.register(ui, this)
+
+    workflow.initCommitMessagePolicy(ui, getChangeList())
+    Disposer.register(this, commitMessagePolicy)
 
     workflow.addListener(this, this)
     workflow.addCommitCustomListener(CommitCustomListener(), this)
@@ -66,7 +64,7 @@ class SingleChangeListCommitWorkflowHandler(
 
     ui.addInclusionListener(this, this)
     updateDefaultCommitActionName()
-    setCommitMessage(commitMessagePolicy.init(getChangeList()))
+    commitMessagePolicy.init()
     initCommitOptions()
 
     amendCommitHandler.initialMessage = getCommitMessage()
@@ -76,7 +74,6 @@ class SingleChangeListCommitWorkflowHandler(
 
   override fun cancelled() {
     commitOptions.saveChangeListSpecificOptions()
-    commitMessagePolicy.onDialogClosed(getCommitState(), false)
 
     if (workflow.isDefaultCommitEnabled) {
       LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
@@ -84,7 +81,7 @@ class SingleChangeListCommitWorkflowHandler(
   }
 
   override fun changeListChanged(oldChangeList: LocalChangeList, newChangeList: LocalChangeList) {
-    commitMessagePolicy.onChangelistChanged(oldChangeList, newChangeList, ui.commitMessageUi)
+    commitMessagePolicy.onChangelistChanged(newChangeList)
     updateCommitOptions()
   }
 
@@ -144,7 +141,7 @@ class SingleChangeListCommitWorkflowHandler(
   }
 
   override fun saveCommitMessageBeforeCommit() {
-    commitMessagePolicy.onDialogClosed(getCommitState(), true)
+    commitMessagePolicy.onBeforeCommit()
   }
 
   private fun initCommitOptions() {

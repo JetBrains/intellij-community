@@ -344,21 +344,22 @@ private object Spec {
 
 private class ChunkCommitMessagePolicy(
   project: Project,
-  private val commitMessageUi: CommitMessageUi,
-) : AbstractCommitMessagePolicy(project) {
+  commitMessageUi: CommitMessageUi,
+) : AbstractCommitMessagePolicy(project, commitMessageUi, false) {
 
-  fun init() {
-    commitMessageUi.text = getCommitMessage()
-  }
+  override fun getInitialMessage(): String? = getCommitMessage()
 
-  fun onBeforeCommit() {
+  override fun onBeforeCommit() {
     val commitMessage = commitMessageUi.text
     vcsConfiguration.saveCommitMessage(commitMessage)
   }
 
-  fun onAfterCommit() {
+  override fun onAfterCommit() {
     saveTempChunkCommitMessage("")
     commitMessageUi.text = getCommitMessage()
+  }
+
+  override fun dispose() {
   }
 
   private fun getCommitMessage(): String {

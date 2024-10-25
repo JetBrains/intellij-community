@@ -1,54 +1,47 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.LocalChangeList
 
-internal class ChangesViewCommitMessagePolicy(project: Project,
-                                              private val commitMessageUi: CommitMessageUi) : AbstractCommitMessagePolicy(project) {
-  fun init(changeList: LocalChangeList, disposable: Disposable) {
-    listenForDelayedProviders(commitMessageUi, disposable)
+internal class ChangesViewCommitMessagePolicy(
+  project: Project,
+  commitMessageUi: CommitMessageUi,
+  initialChangeList: LocalChangeList,
+) : ChangeListCommitMessagePolicy(project, commitMessageUi, initialChangeList, true) {
+  override fun getInitialMessage(): String? = getCommitMessage()
 
-    commitMessageUi.text = getCommitMessage(changeList)
-  }
-
-  fun onChangelistChanged(oldChangeList: LocalChangeList, newChangeList: LocalChangeList) {
+  override fun onChangelistChanged(oldChangeList: LocalChangeList, newChangeList: LocalChangeList) {
     val commitMessage = commitMessageUi.text
     changeListManager.editComment(oldChangeList.name, commitMessage)
     vcsConfiguration.saveCommitMessage(commitMessage)
 
-    commitMessageUi.text = getCommitMessage(newChangeList)
+    commitMessageUi.text = getCommitMessage()
   }
 
-  fun onBeforeCommit(changeList: LocalChangeList) {
+  override fun onBeforeCommit() {
     val commitMessage = commitMessageUi.text
     vcsConfiguration.saveCommitMessage(commitMessage)
-    changeListManager.editComment(changeList.name, commitMessage)
+    changeListManager.editComment(currentChangeList.name, commitMessage)
   }
 
-  fun onAfterCommit(changeList: LocalChangeList) {
-    commitMessageUi.text = getCommitMessage(changeList)
+  override fun onAfterCommit() {
+    commitMessageUi.text = getCommitMessage()
   }
 
-  fun onDispose(changeList: LocalChangeList) {
+  override fun dispose() {
     if (changeListManager.areChangeListsEnabled()) {
       val commitMessage = commitMessageUi.text
-      changeListManager.editComment(changeList.name, commitMessage)
+      changeListManager.editComment(currentChangeList.name, commitMessage)
     }
     else {
       // Disposal of ChangesViewCommitWorkflowHandler on 'com.intellij.vcs.commit.CommitMode.ExternalCommitMode' enabling.
     }
   }
 
-  private fun getCommitMessage(changeList: LocalChangeList): String {
-    if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return ""
-    return getCommitMessageForList(changeList)?.takeIf { it.isNotBlank() }
+  private fun getCommitMessage(): String {
+    if (clearInitialCommitMessage) return ""
+    return getCommitMessageForCurrentList()?.takeIf { it.isNotBlank() }
            ?: vcsConfiguration.LAST_COMMIT_MESSAGE.orEmpty()
-  }
-
-  companion object {
-    private val LOG = logger<ChangesViewCommitMessagePolicy>()
   }
 }
