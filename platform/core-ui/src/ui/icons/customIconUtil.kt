@@ -18,8 +18,8 @@ import kotlin.math.roundToInt
 @ApiStatus.Internal
 fun scaleIconOrLoadCustomVersion(icon: Icon, scale: Float): Icon {
   if (icon is CachedImageIcon) {
-    val oldWidth = icon.getIconWidth()
-    val oldHeight = icon.getIconHeight()
+    val oldWidth = icon.getRawIconWidth()
+    val oldHeight = icon.getRawIconWidth()
     val newWidth = (scale * oldWidth).roundToInt()
     val newHeight = (scale * oldHeight).roundToInt()
     if (oldWidth == newWidth && oldHeight == newHeight) {
