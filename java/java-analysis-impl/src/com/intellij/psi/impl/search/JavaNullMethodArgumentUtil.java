@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,12 @@ import java.util.Objects;
 public final class JavaNullMethodArgumentUtil {
   private static final Logger LOG = Logger.getInstance(JavaNullMethodArgumentUtil.class);
 
+  /**
+   * Returns true if a given method accepts null as an argument. Calls that resolve to overridden methods are ignored.
+   *
+   * @param method target method
+   * @param argumentIdx argument index (zero-based)
+   */
   public static boolean hasNullArgument(@NotNull PsiMethod method, final int argumentIdx) {
     final boolean[] result = {false};
     searchNullArgument(method, argumentIdx, expression -> {
@@ -32,6 +39,13 @@ public final class JavaNullMethodArgumentUtil {
     return result[0];
   }
 
+  /**
+   * Looks for method calls that pass null to a given method. Calls that resolve to overridden methods are not processed.
+   *  
+   * @param method target method
+   * @param argumentIdx argument index (zero-based)
+   * @param nullArgumentProcessor a processor that accepts null literals passed as a specified argument to a specified method calls.
+   */
   public static void searchNullArgument(@NotNull PsiMethod method, final int argumentIdx, @NotNull Processor<? super PsiExpression> nullArgumentProcessor) {
     final PsiParameter parameter = Objects.requireNonNull(method.getParameterList().getParameter(argumentIdx));
     if (parameter.getType() instanceof PsiEllipsisType) {
@@ -57,18 +71,24 @@ public final class JavaNullMethodArgumentUtil {
 
     GlobalSearchScope scope = GlobalSearchScope.filesScope(method.getProject(), candidateFiles);
     MethodReferencesSearch.search(method, scope, true).forEach(ref -> {
-      PsiExpression argument = getCallArgument(ref, argumentIdx);
+      PsiExpressionList argumentList = getCallArgumentList(ref.getElement());
+      PsiExpression argument = getCallArgument(argumentList, argumentIdx);
       if (argument instanceof PsiLiteralExpression && argument.textMatches(PsiKeyword.NULL)) {
+        if (argumentList.getParent() instanceof PsiMethodCallExpression methodCall) {
+          PsiMethod target = methodCall.resolveMethod();
+          // Could be resolved to overriding method
+          if (target == null || !target.isEquivalentTo(method)) return true;
+        }
         return nullArgumentProcessor.process(argument);
       }
       return true;
     });
   }
 
-  @Nullable
-  private static PsiExpression getCallArgument(PsiReference ref, int argumentIdx) {
-    PsiExpressionList argumentList = getCallArgumentList(ref.getElement());
-    PsiExpression[] arguments = argumentList == null ? PsiExpression.EMPTY_ARRAY : argumentList.getExpressions();
+  @Contract("null, _ -> null")
+  private static @Nullable PsiExpression getCallArgument(@Nullable PsiExpressionList argumentList, int argumentIdx) {
+    if (argumentList == null) return null;
+    PsiExpression[] arguments = argumentList.getExpressions();
     return argumentIdx < arguments.length ? arguments[argumentIdx] : null;
   }
 
