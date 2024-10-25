@@ -5,10 +5,8 @@ import com.intellij.openapi.util.SystemInfoRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 
 // TODO: move it in to open api module
 public final class NioFiles {
@@ -25,22 +23,26 @@ public final class NioFiles {
       return;
     }
 
-    copy(source, target);
+    copyRecursively(source, target);
     delete(source);
   }
 
-  private static void copy(@NotNull Path source, @NotNull Path target) throws IOException {
-    if (Files.isDirectory(source)) {
-      Files.createDirectories(target);
-      try (DirectoryStream<Path> entries = Files.newDirectoryStream(source)) {
-        for (Path entry : entries) {
-          copy(entry, target.resolve(entry.getFileName()));
-        }
+  public static void copyRecursively(@NotNull Path from, @NotNull Path to) throws IOException {
+    Files.walkFileTree(from, new SimpleFileVisitor<Path>() {
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+        Path copy = dir == from ? to : to.resolve(from.relativize(dir));
+        com.intellij.openapi.util.io.NioFiles.createDirectories(copy);
+        return FileVisitResult.CONTINUE;
       }
-    }
-    else {
-      Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
-    }
+
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        Path copy = file == from ? to : to.resolve(from.relativize(file));
+        Files.copy(file, copy, LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
+        return FileVisitResult.CONTINUE;
+      }
+    });
   }
 
   private static void delete(@NotNull Path path) throws IOException {
