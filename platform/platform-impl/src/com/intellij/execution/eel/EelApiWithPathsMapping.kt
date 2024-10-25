@@ -7,6 +7,7 @@ import com.intellij.platform.eel.EelExecApi.ExecuteProcessError
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.pathOs
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal

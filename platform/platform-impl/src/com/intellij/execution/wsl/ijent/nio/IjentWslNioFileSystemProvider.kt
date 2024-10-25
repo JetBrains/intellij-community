@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl.ijent.nio
 
-import com.intellij.execution.eel.EelPathUtils.walkingTransfer
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.diagnostic.logger
@@ -9,6 +8,7 @@ import com.intellij.openapi.util.io.CaseSensitivityAttribute
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import com.intellij.platform.eel.EelUserPosixInfo
+import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.ijent.community.impl.nio.EelPosixGroupPrincipal
 import com.intellij.platform.ijent.community.impl.nio.EelPosixUserPrincipal
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
@@ -224,7 +224,7 @@ class IjentWslNioFileSystemProvider(
       }
 
       else -> {
-        walkingTransfer(source, target, removeSource = false)
+        EelPathUtils.walkingTransfer(source, target, removeSource = false)
       }
     }
   }
@@ -243,7 +243,7 @@ class IjentWslNioFileSystemProvider(
       }
 
       else -> {
-        walkingTransfer(source, target, removeSource = true)
+        EelPathUtils.walkingTransfer(source, target, removeSource = true)
       }
     }
   }

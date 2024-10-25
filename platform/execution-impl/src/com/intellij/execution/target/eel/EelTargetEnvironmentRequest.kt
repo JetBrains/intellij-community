@@ -2,7 +2,6 @@
 package com.intellij.execution.target.eel
 
 import com.intellij.execution.Platform
-import com.intellij.execution.eel.EelPathUtils
 import com.intellij.execution.target.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -16,6 +15,7 @@ import com.intellij.platform.eel.EelTunnelsApi.Arguments.hostAddressBuilder
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.getOrThrow
+import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.ijent.tunnels.forwardLocalPort
 import com.intellij.platform.util.coroutines.channel.ChannelInputStream
 import com.intellij.platform.util.coroutines.channel.ChannelOutputStream

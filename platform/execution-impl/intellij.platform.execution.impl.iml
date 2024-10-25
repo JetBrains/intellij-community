@@ -43,5 +43,6 @@
     <orderEntry type="library" name="rd-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.rd.community" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" />
   </component>
 </module>
