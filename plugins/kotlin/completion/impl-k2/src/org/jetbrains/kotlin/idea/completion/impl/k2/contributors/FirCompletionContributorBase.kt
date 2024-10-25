@@ -45,7 +45,8 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
     priority: Int,
 ) : FirCompletionContributor<C> {
 
-    protected open val prefixMatcher: PrefixMatcher get() = basicContext.prefixMatcher
+    protected open val prefixMatcher: PrefixMatcher
+        get() = sink.prefixMatcher
 
     protected val parameters: CompletionParameters get() = basicContext.parameters
     protected val sink: LookupElementSink = basicContext.sink.withPriority(priority)

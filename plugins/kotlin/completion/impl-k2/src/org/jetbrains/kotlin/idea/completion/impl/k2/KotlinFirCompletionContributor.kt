@@ -183,6 +183,6 @@ internal data class FirCompletionSessionParameters(
             return !(basicContext.parameters.invocationCount == 0
                     && (declaration is KtNamedFunction || declaration is KtProperty)
                     && positionContext.explicitReceiver == null
-                    && basicContext.prefixMatcher.prefix.firstOrNull()?.isLowerCase() == true)
+                    && basicContext.sink.prefixMatcher.prefix.firstOrNull()?.isLowerCase() == true)
         }
 }

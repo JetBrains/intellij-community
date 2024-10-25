@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.parentOfType
+import com.intellij.util.applyIf
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -44,10 +45,15 @@ internal class FirWhenWithSubjectConditionContributor(
     priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinWithSubjectEntryPositionContext>(basicContext, priority) {
 
-    private val prefix: String get() = basicContext.prefixMatcher.prefix
-    private val onTypingIsKeyword: Boolean = prefix.isNotEmpty() && KtTokens.IS_KEYWORD.value.startsWith(prefix)
+    private val onTypingIsKeyword: Boolean =
+        super.prefixMatcher.prefix.let { prefix ->
+            prefix.isNotEmpty()
+                    && KtTokens.IS_KEYWORD.value.startsWith(prefix)
+        }
 
-    override val prefixMatcher: PrefixMatcher = if (onTypingIsKeyword) basicContext.prefixMatcher.cloneWithPrefix("") else super.prefixMatcher
+    override val prefixMatcher: PrefixMatcher =
+        super.prefixMatcher
+            .applyIf(onTypingIsKeyword) { cloneWithPrefix("") }
 
     context(KaSession)
     override fun complete(

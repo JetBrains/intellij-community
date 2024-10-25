@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.context
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
@@ -17,7 +16,6 @@ import org.jetbrains.kotlin.psi.*
 internal class FirBasicCompletionContext(
     val parameters: CompletionParameters,
     val sink: LookupElementSink,
-    val prefixMatcher: PrefixMatcher,
     val originalKtFile: KtFile,
     val fakeKtFile: KtFile,
     val targetPlatform: TargetPlatform,
@@ -41,7 +39,6 @@ internal class FirBasicCompletionContext(
             return FirBasicCompletionContext(
                 parameters = parameters,
                 sink = LookupElementSink(result, firParameters),
-                prefixMatcher = result.prefixMatcher,
                 originalKtFile = originalKtFile,
                 fakeKtFile = fakeKtFile,
                 targetPlatform = originalKtFile.platform,

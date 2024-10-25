@@ -2,10 +2,7 @@
 
 package org.jetbrains.kotlin.idea.completion.impl.k2
 
-import com.intellij.codeInsight.completion.CompletionInitializationContext
-import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.codeInsight.completion.InsertHandler
-import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.openapi.editor.Document
@@ -29,6 +26,9 @@ internal class LookupElementSink(
     private val parameters: KotlinFirCompletionParameters,
     private val groupPriority: Int = 0,
 ) {
+
+    val prefixMatcher: PrefixMatcher
+        get() = resultSet.prefixMatcher
 
     fun withPriority(priority: Int): LookupElementSink =
         LookupElementSink(resultSet, parameters, priority)
