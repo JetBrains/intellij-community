@@ -1,11 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
@@ -13,24 +12,23 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import com.intellij.xdebugger.impl.ui.TextViewer;
-import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
+import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedTextPopupUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +36,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 @ApiStatus.Experimental
 public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
@@ -48,7 +48,6 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
   private static final int MAX_POPUP_HEIGHT = 400;
   private static final int MIN_POPUP_WIDTH = 170;
   private static final int MIN_POPUP_HEIGHT = 100;
-  private static final int MED_TEXT_VIEWER_SIZE = 300;
   private static final int TOOLBAR_MARGIN = 30;
 
   protected final @Nullable XFullValueEvaluator myEvaluator;
@@ -58,13 +57,12 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
   protected final @NotNull Editor myEditor;
   protected final @NotNull Point myPoint;
   protected final @Nullable Runnable myHideRunnable;
-  protected final @NotNull TextViewer myTextViewer;
 
+  private VisualizedTextPopupUtil.VisualizedTextPanel myTextPanel;
   private @Nullable JBPopup myPopup;
   protected boolean myTreePopupIsShown = false;
   protected @Nullable Tree myTree;
   private boolean mySetValueModeEnabled = false;
-  private String myCachedText = "";
 
   @ApiStatus.Experimental
   public XDebuggerTextPopup(@Nullable XFullValueEvaluator evaluator,
@@ -82,7 +80,6 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
     myPoint = point;
     myProject = project;
     myHideRunnable = hideRunnable;
-    myTextViewer = DebuggerUIUtil.createTextViewer(XDebuggerUIConstants.getEvaluatingExpressionMessage(), myProject);
 
     if (evaluator == null && value instanceof XValueTextProvider) {
       evaluator = new XFullValueEvaluator() {
@@ -106,8 +103,62 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
   }
 
   private JBPopup createPopup(XFullValueEvaluator evaluator, Runnable afterEvaluation, Runnable hideTextPopupRunnable) {
+
+    AtomicBoolean evaluationObsolete = new AtomicBoolean(false);
+    var callback = new XFullValueEvaluator.XFullValueEvaluationCallback() {
+
+      private final AtomicReference<Integer> lastFullValueHashCode = new AtomicReference<>();
+
+      private boolean preventDoubleExecution(@NotNull String fullValue) {
+        // This code is not expected to be called multiple times (e.g., statistics are expected to be collected only once),
+        // but it is actually called in the case of huge Java string.
+        // 1. NodeDescriptorImpl.updateRepresentation() calls ValueDescriptorImpl.calcRepresentation() and it calls labelChanged()
+        // 2. NodeDescriptorImpl.updateRepresentation() also directly calls labelChanged()
+        // Double visualization spoils statistics and wastes the resources.
+        // Try to prevent it by a simple hash code check.
+        Integer hashCode = fullValue.hashCode();
+        if (hashCode.equals(lastFullValueHashCode.get())) {
+          return true;
+        }
+        lastFullValueHashCode.set(hashCode);
+        return false;
+      }
+
+      @Override
+      public void evaluated(@NotNull final String fullValue, @Nullable final Font font) {
+        if (preventDoubleExecution(fullValue)) return;
+
+        AppUIUtil.invokeOnEdt(() -> {
+          myTextPanel.showVisualizedText(fullValue);
+          if (afterEvaluation != null) {
+            afterEvaluation.run();
+          }
+        });
+      }
+
+      @Override
+      public void errorOccurred(@NotNull final String errorMessage) {
+        AppUIUtil.invokeOnEdt(() -> {
+          myTextPanel.showError(errorMessage);
+        });
+      }
+
+      @Override
+      public boolean isObsolete() {
+        return evaluationObsolete.get();
+      }
+    };
+
+    Runnable cancelCallback = () -> {
+      evaluationObsolete.set(true);
+      if (hideTextPopupRunnable != null) {
+        hideTextPopupRunnable.run();
+      }
+    };
+
+    evaluator.startEvaluation(callback);
     ComponentPopupBuilder builder =
-      DebuggerUIUtil.createTextViewerPopupBuilder(myContent, myTextViewer, evaluator, myProject, afterEvaluation, hideTextPopupRunnable);
+      DebuggerUIUtil.createCancelablePopupBuilder(myProject, myContent, myTextPanel, cancelCallback, null);
 
     return builder.setCancelKeyEnabled(false)
       .setRequestFocus(true)
@@ -126,10 +177,10 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
   }
 
   public JBPopup show(@NotNull String initialText) {
-    myTextViewer.setPreferredSize(new Dimension(0, 0));
-    myMainPanel.setBorder(JBUI.Borders.empty(10));
-    myMainPanel.setBackground(myTextViewer.getBackground());
-    setContent(myTextViewer, getToolbarActions(), ACTION_PLACE, null);
+    myTextPanel = new VisualizedTextPopupUtil.VisualizedTextPanel(myProject);
+    myMainPanel.setBorder(JBUI.Borders.empty());
+    myMainPanel.setBackground(myTextPanel.getBackground());
+    setContent(myTextPanel, getToolbarActions(), ACTION_PLACE, null);
 
     XFullValueEvaluator evaluator = myEvaluator != null ? myEvaluator : new ImmediateFullValueEvaluator(initialText);
 
@@ -140,6 +191,7 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
     };
 
     myPopup = createPopup(evaluator, this::resizePopup, hideTextPopupRunnable);
+    Disposer.register(myPopup, myTextPanel);
 
     myTree = myTreeCreator.createTree(myInitialItem);
     registerTreeDisposable(myPopup, myTree);
@@ -150,41 +202,6 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
     return myPopup;
   }
 
-  private void updatePopupWidth(@NotNull Window popupWindow) {
-    Rectangle screenRectangle = ScreenUtil.getScreenRectangle(myToolbar);
-
-    String text = myTextViewer.getText();
-    FontMetrics fontMetrics = myTextViewer.getFontMetrics(EditorUtil.getEditorFont());
-    int width = fontMetrics.stringWidth(text) + TOOLBAR_MARGIN;
-
-    int toolbarWidth = myToolbar.getPreferredSize().width + TOOLBAR_MARGIN;
-
-    int newWidth = Math.max(toolbarWidth, width);
-
-    newWidth = Math.min(newWidth, getMaxPopupWidth(screenRectangle));
-    newWidth = Math.max(newWidth, getMinPopupWidth(screenRectangle));
-
-    updatePopupBounds(popupWindow, newWidth, popupWindow.getHeight());
-  }
-
-  private void updatePopupHeight(@NotNull Window popupWindow) {
-    Rectangle screenRectangle = ScreenUtil.getScreenRectangle(myToolbar);
-
-    int newHeight = myToolbar.getPreferredSize().height;
-    Editor editor = myTextViewer.getEditor();
-    if (editor != null) {
-      newHeight += editor.getContentComponent().getHeight();
-    }
-    else {
-      newHeight += getMediumTextViewerHeight();
-    }
-
-    newHeight = Math.min(newHeight, getMaxPopupHeight(screenRectangle));
-    newHeight = Math.max(newHeight, getMinPopupHeight(screenRectangle));
-
-    updatePopupBounds(popupWindow, popupWindow.getWidth(), newHeight);
-  }
-
   private void resizePopup() {
     if (myPopup == null || !myPopup.isVisible() || myPopup.isDisposed()) {
       return;
@@ -193,8 +210,21 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
     if (popupWindow == null) {
       return;
     }
-    updatePopupWidth(popupWindow);
-    updatePopupHeight(popupWindow);
+
+    int textWidth = myTextPanel.getPreferredSize().width;
+    int toolbarWidth = myToolbar.getPreferredSize().width;
+    int newWidth = Math.max(toolbarWidth, textWidth) + TOOLBAR_MARGIN;
+
+    int textHeight = myTextPanel.getPreferredSize().height;
+    int toolbarHeight = myToolbar.getPreferredSize().height;
+    int newHeight = textHeight + toolbarHeight;
+
+    Rectangle screenRectangle = ScreenUtil.getScreenRectangle(myToolbar);
+    newWidth = Math.min(newWidth, getMaxPopupWidth(screenRectangle));
+    newWidth = Math.max(newWidth, getMinPopupWidth(screenRectangle));
+    newHeight = Math.min(newHeight, getMaxPopupHeight(screenRectangle));
+    newHeight = Math.max(newHeight, getMinPopupHeight(screenRectangle));
+    updatePopupBounds(popupWindow, newWidth, newHeight);
   }
 
   protected void hideTextPopup() {
@@ -225,20 +255,19 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
     new XDebuggerTreePopup<>(myTreeCreator, myEditor, myPoint, myProject, hideTreeRunnable).show(myInitialItem);
   }
 
-  private void enableSetValueMode() {
-    myCachedText = myTextViewer.getText();
-    myTextViewer.setViewer(false);
-    myTextViewer.selectAll();
-    mySetValueModeEnabled = true;
-    myToolbar.updateActionsImmediately();
+
+  private void tryEnableSetValueMode() {
+    if (myTextPanel.tryEditText()) {
+      mySetValueModeEnabled = true;
+      myToolbar.updateActionsImmediately();
+    } // it may fail to start editing if huge string value wasn't yet evaluated and shown but user already clicks "Set Value"
   }
 
-  private void disableSetValueMode() {
-    myCachedText = "";
-    myTextViewer.setViewer(true);
-    myTextViewer.removeSelection();
+  private String disableSetValueMode(boolean saveChanges) {
+    String newText = myTextPanel.finishEdit(saveChanges);
     mySetValueModeEnabled = false;
     myToolbar.updateActionsImmediately();
+    return newText;
   }
 
   @Override
@@ -264,15 +293,19 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
     return Math.max(screenRectangle.height / 7, MIN_POPUP_HEIGHT);
   }
 
-  private static int getMediumTextViewerHeight() {
-    return MED_TEXT_VIEWER_SIZE;
+  private static boolean canSetTextValue(@Nullable XValueNodeImpl node) {
+    return getTextValueModifier(node) != null;
   }
 
-  private static boolean canSetTextValue(@NotNull XValueNodeImpl node) {
-    @NotNull XValue value = node.getValueContainer();
-    return value instanceof XValueTextProvider &&
-           ((XValueTextProvider)value).shouldShowTextValue() &&
-           value.getModifier() instanceof XStringValueModifier;
+  private static @Nullable XStringValueModifier getTextValueModifier(@Nullable XValueNodeImpl node) {
+    if (node == null) return null;
+
+    XValue value = node.getValueContainer();
+    return value instanceof XValueTextProvider textProvider &&
+           textProvider.shouldShowTextValue() &&
+           value.getModifier() instanceof XStringValueModifier modifier
+           ? modifier
+           : null;
   }
 
   protected static void registerTreeDisposable(Disposable disposable, Tree tree) {
@@ -307,9 +340,8 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      @Nullable XValueNodeImpl node = getValueNode();
       Presentation presentation = e.getPresentation();
-      presentation.setEnabledAndVisible(node != null && canSetTextValue(node));
+      presentation.setEnabledAndVisible(canSetTextValue(getValueNode()));
     }
 
     @Override
@@ -320,22 +352,27 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       @Nullable XValueNodeImpl node = getValueNode();
-
-      if (node != null && canSetTextValue(node)) {
-        setTextValue(node, myTextViewer.getText());
-        disableSetValueMode();
+      var modifier = getTextValueModifier(node);
+      if (modifier != null) {
+        String newValue = disableSetValueMode(true);
+        setTextValue(node, modifier, newValue);
+      }
+      else {
+        // No need to call disableSetValueMode(), popup will be hidden on error.
+        onErrorSettingValue("Unexpectedly cannot set text value for this edited value");
       }
     }
 
-    private static void setTextValue(@NotNull XValueNodeImpl node, @NotNull String text) {
-      @NotNull XValue value = node.getValueContainer();
-      @Nullable XValueModifier modifier = value.getModifier();
-      if (modifier instanceof XStringValueModifier) {
-        XExpression expression = ((XStringValueModifier)modifier).stringToXExpression(text);
-        Consumer<? super String> errorConsumer =
-          (@NlsContexts.DialogMessage String errorMessage) -> Messages.showErrorDialog(node.getTree(), errorMessage);
-        DebuggerUIUtil.setTreeNodeValue(node, expression, errorConsumer);
-      }
+    private void setTextValue(@NotNull XValueNodeImpl node, @NotNull XStringValueModifier modifier, @NotNull String text) {
+      XExpression expression = modifier.stringToXExpression(text);
+      DebuggerUIUtil.setTreeNodeValue(node, expression, this::onErrorSettingValue);
+    }
+
+    private void onErrorSettingValue(String errorMessage) {
+      hideTextPopup();
+      //noinspection HardCodedStringLiteral
+      @NlsContexts.DialogMessage String message = errorMessage;
+      Messages.showErrorDialog(myEditor.getComponent(), message, XDebuggerBundle.message("xdebugger.set.text.value.error.title"));
     }
   }
 
@@ -347,9 +384,8 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      @Nullable XValueNodeImpl node = getValueNode();
       Presentation presentation = e.getPresentation();
-      presentation.setEnabledAndVisible(node != null && canSetTextValue(node));
+      presentation.setEnabledAndVisible(canSetTextValue(getValueNode()));
     }
 
     @Override
@@ -359,7 +395,7 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      enableSetValueMode();
+      tryEnableSetValueMode();
     }
   }
 
@@ -372,8 +408,7 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myTextViewer.setText(myCachedText);
-      disableSetValueMode();
+      disableSetValueMode(false);
     }
   }
 }

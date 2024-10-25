@@ -66,7 +66,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
@@ -162,11 +161,12 @@ public final class DebuggerUIUtil {
   }
 
   /**
-   * Create read-only {@link Editor} for text data with syntax highlighting, folding and other {@link Editor} features.
+   * Create {@link Editor} for text data with syntax highlighting, folding and other {@link Editor} features.
    * @see #createTextViewer(String, Project)
+   * @see #createFormattedTextViewer(String, FileType, Project, Disposable)
    */
   @ApiStatus.Experimental
-  public static Editor createFormattedTextViewer(@NotNull String initialText, @NotNull FileType type, @NotNull Project project, @NotNull Disposable parentDisposable) {
+  public static Editor createFormattedTextEditor(@NotNull String initialText, @NotNull FileType type, @NotNull Project project, @NotNull Disposable parentDisposable, boolean isViewer) {
     // Proper highlighting requires presense of PSIFile corresponding to the Document, see IJPL-157652.
     var virtualFile = new LightVirtualFile("", type, initialText);
     var psiFile = PsiManager.getInstance(project).findFile(virtualFile);
@@ -174,7 +174,7 @@ public final class DebuggerUIUtil {
     var document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     assert document != null;
 
-    var editor = EditorFactory.getInstance().createEditor(document, project, virtualFile, true);
+    var editor = EditorFactory.getInstance().createEditor(document, project, virtualFile, isViewer);
     Disposer.register(parentDisposable, () -> {
       EditorFactory.getInstance().releaseEditor(editor);
     });
@@ -182,52 +182,14 @@ public final class DebuggerUIUtil {
     return editor;
   }
 
+  /**
+   * Create read-only {@link Editor} for text data with syntax highlighting, folding and other {@link Editor} features.
+   * @see #createTextViewer(String, Project)
+   * @see #createFormattedTextEditor(String, FileType, Project, Disposable, boolean)
+   */
   @ApiStatus.Experimental
-  public static ComponentPopupBuilder createTextViewerPopupBuilder(@NotNull JComponent popupContent,
-                                                                   @NotNull TextViewer textViewer,
-                                                                   @NotNull XFullValueEvaluator evaluator,
-                                                                   @NotNull Project project,
-                                                                   @Nullable Runnable afterFullValueEvaluation,
-                                                                   @Nullable Runnable hideRunnable) {
-
-    AtomicBoolean evaluationObsolete = new AtomicBoolean(false);
-    var callback = new XFullValueEvaluator.XFullValueEvaluationCallback() {
-      @Override
-      public void evaluated(@NotNull final String fullValue, @Nullable final Font font) {
-        AppUIUtil.invokeOnEdt(() -> {
-          textViewer.setText(fullValue);
-          if (font != null) {
-            textViewer.setFont(font);
-          }
-          if (afterFullValueEvaluation != null) {
-            afterFullValueEvaluation.run();
-          }
-        });
-      }
-
-      @Override
-      public void errorOccurred(@NotNull final String errorMessage) {
-        AppUIUtil.invokeOnEdt(() -> {
-          textViewer.setForeground(XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES.getFgColor());
-          textViewer.setText(errorMessage);
-        });
-      }
-
-      @Override
-      public boolean isObsolete() {
-        return evaluationObsolete.get();
-      }
-    };
-
-    Runnable cancelCallback = () -> {
-      evaluationObsolete.set(true);
-      if (hideRunnable != null) {
-        hideRunnable.run();
-      }
-    };
-
-    evaluator.startEvaluation(callback);
-    return createCancelablePopupBuilder(project, popupContent, textViewer, cancelCallback, null);
+  public static Editor createFormattedTextViewer(@NotNull String initialText, @NotNull FileType type, @NotNull Project project, @NotNull Disposable parentDisposable) {
+    return createFormattedTextEditor(initialText, type, project, parentDisposable, true);
   }
 
   public static JBPopup createValuePopup(Project project,
@@ -237,7 +199,8 @@ public final class DebuggerUIUtil {
     return createCancelablePopupBuilder(project, component, null, cancelCallback, FULL_VALUE_POPUP_DIMENSION_KEY).createPopup();
   }
 
-  private static ComponentPopupBuilder createCancelablePopupBuilder(Project project,
+  @ApiStatus.Experimental
+  public static ComponentPopupBuilder createCancelablePopupBuilder(Project project,
                                                                     JComponent component,
                                                                     JComponent preferableFocusComponent,
                                                                     @Nullable Runnable cancelCallback,

@@ -75,7 +75,6 @@ a:com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 - pf:myInitialItem:java.lang.Object
 - pf:myPoint:java.awt.Point
 - pf:myProject:com.intellij.openapi.project.Project
-- pf:myTextViewer:com.intellij.xdebugger.impl.ui.TextViewer
 - p:myTree:com.intellij.ui.treeStructure.Tree
 - pf:myTreeCreator:com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeCreator
 - p:myTreePopupIsShown:Z
@@ -130,9 +129,10 @@ a:com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 - isObsolete():Z
 - f:setObsolete():V
 f:com.intellij.xdebugger.impl.ui.DebuggerUIUtil
+- *s:createCancelablePopupBuilder(com.intellij.openapi.project.Project,javax.swing.JComponent,javax.swing.JComponent,java.lang.Runnable,java.lang.String):com.intellij.openapi.ui.popup.ComponentPopupBuilder
+- *s:createFormattedTextEditor(java.lang.String,com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,Z):com.intellij.openapi.editor.Editor
 - *s:createFormattedTextViewer(java.lang.String,com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):com.intellij.openapi.editor.Editor
 - *s:createTextViewer(java.lang.String,com.intellij.openapi.project.Project):com.intellij.xdebugger.impl.ui.TextViewer
-- *s:createTextViewerPopupBuilder(javax.swing.JComponent,com.intellij.xdebugger.impl.ui.TextViewer,com.intellij.xdebugger.frame.XFullValueEvaluator,com.intellij.openapi.project.Project,java.lang.Runnable,java.lang.Runnable):com.intellij.openapi.ui.popup.ComponentPopupBuilder
 *:com.intellij.xdebugger.impl.ui.XDebugSessionTabCustomizer
 - allowFramesViewCustomization():Z
 - forceShowNewDebuggerUi():Z
