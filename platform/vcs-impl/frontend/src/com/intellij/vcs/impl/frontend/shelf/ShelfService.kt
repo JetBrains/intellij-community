@@ -34,14 +34,14 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
     }
   }
 
-  fun compareWithLocal(changeListsMap: Map<ShelvedChangeListEntity, List<ShelvedChangeEntity>>) {
+  fun compareWithLocal(changeListsMap: Map<ShelvedChangeListEntity, List<ShelvedChangeEntity>>, withLocal: Boolean) {
     cs.launch {
       withKernel {
         val changeLists = changeListsMap.map {
           ChangeListDto(it.key.sharedRef(), it.value.map { it.sharedRef() })
         }
         val projectRef = project.asEntity().sharedRef()
-        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).compareWithLocal(projectRef, changeLists)
+        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).showStandaloneDiff(projectRef, changeLists, withLocal)
       }
     }
   }

@@ -26,8 +26,8 @@ class BackendShelfActionsApi : RemoteShelfActionsApi {
     getShelfRemoteActionExecutor(projectRef).createPatchForShelvedChanges(changeListDto, silentClipboard)
   }
 
-  override suspend fun compareWithLocal(projectRef: SharedRef<ProjectEntity>, changeListsDto: List<ChangeListDto>) {
-    getShelfRemoteActionExecutor(projectRef).compareWithLocal(changeListsDto)
+  override suspend fun showStandaloneDiff(projectRef: SharedRef<ProjectEntity>, changeListsDto: List<ChangeListDto>, withLocal: Boolean) {
+    getShelfRemoteActionExecutor(projectRef).showStandaloneDiff(changeListsDto, withLocal)
   }
 
   override suspend fun importShelvesFromPatches(projectRef: SharedRef<ProjectEntity>) {

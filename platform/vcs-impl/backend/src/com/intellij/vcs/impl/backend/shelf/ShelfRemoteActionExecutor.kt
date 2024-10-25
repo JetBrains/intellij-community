@@ -73,9 +73,9 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
     }
   }
 
-  fun compareWithLocal(dtos: List<ChangeListDto>) {
+  fun showStandaloneDiff(dtos: List<ChangeListDto>, withLocal: Boolean) {
     cs.launch(Dispatchers.EDT) {
-      DiffShelvedChangesActionProvider.showShelvedChangesDiff(project, true) {
+      DiffShelvedChangesActionProvider.showShelvedChangesDiff(project, withLocal) {
         val shelvedChanges = dtos.flatMap { shelfTreeHolder.findChangesInTree(it) }.map { it.shelvedChange }
         val wrappers: ListSelection<ShelvedWrapper> = ListSelection.createAt(shelvedChanges, 0)
         if (wrappers.list.size == 1 && shelvedChanges.size > 1) {
