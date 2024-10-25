@@ -26,7 +26,6 @@ import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.EdtExecutorService;
@@ -303,7 +302,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
            "; myPsiFile: "+myPsiFile+ " (" + myPsiFile.getClass() + ")"+
            (myIsEssentialHighlightingOnly ? "; essentialHighlightingOnly":"") +
            (isCanceled() ? "; canceled" : "") +
-           (myProgressIndicator.isCanceled() ? "indicator: "+ myProgressIndicator : "")
+           (myProgressIndicator.isCanceled() ? "; indicator: "+ myProgressIndicator : "")
       ;
   }
 

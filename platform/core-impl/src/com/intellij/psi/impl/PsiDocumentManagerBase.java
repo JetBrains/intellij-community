@@ -937,7 +937,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public void documentChanged(@NotNull DocumentEvent event) {
-    if (myStopTrackingDocuments || myProject.isDisposed()) return;
+    if (myStopTrackingDocuments || myProject.isDisposed()) {
+      return;
+    }
 
     Document document = event.getDocument();
 
