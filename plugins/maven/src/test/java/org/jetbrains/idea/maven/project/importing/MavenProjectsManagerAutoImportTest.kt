@@ -220,7 +220,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                       ${repo1.path}</localRepository>
                       """.trimIndent())
     }
-    assertEquals(repo1, mavenGeneralSettings.getEffectiveRepositoryPath())
+    assertEquals(repo1, mavenGeneralSettings.getEffectiveRepositoryPath().toFile())
     val repo2 = File(dir, "localRepo2")
     waitForImportWithinTimeout {
       updateSettingsXml("""
@@ -228,7 +228,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                       ${repo2.path}</localRepository>
                       """.trimIndent())
     }
-    assertEquals(repo2, mavenGeneralSettings.getEffectiveRepositoryPath())
+    assertEquals(repo2, mavenGeneralSettings.getEffectiveRepositoryPath().toFile())
   }
 
   @Test
