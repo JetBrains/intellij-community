@@ -182,7 +182,7 @@
                  restartRequired="false"
                  description="Set initial Linux tty size to 100x100 for WSL processes not attached to Windows PTY (workaround for https://github.com/microsoft/WSL/issues/10701)"
                  defaultValue="true"/>
-    <experimentalFeature id="ide.redesigned.inspector" percentOfUsers="50">
+    <experimentalFeature id="ide.redesigned.inspector" percentOfUsers="0">
       <description>
         Enable new inspection widget experiment
       </description>
