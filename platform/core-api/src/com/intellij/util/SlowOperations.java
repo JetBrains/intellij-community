@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.diagnostic.LoadingState;
@@ -30,45 +30,6 @@ import java.util.Set;
  * @see #assertSlowOperationsAreAllowed()
  */
 public final class SlowOperations {
-  private static final Logger LOG = Logger.getInstance(SlowOperations.class);
-
-  private static final String ERROR_EDT = "Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.";
-  private static final String ERROR_RA = "Non-cancelable slow operations are prohibited inside read action. See SlowOperations.assertNonCancelableSlowOperationsAreAllowed javadoc.";
-
-  /** Do not use. For Action System only */
-  @ApiStatus.Internal
-  public static final String ACTION_UPDATE = "action.update";
-  /** Mark entry-points to user-triggered actions. The assertion is suppressed for now. */
-  public static final String ACTION_PERFORM = "action.perform";
-  /** For muting noisy problems with YT tickets */
-  private static final String KNOWN_ISSUE = "known-issues";
-  /** @deprecated Do not use. It is a to-be-deleted no-op */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static final String GENERIC = "generic";
-
-  /** Do not use. For Action System only. The assertion is thrown even if disabled */
-  @ApiStatus.Internal
-  public static final String FORCE_ASSERT = "  force assert  ";
-  /** Do not use. For Action System only. The assertion is turned into PCE */
-  @ApiStatus.Internal
-  public static final String FORCE_THROW = "  force throw  ";
-  /** Do not use. For Action System only. It resets the section stack in modal dialogs */
-  @ApiStatus.Internal
-  public static final String RESET = "  reset  ";
-
-  /** VM property, set to {@code true} if running in plugin development sandbox. */
-  @ApiStatus.Internal
-  public static final String IDEA_PLUGIN_SANDBOX_MODE = "idea.plugin.in.sandbox.mode";
-
-  private static int ourAlwaysAllow = -1;
-  private static @NotNull FList<@NotNull String> ourStack = FList.emptyList();
-
-  private static String ourTargetClass;
-  private static final Set<String> ourReportedClasses = new HashSet<>();
-
-  private SlowOperations() {}
-
   /**
    * If you get an exception from this method, then you need to move the computation to a background thread (BGT)
    * and to avoid blocking the UI thread (EDT).
@@ -109,8 +70,45 @@ public final class SlowOperations {
     if (isInSection(FORCE_THROW) && !Cancellation.isInNonCancelableSection()) {
       throw new SlowOperationCanceledException();
     }
-    LOG.error(error);
+    Holder.LOG.error(error);
   }
+
+  private static final String ERROR_EDT = "Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.";
+  private static final String ERROR_RA = "Non-cancelable slow operations are prohibited inside read action. See SlowOperations.assertNonCancelableSlowOperationsAreAllowed javadoc.";
+
+  /** Do not use. For Action System only */
+  @ApiStatus.Internal
+  public static final String ACTION_UPDATE = "action.update";
+  /** Mark entry-points to user-triggered actions. The assertion is suppressed for now. */
+  public static final String ACTION_PERFORM = "action.perform";
+  /** For muting noisy problems with YT tickets */
+  private static final String KNOWN_ISSUE = "known-issues";
+  /** @deprecated Do not use. It is a to-be-deleted no-op */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final String GENERIC = "generic";
+
+  /** Do not use. For Action System only. The assertion is thrown even if disabled */
+  @ApiStatus.Internal
+  public static final String FORCE_ASSERT = "  force assert  ";
+  /** Do not use. For Action System only. The assertion is turned into PCE */
+  @ApiStatus.Internal
+  public static final String FORCE_THROW = "  force throw  ";
+  /** Do not use. For Action System only. It resets the section stack in modal dialogs */
+  @ApiStatus.Internal
+  public static final String RESET = "  reset  ";
+
+  /** VM property, set to {@code true} if running in plugin development sandbox. */
+  @ApiStatus.Internal
+  public static final String IDEA_PLUGIN_SANDBOX_MODE = "idea.plugin.in.sandbox.mode";
+
+  private static int ourAlwaysAllow = -1;
+  private static @NotNull FList<@NotNull String> ourStack = FList.emptyList();
+
+  private static String ourTargetClass;
+  private static final Set<String> ourReportedClasses = new HashSet<>();
+
+  private SlowOperations() {}
 
   /**
    * I/O and native calls in addition to being slow operations must not be called inside read-action (RA)
@@ -123,7 +121,11 @@ public final class SlowOperations {
                    EDT.isCurrentThreadEdt() ? (isSlowOperationAllowed() ? null : ERROR_EDT) :
                    (ApplicationManager.getApplication().isReadAccessAllowed() ? ERROR_RA : null);
     if (error == null || isAlreadyReported()) return;
-    LOG.error(error);
+    Holder.LOG.error(error);
+  }
+
+  private static final class Holder {
+    private static final Logger LOG = Logger.getInstance(SlowOperations.class);
   }
 
   private static boolean isSlowOperationAllowed() {
