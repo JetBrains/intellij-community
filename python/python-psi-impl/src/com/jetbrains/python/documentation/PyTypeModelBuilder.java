@@ -16,10 +16,12 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.*;
-import com.jetbrains.python.pyi.PyiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -299,7 +301,8 @@ public class PyTypeModelBuilder {
                                         ? Collections.singletonList(tupleType.getIteratedItemType())
                                         : tupleType.getElementTypes();
 
-      boolean useTypingAlias = PyiUtil.getOriginalLanguageLevel(tupleType.getPyClass()).isOlderThan(LanguageLevel.PYTHON39);
+      boolean useTypingAlias =
+        PythonLanguageLevelPusher.getLanguageLevelForFile(tupleType.getPyClass().getContainingFile()).isOlderThan(LanguageLevel.PYTHON39);
       final List<TypeModel> elementModels = ContainerUtil.map(elementTypes, elementType -> build(elementType, true));
       result = new TupleType(elementModels, tupleType.isHomogeneous(), useTypingAlias);
     }
@@ -309,8 +312,10 @@ public class PyTypeModelBuilder {
         elementModels.add(build(elementType, true));
       }
       if (!elementModels.isEmpty()) {
-        final TypeModel collectionType = build(new PyClassTypeImpl(asCollection.getPyClass(), asCollection.isDefinition()), false);
-        boolean useTypingAlias = PyiUtil.getOriginalLanguageLevel(asCollection.getPyClass()).isOlderThan(LanguageLevel.PYTHON39);
+        PyClass pyClass = asCollection.getPyClass();
+        final TypeModel collectionType = build(new PyClassTypeImpl(pyClass, asCollection.isDefinition()), false);
+        boolean useTypingAlias =
+          PythonLanguageLevelPusher.getLanguageLevelForFile(pyClass.getContainingFile()).isOlderThan(LanguageLevel.PYTHON39);
         result = new CollectionOf(collectionType,
                                   elementModels,
                                   useTypingAlias,

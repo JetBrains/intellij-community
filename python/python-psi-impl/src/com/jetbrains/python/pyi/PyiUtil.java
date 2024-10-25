@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.pyi;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,7 +25,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyType;
@@ -92,37 +90,6 @@ public final class PyiUtil {
     }
 
     return result;
-  }
-
-  /**
-   * Returns the language level of {@link #getOriginalElement(PyElement)} result if {@code element} belongs to a .pyi file and
-   * the language level of the {@code element} itself, otherwise.
-   * <p>
-   * If {@link #getOriginalElement(PyElement)} still returns {@code null}, we try to restore the original SDK language level
-   * from the corresponding .pyi file using the underlying machinery of {@link PythonLanguageLevelPusher}. The reason for that
-   * is that by design {@link PyiFile#getLanguageLevel()} unconditionally returns the latest supported Python version (as these
-   * are not executable), and original .py implementations may be absent in some environments such as unit tests with a mock SDK.
-   */
-  @NotNull
-  public static LanguageLevel getOriginalLanguageLevel(@NotNull PyElement element) {
-    PsiFile containingFile = element.getContainingFile();
-    if (containingFile instanceof PyiFile pyiFile) {
-      PsiElement impl = getOriginalElement(element);
-      if (impl != null) {
-        return LanguageLevel.forElement(impl);
-      }
-      else {
-        // XXX: Relying on the fact .pyi files still have the language level key set by the pusher
-        VirtualFile vFile = containingFile.getVirtualFile();
-        if (vFile != null) {
-          return PythonLanguageLevelPusher.getLanguageLevelForVirtualFile(element.getProject(), vFile);
-        }
-        else {
-          return pyiFile.getLanguageLevel();
-        }
-      }
-    }
-    return LanguageLevel.forElement(element);
   }
 
   /**

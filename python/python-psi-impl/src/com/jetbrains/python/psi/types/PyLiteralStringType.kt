@@ -2,11 +2,9 @@ package com.jetbrains.python.psi.types
 
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
-import com.jetbrains.python.PyElementTypes
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
-import com.jetbrains.python.psi.impl.PyPsiUtils
-import com.jetbrains.python.pyi.PyiUtil
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
 import java.util.*
 
 
@@ -40,7 +38,7 @@ class PyLiteralStringType private constructor(val cls: PyClass) : PyClassTypeImp
     fun create(anchor: PsiElement): PyClassType? {
       val strType = PyBuiltinCache.getInstance(anchor).strType
       if (Registry.`is`("python.type.hints.literal.string") && strType != null) {
-        if (anchor is PyElement && PyiUtil.getOriginalLanguageLevel(anchor).isPy3K) {
+        if (anchor is PyElement && PythonLanguageLevelPusher.getLanguageLevelForFile(anchor.getContainingFile()).isPy3K) {
           return PyLiteralStringType(strType.pyClass)
         }
       }
