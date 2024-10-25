@@ -15,6 +15,10 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.getOrThrow
+import com.intellij.platform.eel.provider.getEelApi
+import com.intellij.platform.eel.toNioPath
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -38,18 +42,20 @@ import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.NioFiles
-import java.io.File
 import java.io.IOException
 import java.nio.file.Path
+import kotlin.io.path.pathString
 
-open class MavenModuleBuilderHelper(protected val myProjectId: MavenId,
-                                    protected val myAggregatorProject: MavenProject?,
-                                    private val myParentProject: MavenProject?,
-                                    private val myInheritGroupId: Boolean,
-                                    private val myInheritVersion: Boolean,
-                                    private val myArchetype: MavenArchetype?,
-                                    private val myPropertiesToCreateByArtifact: Map<String, String>?,
-                                    protected val myCommandName: @NlsContexts.Command String?) {
+open class MavenModuleBuilderHelper(
+  protected val myProjectId: MavenId,
+  protected val myAggregatorProject: MavenProject?,
+  private val myParentProject: MavenProject?,
+  private val myInheritGroupId: Boolean,
+  private val myInheritVersion: Boolean,
+  private val myArchetype: MavenArchetype?,
+  private val myPropertiesToCreateByArtifact: Map<String, String>?,
+  protected val myCommandName: @NlsContexts.Command String?,
+) {
   open fun configure(project: Project, root: VirtualFile, isInteractive: Boolean) {
     trigger(project, MavenActionsUsagesCollector.CREATE_MAVEN_PROJECT)
 
@@ -167,10 +173,16 @@ open class MavenModuleBuilderHelper(protected val myProjectId: MavenId,
   private suspend fun generateFromArchetype(project: Project, pom: VirtualFile) {
     trigger(project, MavenActionsUsagesCollector.CREATE_MAVEN_PROJECT_FROM_ARCHETYPE)
 
-    val workingDir: File
-    try {
-      workingDir = FileUtil.createTempDirectory("archetype", "tmp")
-      workingDir.deleteOnExit()
+    val eel = project.getEelApi()
+
+    val workingDir: Path = try {
+      val tmpOptions = EelFileSystemApi.createTemporaryDirectoryOptions().apply {
+        suffix("tmp")
+        prefix("archetype")
+        deleteOnExit(true)
+      }
+
+      eel.fs.createTemporaryDirectory(tmpOptions).getOrThrow { throw IOException(it.message) }.toNioPath(eel)
     }
     catch (e: IOException) {
       showError(project, e)
@@ -178,7 +190,7 @@ open class MavenModuleBuilderHelper(protected val myProjectId: MavenId,
     }
 
     val params = MavenRunnerParameters(
-      false, workingDir.path, null as String?,
+      false, workingDir.pathString, null as String?,
       listOf("org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate"),
       emptyList())
 
@@ -192,7 +204,7 @@ open class MavenModuleBuilderHelper(protected val myProjectId: MavenId,
     }
 
     withContext(Dispatchers.Default) {
-      runner.run(params, settings) { copyGeneratedFiles(workingDir.toPath() /* TODO */, pom, project, props["artifactId"]) }
+      runner.run(params, settings) { copyGeneratedFiles(workingDir, pom, project, props["artifactId"]) }
     }
   }
 
