@@ -30,10 +30,7 @@ suspend fun <T> instantiate(
   supportedSignatures: List<MethodType>,
 ): T {
   val (signature, constructor) = findConstructor(instanceClass, supportedSignatures)
-  when (val result = resolveArguments(resolver = resolver,
-                                      parameterTypes = signature.parameterArray(),
-                                      instanceClass = instanceClass,
-                                      round = 0)) {
+  when (val result = resolveArguments(resolver, signature.parameterArray(), instanceClass, round = 0)) {
     is ResolutionResult.UnresolvedParameter -> {
       throw InstantiationException(
         "Signature '$signature' for found in '${instanceClass.name}', but '${resolver}' cannot resolve '${result.parameterType}'"
@@ -58,10 +55,7 @@ private fun findConstructor(instanceClass: Class<*>, signatures: List<MethodType
   val lookup = MethodHandles.privateLookupIn(instanceClass, MethodHandles.lookup())
   for (signature in signatures) {
     try {
-      return Pair(signature, lookup.findConstructor(instanceClass, signature))
-    }
-    catch (e: CancellationException) {
-      throw e
+      return signature to lookup.findConstructor(instanceClass, signature)
     }
     catch (_: NoSuchMethodException) { }
     catch (_: IllegalAccessException) { }
@@ -134,10 +128,7 @@ private fun <T> findConstructorAndArguments(
   } as List<Constructor<T>>
 
   var roundIndex = 0
-  val roundZero = doFindConstructorAndArguments(resolver = resolver,
-                                                constructors = sortedConstructors,
-                                                round = roundIndex,
-                                                instanceClass = instanceClass)
+  val roundZero = doFindConstructorAndArguments(resolver, sortedConstructors, instanceClass, roundIndex)
   var round = roundZero
   while (true) {
     when (round) {
@@ -154,10 +145,7 @@ private fun <T> findConstructorAndArguments(
           }
           roundIndex < rounds -> {
             roundIndex++
-            round = doFindConstructorAndArguments(resolver = resolver,
-                                                  constructors = sortedConstructors,
-                                                  instanceClass = instanceClass,
-                                                  round = roundIndex)
+            round = doFindConstructorAndArguments(resolver, sortedConstructors, instanceClass, roundIndex)
           }
           else -> {
             // NB reporting unsatisfiable constructors from round zero
@@ -201,10 +189,7 @@ private fun <T> doFindConstructorAndArguments(
       continue
     }
 
-    val arguments = when (val result = resolveArguments(resolver = resolver,
-                                                        parameterTypes = parameterTypes,
-                                                        instanceClass = instanceClass,
-                                                        round = round)) {
+    val arguments = when (val result = resolveArguments(resolver, parameterTypes, instanceClass, round)) {
       is ResolutionResult.UnresolvedParameter -> {
         if (unsatisfiableConstructors == null) {
           unsatisfiableConstructors = ArrayList()
@@ -235,7 +220,6 @@ private fun <T> doFindConstructorAndArguments(
 }
 
 private sealed interface ResolutionResult {
-
   @JvmInline
   value class UnresolvedParameter(val parameterType: Class<*>) : ResolutionResult
 
@@ -243,10 +227,7 @@ private sealed interface ResolutionResult {
   value class Resolved(val arguments: List<Argument>) : ResolutionResult
 }
 
-private fun resolveArguments(resolver: DependencyResolver,
-                             parameterTypes: Array<Class<*>>,
-                             instanceClass: Class<*>,
-                             round: Int): ResolutionResult {
+private fun resolveArguments(resolver: DependencyResolver, parameterTypes: Array<Class<*>>, instanceClass: Class<*>, round: Int): ResolutionResult {
   if (parameterTypes.isEmpty()) {
     return ResolutionResult.Resolved(emptyList())
   }
@@ -257,7 +238,7 @@ private fun resolveArguments(resolver: DependencyResolver,
       arguments.add(Argument.CoroutineScopeMarker)
     }
     else {
-      val dependency = resolver.resolveDependency(parameterType = parameterType, instanceClass = instanceClass, round = round)
+      val dependency = resolver.resolveDependency(parameterType, instanceClass, round)
                        ?: return ResolutionResult.UnresolvedParameter(parameterType)
       arguments.add(Argument.LazyArgument(dependency))
     }
@@ -309,7 +290,6 @@ private suspend fun <T> instantiate(
     }
   }
 }
-
 
 // A separate thread-local is required to track cyclic service initialization, because
 // we don't want it to be captured by lambdas scheduled in the constructor (= context propagation).
