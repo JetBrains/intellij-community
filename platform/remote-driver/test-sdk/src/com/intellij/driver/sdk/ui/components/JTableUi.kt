@@ -2,6 +2,7 @@ package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.StringTable
+import com.intellij.driver.sdk.ui.CellRendererReader
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
@@ -16,6 +17,7 @@ fun Finder.table(init: QueryBuilder.() -> String) = x(JTableUiComponent::class.j
 
 open class JTableUiComponent(data: ComponentData) : UiComponent(data) {
   private val fixture by lazy { driver.new(JTableFixtureRef::class, robot, component) }
+  private val tableComponent by lazy { driver.cast(component, JTableComponent::class) }
 
   // content()[ROW][COLUMN]
   fun content(): Map<Int, Map<Int, String>> = fixture.collectItems()
@@ -24,6 +26,9 @@ open class JTableUiComponent(data: ComponentData) : UiComponent(data) {
   fun clickCell(row: Int, column: Int) = fixture.clickCell(row, column)
   fun rightClickCell(row: Int, column: Int) = fixture.rightClickCell(row, column)
   fun doubleClickCell(row: Int, column: Int) = fixture.doubleClickCell(row, column)
+  fun replaceCellRendererReader(reader: CellRendererReader) = fixture.replaceCellRendererReader(reader)
+  fun isRowSelected(row: Int): Boolean = tableComponent.isRowSelected(row)
+  fun getSelectedRow(): Int = tableComponent.getSelectedRow()
 }
 
 @Remote("com.jetbrains.performancePlugin.remotedriver.fixtures.JTableTextFixture", plugin = REMOTE_ROBOT_MODULE_ID)
@@ -34,4 +39,11 @@ interface JTableFixtureRef {
   fun clickCell(row: Int, column: Int)
   fun rightClickCell(row: Int, column: Int)
   fun doubleClickCell(row: Int, column: Int)
+  fun replaceCellRendererReader(reader: CellRendererReader)
+}
+
+@Remote("javax.swing.JTable")
+interface JTableComponent {
+  fun isRowSelected(row: Int): Boolean
+  fun getSelectedRow(): Int
 }
