@@ -66,7 +66,7 @@ public abstract class EntityIndexingServiceTestBase extends HeavyPlatformTestCas
           changes.add(next);
         }
       }
-      iterators = EntityIndexingServiceImpl.getIterators(getProject(), changes);
+      iterators = EntityIndexingServiceImpl.Companion.getIterators(getProject(), changes);
       Collection<IndexableFilesIterator> expectedIterators = expectedIteratorsProducer.apply(createdEntities);
 
       assertSameIterators(iterators, expectedIterators);
