@@ -69,5 +69,5 @@ private fun disableInlayHintsProvider(key: SettingsKey<*>, language: Language) =
   InlayHintsSettings.instance().changeHintTypeStatus(key, language, false)
 
 private fun refreshHints(project: Project) {
-  InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project)
+  InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project, "InlayProviderDisablingActionKt.refreshHints")
 }

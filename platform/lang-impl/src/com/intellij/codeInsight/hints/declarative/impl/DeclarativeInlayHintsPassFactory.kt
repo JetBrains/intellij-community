@@ -5,7 +5,7 @@ import com.intellij.codeHighlighting.Pass
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInsight.hints.InlayHintsSettings
@@ -54,7 +54,7 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
 
     fun scheduleRecompute(editor: Editor, project: Project) {
       resetModificationStamp(editor)
-      DaemonCodeAnalyzer.getInstance(project).restart()
+      DaemonCodeAnalyzerEx.getInstanceEx(project).restart("DeclarativeInlayHintsPassFactory.scheduleRecompute")
     }
 
     internal fun updateModificationStamp(editor: Editor, project: Project) {

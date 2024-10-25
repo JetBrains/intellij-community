@@ -284,7 +284,7 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
       prop.set(!prop.get())
       val storage = InlayHintsSettings.instance()
       storage.storeSettings(ourKey, JavaLanguage.INSTANCE, settings)
-      InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project)
+      InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project, "AnnotationInlayProvider.ToggleSettingsAction.actionPerformed")
     }
 
   }

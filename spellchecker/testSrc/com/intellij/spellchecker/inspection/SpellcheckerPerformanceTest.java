@@ -16,15 +16,15 @@
 package com.intellij.spellchecker.inspection;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.inspections.*;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,7 +55,7 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
     runLocalInspections();
     LOG.debug("warm-up took " + (System.currentTimeMillis() - start) + " ms");
 
-    DaemonCodeAnalyzer.getInstance(getProject()).restart();
+    DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart(getTestName(false));
     int[] toIgnore = ignoreEverythingExceptInspections();
     Benchmark.newBenchmark("many typos highlighting", () -> {
       assertSize(typoCount, CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), toIgnore, false));
@@ -80,7 +80,7 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
     LOG.debug("warm-up took " + (System.currentTimeMillis() - start) + " ms");
 
     Benchmark.newBenchmark("many whitespaces highlighting", () -> {
-      DaemonCodeAnalyzer.getInstance(getProject()).restart();
+      DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart(getTestName(false));
       assertEmpty(runLocalInspections());
     }).start();
   }

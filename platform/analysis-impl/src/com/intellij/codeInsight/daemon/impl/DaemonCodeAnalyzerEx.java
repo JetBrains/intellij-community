@@ -30,6 +30,9 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     return (DaemonCodeAnalyzerEx)getInstance(project);
   }
 
+  @ApiStatus.Internal
+  public abstract void restart(@NotNull Object reason);
+
   public static boolean processHighlights(@NotNull Document document,
                                           @NotNull Project project,
                                           @Nullable("null means all") HighlightSeverity minSeverity,

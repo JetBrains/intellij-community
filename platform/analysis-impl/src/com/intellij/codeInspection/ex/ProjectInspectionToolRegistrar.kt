@@ -46,7 +46,7 @@ class ProjectInspectionToolRegistrar(project: Project, scope: CoroutineScope) : 
             }
           }
           oldInspections = currentInspections
-          DaemonCodeAnalyzerEx.getInstance(project).restart()
+          DaemonCodeAnalyzerEx.getInstanceEx(project).restart("ProjectInspectionToolRegistrar.updateInspectionProfilesSubscription")
         }
         finally {
           dynamicInspectionsWereInitialized.complete()

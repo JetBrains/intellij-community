@@ -492,7 +492,7 @@ open class TrafficLightRenderer internal constructor(
       val setting = FileHighlightingSetting.fromInspectionsLevel(level.level)
       HighlightLevelUtil.forceRootHighlighting(root, setting)
       InjectedLanguageManager.getInstance(project).dropFileCaches(psiFile)
-      daemonCodeAnalyzer.restart()
+      daemonCodeAnalyzer.restart("TrafficLightRenderer.AbstractUIController.setHighLightLevel")
       // after that, TrafficLightRenderer will be recreated anew, no need to patch myFileHighlightingSettings
     }
 
@@ -542,7 +542,7 @@ open class TrafficLightRenderer internal constructor(
         if (psiFile != null) {
           InjectedLanguageManager.getInstance(project).dropFileCaches(psiFile)
         }
-        daemonCodeAnalyzer.restart()
+        daemonCodeAnalyzer.restart("TrafficLightRenderer.AbstractUIController.canClosePopup")
       }
       return true
     }

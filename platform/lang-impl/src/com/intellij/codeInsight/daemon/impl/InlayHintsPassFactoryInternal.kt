@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeHighlighting.*
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.hints.*
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.editor.Editor
@@ -14,6 +13,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 
 
 private val PSI_MODIFICATION_STAMP: Key<Long> = Key.create("inlay.psi.modification.stamp")
@@ -48,9 +48,15 @@ class InlayHintsPassFactoryInternal : TextEditorHighlightingPassFactory, TextEdi
       }
     }
 
+    @Deprecated(message = "use [DaemonCodeAnalyzer.restart]")
     fun restartDaemonUpdatingHints(project: Project) {
       forceHintsUpdateOnNextPass()
-      DaemonCodeAnalyzer.getInstance(project).restart()
+      DaemonCodeAnalyzerEx.getInstanceEx(project).restart("InlayHintsPassFactoryInternal.restartDaemonUpdatingHints")
+    }
+    @ApiStatus.Internal
+    fun restartDaemonUpdatingHints(project: Project, reason: String) {
+      forceHintsUpdateOnNextPass()
+      DaemonCodeAnalyzerEx.getInstanceEx(project).restart(reason)
     }
 
     fun putCurrentModificationStamp(editor: Editor, file: PsiFile) {

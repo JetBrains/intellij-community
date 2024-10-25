@@ -3,18 +3,12 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
 
 class InlayHintsFactory {
 
   companion object {
-    @ApiStatus.Internal
-    fun restartDaemonUpdatingHints(project: Project) {
-      InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project)
-    }
-
     @ApiStatus.Internal
     fun clearModificationStamp(editor: Editor) {
       InlayHintsPassFactoryInternal.clearModificationStamp(editor)

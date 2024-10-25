@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsImpl;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.codeInsight.hint.HintManager;
@@ -108,7 +107,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   private final DaemonListeners myListeners;
   private PsiDocumentManager psiDocumentManager;
   private FileEditorManager fileEditorManager;
-  private final Map<FileEditor, DaemonProgressIndicator> myUpdateProgress = new ConcurrentHashMap<>();
+  private final Map<FileEditor, DaemonProgressIndicator> myUpdateProgress = new ConcurrentHashMap<>(); // modified under `this` lock
 
   private final UpdateRunnable myUpdateRunnable;
   private volatile @NotNull Future<?> myUpdateRunnableFuture = CompletableFuture.completedFuture(null);
@@ -117,7 +116,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   private final Collection<VirtualFile> myDisabledHighlightingFiles = new HashSet<>();
 
   private final FileStatusMap myFileStatusMap;
-  private DaemonCodeAnalyzerSettings myLastSettings;
 
   private volatile boolean myDisposed;     // the only possible transition: false -> true
 
@@ -143,7 +141,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
     myProject = project;
     mySettings = DaemonCodeAnalyzerSettings.getInstance();
-    myLastSettings = ((DaemonCodeAnalyzerSettingsImpl)mySettings).clone();
 
     myFileStatusMap = new FileStatusMap(project);
     myPassExecutorService = new PassExecutorService(project);
@@ -162,7 +159,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       stopProcess(false, "Dispose "+project);
 
       myDisposed = true;
-      myLastSettings = null;
     });
     myDaemonListenerPublisher = project.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC);
     myListeners = new DaemonListeners(project, this);
@@ -421,7 +417,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         fileLevelInfos.add(newInfo);
         FileLevelIntentionComponent component = new FileLevelIntentionComponent(newInfo.getDescription(), newInfo.getSeverity(),
                                                                                 newInfo.getGutterIconRenderer(), actionRanges,
-                                                                                psiFile, ((TextEditor)fileEditor).getEditor(), newInfo.getToolTip());
+                                                                                psiFile, textEditor.getEditor(), newInfo.getToolTip());
         fileEditorManager.addTopComponent(fileEditor, component);
         newInfo.addFileLevelComponent(fileEditor, component);
         if (LOG.isDebugEnabled()) {
@@ -724,8 +720,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
   @Override
   public void settingsChanged() {
-    restart();
-    myLastSettings = ((DaemonCodeAnalyzerSettingsImpl)mySettings).clone();
+    restart("DCAI.settingsChanged");
   }
 
   @Override
@@ -810,13 +805,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
   @Override
   public void restart() {
-    stopProcessAndRestartAllFiles("Global restart");
+    restart("Global restart");
   }
 
-  // return true if the progress was really canceled
-  void stopProcessAndRestartAllFiles(@NotNull String reason) {
+  @Override
+  public void restart(@NotNull Object reason) {
     myFileStatusMap.markAllFilesDirty(reason);
-    stopProcess(true, reason);
+    stopProcess(true, reason.toString());
   }
 
   @Override
@@ -853,6 +848,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     assertMyFile(psiFile.getProject(), psiFile);
     Document document = psiFile.getViewProvider().getDocument();
     return document != null &&
+           PsiDocumentManager.getInstance(myProject).isCommitted(document) &&
            document.getModificationStamp() == psiFile.getViewProvider().getModificationStamp() &&
            myFileStatusMap.allDirtyScopesAreNull(document);
   }
@@ -1572,7 +1568,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
   // tell the next restarted highlighting that it should start all inspections/external annotators/etc
   void restartToCompleteEssentialHighlighting() {
-    restart();
+    restart("restartToCompleteEssentialHighlighting");
     completeEssentialHighlightingRequested = true;
   }
   public boolean isRestartToCompleteEssentialHighlightingRequested() {

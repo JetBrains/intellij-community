@@ -181,5 +181,5 @@ internal fun createKtFile(
 
 internal fun refreshHints(project: Project) {
     DeclarativeInlayHintsPassFactory.resetModificationStamp()
-    InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project)
+    InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project, "KotlinAbstractHintsProviderKt.refreshHints")
 }

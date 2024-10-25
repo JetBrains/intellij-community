@@ -11,11 +11,16 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
-import com.intellij.psi.*
-import com.intellij.testFramework.*
+import com.intellij.psi.JavaElementVisitor
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiLiteralExpression
+import com.intellij.testFramework.DumbModeTestUtils
+import com.intellij.testFramework.enableInspectionTool
+import com.intellij.testFramework.enableInspectionTools
 import org.intellij.lang.annotations.Language
-import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.Throws
 
 @CanChangeDocumentDuringHighlighting
 class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
@@ -39,14 +44,14 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
     assertOneElement(dumbInfos)
     assertExistsInfo(dumbInfos, "Dumb0")
 
-    DaemonCodeAnalyzer.getInstance(project).restart()
+    DaemonCodeAnalyzerEx.getInstanceEx(project).restart(getTestName(false));
     // dumb and smart inspections run in dumb mode
     val smartInfos = doHighlighting()
     assertSize(2, smartInfos)
     assertExistsInfo(smartInfos, "Dumb1")
     assertExistsInfo(smartInfos, "Smart0")
 
-    DaemonCodeAnalyzer.getInstance(project).restart()
+    DaemonCodeAnalyzerEx.getInstanceEx(project).restart(getTestName(false));
     // only dumb inspection runs in dumb mode, but the results of smart inspection are frozen from the previous run
     val dumbInfos2 = doHighlightingInDumbMode()
     assertSize(2, dumbInfos2)
@@ -69,7 +74,7 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
     assertExistsInfo(smartInfos, "Dumb0")
     assertExistsInfo(smartInfos, "Smart0")
 
-    DaemonCodeAnalyzer.getInstance(project).restart()
+    DaemonCodeAnalyzerEx.getInstanceEx(project).restart(getTestName(false));
     // only dumb inspection runs in dumb mode, but the results of smart inspection are frozen from the previous run
     val dumbInfos = doHighlightingInDumbMode()
     assertSize(2, dumbInfos)

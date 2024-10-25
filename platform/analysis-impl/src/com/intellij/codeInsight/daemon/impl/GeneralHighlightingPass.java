@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.analysis.AnalysisBundle;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInsight.problems.ProblemImpl;
@@ -203,7 +202,7 @@ sealed class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           }
         }
         else {
-          cancelAndRestartDaemonLater(progress, myProject);
+          cancelAndRestartDaemonLater(progress, myProject, "GHP.collectHighlights() == false");
         }
       };
       if (myHighlightInfoUpdater instanceof HighlightInfoUpdaterImpl impl) {
@@ -260,13 +259,13 @@ sealed class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return RESTART_REQUESTS.get() > 0;
   }
 
-  private static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress, @NotNull Project project) throws ProcessCanceledException {
+  private static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress, @NotNull Project project, @NotNull String reason) throws ProcessCanceledException {
     RESTART_REQUESTS.incrementAndGet();
     progress.cancel();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       RESTART_REQUESTS.decrementAndGet();
       if (!project.isDisposed()) {
-        DaemonCodeAnalyzer.getInstance(project).restart();
+        DaemonCodeAnalyzerEx.getInstanceEx(project).restart(reason);
       }
     }
     else {
@@ -274,7 +273,7 @@ sealed class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
         RESTART_REQUESTS.decrementAndGet();
         if (!project.isDisposed()) {
-          DaemonCodeAnalyzer.getInstance(project).restart();
+          DaemonCodeAnalyzerEx.getInstanceEx(project).restart(reason);
         }
       }, delay, TimeUnit.MILLISECONDS);
     }

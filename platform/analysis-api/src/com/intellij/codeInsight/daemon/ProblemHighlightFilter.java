@@ -38,7 +38,9 @@ public abstract class ProblemHighlightFilter {
     for (ProblemHighlightFilter filter : EP_NAME.getExtensionList()) {
       boolean shouldHighlight = onTheFly ? filter.shouldHighlight(psiFile) : filter.shouldProcessInBatch(psiFile);
       if (isDebugEnabled) {
-        LOG.debug("shouldProcess highlight: " + shouldHighlight + " filter type: " + filter.getClass().getSimpleName());
+        if (!shouldHighlight) {
+          LOG.debug("shouldProcess shouldHighlight(" + psiFile.getName()+") = "+shouldHighlight + "; filter type: " + filter.getClass()+"; onTheFly="+onTheFly);
+        }
       }
       if (!shouldHighlight) {
         return false;

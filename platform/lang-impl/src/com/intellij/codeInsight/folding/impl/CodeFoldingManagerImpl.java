@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.folding.impl.FoldingUpdate.RegionInfo;
 import com.intellij.lang.folding.CustomFoldingProvider;
@@ -209,7 +209,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
   @Override
   public void scheduleAsyncFoldingUpdate(@NotNull Editor editor) {
     FoldingUpdate.clearFoldingCache(editor);
-    DaemonCodeAnalyzer.getInstance(myProject).restart();
+    DaemonCodeAnalyzerEx.getInstanceEx(myProject).restart("CodeFoldingManagerImpl.scheduleAsyncFoldingUpdate");
   }
 
   private void initFolding(@NotNull Editor editor) {

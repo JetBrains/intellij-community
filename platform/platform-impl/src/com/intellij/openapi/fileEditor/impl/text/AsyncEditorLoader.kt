@@ -3,7 +3,7 @@
 
 package com.intellij.openapi.fileEditor.impl.text
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.concurrency.captureThreadContext
 import com.intellij.concurrency.resetThreadContext
@@ -119,7 +119,7 @@ class AsyncEditorLoader internal constructor(
     }
 
     // do not get service in invokeOnCompletion
-    val daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project)
+    val daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project)
     coroutineScope.launch(CoroutineName("AsyncEditorLoader.wait")) {
       val editorFileName = textEditor.file.name
       val indicatorJob = showLoadingIndicator(
@@ -160,7 +160,7 @@ class AsyncEditorLoader internal constructor(
 
         // make sure the highlighting is restarted when the editor is finally loaded, because otherwise some crazy things happen,
         // for instance `FileEditor.getBackgroundHighlighter()` returning null, essentially stopping highlighting silently
-        daemonCodeAnalyzer.restart()
+        daemonCodeAnalyzer.restart("AsyncEditorLoader.start ${textEditor.file.name}")
       }
   }
 

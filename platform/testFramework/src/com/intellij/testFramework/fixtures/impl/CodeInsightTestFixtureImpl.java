@@ -1721,7 +1721,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     Editor editor = fileEditorManager.openTextEditor(new OpenFileDescriptor(project, file), false);
     // to make UIUtil.hasFocus return true to make ShowAutoImportPass.showImports work
     UIUtil.markAsFocused(editor.getContentComponent(), true);
-    DaemonCodeAnalyzer.getInstance(getProject()).restart();
+    DaemonCodeAnalyzerEx.getInstanceEx(project).restart("CodeInsightTestFixtureImpl.createEditor");
     return editor;
   }
 

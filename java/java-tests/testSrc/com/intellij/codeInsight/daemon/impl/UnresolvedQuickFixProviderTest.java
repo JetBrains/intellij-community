@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
@@ -74,7 +73,7 @@ public class UnresolvedQuickFixProviderTest extends LightDaemonAnalyzerTestCase 
 
     getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().indexOf("UnknownClassNumber15"));
     ALLOW_UNRESOLVED_REFERENCE_QUICK_FIXES = true;
-    DaemonCodeAnalyzer.getInstance(getProject()).restart();
+    DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart(getTestName(false));
     errors = highlightErrors();
     CodeInsightTestFixtureImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(getFile(), getEditor());
     UIUtil.dispatchAllInvocationEvents();
@@ -99,7 +98,7 @@ public class UnresolvedQuickFixProviderTest extends LightDaemonAnalyzerTestCase 
     DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaLanguage.INSTANCE, new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{
       new MyClassAnnotator()}, ()->{
       getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().indexOf("MyClass var1"));
-      DaemonCodeAnalyzer.getInstance(getProject()).restart();
+      DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart(getTestName(false));
       List<HighlightInfo> errors = highlightErrors();
       assertOneElement(errors);
       CodeInsightTestFixtureImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(getFile(), getEditor());

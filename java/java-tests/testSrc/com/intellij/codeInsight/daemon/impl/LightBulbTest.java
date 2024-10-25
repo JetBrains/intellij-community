@@ -247,7 +247,7 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
     configureByText(JavaFileType.INSTANCE, "class X { <caret>  }");
     DaemonRespondToChangesTest.makeEditorWindowVisible(new Point(0, 0), myEditor);
     doHighlighting();
-    myDaemonCodeAnalyzer.restart();
+    myDaemonCodeAnalyzer.restart(getTestName(false));
     DaemonRespondToChangesTest.runWithReparseDelay(0, () -> {
       for (int i = 0; i < 1000; i++) {
         caretRight();
@@ -346,7 +346,7 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
     configureByText(JavaFileType.INSTANCE, text);
     WriteCommandAction.runWriteCommandAction(getProject(), () -> myEditor.getDocument().setText(text));
     doHighlighting();
-    myDaemonCodeAnalyzer.restart();
+    myDaemonCodeAnalyzer.restart(getTestName(false));
     doHighlighting();
   }
 
@@ -484,7 +484,7 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
 
       myDaemonCodeAnalyzer.mustWaitForSmartMode(false, getTestRootDisposable());
       DumbModeTestUtils.runInDumbModeSynchronously(myProject, () -> {
-        myDaemonCodeAnalyzer.restart();
+        myDaemonCodeAnalyzer.restart(getTestName(false));
         HighlightInfo info2 = assertOneElement(highlightErrors());
         assertEquals(MyDumbAnnotator.ERR_MSG, info2.getDescription());
 

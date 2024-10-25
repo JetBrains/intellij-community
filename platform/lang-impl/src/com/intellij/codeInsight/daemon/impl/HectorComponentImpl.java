@@ -262,8 +262,7 @@ final class HectorComponentImpl extends JPanel implements HectorComponent {
       }
     }
     InjectedLanguageManager.getInstance(myFile.getProject()).dropFileCaches(myFile);
-    DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(myFile.getProject());
-    analyzer.restart();
+    DaemonCodeAnalyzerEx.getInstanceEx(myFile.getProject()).restart("HectorComponentImpl.forceDaemonRestart");
   }
 
   private boolean isModified() {

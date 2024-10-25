@@ -1270,7 +1270,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     configureByFile(filePath);
     assertEmpty(highlightErrors());
 
-    myDaemonCodeAnalyzer.restart();
+    myDaemonCodeAnalyzer.restart(getTestName(false));
     try {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
@@ -1556,7 +1556,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         applied.clear();
         collected.clear();
 
-        myDaemonCodeAnalyzer.restart(); // try to restart daemon
+        myDaemonCodeAnalyzer.restart(getTestName(false)); // try to restart daemon
 
         long start = System.currentTimeMillis();
         while (System.currentTimeMillis() < start + 5000) {
@@ -1569,7 +1569,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       applied.clear();
       collected.clear();
 
-      myDaemonCodeAnalyzer.restart(); // try to restart daemon
+      myDaemonCodeAnalyzer.restart(getTestName(false)); // try to restart daemon
 
       long start = System.currentTimeMillis();
       while (System.currentTimeMillis() < start + 5000 && applied.isEmpty()) {
