@@ -13423,13 +13423,6 @@ f:com.intellij.navigation.ProtocolOpenProjectResult$Success
 - com.intellij.navigation.ProtocolOpenProjectResult
 - <init>(com.intellij.openapi.project.Project):V
 - f:getProject():com.intellij.openapi.project.Project
-f:com.intellij.openapi.editor.CombinedPopupLayout
-- java.awt.LayoutManager
-- addLayoutComponent(java.lang.String,java.awt.Component):V
-- layoutContainer(java.awt.Container):V
-- minimumLayoutSize(java.awt.Container):java.awt.Dimension
-- preferredLayoutSize(java.awt.Container):java.awt.Dimension
-- removeLayoutComponent(java.awt.Component):V
 c:com.intellij.openapi.editor.EditorMouseHoverPopupManager
 - com.intellij.openapi.Disposable
 - sf:MAX_QUICK_DOC_CHARACTERS:I
