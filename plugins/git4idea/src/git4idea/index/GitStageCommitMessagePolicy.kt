@@ -18,6 +18,7 @@ class GitStageCommitMessagePolicy(
   }
 
   override fun dispose() {
+    vcsConfiguration.LAST_COMMIT_MESSAGE = commitMessageUi.text
   }
 
   private fun getCommitMessage(): String {
