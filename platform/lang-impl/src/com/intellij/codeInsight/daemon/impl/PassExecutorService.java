@@ -8,6 +8,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.diagnostic.Activity;
@@ -62,8 +63,6 @@ import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 final class PassExecutorService implements Disposable {
   static final Logger LOG = Logger.getInstance(PassExecutorService.class);
@@ -135,7 +134,7 @@ final class PassExecutorService implements Disposable {
                     HighlightingPass @NotNull [] passes,
                     @NotNull DaemonProgressIndicator updateProgress) {
     if (isDisposed()) {
-      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopMyProcess(updateProgress, true, null,"PES is disposed");
+      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopMyProcess(updateProgress, true, null, "PES is disposed");
       return;
     }
     ApplicationManager.getApplication().assertIsNonDispatchThread();
@@ -449,7 +448,7 @@ final class PassExecutorService implements Disposable {
             if (!myUpdateProgress.isCanceled()) {
               //in case some smart asses throw PCE just for fun
               ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopMyProcess(myUpdateProgress, true,
-                                                                                                ObjectUtils.notNull(e.getCause(), e), "PCE was thrown by pass");
+                                                                                                          ObjectUtils.notNull(e.getCause(), e), "PCE was thrown by pass");
               if (LOG.isDebugEnabled()) {
                 LOG.debug("PCE was thrown by " + myPass.getClass(), e);
               }
@@ -575,18 +574,12 @@ final class PassExecutorService implements Disposable {
     ContainerUtil.quickSort(result, Comparator.comparingInt(TextEditorHighlightingPass::getId));
   }
 
-  private static int getThreadNum() {
-    Matcher matcher = Pattern.compile("JobScheduler FJ pool (\\d*)/(\\d*)").matcher(Thread.currentThread().getName());
-    String num = matcher.matches() ? matcher.group(1) : null;
-    return StringUtil.parseInt(num, 0);
-  }
-
   static void log(ProgressIndicator progressIndicator, HighlightingPass pass, @NonNls Object @NotNull ... info) {
     if (LOG.isDebugEnabled()) {
       Document document = pass instanceof TextEditorHighlightingPass text ? text.getDocument() : null;
       CharSequence docText = document == null ? "" : ": '" + StringUtil.first(document.getCharsSequence(), 10, true)+ "'";
       synchronized (PassExecutorService.class) {
-        String message = StringUtil.repeatSymbol(' ', getThreadNum() * 4)
+        String message = StringUtil.repeatSymbol(' ', IdeaForkJoinWorkerThreadFactory.getThreadNum() * 4)
                          + " " + (pass == null ? "" : pass + " ")
                          + StringUtil.join(info, Functions.TO_STRING(), " ")
                          + "; progress=" + (progressIndicator == null ? null : System.identityHashCode(progressIndicator))

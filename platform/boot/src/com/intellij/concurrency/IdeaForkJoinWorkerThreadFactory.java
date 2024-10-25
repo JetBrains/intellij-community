@@ -41,6 +41,7 @@ public final class IdeaForkJoinWorkerThreadFactory implements ForkJoinPool.ForkJ
       }
     };
     thread.setName("JobScheduler FJ pool " + n + "/" + pool.getParallelism());
+    FJP_THREAD_NUM.set(n);
     return thread;
   }
 
@@ -51,5 +52,11 @@ public final class IdeaForkJoinWorkerThreadFactory implements ForkJoinPool.ForkJ
 
   private static void clearBit(int n) {
     bits.updateAndGet(value -> value & ~(1L << n));
+  }
+  private static final ThreadLocal<Integer> FJP_THREAD_NUM = new ThreadLocal<>();
+  // for logging with the nice indent only
+  public static int getThreadNum() {
+    Integer i = FJP_THREAD_NUM.get();
+    return i == null ? 0 : i;
   }
 }
