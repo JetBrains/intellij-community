@@ -40,7 +40,7 @@ internal object WindowsDefenderExcludeUtil {
     defenderExclusions.replaceAll { _, _ -> false }
   }
 
-  fun updateDefenderConfig(checker: WindowsDefenderChecker, project: Project, paths: List<Path>, afterFinish: () -> Unit = {}) {
+  fun updateDefenderConfig(checker: WindowsDefenderChecker, project: Project, paths: List<Path>, isUpdatedFromNotification: Boolean = false, afterFinish: () -> Unit = {}) {
     service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
       @Suppress("DialogTitleCapitalization")
       withBackgroundProgress(project, DiagnosticBundle.message("defender.config.progress"), false) {
@@ -58,7 +58,7 @@ internal object WindowsDefenderExcludeUtil {
         WindowsDefenderStatisticsCollector.configured(project, success)
       }
     }
-    WindowsDefenderStatisticsCollector.auto(project)
+    if (isUpdatedFromNotification) WindowsDefenderStatisticsCollector.auto(project)
   }
 
   fun getPathsToExclude(project: Project?, projectPath: Path?): List<Path> {
