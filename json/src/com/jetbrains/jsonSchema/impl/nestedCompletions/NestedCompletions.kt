@@ -170,8 +170,13 @@ private tailrec fun doExpand(parentObject: JsonObjectValueAdapter,
                              element: PsiElement,
                              index: Int,
                              fakeProperty: PsiElement?): PsiElement? {
-  val property = parentObject.propertyList.firstOrNull { it.name == completionPath[index] }
-                 ?: addNewPropertyWithObjectValue(parentObject, completionPath[index], walker, element, fakeProperty)
+  val parentProperty = walker.getParentPropertyAdapter(element.parent)
+  val property = parentObject.propertyList.firstOrNull {
+    // we match properties both by name and by parent
+    // for languages with exotic syntaxes, there can be multiple same-named properties
+    //  at different levels within the same object
+    it.name == completionPath[index] && (parentProperty == null || parentProperty.delegate.parent == it.delegate.parent)
+  } ?: addNewPropertyWithObjectValue(parentObject, completionPath[index], walker, element, fakeProperty)
   fakeProperty?.let {
     cleanupWhitespacesAndDelete(it, walker)
   }
