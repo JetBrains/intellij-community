@@ -30,7 +30,7 @@ abstract class JupyterAbstractAboveCellToolbar(
       else -> JBColor.GRAY
     }
     border = BorderFactory.createCompoundBorder(RoundedLineBorder(borderColor, getArcSize(), TOOLBAR_BORDER_THICKNESS),
-                                                BorderFactory.createEmptyBorder(getOuterPadding(), getOuterPadding(), getOuterPadding(), getOuterPadding()))
+                                                BorderFactory.createEmptyBorder(getVerticalPadding(), getHorizontalPadding(), getVerticalPadding(), getHorizontalPadding()))
     isOpaque = false
     cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
     targetComponent = target
@@ -60,7 +60,8 @@ abstract class JupyterAbstractAboveCellToolbar(
 
   override fun installPopupHandler(customizable: Boolean, popupActionGroup: ActionGroup?, popupActionId: String?) = Unit
   protected abstract fun getArcSize(): Int
-  protected abstract fun getOuterPadding(): Int
+  protected abstract fun getHorizontalPadding(): Int
+  protected open fun getVerticalPadding(): Int = getHorizontalPadding()
 
   companion object {
     private const val ALPHA = 1.0f
