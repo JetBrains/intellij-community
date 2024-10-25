@@ -42,8 +42,8 @@ internal open class CallableImportCandidatesProvider(
                     // filter out extensions here, because they are added later with the use of information about receiver types
                     acceptsKotlinCallable(declaration) && !declaration.isExtensionDeclaration()
                 })
-                addAll(indexProvider.getJavaMethodsByName(unresolvedName, ::acceptsJavaCallable))
-                addAll(indexProvider.getJavaFieldsByName(unresolvedName, ::acceptsJavaCallable))
+                addAll(indexProvider.getJavaMethodsByName(unresolvedName) { acceptsJavaCallable(it) })
+                addAll(indexProvider.getJavaFieldsByName(unresolvedName) { acceptsJavaCallable(it) })
             }
 
             when (val context = positionContext) {
@@ -88,6 +88,10 @@ internal class DelegateMethodImportCandidatesProvider(
         } ?: return emptyList()
 
         val expressionType = positionContext.position.parentOfType<KtPropertyDelegate>()?.expression?.expressionType ?: return emptyList()
-        return indexProvider.getExtensionCallableSymbolsByName(functionName, listOf(expressionType), ::acceptsKotlinCallable).toList()
+        return indexProvider.getExtensionCallableSymbolsByName(
+            name = functionName,
+            receiverTypes = listOf(expressionType),
+        ) { acceptsKotlinCallable(it) }
+            .toList()
     }
 }

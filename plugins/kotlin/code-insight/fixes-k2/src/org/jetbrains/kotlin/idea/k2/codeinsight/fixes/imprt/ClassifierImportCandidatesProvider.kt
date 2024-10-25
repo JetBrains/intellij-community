@@ -45,8 +45,8 @@ internal open class ClassifierImportCandidatesProvider(
         val fileSymbol = getFileSymbol()
 
         return buildList {
-            addAll(indexProvider.getKotlinClassesByName(unresolvedName, ::acceptsKotlinClass))
-            addAll(indexProvider.getJavaClassesByName(unresolvedName, ::acceptsJavaClass))
+            addAll(indexProvider.getKotlinClassesByName(unresolvedName) { acceptsKotlinClass(it) })
+            addAll(indexProvider.getJavaClassesByName(unresolvedName) { acceptsJavaClass(it) })
         }.filter { it.isVisible(fileSymbol) && it.classId != null && acceptsClassLikeSymbol(it) }
     }
 }
