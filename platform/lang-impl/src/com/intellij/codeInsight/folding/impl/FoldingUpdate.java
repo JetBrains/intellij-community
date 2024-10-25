@@ -132,6 +132,7 @@ public final class FoldingUpdate {
     if (file instanceof PsiCompiledElement) return null;
     boolean codeFoldingForInjectedEnabled = editor.getUserData(INJECTED_CODE_FOLDING_ENABLED) != Boolean.FALSE;
 
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     Project project = file.getProject();
@@ -143,6 +144,7 @@ public final class FoldingUpdate {
     Object lastTimeStamp = editor.getUserData(LAST_UPDATE_INJECTED_STAMP_KEY);
     if (lastTimeStamp instanceof Long && ((Long)lastTimeStamp).longValue() == timeStamp) return null;
 
+    // we assume the injections are already done in InjectedGeneralHighlightingPass
     List<DocumentWindow> injectedDocuments = InjectedLanguageManager.getInstance(project).getCachedInjectedDocumentsInRange(file, file.getTextRange());
     if (injectedDocuments.isEmpty()) return null;
     List<EditorWindow> injectedEditors = new ArrayList<>();

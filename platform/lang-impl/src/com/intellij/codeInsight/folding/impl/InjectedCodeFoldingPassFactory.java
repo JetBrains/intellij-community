@@ -10,7 +10,8 @@ import org.jetbrains.annotations.NotNull;
 final class InjectedCodeFoldingPassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
   @Override
   public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
-    registrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL}, null, false, -1);
+    // run injected folding pass after completion of InjectedGeneralHighlightingPass to take advantage of completed injections there
+    registrar.registerTextEditorHighlightingPass(this, new int[]{Pass.INJECTED_GENERAL}, null, false, -1);
   }
 
   @Override
