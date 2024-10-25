@@ -13,7 +13,6 @@ import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
@@ -26,19 +25,18 @@ import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.serialization.deserialization.METADATA_FILE_EXTENSION
 
-@OptIn(KaExperimentalApi::class)
-class KtSymbolFromIndexProvider private constructor(
-    private val useSiteFile: KtFile,
-    private val scope: GlobalSearchScope,
+class KtSymbolFromIndexProvider(
+    private val file: KtFile,
 ) {
+
     private val project: Project
-        get() = useSiteFile.project
+        get() = file.project
 
     context(KaSession)
     private fun <T : PsiElement> T.isAcceptable(psiFilter: (T) -> Boolean): Boolean {
         if (!psiFilter(this)) return false
 
-        if (kotlinFqName?.isExcludedFromAutoImport(project, useSiteFile) == true) return false
+        if (kotlinFqName?.isExcludedFromAutoImport(project, file) == true) return false
 
         return this !is KtDeclaration
                 || !isExpectDeclaration()
@@ -46,6 +44,7 @@ class KtSymbolFromIndexProvider private constructor(
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     fun getKotlinClassesByName(
         name: Name,
         psiFilter: (KtClassLikeDeclaration) -> Boolean = { true },
@@ -64,6 +63,7 @@ class KtSymbolFromIndexProvider private constructor(
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     fun getKotlinClassesByNameFilter(
         nameFilter: (Name) -> Boolean,
         psiFilter: (KtClassLikeDeclaration) -> Boolean = { true },
@@ -135,6 +135,7 @@ class KtSymbolFromIndexProvider private constructor(
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     fun getKotlinCallableSymbolsByNameFilter(
         nameFilter: (Name) -> Boolean,
         psiFilter: (KtCallableDeclaration) -> Boolean = { true },
@@ -156,6 +157,7 @@ class KtSymbolFromIndexProvider private constructor(
             resolveExtensionScopeWithTopLevelDeclarations.callables(nameFilter)
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     fun getKotlinCallableSymbolsByName(
         name: Name,
         psiFilter: (KtCallableDeclaration) -> Boolean = { true },
@@ -220,6 +222,7 @@ class KtSymbolFromIndexProvider private constructor(
      *  Returns top-level callables, excluding extensions. To obtain extensions use [getExtensionCallableSymbolsByNameFilter].
      */
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     fun getTopLevelCallableSymbolsByNameFilter(
         nameFilter: (Name) -> Boolean,
         psiFilter: (KtCallableDeclaration) -> Boolean = { true }
@@ -247,6 +250,7 @@ class KtSymbolFromIndexProvider private constructor(
                 .filterNot { it.isExtension }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     fun getExtensionCallableSymbolsByName(
         name: Name,
         receiverTypes: List<KaType>,
@@ -278,6 +282,7 @@ class KtSymbolFromIndexProvider private constructor(
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     fun getExtensionCallableSymbolsByNameFilter(
         nameFilter: (Name) -> Boolean,
         receiverTypes: List<KaType>,
@@ -368,6 +373,7 @@ class KtSymbolFromIndexProvider private constructor(
         }
     }
 
+    context(KaSession)
     private fun getPossibleTypeAliasExpansionNames(originalTypeName: Name): Set<Name> = buildSet {
         fun searchRecursively(typeName: Name) {
             ProgressManager.checkCanceled()
@@ -381,11 +387,11 @@ class KtSymbolFromIndexProvider private constructor(
         searchRecursively(originalTypeName)
     }
 
-    companion object {
-        fun createForElement(useSiteKtElement: KtElement): KtSymbolFromIndexProvider = analyze(useSiteKtElement) {
-            KtSymbolFromIndexProvider(useSiteKtElement.containingKtFile, analysisScope)
-        }
-    }
+    // TODO should be passed explicitly in some cases;
+    //  for example if the invocation count is greater than two
+    context(KaSession)
+    private val scope: GlobalSearchScope
+        get() = analysisScope
 }
 
 private val KotlinBuiltins = setOf(

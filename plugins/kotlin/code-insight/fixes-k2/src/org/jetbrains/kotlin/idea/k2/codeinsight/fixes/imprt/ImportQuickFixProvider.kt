@@ -37,7 +37,7 @@ object ImportQuickFixProvider {
         val positionContext = position?.let { KotlinPositionContextDetector.detect(it) }
 
         if (positionContext !is KotlinNameReferencePositionContext) return emptyList()
-        val indexProvider = KtSymbolFromIndexProvider.createForElement(positionContext.nameExpression)
+        val indexProvider = KtSymbolFromIndexProvider(positionContext.nameExpression.containingKtFile)
 
         return diagnosticPsi.kotlinUnresolvedReferenceKinds
             .ifEmpty { listOf(KotlinUnresolvedReferenceKind.Regular) }
