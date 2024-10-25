@@ -903,7 +903,7 @@ private fun readTextAreaStyle(metrics: TextFieldMetrics): TextAreaStyle {
     val colors =
         TextAreaColors(
             background = normalBackground,
-            backgroundDisabled = retrieveColorOrUnspecified("TextArea.disabledBackground"),
+            backgroundDisabled = Color.Transparent,
             backgroundFocused = normalBackground,
             backgroundPressed = normalBackground,
             backgroundHovered = normalBackground,
@@ -947,7 +947,7 @@ private fun readTextFieldStyle(): TextFieldStyle {
     val colors =
         TextFieldColors(
             background = normalBackground,
-            backgroundDisabled = retrieveColorOrUnspecified("TextField.disabledBackground"),
+            backgroundDisabled = Color.Transparent,
             backgroundFocused = normalBackground,
             backgroundPressed = normalBackground,
             backgroundHovered = normalBackground,

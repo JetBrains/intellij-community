@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -123,16 +124,20 @@ private fun RowScope.ColumnOne() {
             DefaultButton({}, enabled = false) { Text("Default") }
         }
 
-        val state = rememberTextFieldState("")
-        TextField(
-            state = state,
-            modifier =
-                Modifier.width(200.dp).provideData {
-                    set(ActionSystemTestAction.COMPONENT_DATA_KEY.name, "TextField")
-                    lazy(ActionSystemTestAction.COMPONENT_DATA_KEY.name) { Math.random().toString() }
-                },
-            placeholder = { Text("Write something...") },
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            val state = rememberTextFieldState("")
+            TextField(
+                state = state,
+                modifier =
+                    Modifier.width(200.dp).provideData {
+                        set(ActionSystemTestAction.COMPONENT_DATA_KEY.name, "TextField")
+                        lazy(ActionSystemTestAction.COMPONENT_DATA_KEY.name) { Math.random().toString() }
+                    },
+                placeholder = { Text("Write something...") },
+            )
+
+            TextField(TextFieldState("Can't write here, I'm disabled"), enabled = false)
+        }
 
         var checked by remember { mutableStateOf(false) }
         var validated by remember { mutableStateOf(false) }
