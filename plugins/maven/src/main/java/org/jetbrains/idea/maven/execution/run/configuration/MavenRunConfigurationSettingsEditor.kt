@@ -503,7 +503,7 @@ class MavenRunConfigurationSettingsEditor(
       { generalSettingsOrDefault.setUserSettingsFile(it) },
       {
         val mavenConfig = MavenProjectsManager.getInstance(project)?.generalSettings?.mavenConfig
-        val userSettings = MavenEelUtil.getUserSettings(project, "", mavenConfig)
+        val userSettings = MavenEelUtil.getUserSettingsUnderModalProgress(project, "", mavenConfig)
         getCanonicalPath(userSettings.toString())
       }
     )
@@ -531,7 +531,7 @@ class MavenRunConfigurationSettingsEditor(
       val distributionInfo = distributionComponent.selectedDistribution
       val distribution = distributionInfo?.let(::asMavenHome) ?: BundledMaven3
       val userSettingsPath = getCanonicalPath(userSettingsComponent.text)
-      val userSettingsFile = MavenEelUtil.getUserSettings(project, userSettingsPath, mavenConfig)
+      val userSettingsFile = MavenEelUtil.getUserSettingsUnderModalProgress(project, userSettingsPath, mavenConfig)
       val userSettings = getCanonicalPath(userSettingsFile.toString())
       val localRepository = MavenEelUtil.getLocalRepoForUserPreview(project, "", distribution, userSettings, mavenConfig)
       getCanonicalPath(localRepository.toString())

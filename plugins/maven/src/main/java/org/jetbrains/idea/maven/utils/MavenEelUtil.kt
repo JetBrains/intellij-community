@@ -29,12 +29,13 @@ import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.provider.getEelApi
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
-import com.intellij.platform.eel.provider.utils.userHomeBlocking
 import com.intellij.platform.eel.provider.utils.where
 import com.intellij.platform.eel.toNioPath
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.navigation.Place
 import com.intellij.util.SystemProperties
 import com.intellij.util.text.VersionComparatorUtil
+import kotlinx.io.IOException
 import org.jetbrains.idea.maven.config.MavenConfig
 import org.jetbrains.idea.maven.config.MavenConfigSettings
 import org.jetbrains.idea.maven.execution.SyncBundle
@@ -46,13 +47,23 @@ import javax.swing.event.HyperlinkEvent
 object MavenEelUtil : MavenUtil() {
   @JvmStatic
   fun EelApi?.resolveM2Dir(): Path {
+    return runBlockingMaybeCancellable { resolveM2DirAsync() }
+  }
+
+  @JvmStatic
+  suspend fun EelApi?.resolveM2DirAsync(): Path {
     val localUserHome = Path.of(SystemProperties.getUserHome())
-    val userHome = if (this != null) fs.userHomeBlocking()?.let { mapper.toNioPath(it) } ?: localUserHome else localUserHome
+    val userHome = if (this != null) fs.userHome()?.let { mapper.toNioPath(it) } ?: localUserHome else localUserHome
 
     return userHome.resolve(DOT_M2_DIR)
   }
 
-  suspend fun <T> resolveUsingEel(project: Project?, ordinary: () -> T, eel: suspend (EelApi) -> T?): T {
+  @JvmStatic
+  suspend fun Project?.resolveM2DirAsync(): Path {
+    return this?.getEelApi().resolveM2DirAsync()
+  }
+
+  suspend fun <T> resolveUsingEel(project: Project?, ordinary: suspend () -> T, eel: suspend (EelApi) -> T?): T {
     if (project == null && isMavenUnitTestModeEnabled()) {
       MavenLog.LOG.error("resolveEelAware: Project is null")
     }
@@ -143,15 +154,14 @@ object MavenEelUtil : MavenUtil() {
    */
   @JvmStatic
   fun getLocalRepoForUserPreview(
-    project: Project?,
+    project: Project,
     overriddenLocalRepository: String?,
     mavenHome: MavenHomeType,
     mavenSettingsFile: String?,
     mavenConfig: MavenConfig?,
   ): Path {
-
     val staticMavenHome = mavenHome.staticOrBundled()
-    return getLocalRepo(project, overriddenLocalRepository, staticMavenHome, mavenSettingsFile, mavenConfig)
+    return getLocalRepoUnderModalProgress(project, overriddenLocalRepository, staticMavenHome, mavenSettingsFile, mavenConfig)
   }
 
   @JvmStatic
@@ -162,24 +172,117 @@ object MavenEelUtil : MavenUtil() {
     mavenSettingsFile: String?,
     mavenConfig: MavenConfig?,
   ): Path {
+    return runBlockingMaybeCancellable { getLocalRepoAsync(project, overriddenLocalRepository, mavenHome, mavenSettingsFile, mavenConfig) }
+  }
+
+  @JvmStatic
+  fun getLocalRepoUnderModalProgress(
+    project: Project,
+    overriddenLocalRepository: String?,
+    mavenHome: StaticResolvedMavenHomeType,
+    mavenSettingsFile: String?,
+    mavenConfig: MavenConfig?,
+  ): Path {
+    return runWithModalProgressBlocking(project, MavenConfigurableBundle.message("maven.progress.title.computing.repository.location")) {
+      getLocalRepoAsync(project, overriddenLocalRepository, mavenHome, mavenSettingsFile, mavenConfig)
+    }
+  }
+
+  @JvmStatic
+  suspend fun getLocalRepoAsync(
+    project: Project?,
+    overriddenLocalRepository: String?,
+    mavenHome: StaticResolvedMavenHomeType,
+    mavenSettingsFile: String?,
+    mavenConfig: MavenConfig?,
+  ): Path {
     var settingPath = mavenSettingsFile
     if (mavenSettingsFile.isNullOrBlank()) {
       settingPath = mavenConfig?.getFilePath(MavenConfigSettings.ALTERNATE_USER_SETTINGS) ?: ""
     }
-    return resolveUsingEelBlocking(project,
-                                   { resolveLocalRepository(project, overriddenLocalRepository, mavenHome, settingPath) },
-                                   { if (it is LocalEelApi) null else it.resolveRepository(overriddenLocalRepository, mavenHome, settingPath) })
+    return resolveUsingEel(project,
+                           { resolveLocalRepositoryAsync(project, overriddenLocalRepository, mavenHome, settingPath) },
+                           { if (it is LocalEelApi) null else it.resolveRepository(overriddenLocalRepository, mavenHome, settingPath) })
+  }
+
+  @JvmStatic
+  fun resolveLocalRepositoryBlocking(
+    project: Project?,
+    overriddenLocalRepository: String?,
+    mavenHomeType: StaticResolvedMavenHomeType,
+    overriddenUserSettingsFile: String?,
+  ): Path {
+    return runBlockingMaybeCancellable { resolveLocalRepositoryAsync(project, overriddenLocalRepository, mavenHomeType, overriddenUserSettingsFile) }
+  }
+
+  suspend fun resolveUserSettingsPathAsync(overriddenUserSettingsFile: String?, project: Project?): Path {
+    if (!overriddenUserSettingsFile.isNullOrEmpty()) return Path.of(overriddenUserSettingsFile)
+    return project.resolveM2DirAsync().resolve(SETTINGS_XML)
+  }
+
+  @JvmStatic
+  fun resolveUserSettingsPathBlocking(overriddenUserSettingsFile: String?, project: Project?): Path {
+    return runBlockingMaybeCancellable { resolveUserSettingsPathAsync(overriddenUserSettingsFile, project) }
+  }
+
+  suspend fun resolveLocalRepositoryAsync(
+    project: Project?,
+    overriddenLocalRepository: String?,
+    mavenHomeType: StaticResolvedMavenHomeType,
+    overriddenUserSettingsFile: String?,
+  ): Path {
+    val forcedM2Home = System.getProperty(PROP_FORCED_M2_HOME)
+    if (forcedM2Home != null) {
+      MavenLog.LOG.error("$PROP_FORCED_M2_HOME is deprecated, use maven.repo.local property instead")
+      return Path.of(forcedM2Home)
+    }
+
+    val result: Path = if (!overriddenLocalRepository.isNullOrBlank()) {
+      Path.of(overriddenLocalRepository)
+    }
+    else {
+      val localRepoHome = System.getProperty(MAVEN_REPO_LOCAL)
+      if (localRepoHome != null) {
+        MavenLog.LOG.debug("Using $MAVEN_REPO_LOCAL=$localRepoHome")
+        return Path.of(localRepoHome)
+      }
+      else {
+        doResolveLocalRepository(
+          resolveUserSettingsPathAsync(overriddenUserSettingsFile, project),
+          resolveGlobalSettingsFile(mavenHomeType)
+        ) ?: project.resolveM2DirAsync().resolve(REPOSITORY_DIR)
+      }
+    }
+
+    return try {
+      result.toRealPath()
+    }
+    catch (e: IOException) {
+      result
+    }
+  }
+
+  @JvmStatic
+  fun getUserSettingsUnderModalProgress(project: Project, userSettingsPath: String?, mavenConfig: MavenConfig?): Path {
+    return runWithModalProgressBlocking(project, MavenConfigurableBundle.message("maven.progress.title.computing.user.settings.location")) {
+      getUserSettingsAsync(project, userSettingsPath, mavenConfig)
+    }
   }
 
   @JvmStatic
   fun getUserSettings(project: Project?, userSettingsPath: String?, mavenConfig: MavenConfig?): Path {
+    return runBlockingMaybeCancellable { getUserSettingsAsync(project, userSettingsPath, mavenConfig) }
+  }
+
+  @JvmStatic
+  suspend fun getUserSettingsAsync(project: Project?, userSettingsPath: String?, mavenConfig: MavenConfig?): Path {
     var settingPath = userSettingsPath
     if (userSettingsPath.isNullOrBlank()) {
       settingPath = mavenConfig?.getFilePath(MavenConfigSettings.ALTERNATE_USER_SETTINGS) ?: ""
     }
-    return resolveUsingEelBlocking(project,
-                                   { resolveUserSettingsPath(settingPath, project) },
-                                   { resolveUserSettingsPath(settingPath, project) })
+    return resolveUsingEel(project,
+                           { resolveUserSettingsPath(settingPath, project) },
+                           { resolveUserSettingsPath(settingPath, project) })
   }
 
   @JvmStatic

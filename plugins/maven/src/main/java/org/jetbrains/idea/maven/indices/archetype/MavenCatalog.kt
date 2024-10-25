@@ -3,6 +3,8 @@ package org.jetbrains.idea.maven.indices.archetype
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import org.jetbrains.idea.maven.project.MavenConfigurableBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.staticOrBundled
 import org.jetbrains.idea.maven.utils.MavenEelUtil
@@ -29,8 +31,11 @@ sealed interface MavenCatalog {
           val generalSettings = MavenProjectsManager.getInstance(project).generalSettings
           val mavenConfig = generalSettings.mavenConfig
           val mavenHome = generalSettings.mavenHomeType.staticOrBundled()
-          val userSettings = MavenEelUtil.getUserSettings(project, "", mavenConfig).toString()
-          return MavenEelUtil.getLocalRepo(project, "", mavenHome, userSettings, mavenConfig)
+
+          return runWithModalProgressBlocking(project, MavenConfigurableBundle.message("maven.progress.title.computing.repository.location")) {
+            val settings = MavenEelUtil.getUserSettingsAsync(project, "", mavenConfig).toString()
+            MavenEelUtil.getLocalRepoAsync(project, "", mavenHome, settings, mavenConfig)
+          }
         }
 
       override val name: String = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.default.local.name")

@@ -138,7 +138,7 @@ public class MavenUtil {
   public static final String CLIENT_ARTIFACT_SUFFIX = "-client";
   public static final String CLIENT_EXPLODED_ARTIFACT_SUFFIX = CLIENT_ARTIFACT_SUFFIX + " exploded";
   @Deprecated
-  private static final String PROP_FORCED_M2_HOME = "idea.force.m2.home";
+  protected static final String PROP_FORCED_M2_HOME = "idea.force.m2.home";
   public static final String MAVEN_REPO_LOCAL = "maven.repo.local";
 
 
@@ -984,8 +984,7 @@ public class MavenUtil {
 
   @NotNull
   public static Path resolveUserSettingsPath(@Nullable String overriddenUserSettingsFile, @Nullable Project project) {
-    if (!isEmptyOrSpaces(overriddenUserSettingsFile)) return Path.of(overriddenUserSettingsFile);
-    return resolveM2Dir(project).resolve(SETTINGS_XML);
+    return MavenEelUtil.resolveUserSettingsPathBlocking(overriddenUserSettingsFile, project);
   }
 
   @NotNull
@@ -1060,33 +1059,7 @@ public class MavenUtil {
                                             @Nullable String overriddenLocalRepository,
                                             @NotNull StaticResolvedMavenHomeType mavenHomeType,
                                             @Nullable String overriddenUserSettingsFile) {
-    String forcedM2Home = System.getProperty(PROP_FORCED_M2_HOME);
-    if (forcedM2Home != null) {
-      MavenLog.LOG.error(PROP_FORCED_M2_HOME + " is deprecated, use maven.repo.local property instead");
-      return Path.of(forcedM2Home);
-    }
-    Path result = null;
-    if (!isEmptyOrSpaces(overriddenLocalRepository)) result = Path.of(overriddenLocalRepository);
-
-    String localRepoHome = System.getProperty(MAVEN_REPO_LOCAL);
-    if (localRepoHome != null) {
-      MavenLog.LOG.debug("Using " + MAVEN_REPO_LOCAL + "=" + localRepoHome);
-      return Path.of(localRepoHome);
-    }
-    if (result == null) {
-      result = doResolveLocalRepository(resolveUserSettingsPath(overriddenUserSettingsFile, project),
-                                        resolveGlobalSettingsFile(mavenHomeType));
-
-      if (result == null) {
-        result = resolveM2Dir(project).resolve(REPOSITORY_DIR);
-      }
-    }
-    try {
-      return result.toRealPath();
-    }
-    catch (IOException e) {
-      return result;
-    }
+    return MavenEelUtil.resolveLocalRepositoryBlocking(project, overriddenLocalRepository, mavenHomeType, overriddenUserSettingsFile);
   }
 
   @Nullable

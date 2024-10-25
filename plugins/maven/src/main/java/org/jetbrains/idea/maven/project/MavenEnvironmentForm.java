@@ -109,7 +109,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
   private Path doResolveDefaultLocalRepository() {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
     MavenConfig config = projectsManager != null ? projectsManager.getGeneralSettings().getMavenConfig() : null;
-    return MavenEelUtil.getLocalRepo(myProject, "",
+    return MavenEelUtil.getLocalRepoUnderModalProgress(myProject, "",
                                      staticOrBundled(resolveMavenHomeType(mavenHomeField.getText().trim())),
                                      settingsFileComponent.getComponent().getText(), config);
   }
@@ -118,7 +118,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
   private Path doResolveDefaultUserSettingsFile() {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
     MavenConfig config = projectsManager != null ? projectsManager.getGeneralSettings().getMavenConfig() : null;
-    return MavenEelUtil.getUserSettings(myProject, "", config);
+    return MavenEelUtil.getUserSettingsUnderModalProgress(myProject, "", config);
   }
 
   private void createUIComponents() {
