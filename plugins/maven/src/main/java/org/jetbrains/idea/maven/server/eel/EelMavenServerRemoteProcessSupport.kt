@@ -11,11 +11,8 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.pathSeparator
-import com.intellij.platform.eel.getOrThrow
-import com.intellij.platform.eel.maybeUploadPath
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import com.intellij.platform.ijent.tunnels.forwardLocalPort
 import kotlinx.coroutines.GlobalScope
@@ -50,7 +47,7 @@ class EelMavenServerRemoteProcessSupport(
   override fun publishPort(port: Int): Int {
     val deferred = CompletableFuture<Unit>()
     GlobalScope.launch {
-      forwardLocalPort(eel.tunnels, port, eel.tunnels.hostAddressBuilder(port.toUShort()).hostname(remoteHost).build())
+      forwardLocalPort(eel.tunnels, port, EelTunnelsApi.hostAddressBuilder(port.toUShort()).hostname(remoteHost).build())
       deferred.complete(Unit)
     }
     deferred.join()

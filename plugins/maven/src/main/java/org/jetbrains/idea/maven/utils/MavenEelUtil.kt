@@ -41,8 +41,6 @@ import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.MavenServerManager
 import java.nio.file.Path
-import java.util.function.Function
-import java.util.function.Supplier
 import javax.swing.event.HyperlinkEvent
 
 object MavenEelUtil : MavenUtil() {
@@ -54,12 +52,12 @@ object MavenEelUtil : MavenUtil() {
     return userHome.resolve(DOT_M2_DIR)
   }
 
-  suspend fun <T> resolveUsingEel(project: Project?, ordinary: Supplier<T>, eel: suspend (EelApi) -> T): T {
+  suspend fun <T> resolveUsingEel(project: Project?, ordinary: () -> T, eel: suspend (EelApi) -> T?): T {
     if (project == null && isMavenUnitTestModeEnabled()) {
       MavenLog.LOG.error("resolveEelAware: Project is null")
     }
-    val eelApi = project?.getEelApi() ?: return ordinary.get()
-    return eel.invoke(eelApi)
+
+    return project?.getEelApi()?.let { eel(it) } ?: ordinary.invoke()
   }
 
   @JvmStatic
@@ -136,8 +134,8 @@ object MavenEelUtil : MavenUtil() {
   }
 
   @JvmStatic
-  fun <T> resolveUsingEelBlocking(project: Project?, ordinary: Supplier<T>, eel: Function<EelApi, T>): T {
-    return runBlockingMaybeCancellable { resolveUsingEel(project, ordinary) { eel.apply(it) } }
+  fun <T> resolveUsingEelBlocking(project: Project?, ordinary: () -> T, eel: suspend (EelApi) -> T?): T {
+    return runBlockingMaybeCancellable { resolveUsingEel(project, ordinary, eel) }
   }
 
   /**
@@ -170,7 +168,7 @@ object MavenEelUtil : MavenUtil() {
     }
     return resolveUsingEelBlocking(project,
                                    { resolveLocalRepository(project, overriddenLocalRepository, mavenHome, settingPath) },
-                                   { it.resolveRepository(overriddenLocalRepository, mavenHome, settingPath) })
+                                   { if (it is LocalEelApi) null else it.resolveRepository(overriddenLocalRepository, mavenHome, settingPath) })
   }
 
   @JvmStatic
