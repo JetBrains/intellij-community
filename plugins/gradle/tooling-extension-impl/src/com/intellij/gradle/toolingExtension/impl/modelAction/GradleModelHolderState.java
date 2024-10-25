@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.modelAction;
 
-import com.intellij.gradle.toolingExtension.impl.telemetry.TelemetryHolder;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.jetbrains.annotations.ApiStatus;
@@ -23,7 +22,6 @@ public class GradleModelHolderState implements Serializable {
   private final @NotNull Map<GradleModelId, Object> myModels;
 
   private final @Nullable GradleModelFetchPhase myPhase;
-  private final @NotNull TelemetryHolder myOpenTelemetryTraces;
 
   public GradleModelHolderState(
     @Nullable DefaultGradleLightBuild rootBuild,
@@ -31,7 +29,7 @@ public class GradleModelHolderState implements Serializable {
     @Nullable BuildEnvironment buildEnvironment,
     @NotNull Map<GradleModelId, Object> models
   ) {
-    this(rootBuild, nestedBuilds, buildEnvironment, models, null, TelemetryHolder.empty());
+    this(rootBuild, nestedBuilds, buildEnvironment, models, null);
   }
 
   public GradleModelHolderState(
@@ -39,15 +37,13 @@ public class GradleModelHolderState implements Serializable {
     @NotNull Collection<DefaultGradleLightBuild> nestedBuilds,
     @Nullable BuildEnvironment buildEnvironment,
     @NotNull Map<GradleModelId, Object> models,
-    @Nullable GradleModelFetchPhase phase,
-    @NotNull TelemetryHolder telemetryHolder
+    @Nullable GradleModelFetchPhase phase
   ) {
     myPhase = phase;
     myRootBuild = rootBuild;
     myNestedBuilds = nestedBuilds;
     myBuildEnvironment = buildEnvironment;
     myModels = models;
-    myOpenTelemetryTraces = telemetryHolder;
   }
 
   public @Nullable DefaultGradleLightBuild getRootBuild() {
@@ -70,17 +66,13 @@ public class GradleModelHolderState implements Serializable {
     return myPhase;
   }
 
-  public @NotNull TelemetryHolder getOpenTelemetry() {
-    return myOpenTelemetryTraces;
-  }
-
   @Contract(pure = true)
-  public @NotNull GradleModelHolderState withOpenTelemetryTraces(TelemetryHolder telemetry) {
-    return new GradleModelHolderState(myRootBuild, myNestedBuilds, myBuildEnvironment, myModels, myPhase, telemetry);
+  public @NotNull GradleModelHolderState current() {
+    return new GradleModelHolderState(myRootBuild, myNestedBuilds, myBuildEnvironment, myModels, myPhase);
   }
 
   @Contract(pure = true)
   public @NotNull GradleModelHolderState withPhase(@NotNull GradleModelFetchPhase phase) {
-    return new GradleModelHolderState(myRootBuild, myNestedBuilds, myBuildEnvironment, myModels, phase, myOpenTelemetryTraces);
+    return new GradleModelHolderState(myRootBuild, myNestedBuilds, myBuildEnvironment, myModels, phase);
   }
 }

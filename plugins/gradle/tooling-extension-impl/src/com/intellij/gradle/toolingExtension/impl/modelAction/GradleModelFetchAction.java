@@ -4,7 +4,6 @@ package com.intellij.gradle.toolingExtension.impl.modelAction;
 import com.intellij.gradle.toolingExtension.impl.model.utilTurnOffDefaultTasksModel.TurnOffDefaultTasks;
 import com.intellij.gradle.toolingExtension.impl.modelSerialization.ToolingSerializerConverter;
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry;
-import com.intellij.gradle.toolingExtension.impl.telemetry.TelemetryHolder;
 import com.intellij.gradle.toolingExtension.impl.util.GradleExecutorServiceUtil;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
@@ -108,14 +107,7 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
   }
 
   private GradleModelHolderState withOpenTelemetry(@NotNull Function<GradleOpenTelemetry, GradleModelHolderState> action) {
-    TelemetryContext tracingContext = myTracingContext;
-    if (tracingContext == null) {
-      GradleOpenTelemetry noopTelemetry = new GradleOpenTelemetry();
-      return action.apply(noopTelemetry);
-    }
-
-    GradleOpenTelemetry telemetry = new GradleOpenTelemetry();
-    telemetry.start(tracingContext);
+    GradleOpenTelemetry telemetry = new GradleOpenTelemetry(myTracingContext);
     GradleModelHolderState state;
     try {
       state = action.apply(telemetry);
@@ -124,8 +116,7 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
       telemetry.shutdown();
       throw exception;
     }
-    TelemetryHolder holder = telemetry.shutdown();
-    return state.withOpenTelemetryTraces(holder);
+    return state.current();
   }
 
   private @NotNull GradleModelHolderState doExecute(
