@@ -30,6 +30,7 @@ import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamReader
 import javax.xml.stream.events.XMLEvent
+import kotlin.Throws
 
 @ApiStatus.Internal const val PACKAGE_ATTRIBUTE: String = "package"
 @ApiStatus.Internal const val IMPLEMENTATION_DETAIL_ATTRIBUTE: String = "implementation-detail"
@@ -48,8 +49,16 @@ fun readModuleDescriptor(
   includeBase: String?,
   readInto: RawPluginDescriptor?,
   locationSource: String?,
-): RawPluginDescriptor =
-  readModuleDescriptor(createNonCoalescingXmlStreamReader(input, locationSource), readContext, dataLoader, pathResolver, includeBase, readInto)
+): RawPluginDescriptor {
+  return readModuleDescriptor(
+    reader = createNonCoalescingXmlStreamReader(input = input, locationSource = locationSource),
+    readContext = readContext,
+    dataLoader = dataLoader,
+    pathResolver = pathResolver,
+    includeBase = includeBase,
+    readInto = readInto,
+  )
+}
 
 @ApiStatus.Internal
 fun readModuleDescriptor(
@@ -60,8 +69,16 @@ fun readModuleDescriptor(
   includeBase: String?,
   readInto: RawPluginDescriptor?,
   locationSource: String?,
-): RawPluginDescriptor =
-  readModuleDescriptor(createNonCoalescingXmlStreamReader(input, locationSource), readContext, dataLoader, pathResolver, includeBase, readInto)
+): RawPluginDescriptor {
+  return readModuleDescriptor(
+    reader = createNonCoalescingXmlStreamReader(input = input, locationSource = locationSource),
+    readContext = readContext,
+    dataLoader = dataLoader,
+    pathResolver = pathResolver,
+    includeBase = includeBase,
+    readInto = readInto,
+  )
+}
 
 internal fun readModuleDescriptor(
   reader: XMLStreamReader2,
@@ -87,7 +104,15 @@ internal fun readModuleDescriptor(
     readRootAttributes(reader, descriptor)
 
     reader.consumeChildElements { localName ->
-      readRootElementChild(reader, descriptor, localName, readContext, pathResolver, dataLoader, includeBase)
+      readRootElementChild(
+        reader = reader,
+        descriptor = descriptor,
+        localName = localName,
+        readContext = readContext,
+        pathResolver = pathResolver,
+        dataLoader = dataLoader,
+        includeBase = includeBase,
+      )
       assert(reader.isEndElement)
     }
 
@@ -100,7 +125,7 @@ internal fun readModuleDescriptor(
 
 @Throws(XMLStreamException::class)
 internal fun readBasicDescriptorData(input: InputStream): RawPluginDescriptor? {
-  val reader = createNonCoalescingXmlStreamReader(input, locationSource = null)
+  val reader = createNonCoalescingXmlStreamReader(input = input, locationSource = null)
   try {
     if (reader.eventType != XMLStreamConstants.START_DOCUMENT) {
       throw XMLStreamException("Expected: ${XMLStreamConstants.START_DOCUMENT}, got: ${getEventTypeString(reader.eventType)}", reader.location)
@@ -196,16 +221,18 @@ private fun readRootElementChild(
 ) {
   when (localName) {
     "id" -> {
-      if (descriptor.id == null) {
-        descriptor.id = getNullifiedContent(reader)
-      }
-      else if (!KNOWN_KOTLIN_PLUGIN_IDS.contains(descriptor.id) && descriptor.id != "com.intellij") {
-        // no warning and no redefinition for kotlin - compiler.xml is a known issue
-        LOG.warn("id redefinition (${reader.locationInfo.location})")
-        descriptor.id = getNullifiedContent(reader)
-      }
-      else {
-        reader.skipElement()
+      when {
+        descriptor.id == null -> {
+          descriptor.id = getNullifiedContent(reader)
+        }
+        !KNOWN_KOTLIN_PLUGIN_IDS.contains(descriptor.id) && descriptor.id != "com.intellij" -> {
+          // no warning and no redefinition for kotlin - compiler.xml is a known issue
+          LOG.warn("id redefinition (${reader.locationInfo.location})")
+          descriptor.id = getNullifiedContent(reader)
+        }
+        else -> {
+          reader.skipElement()
+        }
       }
     }
     "name" -> descriptor.name = getNullifiedContent(reader)
@@ -742,7 +769,7 @@ private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescripto
     }
     if (isEndElement) {
       if (os == null || os.isSuitableForOs()) {
-        descriptor.contentModules!!.add(PluginContentDescriptor.ModuleItem(name, configFile, descriptorContent = null, loadingRule))
+        descriptor.contentModules!!.add(PluginContentDescriptor.ModuleItem(name = name, configFile = configFile, descriptorContent = null, loadingRule = loadingRule))
       }
     }
     else {
@@ -751,7 +778,7 @@ private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescripto
         val toIndex = fromIndex + reader.textLength
         val length = toIndex - fromIndex
         val descriptorContent = if (length == 0) null else reader.textCharacters.copyOfRange(fromIndex, toIndex)
-        descriptor.contentModules!!.add(PluginContentDescriptor.ModuleItem(name, configFile, descriptorContent, loadingRule))
+        descriptor.contentModules!!.add(PluginContentDescriptor.ModuleItem(name = name, configFile = configFile, descriptorContent = descriptorContent, loadingRule = loadingRule))
       }
 
       var nesting = 1
@@ -823,7 +850,9 @@ private fun getNullifiedAttributeValue(reader: XMLStreamReader2, i: Int) = reade
 @ApiStatus.Internal
 interface ReadModuleContext {
   val interner: XmlInterner
-  val isMissingIncludeIgnored: Boolean get() = false
+
+  val isMissingIncludeIgnored: Boolean
+    get() = false
 }
 
 private fun readInclude(
@@ -969,8 +998,8 @@ private fun readListeners(reader: XMLStreamReader2, containerDescriptor: Contain
   assert(reader.isEndElement)
 }
 
-private fun readOs(value: String): ExtensionDescriptor.Os =
-  when (value) {
+private fun readOs(value: String): ExtensionDescriptor.Os {
+  return when (value) {
     "mac" -> ExtensionDescriptor.Os.mac
     "linux" -> ExtensionDescriptor.Os.linux
     "windows" -> ExtensionDescriptor.Os.windows
@@ -978,6 +1007,7 @@ private fun readOs(value: String): ExtensionDescriptor.Os =
     "freebsd" -> ExtensionDescriptor.Os.freebsd
     else -> throw IllegalArgumentException("Unknown OS: $value")
   }
+}
 
 private inline fun XMLStreamReader.consumeChildElements(crossinline consumer: (name: String) -> Unit) {
   // the cursor must be at the start of the parent element
@@ -1025,8 +1055,8 @@ private inline fun XMLStreamReader2.consumeChildElements(name: String, crossinli
   }
 }
 
-private fun getEventTypeString(eventType: Int): String =
-  when (eventType) {
+private fun getEventTypeString(eventType: Int): String {
+  return when (eventType) {
     XMLEvent.START_ELEMENT -> "START_ELEMENT"
     XMLEvent.END_ELEMENT -> "END_ELEMENT"
     XMLEvent.PROCESSING_INSTRUCTION -> "PROCESSING_INSTRUCTION"
@@ -1041,3 +1071,4 @@ private fun getEventTypeString(eventType: Int): String =
     XMLEvent.SPACE -> "SPACE"
     else -> "UNKNOWN_EVENT_TYPE, $eventType"
   }
+}
