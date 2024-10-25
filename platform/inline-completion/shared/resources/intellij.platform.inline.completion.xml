@@ -8,7 +8,7 @@
     <registryKey key="inline.completion.rem.dev.use.rhizome"
                  description="Use Rhizome DB for inline completion implementation in RemDev"
                  restartRequired="true"
-                 defaultValue="false"/>
+                 defaultValue="true"/>
   </extensions>
 
   <extensionPoints>
