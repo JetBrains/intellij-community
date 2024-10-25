@@ -40,6 +40,7 @@ import com.intellij.project.stateStore
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.indexing.EntityIndexingService
+import com.intellij.util.indexing.ProjectEntityIndexingService
 import com.intellij.util.indexing.roots.WorkspaceIndexingRootsBuilder
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
@@ -261,7 +262,7 @@ open class ProjectRootManagerComponent(
     finally {
       isFiringEvent = false
     }
-    EntityIndexingService.getInstance().indexChanges(project, indexingInfos)
+    ProjectEntityIndexingService.getInstance(project).indexChanges(indexingInfos)
     addRootsToWatch()
   }
 

@@ -19,10 +19,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.AdditionalIndexableFileSet;
-import com.intellij.util.indexing.EntityIndexingServiceEx;
-import com.intellij.util.indexing.IndexableFilesIndex;
-import com.intellij.util.indexing.IndexableSetContributor;
+import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind;
@@ -66,7 +63,7 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
     if (files.isEmpty()) return Collections.emptyList();
     OriginClassifier classifier = OriginClassifier.classify(project, files);
     Collection<IndexableFilesIterator> iterators =
-      EntityIndexingServiceEx.getInstanceEx().createIteratorsForOrigins(project, classifier.entityStorage, classifier.myEntityPointers,
+      ProjectEntityIndexingService.Companion.getInstance(project).createIteratorsForOrigins(classifier.entityStorage, classifier.myEntityPointers,
                                                                         classifier.sdks, classifier.libraryIds,
                                                                         classifier.filesFromAdditionalLibraryRootsProviders,
                                                                         classifier.filesFromIndexableSetContributors);
