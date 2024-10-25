@@ -19,7 +19,6 @@ import com.sun.jdi.BooleanValue
 import com.sun.jdi.ClassType
 import com.sun.jdi.ObjectReference
 import org.jetbrains.idea.devkit.debugger.settings.DevKitDebuggerSettings
-import java.util.*
 
 /**
  * @see com.intellij.ide.debug.ApplicationStateDebugSupport
@@ -36,21 +35,18 @@ private const val ACTIONS_KT_FQN = "com.intellij.openapi.application.ActionsKt"
 
 internal data class IdeState(val readAllowed: Boolean?, val writeAllowed: Boolean?)
 
-private val cachedIdeState = WeakHashMap<SuspendContext, IdeState?>()
 internal fun getIdeState(evaluationContext: EvaluationContext): IdeState? = try {
-  cachedIdeState.computeIfAbsent(evaluationContext.suspendContext) f@{
-    val supportClass = findClassOrNull(evaluationContext, SUPPORT_CLASS_FQN) as? ClassType ?: return@f null
-    val state = evaluationContext.computeAndKeep {
-      DebuggerUtilsImpl.invokeClassMethod(evaluationContext, supportClass, GET_STATE_METHOD_NAME, GET_STATE_METHOD_SIGNATURE) as? ObjectReference
-    } ?: return@f null
+  val supportClass = findClassOrNull(evaluationContext, SUPPORT_CLASS_FQN) as? ClassType ?: return null
+  val state = evaluationContext.computeAndKeep {
+    DebuggerUtilsImpl.invokeClassMethod(evaluationContext, supportClass, GET_STATE_METHOD_NAME, GET_STATE_METHOD_SIGNATURE) as? ObjectReference
+  } ?: return null
 
-    val stateClass = state.referenceType()
-    val fieldValues = state.getValues(stateClass.allFields()).mapKeys { it.key.name() }
+  val stateClass = state.referenceType()
+  val fieldValues = state.getValues(stateClass.allFields()).mapKeys { it.key.name() }
 
-    val readField = (fieldValues[READ_ACTION_ALLOWED_FIELD_NAME] as? BooleanValue)?.value()
-    val writeField = (fieldValues[WRITE_ACTION_ALLOWED_FIELD_NAME] as? BooleanValue)?.value()
-    IdeState(readAllowed = readField, writeAllowed = writeField)
-  }
+  val readField = (fieldValues[READ_ACTION_ALLOWED_FIELD_NAME] as? BooleanValue)?.value()
+  val writeField = (fieldValues[WRITE_ACTION_ALLOWED_FIELD_NAME] as? BooleanValue)?.value()
+  IdeState(readAllowed = readField, writeAllowed = writeField)
 }
 catch (e: Exception) {
   if (!logIncorrectSuspendState(e)) {
