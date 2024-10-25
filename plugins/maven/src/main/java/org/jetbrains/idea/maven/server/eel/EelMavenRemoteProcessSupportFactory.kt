@@ -35,7 +35,8 @@ class EelMavenRemoteProcessSupportFactory : MavenRemoteProcessSupportFactory {
 
 class EelRemotePathTransformFactory : RemotePathTransformerFactory {
   override fun isApplicable(project: Project): Boolean {
-    return true
+    // TODO: should we use eel also for local environments?
+    return project.getEelApiBlocking() !is LocalEelApi
   }
 
   override fun createTransformer(project: Project): RemotePathTransformerFactory.Transformer {
