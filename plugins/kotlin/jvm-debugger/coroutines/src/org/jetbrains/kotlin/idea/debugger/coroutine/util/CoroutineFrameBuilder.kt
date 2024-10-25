@@ -127,6 +127,15 @@ class CoroutineFrameBuilder {
             }
         }
 
+        // Fast check to get the whole coroutine information only for the first suspend frame
+        fun isFirstSuspendFrame(frame: StackFrameProxyImpl): Pair<Boolean, Boolean> {
+            if (extractContinuation(frame, frame.getSuspendExitMode()) == null) {
+                return Pair(false, false)
+            }
+
+            return Pair(true, theFollowingFrames(frame).second)
+        }
+
         fun lookupContinuation(suspendContext: SuspendContextImpl, frame: StackFrameProxyImpl): CoroutinePreflightFrame? {
             val mode = frame.getSuspendExitMode()
             if (!mode.isCoroutineFound())

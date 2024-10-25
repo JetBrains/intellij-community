@@ -46,14 +46,21 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
             }
 
             val suspendContextImpl = SuspendManagerUtil.getContextForEvaluation(debugProcess.suspendManager)
-            val stackFrame = suspendContextImpl?.let {
-                CoroutineFrameBuilder.coroutineExitFrame(frame, it)
-            } ?: return null
+            if (suspendContextImpl == null) {
+                return null
+            }
 
-            // only leave the first suspend frame
-            if (!stackFrame.isFirstSuspendFrame) {
+            val (isSuspendFrame, isFirst) = CoroutineFrameBuilder.isFirstSuspendFrame(frame)
+            if (!isSuspendFrame) {
+                return null
+            }
+
+            if (!isFirst) {
                 return emptyList() // skip
             }
+
+            // only get the information for the first suspend frame
+            val stackFrame = CoroutineFrameBuilder.coroutineExitFrame(frame, suspendContextImpl) ?: return null
 
             if (Registry.`is`("debugger.kotlin.auto.show.coroutines.view")) {
                 showOrHideCoroutinePanel(debugProcess, true)
