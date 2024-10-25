@@ -6,6 +6,8 @@ import com.intellij.lang.java.beans.PropertyKind;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaSimplePropertyGistKt;
+import com.intellij.psi.impl.compiled.ClsMethodImpl;
+import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.PsiMethodImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,8 +41,12 @@ public final class PropertyUtil extends PropertyUtilBase {
   private static @Nullable PsiField getFieldImpl(@NotNull PsiMethod method,
                                                  @NotNull Supplier<? extends PsiExpression> returnExprSupplier,
                                                  boolean useIndex) {
+    if (method instanceof LightRecordMethod) {
+      PsiRecordComponent component = JavaPsiRecordUtil.getRecordComponentForAccessor(method);
+      return component == null ? null : JavaPsiRecordUtil.getFieldForComponent(component);
+    }
     if (useIndex) {
-      if (PsiUtil.preferCompiledElement(method) instanceof PsiMethod compiledMethod) {
+      if (PsiUtil.preferCompiledElement(method) instanceof ClsMethodImpl compiledMethod) {
         return ProjectBytecodeAnalysis.getInstance(method.getProject()).findFieldForGetter(compiledMethod);
       }
       if (method instanceof PsiMethodImpl && method.isPhysical()) {

@@ -194,6 +194,17 @@ public class CFGBuilder {
   }
 
   /**
+   * Add a custom null-check
+   * 
+   * @param problem a nullcheck to add
+   * @return this builder
+   */
+  public CFGBuilder nullCheck(NullabilityProblemKind.NullabilityProblem<?> problem) {
+    myAnalyzer.addNullCheck(problem);
+    return this;
+  }
+
+  /**
    * Generate instructions to push given DfType on stack.
    * <p>
    * Stack before: ...

@@ -410,7 +410,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
-  private void addNullCheck(@NotNull PsiExpression expression) {
+  void addNullCheck(@NotNull PsiExpression expression) {
     addNullCheck(NullabilityProblemKind.fromContext(expression, myCustomNullabilityProblems));
   }
 
@@ -1152,8 +1152,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
               PsiPattern patternComponent = components[i];
               PsiMethod accessor = JavaPsiRecordUtil.getAccessorForRecordComponent(recordComponent);
               if (accessor == null) continue;
-              DfaVariableValue accessorDfaVar =
-                getFactory().getVarFactory().createVariableValue(new GetterDescriptor(accessor), patternDfaVar);
+              PsiField field = PropertyUtil.getFieldOfGetter(accessor);
+              VariableDescriptor descriptor = field == null ? new GetterDescriptor(accessor) : new PlainDescriptor(field);
+              DfaVariableValue accessorDfaVar = getFactory().getVarFactory().createVariableValue(descriptor, patternDfaVar);
               addInstruction(new JvmPushInstruction(accessorDfaVar, null));
               processPattern(sourcePattern, patternComponent, substitutor.substitute(recordComponent.getType()), null, endPatternOffset);
             }
@@ -2504,11 +2505,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(expression);
 
     final PsiExpression qualifierExpression = expression.getQualifierExpression();
-    if (qualifierExpression != null) {
-      if (!(expression.resolve() instanceof PsiMember member) || !member.hasModifierProperty(PsiModifier.STATIC)) {
-        qualifierExpression.accept(this);
-        addInstruction(new PopInstruction());
-      }
+    if (qualifierExpression != null && !(qualifierExpression instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiClass)) {
+      qualifierExpression.accept(this);
+      addInstruction(new PopInstruction());
     }
 
     // complex assignments (e.g. "|=") are both reading and writing
@@ -2738,7 +2737,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private static final CallInliner[] INLINERS = {
     new AssertJInliner(), new OptionalChainInliner(), new LambdaInliner(), new CollectionUpdateInliner(),
     new StreamChainInliner(), new MapUpdateInliner(), new AssumeInliner(), new ClassMethodsInliner(),
-    new AssertAllInliner(), new BoxingInliner(), new SimpleMethodInliner(),
+    new AssertAllInliner(), new BoxingInliner(), new SimpleMethodInliner(), new AccessorInliner(),
     new TransformInliner(), new EnumCompareInliner(), new IndexOfInliner(), new AssertInstanceOfInliner()
   };
 }

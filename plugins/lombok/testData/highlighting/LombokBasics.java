@@ -34,7 +34,7 @@ final class <warning descr="Class 'Foo' is never used">Foo</warning> {
 
   public void <warning descr="Method 'test()' is never used">test</warning>() {
     bar = null;
-    System.out.println(getBar().trim());
+    System.out.println(getBar().<warning descr="Method invocation 'trim' will produce 'NullPointerException'">trim</warning>());
   }
 }
 class <warning descr="Class 'Outer' is never used">Outer</warning> {

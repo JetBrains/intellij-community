@@ -165,6 +165,11 @@ public final class JavaDfaValueFactory {
         }
       }
     }
+    qualifierExpression = PsiUtil.skipParenthesizedExprDown(qualifierExpression);
+    if (qualifierExpression instanceof PsiTypeCastExpression castExpression &&
+        castExpression.getType() instanceof PsiClassType) {
+      qualifierExpression = castExpression.getOperand();
+    }
     return getQualifierValue(factory, qualifierExpression);
   }
 

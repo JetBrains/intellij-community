@@ -111,6 +111,16 @@ public class InstanceofFromObjectToPrimitive {
         }
     }
 
+    private static void testDirectFieldAccess() {
+        LongRecord o = new LongRecord(1L);
+        if (o.o == null) {
+            return;
+        }
+        if (<warning descr="Condition 'o instanceof LongRecord(long a)' is always 'true'">o instanceof LongRecord(long a)</warning>) { //true
+            System.out.println("long");
+        }
+    }
+
     private static void testIntegerRecordNotNull() {
         IntegerRecord o = new IntegerRecord(1);
         if (o.o() == null) {

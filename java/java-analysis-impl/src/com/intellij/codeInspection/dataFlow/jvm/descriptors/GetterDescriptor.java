@@ -45,13 +45,17 @@ public final class GetterDescriptor extends PsiVarDescriptor {
 
   public GetterDescriptor(@NotNull PsiMethod getter) {
     myGetter = getter;
-    if (STABLE_METHODS.methodMatches(getter) || getter instanceof LightRecordMethod) {
+    if (isKnownStableMethod(getter) || getter instanceof LightRecordMethod) {
       myStable = true;
     }
     else {
       PsiField field = PsiUtil.canBeOverridden(getter) ? null : PropertyUtil.getFieldOfGetter(getter);
       myStable = field != null && field.hasModifierProperty(PsiModifier.FINAL);
     }
+  }
+
+  public static boolean isKnownStableMethod(@NotNull PsiMethod getter) {
+    return STABLE_METHODS.methodMatches(getter);
   }
 
   @NotNull
