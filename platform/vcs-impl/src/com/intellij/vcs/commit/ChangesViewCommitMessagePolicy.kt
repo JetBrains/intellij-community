@@ -9,6 +9,8 @@ internal class ChangesViewCommitMessagePolicy(
   commitMessageUi: CommitMessageUi,
   initialChangeList: LocalChangeList,
 ) : ChangeListCommitMessagePolicy(project, commitMessageUi, initialChangeList, true) {
+  override fun getNewMessageAfterCommit(): String? = getCommitMessageFromProvider(currentChangeList)
+
   override fun dispose() {
     if (changeListManager.areChangeListsEnabled()) {
       val commitMessage = commitMessageUi.text

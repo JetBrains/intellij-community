@@ -11,10 +11,14 @@ class GitStageCommitMessagePolicy(
   commitMessageUi: CommitMessageUi,
 ) : AbstractCommitMessagePolicy(project, commitMessageUi, true) {
   override fun getInitialMessage(): String? {
+    return getCommitMessageFromProvider() ?: vcsConfiguration.LAST_COMMIT_MESSAGE.orEmpty()
+  }
+
+  override fun getNewMessageAfterCommit(): String? = getCommitMessageFromProvider()
+
+  private fun getCommitMessageFromProvider(): String? {
     val defaultChangeList = getInstance(project).defaultChangeList // always blank, required for 'CommitMessageProvider'
     return getCommitMessageFromProvider(defaultChangeList)
-           ?: vcsConfiguration.LAST_COMMIT_MESSAGE
-           ?: ""
   }
 
   override fun cleanupStoredMessage() {

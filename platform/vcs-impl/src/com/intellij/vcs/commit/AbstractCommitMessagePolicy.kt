@@ -55,8 +55,20 @@ abstract class AbstractCommitMessagePolicy(
     if (clearMessageAfterCommit) {
       commitMessageUi.text = ""
       cleanupStoredMessage()
+    } else {
+      val newMessage = getNewMessageAfterCommit()
+      if (newMessage != null) {
+        commitMessageUi.text = newMessage
+      }
     }
   }
+
+  /**
+   * Called only if [clearMessageAfterCommit] returned false
+   *
+   * @return null if commit field should remain as is or new value for the commit message otherwise
+   */
+  open fun getNewMessageAfterCommit(): String? = null
 
   /**
    * Called if the commit message should be removed from the storage
@@ -107,9 +119,7 @@ abstract class ChangeListCommitMessagePolicy(
   /**
    * @return new commit message after [currentChangeList] having new [LocalChangeList.getId] was set
    */
-  protected open fun getMessageForNewChangeList(): String {
-    return getCommitMessageForCurrentList().orEmpty()
-  }
+  protected open fun getMessageForNewChangeList(): String = getCommitMessageForCurrentList().orEmpty()
 
   override fun onBeforeCommit(currentMessage: String) {
     editCurrentChangeListComment(currentMessage)
