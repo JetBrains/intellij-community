@@ -20,15 +20,6 @@ class AntiFlickeringPanel(private val content: JComponent) : JBLayeredPane() {
   private var savedSelfieImage: BufferedImage? = null
 
   inner class FreezingPaintPanel : JComponent() {
-    override fun paintComponents(g: Graphics) {
-      super.paintComponents(g)
-    }
-
-    override fun getSize(): Dimension {
-      if (true) return super.size
-      return Dimension(200, 200)
-    }
-
     @DirtyUI
     override fun paint(g: Graphics) {
       val image = savedSelfieImage
@@ -46,7 +37,7 @@ class AntiFlickeringPanel(private val content: JComponent) : JBLayeredPane() {
   }
 
   override fun addImpl(comp: Component, constraints: Any?, index: Int) {
-    require(comp == content || comp == freezingPaintPanel) {
+    require(comp === content || comp === freezingPaintPanel) {
       "Alien component: $comp"
     }
     super.addImpl(comp, constraints, index)
