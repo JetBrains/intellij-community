@@ -77,6 +77,13 @@ object EelPathUtils {
           }
         }
 
+        stat.isSymbolicLink -> {
+          Files.copy(source, target, LinkOption.NOFOLLOW_LINKS)
+          if (removeSource) {
+            Files.delete(source)
+          }
+        }
+
         else -> {
           LOG.info("Not copying $source to $target because the source file is neither a regular file nor a directory")
         }
