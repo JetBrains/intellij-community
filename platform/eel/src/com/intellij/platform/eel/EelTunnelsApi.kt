@@ -60,6 +60,18 @@ sealed interface EelTunnelsApi {
    * Represents an address to a remote host.
    */
   interface HostAddress {
+    val port: UShort
+    val hostname: String
+
+    /**
+     * @see [Builder.preferIPv4]
+     */
+    val protocolPreference: EelIpPreference
+
+    /**
+     * @see [Builder.connectionTimeout]
+     */
+    val timeout: Duration
 
     interface Builder {
 
