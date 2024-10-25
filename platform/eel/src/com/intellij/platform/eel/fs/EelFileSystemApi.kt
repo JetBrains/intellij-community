@@ -312,10 +312,10 @@ interface EelFileSystemApi {
   }
 
   sealed class ChangeAttributesException(where: EelPath.Absolute, additionalMessage: String) : EelFsIOException(where, additionalMessage) {
-    class SourceDoesNotExist(where: EelPath.Absolute) : MoveException(where, "Source does not exist"), EelFsError.DoesNotExist
-    class PermissionDenied(where: EelPath.Absolute) : MoveException(where, "Permission denied"), EelFsError.PermissionDenied
-    class NameTooLong(where: EelPath.Absolute) : MoveException(where, "Name too long"), EelFsError.NameTooLong
-    class Other(where: EelPath.Absolute, additionalMessage: String) : MoveException(where, additionalMessage), EelFsError.Other
+    class SourceDoesNotExist(where: EelPath.Absolute) : ChangeAttributesException(where, "Source does not exist"), EelFsError.DoesNotExist
+    class PermissionDenied(where: EelPath.Absolute) : ChangeAttributesException(where, "Permission denied"), EelFsError.PermissionDenied
+    class NameTooLong(where: EelPath.Absolute) : ChangeAttributesException(where, "Name too long"), EelFsError.NameTooLong
+    class Other(where: EelPath.Absolute, additionalMessage: String) : ChangeAttributesException(where, additionalMessage), EelFsError.Other
   }
 
   @Throws(ChangeAttributesException::class)
