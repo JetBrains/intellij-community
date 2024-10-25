@@ -58,6 +58,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
+import static java.lang.Math.abs;
+
 public class PopupFactoryImpl extends JBPopupFactory {
 
   /**
@@ -552,7 +554,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
         for (TreePath path : paths) {
           Rectangle bounds = tree.getPathBounds(path);
           if (bounds != null) {
-            int distance = Math.abs(bounds.y + bounds.height / 2 - center);
+            int distance = abs(bounds.y + bounds.height / 2 - center);
             if (distance < distanceFound) {
               popupMenuPoint = new Point(bounds.x + 2, bounds.y + bounds.height - 1);
               distanceFound = distance;
