@@ -72,7 +72,7 @@ fun loadIconCustomVersionOrScale(icon: ScalableIcon, size: Int): Icon {
       cachedIcon = cachedIcon.retrieveIcon()
     }
     if (cachedIcon !is CachedImageIcon) {
-      val result = icon.scale(JBUIScale.scale(1.0f) * size / icon.iconWidth)
+      val result = icon.scale(JBUIScale.scale(1.0f) * size / icon.iconWidth * icon.scale)
       return result
     }
   }
