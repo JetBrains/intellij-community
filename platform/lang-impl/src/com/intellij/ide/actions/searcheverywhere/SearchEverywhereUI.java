@@ -6,7 +6,6 @@ import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.find.impl.SearchEverywhereItem;
 import com.intellij.find.impl.TextSearchRightActionAction;
-import com.intellij.find.impl.UsageAdaptersKt;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -32,7 +31,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.FontInfo;
@@ -61,8 +59,6 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.EverythingGlobalScope;
@@ -155,9 +151,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
   private JComponent myExtendedInfoPanel;
   private @Nullable ExtendedInfoComponent myExtendedInfoComponent;
   private final SearchListener topicPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(SEARCH_EVENTS);
+  private @Nullable SearchEverywherePreviewGenerator myPreviewGenerator;
 
   private UsagePreviewPanel myUsagePreviewPanel;
-  private final List<Disposable> myUsagePreviewDisposableList = new ArrayList<>();
   private UsageViewPresentation myUsageViewPresentation;
   private static final String SPLITTER_SERVICE_KEY = "search.everywhere.splitter";
 
@@ -254,6 +250,12 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     myResultsList.addListSelectionListener(mySelectionTracker);
     mySearchTypingListener = new SearchFieldTypingListener();
     mySearchField.addKeyListener(mySearchTypingListener);
+
+    if (project != null) {
+      myPreviewGenerator = new SearchEverywherePreviewGenerator(project, (List<UsageInfo> usageInfos) -> {
+        myUsagePreviewPanel.updateLayout(project, usageInfos);
+      }, () -> myResultsList.getSelectedValue());
+    }
 
     mySearchPerformanceTracker = new SearchPerformanceTracker(startMoment, () -> myHeader.getSelectedTab().getID());
     addSearchListener(mySearchPerformanceTracker);
@@ -468,9 +470,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       myMlService.onDialogClose();
     }
 
-    for (Disposable disposable : myUsagePreviewDisposableList) {
-      Disposer.dispose(disposable);
-    }
+    Disposer.dispose(myPreviewGenerator);
   }
 
   @Override
@@ -984,9 +984,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
           prevSelectedIndex = selectedIndex;
         }
         Object newValue = myResultsList.getSelectedValue();
-        if (isPreviewEnabled() && isPreviewActive() && myProject != null && newValue != null && newValue != currentValue && myUsagePreviewPanel != null) {
-          schedulePreview(newValue);
+        if (isPreviewEnabled() && isPreviewActive() && myPreviewGenerator != null && newValue != null && newValue != currentValue && myUsagePreviewPanel != null) {
           currentValue = newValue;
+          myPreviewGenerator.schedulePreview(newValue);
         }
       }
     });
@@ -1027,84 +1027,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     if (!isHintComponent(oppositeComponent) && !UIUtil.haveCommonOwner(this, oppositeComponent)) {
       sendStatisticsAndClose();
     }
-  }
-
-  private void schedulePreview(@NotNull Object selectedValue) {
-    new Task.Backgroundable(myProject, IdeBundle.message("search.everywhere.preview.showing"), true) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        UsageInfo usageInfo = ReadAction.compute(() -> {
-          return findFirstChild();
-        });
-
-        List<UsageInfo2UsageAdapter> usages = new ArrayList<>();
-        if (usageInfo != null) {
-          usages.add(new UsageInfo2UsageAdapter(usageInfo));
-        }
-        else {
-          if (selectedValue instanceof UsageInfo2UsageAdapter) {
-            usages.add((UsageInfo2UsageAdapter)selectedValue);
-          }
-          else if (selectedValue instanceof SearchEverywhereItem) {
-            usages.add(((SearchEverywhereItem)selectedValue).getUsage());
-          }
-        }
-
-        if (myProject != null) {
-          UsageAdaptersKt.getUsageInfo(usages, myProject).thenAccept(infos -> {
-            List<UsageInfo> usageInfos = !infos.isEmpty() ? infos : null;
-            ReadAction.nonBlocking(() -> UsagePreviewPanel.isOneAndOnlyOnePsiFileInUsages(usageInfos))
-              .finishOnUiThread(ModalityState.nonModal(), isOneAndOnlyOnePsiFileInUsages -> {
-                myUsagePreviewPanel.updateLayout(myProject, usageInfos);
-              })
-              .coalesceBy(this)
-              .submit(AppExecutorUtil.getAppExecutorService());
-          }).exceptionally(throwable -> {
-            Logger.getInstance(SearchEverywhereUI.class).error(throwable);
-            return null;
-          });
-        }
-      }
-
-      private @Nullable UsageInfo findFirstChild() {
-        if (myProject == null) return null;
-
-        PsiElement psiElement = toPsi(selectedValue);
-        if (psiElement == null || !psiElement.isValid()) return null;
-
-        PsiFile psiFile = psiElement instanceof PsiFile ? (PsiFile)psiElement : null;
-        if (psiFile == null) {
-          if (psiElement instanceof PsiFileSystemItem pfsi) {
-            VirtualFile vFile = pfsi.getVirtualFile();
-            PsiFile file = vFile == null ? null : psiElement.getManager().findFile(vFile);
-            if (file != null) {
-              return new UsageInfo(file, 0, 0, true);
-            }
-          }
-          return new UsageInfo(psiElement);
-        }
-
-        for (@NotNull final var finder : SearchEverywherePreviewPrimaryUsageFinder.EP_NAME.getExtensionList()) {
-          final var resultPair = finder.findPrimaryUsageInfo(psiFile);
-          if (resultPair != null) {
-            final var usageInfo = resultPair.getFirst();
-            final var disposable = resultPair.getSecond();
-
-            if (disposable != null) {
-              myUsagePreviewDisposableList.add(new Disposable() {
-                @Override
-                public void dispose() {
-                  Disposer.dispose(disposable);
-                }
-              });
-            }
-
-            return usageInfo;
-          }
-        }
-        return new UsageInfo(psiFile);
-      }
-    }.queue();
   }
 
   static boolean isExtendedInfoEnabled() {
