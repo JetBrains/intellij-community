@@ -3,12 +3,12 @@ package com.intellij.internal.inspector.components;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.internal.inspector.PropertyBean;
-import com.intellij.internal.inspector.UiInspectorAction;
-import com.intellij.internal.inspector.UiInspectorUtil;
+import com.intellij.internal.inspector.*;
+import com.intellij.internal.inspector.accessibilityAudit.AccessibilityAuditManager;
+import com.intellij.internal.inspector.accessibilityAudit.Severity;
+import com.intellij.internal.inspector.accessibilityAudit.UiInspectorAccessibilityInspection;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.UiDataProvider;
-import com.intellij.internal.inspector.accessibilityAudit.*;
 import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
@@ -35,6 +35,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
 import java.lang.reflect.InaccessibleObjectException;
 import java.util.List;
@@ -96,6 +97,47 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
     selectPath(component, false);
   }
 
+  public void selectPath(@NotNull Component component, @Nullable MouseEvent event) {
+    if (event == null ||
+        !(component instanceof JComponent) ||
+        ((JComponent)component).getClientProperty(UiInspectorCustomComponentProvider.KEY) == null) {
+      selectPath(component);
+      return;
+    }
+
+    int count = getRowCount();
+    for (int i = 0; i < count; i++) {
+      TreePath row = getPathForRow(i);
+      Object last = row.getLastPathComponent();
+      if (last instanceof ComponentNode node && node.myComponent == component) {
+        TreePath path = findNode(node, SwingUtilities.convertPoint(event.getComponent(), event.getPoint(), component));
+        setSelectionPath(path == null ? row : path);
+        scrollPathToVisible(getSelectionPath());
+        return;
+      }
+    }
+  }
+
+  private static @Nullable TreePath findNode(@NotNull ComponentNode node, @NotNull Point location) {
+    int count = node.getChildCount();
+
+    for (int i = 0; i < count; i++) {
+      ComponentNode childNode = (ComponentNode)node.getChildAt(i);
+      TreePath result = findNode(childNode, location);
+      if (result != null) {
+        return result;
+      }
+
+      UiInspectorCustomComponentChildProvider childProvider = (UiInspectorCustomComponentChildProvider)childNode.getUserObject();
+      Rectangle bounds = childProvider.getHighlightingBounds();
+      if (bounds != null && bounds.contains(location)) {
+        return new TreePath(childNode.getPath());
+      }
+    }
+
+    return null;
+  }
+
   public void selectPath(@NotNull Component component, boolean isAccessibleTree) {
     int count = getRowCount();
     for (int i = 0; i < count; i++) {
@@ -117,6 +159,18 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
     TreePath[] paths = getSelectionPaths();
     if (paths == null) {
       onComponentsChanged(Collections.emptyList());
+      return;
+    }
+
+    List<UiInspectorCustomComponentChildProvider> providers = ContainerUtil.mapNotNull(paths, path -> {
+      Object component = path.getLastPathComponent();
+      if (component instanceof ComponentNode node && node.getUserObject() instanceof UiInspectorCustomComponentChildProvider provider) {
+        return provider;
+      }
+      return null;
+    });
+    if (!providers.isEmpty()) {
+      onCustomComponentChanged(providers.get(0));
       return;
     }
 
@@ -149,6 +203,8 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
 
   public abstract void onComponentsChanged(List<? extends Component> components);
 
+  public abstract void onCustomComponentChanged(UiInspectorCustomComponentChildProvider provider);
+
   public static final class ComponentNode extends DefaultMutableTreeNode {
     private final Component myComponent;
     private final Accessible myAccessible;
@@ -168,6 +224,21 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
 
     public static ComponentNode createComponentNode(@NotNull Component component) {
       return createComponentNode(component, false);
+    }
+
+    public static ComponentNode createComponentNode(@NotNull UiInspectorCustomComponentChildProvider provider) {
+      ComponentNode node = new ComponentNode(null, null, provider.getTreeName(), false);
+      node.setUserObject(provider);
+
+      List<TreeNode> result = new ArrayList<>();
+
+      for (var child : provider.getChildren()) {
+        result.add(createComponentNode(child));
+      }
+
+      TreeUtil.addChildrenTo(node, result);
+
+      return node;
     }
 
     public static ComponentNode createComponentNode(@NotNull Component component, boolean isAccessibleComponent) {
@@ -265,6 +336,14 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
           result.add(createComponentNode(child));
         }
       }
+      if (parent instanceof JComponent jComponent) {
+        Object clientProperty = jComponent.getClientProperty(UiInspectorCustomComponentProvider.KEY);
+        if (clientProperty instanceof UiInspectorCustomComponentProvider provider) {
+          for (var child : provider.getChildren()) {
+            result.add(createComponentNode(child));
+          }
+        }
+      }
 
       return result;
     }
@@ -295,7 +374,8 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
       accessibilityAuditIcons.clear();
 
       if (value instanceof ComponentNode componentNode) {
-        isRenderer = componentNode.getUserObject() instanceof List<?>;
+        isRenderer = componentNode.getUserObject() instanceof List<?> ||
+                     componentNode.getUserObject() instanceof UiInspectorCustomComponentChildProvider;
         Component component = componentNode.getComponent();
 
         if (component != null && !selected) {

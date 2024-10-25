@@ -8,6 +8,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.InternalActionsBundle;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorAction;
+import com.intellij.internal.inspector.UiInspectorCustomComponentChildProvider;
 import com.intellij.internal.inspector.UiInspectorImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -45,11 +46,9 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -73,7 +72,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
   public InspectorWindow(@Nullable Project project,
                          @NotNull Component component,
-                         UiInspectorAction.UiInspector inspector) throws HeadlessException {
+                         @NotNull UiInspectorAction.UiInspector inspector,
+                         @Nullable MouseEvent event) throws HeadlessException {
     super(findWindow(component));
     myProject = project;
     myInspector = inspector;
@@ -105,6 +105,12 @@ public final class InspectorWindow extends JDialog implements Disposable {
       @Override
       public void onClickInfoChanged(java.util.List<? extends PropertyBean> info) {
         switchClickInfo(info);
+        updateHighlighting();
+      }
+
+      @Override
+      public void onCustomComponentChanged(UiInspectorCustomComponentChildProvider provider) {
+        switchCustomComponentInfo(provider);
         updateHighlighting();
       }
     };
@@ -170,7 +176,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     add(topPanel, BorderLayout.NORTH);
 
     TreeUtil.expandAll(myHierarchyTree);
-    myHierarchyTree.selectPath(component);
+    myHierarchyTree.selectPath(component, event);
 
     addWindowListener(new WindowAdapter() {
       @Override
@@ -231,6 +237,24 @@ public final class InspectorWindow extends JDialog implements Disposable {
     setTitle("Click Info");
     Disposer.dispose(myInspectorTable);
     myInspectorTable = new InspectorTable(clickInfo, myProject);
+    myWrapperPanel.setContent(myInspectorTable);
+  }
+
+  private void switchCustomComponentInfo(@NotNull UiInspectorCustomComponentChildProvider provider) {
+    Rectangle bounds = provider.getHighlightingBounds();
+    if (bounds == null) {
+      myInfo = null;
+    }
+    else {
+      myInfo = Collections.singletonList(new PropertyBean(UiInspectorAction.RENDERER_BOUNDS, bounds));
+    }
+
+    myComponents.clear();
+
+    setTitle(provider.getTreeName());
+
+    Disposer.dispose(myInspectorTable);
+    myInspectorTable = new InspectorTable(provider, myProject);
     myWrapperPanel.setContent(myInspectorTable);
   }
 

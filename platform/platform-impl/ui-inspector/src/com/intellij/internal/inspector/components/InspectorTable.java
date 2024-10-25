@@ -86,6 +86,13 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
     init(component);
   }
 
+  InspectorTable(final @NotNull UiInspectorCustomComponentChildProvider provider, @Nullable Project project) {
+    super(true, 0.75f);
+    myProject = project;
+    myModel = new MyModel(provider);
+    init(null);
+  }
+
   private void init(@Nullable Component component) {
     setSplitterProportionKey("UiInspector.table.splitter.proportion");
 
@@ -219,6 +226,17 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
     MyModel(@NotNull Component c) {
       myComponent = c;
       myProperties.addAll(ComponentPropertiesCollector.collect(c));
+    }
+
+    MyModel(@NotNull UiInspectorCustomComponentChildProvider provider) {
+      myComponent = null;
+
+      Object propertiesHolder = provider.getObjectForProperties();
+      if (propertiesHolder != null) {
+        myProperties.addAll(ComponentPropertiesCollector.collect(propertiesHolder, provider.getPropertiesMethodList()));
+      }
+
+      myProperties.addAll(provider.getUiInspectorContext());
     }
 
     @Override

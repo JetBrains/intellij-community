@@ -1326,6 +1326,19 @@ c:com.intellij.internal.inspector.PropertyBean
 - <init>(java.lang.String,java.lang.Object,Z):V
 com.intellij.internal.inspector.UiInspectorContextProvider
 - a:getUiInspectorContext():java.util.List
+com.intellij.internal.inspector.UiInspectorCustomComponentChildProvider
+- com.intellij.internal.inspector.UiInspectorContextProvider
+- a:getChildren():java.util.List
+- a:getHighlightingBounds():java.awt.Rectangle
+- a:getObjectForProperties():java.lang.Object
+- a:getPropertiesMethodList():java.util.List
+- a:getTreeName():java.lang.String
+com.intellij.internal.inspector.UiInspectorCustomComponentProvider
+- sf:Companion:com.intellij.internal.inspector.UiInspectorCustomComponentProvider$Companion
+- sf:KEY:java.lang.String
+- a:getChildren():java.util.List
+f:com.intellij.internal.inspector.UiInspectorCustomComponentProvider$Companion
+- sf:KEY:java.lang.String
 com.intellij.internal.inspector.UiInspectorListRendererContextProvider
 - a:getUiInspectorContext(javax.swing.JList,java.lang.Object,I):java.util.List
 com.intellij.internal.inspector.UiInspectorPreciseContextProvider

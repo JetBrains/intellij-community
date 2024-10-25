@@ -93,6 +93,12 @@ public final class ComponentPropertiesCollector {
     return collector.myProperties;
   }
 
+  public static @NotNull List<PropertyBean> collect(@NotNull Object propertiesHolder, @NotNull List<@NotNull String> methodList) {
+    ComponentPropertiesCollector collector = new ComponentPropertiesCollector();
+    collector.addProperties("", propertiesHolder, methodList);
+    return collector.myProperties;
+  }
+
   private final List<PropertyBean> myProperties = new ArrayList<>();
 
   private ComponentPropertiesCollector() { }

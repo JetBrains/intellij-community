@@ -30,6 +30,7 @@ fun JBComposePanel(
   }
   return ComposePanel(ComposeAnalytics()).apply {
     setContent {
+      ComposeUiInspector(this)
       SwingBridgeTheme {
         CompositionLocalProvider(LocalComponent provides this@apply) {
           ComponentDataProviderBridge(this@apply) {
