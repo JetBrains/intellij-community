@@ -6,11 +6,9 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
-import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.*
 
 internal class FirBasicCompletionContext(
@@ -18,7 +16,6 @@ internal class FirBasicCompletionContext(
     val sink: LookupElementSink,
     val originalKtFile: KtFile,
     val fakeKtFile: KtFile,
-    val targetPlatform: TargetPlatform,
 ) {
 
     val project: Project
@@ -41,7 +38,6 @@ internal class FirBasicCompletionContext(
                 sink = LookupElementSink(result, firParameters),
                 originalKtFile = originalKtFile,
                 fakeKtFile = fakeKtFile,
-                targetPlatform = originalKtFile.platform,
             )
         }
     }

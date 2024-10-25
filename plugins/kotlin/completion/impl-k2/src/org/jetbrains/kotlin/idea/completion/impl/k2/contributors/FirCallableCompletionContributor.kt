@@ -44,6 +44,7 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositio
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.platform.isMultiPlatform
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.nextSiblingOfSameType
 import org.jetbrains.kotlin.resolve.ArrayFqNames
@@ -102,8 +103,9 @@ internal open class FirCallableCompletionContributor(
     }
 
     context(KaSession)
-    protected open fun filter(symbol: KaCallableSymbol, sessionParameters: FirCompletionSessionParameters): Boolean =
-        sessionParameters.allowExpectedDeclarations || !symbol.isExpect
+    protected open fun filter(symbol: KaCallableSymbol): Boolean =
+        targetPlatform.isMultiPlatform()
+                || !symbol.isExpect
 
     // todo replace with a sealed hierarchy; too many arguments
     protected data class CallableWithMetadataForCompletion(
@@ -178,14 +180,14 @@ internal open class FirCallableCompletionContributor(
             visibilityChecker,
             scopeNameFilter,
             sessionParameters,
-        ) { filter(it, sessionParameters) }
+        ) { filter(it) }
         val extensionsWhichCanBeCalled = collectSuitableExtensions(scopeContext, extensionChecker, visibilityChecker, sessionParameters)
         val availableStaticAndTopLevelNonExtensions = collectStaticAndTopLevelNonExtensionsFromScopeContext(
             scopeContext,
             visibilityChecker,
             scopeNameFilter,
             sessionParameters,
-        ) { filter(it, sessionParameters) }
+        ) { filter(it) }
 
         // TODO: consider relying on tower resolver when populating callable entries. For example
         //  val Int.foo : ...
@@ -225,7 +227,7 @@ internal open class FirCallableCompletionContributor(
                     !visibilityChecker.isDefinitelyInvisibleByPsi(it)
                 }
 
-            members.filter { filter(it, sessionParameters) }
+            members.filter { filter(it) }
                 .filter { visibilityChecker.isVisible(it) }
                 .map { it.asSignature() }
                 .map { signature ->
@@ -311,7 +313,7 @@ internal open class FirCallableCompletionContributor(
             .callables(scopeNameFilter)
             .filterNot { it.isExtension }
             .filter { visibilityChecker.isVisible(it) }
-            .filter { filter(it, sessionParameters) }
+            .filter { filter(it) }
             .map { callable ->
                 val callableSignature = callable.asSignature()
                 val options = CallableInsertionOptions(ImportStrategy.DoNothing, getInsertionStrategy(callableSignature))
@@ -369,7 +371,7 @@ internal open class FirCallableCompletionContributor(
                 visibilityChecker,
                 scopeNameFilter,
                 sessionParameters,
-            ) { filter(it, sessionParameters) }
+            ) { filter(it) }
         }
         val extensionNonMembers = collectSuitableExtensions(
             scopeContext,
@@ -409,7 +411,7 @@ internal open class FirCallableCompletionContributor(
             visibilityChecker,
             sessionParameters
         )
-            .filter { filter(it.signature.symbol, sessionParameters) }
+            .filter { filter(it.signature.symbol) }
             .forEach { applicableExtension ->
                 val callableWithMetadata = createCallableWithMetadata(
                     applicableExtension.signature,
@@ -436,7 +438,7 @@ internal open class FirCallableCompletionContributor(
             visibilityChecker,
             scopeNameFilter,
             sessionParameters,
-        ) { filter(it, sessionParameters) }
+        ) { filter(it) }
 
         return nonExtensions.map { member ->
             val options = CallableInsertionOptions(ImportStrategy.DoNothing, getInsertionStrategy(member))
@@ -459,7 +461,7 @@ internal open class FirCallableCompletionContributor(
         ) { !visibilityChecker.isDefinitelyInvisibleByPsi(it) && it.canBeAnalysed() }
 
         return extensionsFromIndex
-            .filter { filter(it, sessionParameters) }
+            .filter { filter(it) }
             .filter { visibilityChecker.isVisible(it) }
             .mapNotNull { checkApplicabilityAndSubstitute(it, extensionChecker) }
             .let { ShadowedCallablesFilter.sortExtensions(it.toList(), receiverTypes) }
@@ -492,7 +494,7 @@ internal open class FirCallableCompletionContributor(
         scope.callables(scopeNameFilter)
             .filter { it.canBeUsedAsExtension() }
             .filter { visibilityChecker.isVisible(it) }
-            .filter { filter(it, sessionParameters) }
+            .filter { filter(it) }
             .mapNotNull { callable -> checkApplicabilityAndSubstitute(callable, hasSuitableExtensionReceiver) }
             .let { ShadowedCallablesFilter.sortExtensions(it.toList(), receiverTypes) }
 
@@ -684,7 +686,7 @@ internal class FirCallableReferenceCompletionContributor(
     }
 
     context(KaSession)
-    override fun filter(symbol: KaCallableSymbol, sessionParameters: FirCompletionSessionParameters): Boolean = when {
+    override fun filter(symbol: KaCallableSymbol): Boolean = when {
         // References to elements which are members and extensions at the same time are not allowed
         symbol.isExtension && symbol.location == KaSymbolLocation.CLASS -> false
 
@@ -760,9 +762,10 @@ internal class FirInfixCallableCompletionContributor(
     }
 
     context(KaSession)
-    override fun filter(symbol: KaCallableSymbol, sessionParameters: FirCompletionSessionParameters): Boolean {
-        return symbol is KaNamedFunctionSymbol && symbol.isInfix && super.filter(symbol, sessionParameters)
-    }
+    override fun filter(symbol: KaCallableSymbol): Boolean =
+        symbol is KaNamedFunctionSymbol
+                && symbol.isInfix
+                && super.filter(symbol)
 
     companion object {
         private val infixCallableInsertionStrategy = CallableInsertionStrategy.AsIdentifierCustom {

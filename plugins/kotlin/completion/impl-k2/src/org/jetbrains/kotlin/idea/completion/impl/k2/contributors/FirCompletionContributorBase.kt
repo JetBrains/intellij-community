@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.KOTLIN_CAST_REQUIRED_COLOR
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
@@ -36,7 +37,6 @@ import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighsToLooku
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.types.Variance
 
@@ -52,8 +52,8 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
     protected val sink: LookupElementSink = basicContext.sink.withPriority(priority)
     protected val originalKtFile: KtFile get() = basicContext.originalKtFile
     protected val project: Project get() = basicContext.project
-    protected val targetPlatform: TargetPlatform get() = basicContext.targetPlatform
 
+    protected val targetPlatform = originalKtFile.platform
     protected val symbolFromIndexProvider = KtSymbolFromIndexProvider(basicContext.fakeKtFile)
     protected val importStrategyDetector = ImportStrategyDetector(originalKtFile, project)
 
