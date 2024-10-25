@@ -28,6 +28,8 @@ import com.intellij.util.*
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.write
 import com.intellij.util.text.UniqueNameGenerator
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jdom.Document
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -55,6 +57,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
   private val schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
   private val fileChangeSubscriber: FileChangeSubscriber? = null,
   private val settingsCategory: SettingsCategory = SettingsCategory.OTHER,
+  cs: CoroutineScope? = null,
 ) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor), SafeWriteRequestor, StorageManagerFileWriteRequestor {
   private val isUpdateVfs: Boolean = fileChangeSubscriber != null
 
@@ -86,7 +89,9 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     }
 
     if (isUpdateVfs) {
-      runCatching { refreshVirtualDirectory() }.getOrLogException(LOG)
+      cs!!.launch {  // tests should explicitly provide a scope when needed
+        runCatching { refreshVirtualDirectory() }.getOrLogException(LOG)
+      }
     }
   }
 

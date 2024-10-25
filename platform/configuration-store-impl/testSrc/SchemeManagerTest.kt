@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.*
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.xmlb.annotations.Tag
@@ -27,6 +28,7 @@ import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.*
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Functionality without stream providers is covered, ICS has own test suite.
@@ -526,27 +528,29 @@ class SchemeManagerTest {
     val dir = tempDirManager.newPath(refreshVfs = true)
     val busDisposable = Disposer.newDisposable()
     try {
-      val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), null, dir, fileChangeSubscriber = { schemeManager ->
-        @Suppress("UNCHECKED_CAST")
-        val schemeFileTracker = SchemeFileTracker(schemeManager as SchemeManagerImpl<TestScheme, TestScheme>, projectRule.project)
-        ApplicationManager.getApplication().messageBus.connect(busDisposable).subscribe(VirtualFileManager.VFS_CHANGES, schemeFileTracker)
-      })
+      timeoutRunBlocking(1.minutes) {
+        val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), provider = null, dir, fileChangeSubscriber = { schemeManager ->
+          @Suppress("UNCHECKED_CAST")
+          val schemeFileTracker = SchemeFileTracker(schemeManager as SchemeManagerImpl<TestScheme, TestScheme>, projectRule.project)
+          ApplicationManager.getApplication().messageBus.connect(busDisposable).subscribe(VirtualFileManager.VFS_CHANGES, schemeFileTracker)
+        }, cs = this)
 
-      val a = TestScheme("a", "a")
-      val b = TestScheme("b", "b")
-      schemeManager.setSchemes(listOf(a, b))
-      runInEdtAndWait { schemeManager.save() }
+        val a = TestScheme("a", "a")
+        val b = TestScheme("b", "b")
+        schemeManager.setSchemes(listOf(a, b))
+        runInEdtAndWait { schemeManager.save() }
 
-      assertThat(dir.resolve("a.xml")).isRegularFile()
-      assertThat(dir.resolve("b.xml")).isRegularFile()
+        assertThat(dir.resolve("a.xml")).isRegularFile()
+        assertThat(dir.resolve("b.xml")).isRegularFile()
 
-      a.name = "b"
-      b.name = "a"
+        a.name = "b"
+        b.name = "a"
 
-      runInEdtAndWait { schemeManager.save() }
+        runInEdtAndWait { schemeManager.save() }
 
-      assertThat(dir.resolve("a.xml").readText()).isEqualTo("""<scheme name="a" data="b" />""")
-      assertThat(dir.resolve("b.xml").readText()).isEqualTo("""<scheme name="b" data="a" />""")
+        assertThat(dir.resolve("a.xml").readText()).isEqualTo("""<scheme name="a" data="b" />""")
+        assertThat(dir.resolve("b.xml").readText()).isEqualTo("""<scheme name="b" data="a" />""")
+      }
     }
     finally {
       Disposer.dispose(busDisposable)
