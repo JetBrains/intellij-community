@@ -13,6 +13,8 @@ import java.io.Serializable
 class TelemetryContext : HashMap<String, String>(), Serializable {
 
   companion object {
+    const val TRACE_CONTEXT_JVM_PROPERTY_NAME: String = "otel.trace.context"
+
     @JvmStatic
     fun from(context: Context, propagator: TextMapPropagator): TelemetryContext {
       val holder = TelemetryContext()
@@ -41,6 +43,12 @@ class TelemetryContext : HashMap<String, String>(), Serializable {
         // ignore
       }
       return context
+    }
+
+    @JvmStatic
+    fun fromJvmProperties(): TelemetryContext {
+      val value = System.getProperty(TRACE_CONTEXT_JVM_PROPERTY_NAME) ?: return TelemetryContext()
+      return fromString(value)
     }
   }
 

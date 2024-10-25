@@ -2,6 +2,7 @@
 package com.intellij.platform.diagnostic.telemetry.impl.agent
 
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext.Companion.TRACE_CONTEXT_JVM_PROPERTY_NAME
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import kotlin.io.path.pathString
@@ -16,7 +17,7 @@ object TelemetryAgentProvider {
     return listOf(
       "-javaagent:${configuration.agentLocation.pathString}",
       "-Dotel.javaagent.configuration-file=${FileUtilRt.toSystemDependentName(configLocation.absolutePath)}",
-      "-Dotel.context.${configuration.context.asString()}"
+      "-D$TRACE_CONTEXT_JVM_PROPERTY_NAME=${configuration.context.asString()}"
     )
   }
 

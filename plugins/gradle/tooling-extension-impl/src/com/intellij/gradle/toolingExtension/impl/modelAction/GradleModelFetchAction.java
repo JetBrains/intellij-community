@@ -8,7 +8,6 @@ import com.intellij.gradle.toolingExtension.impl.util.GradleExecutorServiceUtil;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
-import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext;
 import com.intellij.util.ReflectionUtilRt;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
@@ -43,10 +42,7 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
   private boolean myUseProjectsLoadedPhase = false;
   private boolean myUseStreamedValues = false;
 
-  private @Nullable TelemetryContext myTracingContext = null;
-
   private transient boolean myProjectLoadedAction = false;
-
   private transient @Nullable GradleDaemonModelHolder myModels = null;
 
   public GradleModelFetchAction addProjectImportModelProviders(
@@ -90,10 +86,6 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
     myUseStreamedValues = useStreamedValues;
   }
 
-  public void setTracingContext(@NotNull TelemetryContext tracingContext) {
-    myTracingContext = tracingContext;
-  }
-
   @Override
   public @NotNull GradleModelHolderState execute(@NotNull BuildController controller) {
     configureAdditionalTypes(controller);
@@ -104,19 +96,6 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
         });
       });
     });
-  }
-
-  private GradleModelHolderState withOpenTelemetry(@NotNull Function<GradleOpenTelemetry, GradleModelHolderState> action) {
-    GradleOpenTelemetry telemetry = new GradleOpenTelemetry(myTracingContext);
-    GradleModelHolderState state;
-    try {
-      state = action.apply(telemetry);
-    }
-    catch (Throwable exception) {
-      telemetry.shutdown();
-      throw exception;
-    }
-    return state.current();
   }
 
   private @NotNull GradleModelHolderState doExecute(
@@ -321,5 +300,20 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
    */
   public @NotNull SortedSet<GradleModelFetchPhase> getBuildFinishedModelFetchPhases() {
     return myModelFetchPhases.tailSet(GradleModelFetchPhase.PROJECT_LOADED_PHASE, false);
+  }
+
+  private static @NotNull GradleModelHolderState withOpenTelemetry(
+    @NotNull Function<GradleOpenTelemetry, GradleModelHolderState> action
+  ) {
+    GradleOpenTelemetry telemetry = new GradleOpenTelemetry();
+    GradleModelHolderState state;
+    try {
+      state = action.apply(telemetry);
+    }
+    catch (Throwable exception) {
+      telemetry.shutdown();
+      throw exception;
+    }
+    return state.current();
   }
 }

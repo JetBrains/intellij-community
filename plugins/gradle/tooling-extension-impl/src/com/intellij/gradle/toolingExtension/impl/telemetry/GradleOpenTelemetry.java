@@ -22,10 +22,10 @@ public final class GradleOpenTelemetry {
   private final @NotNull Tracer myTracer;
   private final @NotNull Scope myScope;
 
-  public GradleOpenTelemetry(@Nullable TelemetryContext tracingContext) {
+  public GradleOpenTelemetry() {
     OpenTelemetry telemetry = GlobalOpenTelemetry.get();
     myTracer = telemetry.getTracer(INSTRUMENTATION_NAME);
-    myScope = extractScope(telemetry, tracingContext);
+    myScope = extractScope(telemetry);
   }
 
   public <T> T callWithSpan(@NotNull String spanName, @NotNull Function<Span, T> fn) {
@@ -65,13 +65,11 @@ public final class GradleOpenTelemetry {
     }
   }
 
-  private static @NotNull Scope extractScope(@NotNull OpenTelemetry telemetry, @Nullable TelemetryContext context) {
-    if (context == null) {
-      return Scope.noop();
-    }
+  private static @NotNull Scope extractScope(@NotNull OpenTelemetry telemetry) {
     TextMapPropagator propagator = telemetry.getPropagators()
       .getTextMapPropagator();
-    return context.extract(propagator)
+    return TelemetryContext.fromJvmProperties()
+      .extract(propagator)
       .makeCurrent();
   }
 }

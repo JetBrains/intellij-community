@@ -31,7 +31,6 @@ import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -41,8 +40,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
-import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
-import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
 import org.gradle.api.ProjectConfigurationException;
 import org.gradle.tooling.BuildActionFailureException;
@@ -327,10 +324,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     Span gradleCallSpan = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
       .spanBuilder("GradleCall")
       .startSpan();
-    buildAction.setTracingContext(TelemetryContext.from(
-      Context.current().with(gradleCallSpan),
-      W3CTraceContextPropagator.getInstance()
-    ));
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
       var modelFetchActionResultHandler = new GradleModelFetchActionResultHandler(resolverContext);
       GradleModelFetchActionRunner.runAndTraceBuildAction(resolverContext, executionSettings, buildAction, modelFetchActionResultHandler);
