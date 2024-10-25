@@ -5,6 +5,8 @@
 - bs:forEachConcurrent$default(java.util.Collection,I,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - sf:mapConcurrent(java.util.Collection,I,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - bs:mapConcurrent$default(java.util.Collection,I,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- sf:mapNotNullConcurrent(java.util.Collection,I,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- bs:mapNotNullConcurrent$default(java.util.Collection,I,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - sf:transformConcurrent(java.util.Collection,I,kotlin.jvm.functions.Function3,kotlin.coroutines.Continuation):java.lang.Object
 - bs:transformConcurrent$default(java.util.Collection,I,kotlin.jvm.functions.Function3,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 f:com.intellij.platform.util.coroutines.CoroutineScopeKt
