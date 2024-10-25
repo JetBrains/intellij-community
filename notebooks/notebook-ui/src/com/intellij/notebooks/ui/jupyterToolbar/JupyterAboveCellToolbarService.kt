@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.*
 import java.awt.MouseInfo
 import java.awt.Point
@@ -21,6 +22,8 @@ import javax.swing.Timer
 class JupyterAboveCellToolbarService(private val scope: CoroutineScope): Disposable {
   private var currentEditor: Editor? = null
   private var currentPanel: JPanel? = null
+
+  private val additionalToolbarEnabled = Registry.`is`("jupyter.cell.additional.toolbar")
   private var currentToolbar: JupyterAddNewCellToolbar? = null
   private var currentAdditionalToolbar: JupyterAdditionalToolbar? = null
 
@@ -57,6 +60,7 @@ class JupyterAboveCellToolbarService(private val scope: CoroutineScope): Disposa
           }
         }
         in ADDITIONAL_TOOLBAR_START_RATIO..1.0 -> {
+          if (!additionalToolbarEnabled) return@launch
           // showing additional toolbar
           hideToolbarUnconditionally()
           if (currentPanel != panel || currentAdditionalToolbar == null) {
@@ -209,14 +213,15 @@ class JupyterAboveCellToolbarService(private val scope: CoroutineScope): Disposa
       panel: JPanel,
       toolbar: JupyterAdditionalToolbar
     ): Rectangle {
-      return calculateToolbarBoundsCommon(editor, panel, toolbar, ADDITIONAL_TOOLBAR_X_OFFSET_RATIO)
+      return calculateToolbarBoundsCommon(editor, panel, toolbar, ADDITIONAL_TOOLBAR_X_OFFSET_RATIO, true)
     }
 
     private fun calculateToolbarBoundsCommon(
       editor: Editor,
       panel: JPanel,
       toolbar: JPanel,
-      horizontalOffsetRatio: Double
+      horizontalOffsetRatio: Double,
+      isAdditionalToolbar: Boolean = false
     ): Rectangle {
       val panelHeight = panel.height
       val panelWidth = panel.width
@@ -224,9 +229,13 @@ class JupyterAboveCellToolbarService(private val scope: CoroutineScope): Disposa
       val toolbarHeight = toolbar.preferredSize.height
       val toolbarWidth = toolbar.preferredSize.width
 
-      val xOffset = (panelWidth * horizontalOffsetRatio - toolbarWidth / 2).toInt()
-      val yOffset = (panelHeight - DELIMITER_SIZE - (toolbarHeight / 2))
+      val panelRoofHeight = panelHeight - DELIMITER_SIZE
 
+      val xOffset = (panelWidth * horizontalOffsetRatio - toolbarWidth / 2).toInt()
+      val yOffset = when (isAdditionalToolbar) {
+        true -> panelHeight - panelRoofHeight - (toolbarHeight / 2)
+        else -> panelHeight - DELIMITER_SIZE - (toolbarHeight / 2)
+      }
       val editorComponent = editor.contentComponent
       val panelLocationInEditor = SwingUtilities.convertPoint(panel, Point(0, 0), editorComponent)
 
