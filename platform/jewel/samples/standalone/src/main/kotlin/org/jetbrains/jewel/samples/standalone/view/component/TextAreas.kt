@@ -1,8 +1,11 @@
 package org.jetbrains.jewel.samples.standalone.view.component
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.input.rememberTextFieldState
@@ -11,8 +14,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.ui.Outline
+import org.jetbrains.jewel.ui.component.GroupHeader
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextArea
+import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 
 @Suppress("SpellCheckingInspection")
 private const val LOREM_IPSUM =
@@ -30,31 +35,76 @@ private const val LOREM_IPSUM =
 
 @Composable
 fun TextAreas() {
-    Row(
-        Modifier.padding(horizontal = 16.dp).height(200.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalAlignment = Alignment.Top,
-    ) {
-        TextArea(state = rememberTextFieldState(LOREM_IPSUM), modifier = Modifier.weight(1f).fillMaxHeight())
+    VerticallyScrollableContainer(Modifier.fillMaxSize()) {
+        Column(Modifier.padding(vertical = 4.dp)) {
+            Row(
+                Modifier.padding(horizontal = 16.dp).height(200.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.Top,
+            ) {
+                TextArea(state = rememberTextFieldState(LOREM_IPSUM), modifier = Modifier.weight(1f).fillMaxHeight())
 
-        TextArea(
-            state = rememberTextFieldState(LOREM_IPSUM),
-            modifier = Modifier.weight(1f).fillMaxHeight(),
-            enabled = false,
-        )
+                TextArea(
+                    state = rememberTextFieldState(LOREM_IPSUM),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    enabled = false,
+                )
 
-        TextArea(
-            state = rememberTextFieldState(""),
-            modifier = Modifier.weight(1f).fillMaxHeight(),
-            outline = Outline.Error,
-            placeholder = { Text("Text area with error") },
-        )
+                TextArea(
+                    state = rememberTextFieldState(""),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    outline = Outline.Error,
+                    placeholder = { Text("Text area with error") },
+                )
 
-        TextArea(
-            state = rememberTextFieldState(""),
-            modifier = Modifier.weight(1f).fillMaxHeight(),
-            outline = Outline.Warning,
-            placeholder = { Text("Text area with warning") },
-        )
+                TextArea(
+                    state = rememberTextFieldState(""),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    outline = Outline.Warning,
+                    placeholder = { Text("Text area with warning") },
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            GroupHeader("Read-only")
+
+            Spacer(Modifier.height(16.dp))
+
+            Row(
+                Modifier.padding(horizontal = 16.dp).height(200.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.Top,
+            ) {
+                TextArea(
+                    state = rememberTextFieldState(LOREM_IPSUM),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    readOnly = true,
+                )
+
+                TextArea(
+                    state = rememberTextFieldState(LOREM_IPSUM),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    enabled = false,
+                    readOnly = true,
+                )
+
+                TextArea(
+                    state = rememberTextFieldState("Error state"),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    outline = Outline.Error,
+                    placeholder = { Text("Text area with error") },
+                    readOnly = true,
+                )
+
+                TextArea(
+                    state = rememberTextFieldState("Warning state"),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    outline = Outline.Warning,
+                    placeholder = { Text("Text area with warning") },
+                    readOnly = true,
+                )
+            }
+        }
     }
 }

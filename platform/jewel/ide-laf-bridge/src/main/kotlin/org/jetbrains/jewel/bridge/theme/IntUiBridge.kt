@@ -552,11 +552,11 @@ private fun readUndecoratedDropdownStyle(menuStyle: MenuStyle): DropdownStyle {
             contentFocused = normalContent,
             contentPressed = normalContent,
             contentHovered = normalContent,
-            border = Color.Transparent,
-            borderDisabled = Color.Transparent,
-            borderFocused = Color.Transparent,
-            borderPressed = Color.Transparent,
-            borderHovered = Color.Transparent,
+            border = Color.Unspecified,
+            borderDisabled = Color.Unspecified,
+            borderFocused = Color.Unspecified,
+            borderPressed = Color.Unspecified,
+            borderHovered = Color.Unspecified,
             iconTint = Color.Unspecified,
             iconTintDisabled = Color.Unspecified,
             iconTintFocused = Color.Unspecified,
@@ -903,7 +903,7 @@ private fun readTextAreaStyle(metrics: TextFieldMetrics): TextAreaStyle {
     val colors =
         TextAreaColors(
             background = normalBackground,
-            backgroundDisabled = Color.Transparent,
+            backgroundDisabled = Color.Unspecified,
             backgroundFocused = normalBackground,
             backgroundPressed = normalBackground,
             backgroundHovered = normalBackground,
@@ -947,7 +947,7 @@ private fun readTextFieldStyle(): TextFieldStyle {
     val colors =
         TextFieldColors(
             background = normalBackground,
-            backgroundDisabled = Color.Transparent,
+            backgroundDisabled = Color.Unspecified,
             backgroundFocused = normalBackground,
             backgroundPressed = normalBackground,
             backgroundHovered = normalBackground,
@@ -994,7 +994,7 @@ private fun readLazyTreeStyle(): LazyTreeStyle {
             contentFocused = normalContent,
             contentSelected = selectedContent,
             contentSelectedFocused = selectedContent,
-            elementBackgroundFocused = Color.Transparent,
+            elementBackgroundFocused = Color.Unspecified,
             elementBackgroundSelected = inactiveSelectedElementBackground,
             elementBackgroundSelectedFocused = selectedElementBackground,
         )
@@ -1042,10 +1042,10 @@ private fun readDefaultTabStyle(): TabStyle {
             contentPressed = normalContent,
             contentHovered = normalContent,
             contentSelected = normalContent,
-            underline = Color.Transparent,
+            underline = Color.Unspecified,
             underlineDisabled = retrieveColorOrUnspecified("TabbedPane.disabledUnderlineColor"),
             underlinePressed = selectedUnderline,
-            underlineHovered = Color.Transparent,
+            underlineHovered = Color.Unspecified,
             underlineSelected = selectedUnderline,
         )
 
@@ -1095,10 +1095,10 @@ private fun readEditorTabStyle(): TabStyle {
             contentPressed = normalContent,
             contentHovered = normalContent,
             contentSelected = normalContent,
-            underline = Color.Transparent,
+            underline = Color.Unspecified,
             underlineDisabled = retrieveColorOrUnspecified("TabbedPane.disabledUnderlineColor"),
             underlinePressed = selectedUnderline,
-            underlineHovered = Color.Transparent,
+            underlineHovered = Color.Unspecified,
             underlineSelected = selectedUnderline,
         )
 

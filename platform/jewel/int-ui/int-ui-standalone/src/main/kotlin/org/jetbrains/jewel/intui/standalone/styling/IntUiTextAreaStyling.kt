@@ -28,7 +28,7 @@ public fun TextAreaStyle.Companion.dark(
 @Composable
 public fun TextAreaColors.Companion.light(
     background: Color = IntUiLightTheme.colors.gray(14),
-    backgroundDisabled: Color = IntUiLightTheme.colors.gray(13),
+    backgroundDisabled: Color = Color.Unspecified,
     backgroundFocused: Color = background,
     backgroundPressed: Color = background,
     backgroundHovered: Color = background,
@@ -76,7 +76,7 @@ public fun TextAreaColors.Companion.light(
 @Composable
 public fun TextAreaColors.Companion.dark(
     background: Color = IntUiDarkTheme.colors.gray(2),
-    backgroundDisabled: Color = background,
+    backgroundDisabled: Color = Color.Unspecified,
     backgroundFocused: Color = background,
     backgroundPressed: Color = background,
     backgroundHovered: Color = background,

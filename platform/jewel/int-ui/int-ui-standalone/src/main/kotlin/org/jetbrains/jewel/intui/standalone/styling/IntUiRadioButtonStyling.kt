@@ -70,7 +70,7 @@ public fun RadioButtonMetrics.Companion.defaults(
     outlineFocusedSize: DpSize = outlineSize,
     outlineSelectedSize: DpSize = DpSize(22.dp, 22.dp),
     outlineSelectedFocusedSize: DpSize = outlineSelectedSize,
-    iconContentGap: Dp = 8.dp,
+    iconContentGap: Dp = 4.dp,
 ): RadioButtonMetrics =
     RadioButtonMetrics(
         radioButtonSize = radioButtonSize,

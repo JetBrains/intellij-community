@@ -7,7 +7,12 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.input.rememberTextFieldState
@@ -26,10 +31,12 @@ import org.jetbrains.jewel.intui.standalone.styling.defaults
 import org.jetbrains.jewel.intui.standalone.styling.light
 import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
 import org.jetbrains.jewel.ui.Outline
+import org.jetbrains.jewel.ui.component.GroupHeader
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextField
+import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 import org.jetbrains.jewel.ui.component.styling.IconButtonColors
 import org.jetbrains.jewel.ui.component.styling.IconButtonMetrics
 import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
@@ -38,63 +45,91 @@ import org.jetbrains.jewel.ui.painter.hints.Stateful
 
 @Composable
 fun TextFields() {
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-        val state1 = rememberTextFieldState("TextField")
-        TextField(state = state1, modifier = Modifier.width(200.dp))
+    VerticallyScrollableContainer(Modifier.fillMaxSize()) {
+        Column {
+            TextFieldsRows(readOnly = false)
 
-        val state2 = rememberTextFieldState("")
-        TextField(state = state2, placeholder = { Text("Placeholder") }, modifier = Modifier.width(200.dp))
+            Spacer(Modifier.height(16.dp))
 
-        val state3 = rememberTextFieldState("")
-        TextField(
-            state = state3,
-            outline = Outline.Error,
-            placeholder = { Text("Error outline") },
-            modifier = Modifier.width(200.dp),
-        )
+            GroupHeader("Read-only")
+
+            Spacer(Modifier.height(16.dp))
+
+            TextFieldsRows(readOnly = true)
+        }
     }
+}
 
-    Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-        val state1 = rememberTextFieldState("")
-        TextField(
-            state = state1,
-            outline = Outline.Warning,
-            placeholder = { Text("Warning outline") },
-            modifier = Modifier.width(200.dp),
-        )
+@Composable
+private fun TextFieldsRows(readOnly: Boolean) {
+    Column(modifier = Modifier.padding(vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            val state1 = rememberTextFieldState("TextField")
+            TextField(state = state1, modifier = Modifier.width(200.dp), readOnly = readOnly)
 
-        val state2 = rememberTextFieldState("Disabled")
-        TextField(state = state2, enabled = false, modifier = Modifier.width(200.dp))
-    }
+            val state2 = rememberTextFieldState("")
+            TextField(
+                state = state2,
+                placeholder = { Text("Placeholder") },
+                modifier = Modifier.width(200.dp),
+                readOnly = readOnly,
+            )
 
-    Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.Top) {
-        val state1 = rememberTextFieldState("")
-        TextField(
-            state = state1,
-            placeholder = { Text("With leading icon") },
-            modifier = Modifier.width(200.dp),
-            leadingIcon = {
-                Icon(
-                    key = AllIconsKeys.Actions.Find,
-                    contentDescription = "SearchIcon",
-                    iconClass = StandaloneSampleIcons::class.java,
-                    modifier = Modifier.size(16.dp),
-                )
-            },
-        )
+            val state3 = rememberTextFieldState("")
+            TextField(
+                state = state3,
+                outline = Outline.Error,
+                placeholder = { Text("Error outline") },
+                modifier = Modifier.width(200.dp),
+                readOnly = readOnly,
+            )
+        }
 
-        val state2 = rememberTextFieldState("")
-        TextField(
-            state = state2,
-            placeholder = { Text("With trailing button") },
-            modifier = Modifier.width(200.dp),
-            trailingIcon = {
-                CloseIconButton(
-                    isVisible = state2.text.isNotEmpty(),
-                    onClick = { state2.setTextAndPlaceCursorAtEnd("") },
-                )
-            },
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            val state1 = rememberTextFieldState("")
+            TextField(
+                state = state1,
+                outline = Outline.Warning,
+                placeholder = { Text("Warning outline") },
+                modifier = Modifier.width(200.dp),
+                readOnly = readOnly,
+            )
+
+            val state2 = rememberTextFieldState("Disabled")
+            TextField(state = state2, enabled = false, modifier = Modifier.width(200.dp), readOnly = readOnly)
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
+            val state1 = rememberTextFieldState("")
+            TextField(
+                state = state1,
+                placeholder = { Text("With leading icon") },
+                modifier = Modifier.width(200.dp),
+                leadingIcon = {
+                    Icon(
+                        key = AllIconsKeys.Actions.Find,
+                        contentDescription = "SearchIcon",
+                        iconClass = StandaloneSampleIcons::class.java,
+                        modifier = Modifier.size(16.dp),
+                    )
+                },
+                readOnly = readOnly,
+            )
+
+            val state2 = rememberTextFieldState("")
+            TextField(
+                state = state2,
+                placeholder = { Text("With trailing button") },
+                modifier = Modifier.width(200.dp),
+                trailingIcon = {
+                    CloseIconButton(
+                        isVisible = state2.text.isNotEmpty(),
+                        onClick = { state2.setTextAndPlaceCursorAtEnd("") },
+                    )
+                },
+                readOnly = readOnly,
+            )
+        }
     }
 }
 
