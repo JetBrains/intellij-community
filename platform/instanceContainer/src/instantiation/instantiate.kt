@@ -63,11 +63,9 @@ private fun findConstructor(instanceClass: Class<*>, signatures: List<MethodType
     catch (e: CancellationException) {
       throw e
     }
-    catch (_: NoSuchMethodException) {
-    }
-    catch (e: Throwable) {
-      throw e
-    }
+    catch (_: NoSuchMethodException) { }
+    catch (_: IllegalAccessException) { }
+    catch (e: Throwable) { throw e }
   }
   throw InstantiationException("Class '$instanceClass' does not define any of supported signatures '$signatures'")
 }
