@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.WeighingContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.Weigher;
@@ -70,7 +71,11 @@ public abstract class CompletionService {
       if (customSorter != null) {
         result = result.withRelevanceSorter(customSorter);
       }
-      getVariantsFromContributor(parameters, contributor, result);
+      try {
+        getVariantsFromContributor(parameters, contributor, result);
+      }
+      catch (IndexNotReadyException ignore) {
+      }
       if (result.isStopped()) {
         return;
       }

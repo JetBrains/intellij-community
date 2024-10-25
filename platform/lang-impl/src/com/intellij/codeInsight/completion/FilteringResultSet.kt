@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.patterns.ElementPattern
 import com.intellij.util.Consumer
 import org.jetbrains.annotations.ApiStatus
@@ -85,7 +86,11 @@ class FilteringResultSet(
         if (customSorter != null) {
           result = result.withRelevanceSorter(customSorter)
         }
-        getVariantsFromContributor(parameters, contributor, result)
+        try {
+          getVariantsFromContributor(parameters, contributor, result)
+        }
+        catch (_: IndexNotReadyException) {
+        }
         if (result.isStopped) {
           return
         }
