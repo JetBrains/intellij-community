@@ -9,10 +9,6 @@ internal class ChangesViewCommitMessagePolicy(
   commitMessageUi: CommitMessageUi,
   initialChangeList: LocalChangeList,
 ) : ChangeListCommitMessagePolicy(project, commitMessageUi, initialChangeList, true) {
-  override fun getInitialMessage(): String? = getCommitMessage()
-
-  override fun getMessageForNewChangeList(): String = getCommitMessage()
-
   override fun dispose() {
     if (changeListManager.areChangeListsEnabled()) {
       val commitMessage = commitMessageUi.text
@@ -21,10 +17,5 @@ internal class ChangesViewCommitMessagePolicy(
     else {
       // Disposal of ChangesViewCommitWorkflowHandler on 'com.intellij.vcs.commit.CommitMode.ExternalCommitMode' enabling.
     }
-  }
-
-  private fun getCommitMessage(): String {
-    return getCommitMessageForCurrentList()?.takeIf { it.isNotBlank() }
-           ?: vcsConfiguration.LAST_COMMIT_MESSAGE.orEmpty()
   }
 }

@@ -89,6 +89,8 @@ abstract class ChangeListCommitMessagePolicy(
   protected val changeListManager: ChangeListManager get() = ChangeListManager.getInstance(project)
   protected var currentChangeList: LocalChangeList = initialChangeList
 
+  override fun getInitialMessage(): String? = getCommitMessageForCurrentList()
+
   /**
    * Called when a new changelist is selected or the current changelist is updated
    */
@@ -105,7 +107,9 @@ abstract class ChangeListCommitMessagePolicy(
   /**
    * @return new commit message after [currentChangeList] having new [LocalChangeList.getId] was set
    */
-  protected abstract fun getMessageForNewChangeList(): String
+  protected open fun getMessageForNewChangeList(): String {
+    return getCommitMessageForCurrentList().orEmpty()
+  }
 
   override fun onBeforeCommit(currentMessage: String) {
     editCurrentChangeListComment(currentMessage)

@@ -11,14 +11,7 @@ internal class SingleChangeListCommitMessagePolicy(
   private val initialCommitMessage: String?,
   initialChangeList: LocalChangeList,
 ) : ChangeListCommitMessagePolicy(project, ui.commitMessageUi, initialChangeList, false) {
-  override fun getInitialMessage(): String? {
-    if (initialCommitMessage != null) return initialCommitMessage
-
-    val commitMessage = getCommitMessageForCurrentList()?.takeIf { it.isNotBlank() }
-    return commitMessage ?: vcsConfiguration.LAST_COMMIT_MESSAGE
-  }
-
-  override fun getMessageForNewChangeList(): String = getCommitMessageForCurrentList().orEmpty()
+  override fun getInitialMessage(): String? = initialCommitMessage ?: super.getInitialMessage()
 
   override fun dispose() {
     editCurrentChangeListComment(commitMessageUi.text)
