@@ -468,8 +468,15 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     if (projectManager.isDefaultProjectInitialized()) {
-      Project defaultProject = projectManager.getDefaultProject();
-      ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(defaultProject)).clearUncommittedDocuments();
+      try {
+        Project defaultProject = projectManager.getDefaultProject();
+        PsiDocumentManager psiDocumentManager = defaultProject.getServiceIfCreated(PsiDocumentManager.class);
+        if (psiDocumentManager instanceof PsiDocumentManagerImpl impl) {
+          impl.clearUncommittedDocuments();
+        }
+      }
+      catch (Throwable ignored) {
+      }
     }
   }
 
