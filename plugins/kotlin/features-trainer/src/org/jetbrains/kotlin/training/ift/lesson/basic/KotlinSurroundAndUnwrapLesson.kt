@@ -18,5 +18,5 @@ class KotlinSurroundAndUnwrapLesson : SurroundAndUnwrapLesson() {
 
     override val lineShiftBeforeUnwrap = -2
 
-    override val unwrapTryText = KotlinBundle.message("unwrap.expression", "try {...}")
+    override val unwrapTryText = KotlinBundle.message("unwrap.expression", "try {${Typography.ellipsis}}")
 }
