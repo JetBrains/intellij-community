@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.KtIconProvider.getBaseIcon
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.completion.OverridesCompletionLookupElementDecorator
-import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
@@ -39,7 +39,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 internal class OverrideKeywordHandler(
-    private val basicContext: FirBasicCompletionContext
+    private val importStrategyDetector: ImportStrategyDetector,
 ) : CompletionKeywordHandler<KaSession>(KtTokens.OVERRIDE_KEYWORD) {
 
     context(KaSession)
@@ -47,7 +47,7 @@ internal class OverrideKeywordHandler(
         parameters: CompletionParameters,
         expression: KtExpression?,
         lookup: LookupElement,
-        project: Project
+        project: Project,
     ): Collection<LookupElement> = createOverrideMemberLookups(parameters, declaration = null, project) + lookup
 
     context(KaSession)
@@ -60,7 +60,7 @@ internal class OverrideKeywordHandler(
         val position = parameters.position
         val isConstructorParameter = position.getNonStrictParentOfType<KtPrimaryConstructor>() != null
         val parent = position.getNonStrictParentOfType<KtClassOrObject>() ?: return result
-        val classOrObject = getOriginalDeclarationOrSelf(parent, basicContext.originalKtFile)
+        val classOrObject = getOriginalDeclarationOrSelf(parent, parameters.originalFile as KtFile)
         val members = collectMembers(classOrObject, isConstructorParameter)
 
         for (member in members) {
@@ -127,7 +127,7 @@ internal class OverrideKeywordHandler(
 
         val baseLookupElement = KotlinFirLookupElementFactory.createLookupElement(
             symbol = memberSymbol,
-            importStrategyDetector = basicContext.importStrategyDetector,
+            importStrategyDetector = importStrategyDetector,
         )
 
         val classOrObjectPointer = classOrObject.createSmartPointer()

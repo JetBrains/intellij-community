@@ -41,7 +41,18 @@ internal class FirKeywordCompletionContributor(
         override fun getLanguageVersionSetting(module: Module) = module.languageVersionSettings
     })
 
-    private val resolveDependentCompletionKeywordHandlers = ResolveDependentCompletionKeywordHandlerProvider(basicContext)
+    private val resolveDependentCompletionKeywordHandlers = object : CompletionKeywordHandlerProvider<KaSession>() {
+
+        override val handlers = CompletionKeywordHandlers(
+            ReturnKeywordHandler,
+            BreakContinueKeywordHandler(KtTokens.CONTINUE_KEYWORD),
+            BreakContinueKeywordHandler(KtTokens.BREAK_KEYWORD),
+            ActualKeywordHandler(importStrategyDetector),
+            OverrideKeywordHandler(importStrategyDetector),
+            ThisKeywordHandler(prefixMatcher),
+            SuperKeywordHandler,
+        )
+    }
 
     context(KaSession)
     override fun complete(
@@ -88,18 +99,4 @@ internal class FirKeywordCompletionContributor(
             complete(lookupElement, keyword)
         }
     }
-}
-
-private class ResolveDependentCompletionKeywordHandlerProvider(
-    basicContext: FirBasicCompletionContext
-) : CompletionKeywordHandlerProvider<KaSession>() {
-    override val handlers = CompletionKeywordHandlers(
-        ReturnKeywordHandler,
-        BreakContinueKeywordHandler(KtTokens.CONTINUE_KEYWORD),
-        BreakContinueKeywordHandler(KtTokens.BREAK_KEYWORD),
-        ActualKeywordHandler(basicContext),
-        OverrideKeywordHandler(basicContext),
-        ThisKeywordHandler(basicContext),
-        SuperKeywordHandler,
-    )
 }

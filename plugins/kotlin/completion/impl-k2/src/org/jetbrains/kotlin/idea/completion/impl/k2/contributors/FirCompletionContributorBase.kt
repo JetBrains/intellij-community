@@ -54,7 +54,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
     protected val targetPlatform: TargetPlatform get() = basicContext.targetPlatform
 
     protected val symbolFromIndexProvider = KtSymbolFromIndexProvider(basicContext.fakeKtFile)
-    protected val importStrategyDetector: ImportStrategyDetector get() = basicContext.importStrategyDetector
+    protected val importStrategyDetector = ImportStrategyDetector(originalKtFile, project)
 
     protected val scopeNameFilter: (Name) -> Boolean =
         { name -> !name.isSpecial && prefixMatcher.prefixMatches(name.identifier) }

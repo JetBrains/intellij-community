@@ -42,14 +42,15 @@ internal class K2ActualDeclarationContributor(
         val declaration = when (positionContext) {
             is KotlinTypeNameReferencePositionContext -> positionContext.typeReference?.getDeclaration()
             else -> null
-        }
+        } ?: return
 
-        if (declaration == null) return
+        if (!declaration.hasModifier(KtTokens.ACTUAL_KEYWORD)) return
 
-        if (declaration.hasModifier(KtTokens.ACTUAL_KEYWORD)) {
-            val elements = ActualKeywordHandler(basicContext, declaration).createActualLookups(parameters, project)
-            sink.addAllElements(elements)
-        }
+        val elements = ActualKeywordHandler(
+            importStrategyDetector = importStrategyDetector,
+            declaration = declaration,
+        ).createActualLookups(parameters, project)
+        sink.addAllElements(elements)
     }
 
     private fun KtTypeReference.getDeclaration(): KtCallableDeclaration? {

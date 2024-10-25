@@ -50,7 +50,7 @@ internal class FirDeclarationFromOverridableMembersContributor(
         } ?: return
 
         if (declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-            val elements = OverrideKeywordHandler(basicContext).createOverrideMemberLookups(parameters, declaration, project)
+            val elements = OverrideKeywordHandler(importStrategyDetector).createOverrideMemberLookups(parameters, declaration, project)
             sink.addAllElements(elements)
         }
     }
