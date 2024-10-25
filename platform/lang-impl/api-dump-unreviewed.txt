@@ -12459,7 +12459,7 @@ f:com.intellij.ide.util.gotoByName.GotoActionItemProvider
 - com.intellij.ide.util.gotoByName.ChooseByNameWeightedItemProvider
 - <init>(com.intellij.ide.util.gotoByName.GotoActionModel):V
 - clearIntentions():V
-- s:createActionWrapper(com.intellij.openapi.actionSystem.AnAction,com.intellij.ide.util.gotoByName.GotoActionModel$GroupMapping,com.intellij.ide.util.gotoByName.MatchMode,com.intellij.ide.util.gotoByName.GotoActionModel):com.intellij.ide.util.gotoByName.GotoActionModel$ActionWrapper
+- s:createActionWrapper(com.intellij.openapi.actionSystem.AnAction,com.intellij.ide.util.gotoByName.GroupMapping,com.intellij.ide.util.gotoByName.MatchMode,com.intellij.ide.util.gotoByName.GotoActionModel):com.intellij.ide.util.gotoByName.GotoActionModel$ActionWrapper
 - filterElements(com.intellij.ide.util.gotoByName.ChooseByNameViewModel,java.lang.String,Z,com.intellij.openapi.progress.ProgressIndicator,com.intellij.util.Processor):Z
 - filterElements(java.lang.String,java.util.function.Predicate):Z
 - filterElementsWithWeights(com.intellij.ide.util.gotoByName.ChooseByNameViewModel,java.lang.String,Z,com.intellij.openapi.progress.ProgressIndicator,com.intellij.util.Processor):Z
@@ -12477,7 +12477,7 @@ f:com.intellij.ide.util.gotoByName.GotoActionModel
 - getElementName(java.lang.Object):java.lang.String
 - getElementsByName(java.lang.String,Z,java.lang.String):java.lang.Object[]
 - getFullName(java.lang.Object):java.lang.String
-- getGroupMapping(com.intellij.openapi.actionSystem.AnAction):com.intellij.ide.util.gotoByName.GotoActionModel$GroupMapping
+- getGroupMapping(com.intellij.openapi.actionSystem.AnAction):com.intellij.ide.util.gotoByName.GroupMapping
 - getGroupName(com.intellij.ide.ui.search.OptionDescription):java.lang.String
 - getHelpId():java.lang.String
 - getListCellRenderer():javax.swing.ListCellRenderer
@@ -12492,12 +12492,12 @@ f:com.intellij.ide.util.gotoByName.GotoActionModel
 - useMiddleMatching():Z
 - willOpenEditor():Z
 c:com.intellij.ide.util.gotoByName.GotoActionModel$ActionWrapper
-- <init>(com.intellij.openapi.actionSystem.AnAction,com.intellij.ide.util.gotoByName.GotoActionModel$GroupMapping,com.intellij.ide.util.gotoByName.MatchMode,com.intellij.openapi.actionSystem.Presentation):V
+- <init>(com.intellij.openapi.actionSystem.AnAction,com.intellij.ide.util.gotoByName.GroupMapping,com.intellij.ide.util.gotoByName.MatchMode,com.intellij.openapi.actionSystem.Presentation):V
 - compareWeights(com.intellij.ide.util.gotoByName.GotoActionModel$ActionWrapper):I
 - equals(java.lang.Object):Z
 - getAction():com.intellij.openapi.actionSystem.AnAction
 - getActionText():java.lang.String
-- getGroupMapping():com.intellij.ide.util.gotoByName.GotoActionModel$GroupMapping
+- getGroupMapping():com.intellij.ide.util.gotoByName.GroupMapping
 - getGroupName():java.lang.String
 - getMode():com.intellij.ide.util.gotoByName.MatchMode
 - getPresentation():com.intellij.openapi.actionSystem.Presentation
@@ -12511,16 +12511,6 @@ f:com.intellij.ide.util.gotoByName.GotoActionModel$GotoActionListCellRenderer
 - <init>(com.intellij.util.Function,Z):V
 - s:calcHit(com.intellij.ide.ui.search.OptionDescription):java.lang.String
 - getListCellRendererComponent(javax.swing.JList,java.lang.Object,I,Z,Z):java.awt.Component
-f:com.intellij.ide.util.gotoByName.GotoActionModel$GroupMapping
-- java.lang.Comparable
-- <init>():V
-- <init>(Z):V
-- compareTo(com.intellij.ide.util.gotoByName.GotoActionModel$GroupMapping):I
-- s:createFromText(java.lang.String,Z):com.intellij.ide.util.gotoByName.GotoActionModel$GroupMapping
-- getAllGroupNames():java.util.List
-- getBestGroupName():java.lang.String
-- getFirstGroup():java.util.List
-- updateBeforeShow(com.intellij.openapi.actionSystem.UpdateSession):V
 c:com.intellij.ide.util.gotoByName.GotoActionModel$MatchedValue
 - com.intellij.ide.actions.searcheverywhere.MergeableElement
 - com.intellij.internal.inspector.UiInspectorContextProvider
@@ -12631,6 +12621,22 @@ c:com.intellij.ide.util.gotoByName.GotoSymbolModel2
 - loadInitialCheckBoxState():Z
 - saveInitialCheckBoxState(Z):V
 - willOpenEditor():Z
+f:com.intellij.ide.util.gotoByName.GroupMapping
+- java.lang.Comparable
+- sf:Companion:com.intellij.ide.util.gotoByName.GroupMapping$Companion
+- <init>():V
+- <init>(Z):V
+- b:<init>(Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:addPath(java.util.List):V
+- compareTo(com.intellij.ide.util.gotoByName.GroupMapping):I
+- sf:createFromText(java.lang.String,Z):com.intellij.ide.util.gotoByName.GroupMapping
+- f:getAllGroupNames():java.util.List
+- f:getBestGroupName():java.lang.String
+- f:getFirstGroup():java.util.List
+- f:updateBeforeShow(com.intellij.openapi.actionSystem.UpdateSession):V
+- f:updateBeforeShowSuspend(kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.ide.util.gotoByName.GroupMapping$Companion
+- f:createFromText(java.lang.String,Z):com.intellij.ide.util.gotoByName.GroupMapping
 f:com.intellij.ide.util.gotoByName.LanguageRef
 - sf:Companion:com.intellij.ide.util.gotoByName.LanguageRef$Companion
 - <init>(java.lang.String,java.lang.String,javax.swing.Icon):V
