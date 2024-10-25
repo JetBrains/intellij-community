@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.trustedProjects
 
-import com.intellij.diagnostic.WindowsDefenderExcludeUtil
 import com.intellij.diagnostic.WindowsDefenderStatisticsCollector
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
@@ -40,7 +39,7 @@ import kotlin.io.path.pathString
 import kotlin.math.ceil
 
 internal class TrustedProjectStartupDialog(
-  private val project: Project?, @NonNls private val projectPath: Path, val isWinDefenderEnabled: Boolean = true,
+  private val project: Project?, @NonNls private val projectPath: Path, val isWinDefenderEnabled: Boolean = true, val idePaths: List<Path>,
   @NlsContexts.DialogTitle private val myTitle: String = IdeBundle.message("untrusted.project.general.dialog.title"),
   @NlsContexts.DialogMessage private val message: String = IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfo.getInstance().fullApplicationName),
   @NlsContexts.Button private val trustButtonText: String = IdeBundle.message("untrusted.project.dialog.trust.button"),
@@ -165,7 +164,7 @@ internal class TrustedProjectStartupDialog(
               .bindSelected(windowsDefender)
               .apply {
                 component.toolTipText = null
-                component.addMouseMotionListener(TooltipMouseAdapter { listOf(getIdePaths().joinToString(separator = "<br>"), getTrustFolder(trustAll.get()).pathString) })
+                component.addMouseMotionListener(TooltipMouseAdapter { listOf(idePaths.joinToString(separator = "<br>"), getTrustFolder(trustAll.get()).pathString) })
                 comment(IdeBundle.message("untrusted.project.location.comment"))
                 visible(isWinDefenderEnabled)
               }
@@ -214,9 +213,6 @@ internal class TrustedProjectStartupDialog(
   private fun getTrustFolder(isTrustAll: Boolean): Path = if (isTrustAll) getParentFolder() else projectPath
 
   private fun getParentFolder(): Path = projectPath.parent
-
-  @NlsSafe
-  private fun getIdePaths(): List<Path> = WindowsDefenderExcludeUtil.getPathsToExclude(project, projectPath)
 
   override fun createActions(): Array<out Action?> {
     val actions: MutableList<Action> = mutableListOf()
@@ -272,7 +268,7 @@ internal class TrustedProjectStartupDialog(
   fun getWidowsDefenderPathsToExclude(): List<Path> {
     return if (windowsDefender.get()) {
       WindowsDefenderStatisticsCollector.excludedFromTrustDialog(trustAll.get())
-      listOf(*getIdePaths().toTypedArray(), getTrustFolder(trustAll.get()))
+      listOf(*idePaths.toTypedArray(), getTrustFolder(trustAll.get()))
     }
     else emptyList()
   }

@@ -54,11 +54,13 @@ object TrustedProjectsDialog {
       return true
     }
     val isWinDefenderEnabled = isWinDefenderEnabled(project, projectRoot)
+    val idePaths = WindowsDefenderExcludeUtil.getPathsToExclude(project, projectRoot)
     val dialog = withContext(Dispatchers.EDT) {
       val dialog = TrustedProjectStartupDialog(
         project = project,
         projectPath = projectRoot,
         isWinDefenderEnabled = isWinDefenderEnabled,
+        idePaths = idePaths,
         myTitle = title,
         message = message,
         trustButtonText = trustButtonText,
