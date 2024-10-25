@@ -40,10 +40,11 @@ class IjentNioFileSystem internal constructor(
       is IjentFileSystemWindowsApi -> "\\"
     }
 
-  override fun getRootDirectories(): Iterable<IjentNioPath> = fsBlocking {
+  override fun getRootDirectories(): Iterable<IjentNioPath> =
     when (val fs = ijentFs) {
       is IjentFileSystemPosixApi -> listOf(getPath("/"))
-      is IjentFileSystemWindowsApi -> fs.getRootDirectories().map { it.toNioPath() }
+      is IjentFileSystemWindowsApi -> fsBlocking {
+        fs.getRootDirectories().map { it.toNioPath() }
     }
   }
 
