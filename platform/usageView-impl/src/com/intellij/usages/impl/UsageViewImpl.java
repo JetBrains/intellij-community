@@ -1038,6 +1038,12 @@ public class UsageViewImpl implements UsageViewEx {
   private boolean rulesChanged; // accessed in EDT only
 
   private void rulesChanged() {
+    try (AccessToken ignore = SlowOperations.knownIssue("IJPL-164976")) {
+      rulesChangedImpl();
+    }
+  }
+
+  private void rulesChangedImpl() {
     ThreadingAssertions.assertEventDispatchThread();
     if (!shouldTreeReactNowToRuleChanges()) {
       rulesChanged = true;

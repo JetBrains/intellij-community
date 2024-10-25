@@ -1324,7 +1324,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     HighlightingSessionImpl session;
     try (AccessToken ignored = ClientId.withExplicitClientId(ClientFileEditorManager.getClientId(fileEditor))) {
       TextRange compositeDocumentDirtyRange = myFileStatusMap.getCompositeDocumentDirtyRange(document);
-      PsiFile psiFileToSubmit = TextEditorBackgroundHighlighter.renewFile(myProject, document);
+      PsiFile psiFileToSubmit;
+      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-173192")) {
+        psiFileToSubmit = TextEditorBackgroundHighlighter.renewFile(myProject, document);
+      }
       if (psiFileToSubmit == null) {
         if (PassExecutorService.LOG.isDebugEnabled()) {
           PassExecutorService.log(progress, null, "queuePassesCreation: psiFile is null for "+virtualFile+"; PsiDocumentManager.getPsiFile()="+PsiDocumentManager.getInstance(myProject).getPsiFile(document));
