@@ -346,12 +346,12 @@ private class ChunkCommitMessagePolicy(
   project: Project,
   commitMessageUi: CommitMessageUi,
 ) : AbstractCommitMessagePolicy(project, commitMessageUi, false) {
+  override val clearMessageAfterCommit = true
 
   override fun getInitialMessage(): String? = getCommitMessage()
 
-  override fun onAfterCommit() {
+  override fun cleanupStoredMessage() {
     saveTempChunkCommitMessage("")
-    commitMessageUi.text = getCommitMessage()
   }
 
   override fun dispose() {

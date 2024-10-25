@@ -2,8 +2,7 @@
 package git4idea.index
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.ChangeListManager.getInstance
 import com.intellij.vcs.commit.AbstractCommitMessagePolicy
 import com.intellij.vcs.commit.CommitMessageUi
 
@@ -11,24 +10,18 @@ class GitStageCommitMessagePolicy(
   project: Project,
   commitMessageUi: CommitMessageUi,
 ) : AbstractCommitMessagePolicy(project, commitMessageUi, true) {
-  override fun getInitialMessage(): String? = getCommitMessage()
+  override fun getInitialMessage(): String? {
+    val defaultChangeList = getInstance(project).defaultChangeList // always blank, required for 'CommitMessageProvider'
+    return getCommitMessageFromProvider(defaultChangeList)
+           ?: vcsConfiguration.LAST_COMMIT_MESSAGE
+           ?: ""
+  }
 
-  override fun onAfterCommit() {
-    commitMessageUi.text = getCommitMessage()
+  override fun cleanupStoredMessage() {
+    vcsConfiguration.LAST_COMMIT_MESSAGE = ""
   }
 
   override fun dispose() {
     vcsConfiguration.LAST_COMMIT_MESSAGE = commitMessageUi.text
-  }
-
-  private fun getCommitMessage(): String {
-    if (clearInitialCommitMessage) {
-      return ""
-    }
-
-    val defaultChangeList = ChangeListManager.getInstance(project).defaultChangeList // always blank, required for 'CommitMessageProvider'
-    return getCommitMessageFromProvider(defaultChangeList)
-           ?: vcsConfiguration.LAST_COMMIT_MESSAGE
-           ?: ""
   }
 }

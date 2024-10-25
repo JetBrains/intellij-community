@@ -13,10 +13,6 @@ internal class ChangesViewCommitMessagePolicy(
 
   override fun getMessageForNewChangeList(): String = getCommitMessage()
 
-  override fun onAfterCommit() {
-    commitMessageUi.text = getCommitMessage()
-  }
-
   override fun dispose() {
     if (changeListManager.areChangeListsEnabled()) {
       val commitMessage = commitMessageUi.text
@@ -28,7 +24,6 @@ internal class ChangesViewCommitMessagePolicy(
   }
 
   private fun getCommitMessage(): String {
-    if (clearInitialCommitMessage) return ""
     return getCommitMessageForCurrentList()?.takeIf { it.isNotBlank() }
            ?: vcsConfiguration.LAST_COMMIT_MESSAGE.orEmpty()
   }

@@ -18,7 +18,13 @@ abstract class AbstractCommitMessagePolicy(
   private val initDelayedProviders: Boolean
 ): Disposable {
   protected val vcsConfiguration: VcsConfiguration get() = VcsConfiguration.getInstance(project)
-  protected val clearInitialCommitMessage: Boolean get() = vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE
+
+  /**
+   * Indicates whether the commit message field should be reset after the successful commit
+   *
+   * @see [onAfterCommit]
+   */
+  protected open val clearMessageAfterCommit: Boolean get() = vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE
 
   fun init() {
     if (initDelayedProviders) {
@@ -45,7 +51,17 @@ abstract class AbstractCommitMessagePolicy(
 
   protected open fun onBeforeCommit(currentMessage: String) {}
 
-  abstract fun onAfterCommit()
+  fun onAfterCommit() {
+    if (clearMessageAfterCommit) {
+      commitMessageUi.text = ""
+      cleanupStoredMessage()
+    }
+  }
+
+  /**
+   * Called if the commit message should be removed from the storage
+   */
+  protected abstract fun cleanupStoredMessage()
 
   protected fun getCommitMessageFromProvider(changeList: LocalChangeList): String? {
     CommitMessageProvider.EXTENSION_POINT_NAME.extensionList.forEach { provider ->
@@ -93,6 +109,10 @@ abstract class ChangeListCommitMessagePolicy(
 
   override fun onBeforeCommit(currentMessage: String) {
     editCurrentChangeListComment(currentMessage)
+  }
+
+  override fun cleanupStoredMessage() {
+    editCurrentChangeListComment("")
   }
 
   protected fun editCurrentChangeListComment(newComment: String) {
