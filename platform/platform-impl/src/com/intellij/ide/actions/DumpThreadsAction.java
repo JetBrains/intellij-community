@@ -1,14 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeDependentAction;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 
 @ApiStatus.Internal
-public final class DumpThreadsAction extends AnAction implements DumbAware {
+public final class DumpThreadsAction extends IdeDependentAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     dumpThreads(e.getProject());
