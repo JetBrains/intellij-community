@@ -93,60 +93,56 @@ internal class WeighingContext private constructor(
     val isPositionInsideImportOrPackageDirective: Boolean = isPositionInsideImportOrPackageDirective(positionInFakeCompletionFile)
 
     companion object {
-        context(KaSession)
-        fun createWeighingContext(
-            basicContext: FirBasicCompletionContext,
-            receiver: KtElement?,
-            expectedType: KaType?,
-            implicitReceivers: List<KaImplicitReceiver>,
-            positionInFakeCompletionFile: PsiElement,
-            symbolsToSkip: Set<KaSymbol> = emptySet(),
-        ): WeighingContext {
-            val fakeCompletionFile = positionInFakeCompletionFile.containingFile as KtFile
-            val defaultImportPaths = fakeCompletionFile.getDefaultImportPaths(useSiteModule = basicContext.useSiteModule).toSet()
-            val languageVersionSettings = fakeCompletionFile.languageVersionSettings
-            return WeighingContext(
-                token,
-                languageVersionSettings,
-                receiver,
-                positionInFakeCompletionFile,
-                expectedType,
-                implicitReceivers,
-                getContextualSymbolsCache(basicContext, positionInFakeCompletionFile),
-                ImportableFqNameClassifier(fakeCompletionFile) { defaultImportPaths.hasImport(it) },
-                symbolsToSkip,
-            )
-        }
 
         context(KaSession)
-        fun createEmptyWeighingContext(
+        fun create(
             basicContext: FirBasicCompletionContext,
-            positionInFakeCompletionFile: PsiElement,
-        ): WeighingContext = createWeighingContext(
-            basicContext,
-            receiver = null,
-            expectedType = null,
-            implicitReceivers = emptyList(),
-            positionInFakeCompletionFile
-        )
+            elementInCompletionFile: PsiElement,
+            receiver: KtElement? = null,
+            expectedType: KaType? = null,
+            implicitReceivers: List<KaImplicitReceiver> = emptyList(),
+            symbolsToSkip: Set<KaSymbol> = emptySet(),
+        ): WeighingContext {
+            val completionFile = basicContext.fakeKtFile
+            val defaultImportPaths = completionFile.getDefaultImportPaths(useSiteModule = basicContext.useSiteModule).toSet()
+            return WeighingContext(
+                token = token,
+                languageVersionSettings = completionFile.languageVersionSettings,
+                explicitReceiver = receiver,
+                positionInFakeCompletionFile = elementInCompletionFile,
+                myExpectedType = expectedType,
+                myImplicitReceivers = implicitReceivers,
+                contextualSymbolsCache = ContextualSymbolsCache(
+                    getContextualSymbolsCache(
+                        elementInCompletionFile = elementInCompletionFile,
+                        originalFile = basicContext.originalKtFile,
+                    )
+                ),
+                importableFqNameClassifier = ImportableFqNameClassifier(completionFile) { defaultImportPaths.hasImport(it) },
+                mySymbolsToSkip = symbolsToSkip,
+            )
+        }
 
         private fun Set<ImportPath>.hasImport(name: FqName): Boolean {
             return ImportPath(name, false) in this || ImportPath(name.parent(), true) in this
         }
 
         context(KaSession)
-        private fun getContextualSymbolsCache(basicContext: FirBasicCompletionContext, element: PsiElement): ContextualSymbolsCache {
-            if (element.parent !is KtSimpleNameExpression) {
-                return ContextualSymbolsCache(emptyMap())
+        private fun getContextualSymbolsCache(
+            elementInCompletionFile: PsiElement,
+            originalFile: KtFile,
+        ): Map<Name, List<KaCallableSymbol>> {
+            if (elementInCompletionFile.parent !is KtSimpleNameExpression) {
+                return emptyMap()
             }
 
-            return element
-                .parentsOfType<KtCallableDeclaration>()
-                .filter { it !is KtParameter }
-                .map { getOriginalDeclarationOrSelf(it, basicContext.originalKtFile).symbol as KaCallableSymbol }
+            return elementInCompletionFile.parentsOfType<KtCallableDeclaration>()
+                .filterNot { it is KtParameter }
+                .map { getOriginalDeclarationOrSelf(it, originalFile) }
+                .map { it.symbol }
+                .filterIsInstance<KaCallableSymbol>()
                 .filter { it is KaNamedSymbol }
                 .groupBy { (it as KaNamedSymbol).name }
-                .let { ContextualSymbolsCache(it) }
         }
     }
 }

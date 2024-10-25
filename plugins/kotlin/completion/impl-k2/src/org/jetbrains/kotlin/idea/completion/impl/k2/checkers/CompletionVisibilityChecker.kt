@@ -2,11 +2,9 @@
 
 package org.jetbrains.kotlin.idea.completion.checkers
 
-import com.intellij.platform.ide.progress.ModalTaskOwner.project
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
@@ -53,7 +51,7 @@ internal class CompletionVisibilityChecker(
         val declarationModule = file.getKaModule(basicContext.project, useSiteModule)
 
         return declarationModule == useSiteModule ||
-                declarationModule in basicContext.useSiteModule.directFriendDependencies
+                declarationModule in useSiteModule.directFriendDependencies
     }
 
     context(KaSession)

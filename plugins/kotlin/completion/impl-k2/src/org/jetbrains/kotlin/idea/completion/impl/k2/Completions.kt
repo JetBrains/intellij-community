@@ -201,12 +201,11 @@ internal object Completions {
     ): WeighingContext = when (positionContext) {
         is KotlinSuperReceiverNameReferencePositionContext ->
             // Implicit receivers do not match for this position completion context.
-            WeighingContext.createWeighingContext(
+            WeighingContext.create(
                 basicContext = basicContext,
+                elementInCompletionFile = positionContext.position,
                 receiver = positionContext.superExpression,
                 expectedType = positionContext.nameExpression.expectedType,
-                implicitReceivers = emptyList(),
-                positionInFakeCompletionFile = positionContext.position,
             )
 
         is KotlinWithSubjectEntryPositionContext -> {
@@ -216,7 +215,10 @@ internal object Completions {
         }
 
         is KotlinNameReferencePositionContext -> createWeighingContextForNameReference(basicContext, positionContext)
-        else -> WeighingContext.createEmptyWeighingContext(basicContext, positionContext.position)
+        else -> WeighingContext.create(
+            basicContext = basicContext,
+            elementInCompletionFile = positionContext.position,
+        )
     }
 
     context(KaSession)
@@ -247,16 +249,16 @@ internal object Completions {
             is KotlinCallableReferencePositionContext -> null
             else -> positionContext.nameExpression.expectedType
         }
-        val receiver = positionContext.explicitReceiver
-        val implicitReceivers = basicContext.originalKtFile.scopeContext(positionContext.nameExpression).implicitReceivers
+        val scopeContext = basicContext.originalKtFile
+            .scopeContext(positionContext.nameExpression)
 
-        return WeighingContext.createWeighingContext(
-            basicContext,
-            receiver,
-            expectedType,
-            implicitReceivers,
-            positionContext.position,
-            symbolsToSkip
+        return WeighingContext.create(
+            basicContext = basicContext,
+            elementInCompletionFile = positionContext.position,
+            receiver = positionContext.explicitReceiver,
+            expectedType = expectedType,
+            implicitReceivers = scopeContext.implicitReceivers,
+            symbolsToSkip = symbolsToSkip,
         )
     }
 }
