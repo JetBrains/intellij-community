@@ -8,6 +8,7 @@ import com.intellij.platform.eel.EelUserWindowsInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
 import com.intellij.platform.eel.path.EelPath
 import java.nio.ByteBuffer
+import kotlin.Throws
 
 val EelFileSystemApi.pathOs: EelPath.Absolute.OS
   get() = when (this) {
@@ -644,4 +645,24 @@ interface EelFileSystemWindowsApi : EelFileSystemApi {
   override suspend fun stat(path: EelPath.Absolute, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelResult<
     EelWindowsFileInfo,
     StatError>
+}
+
+suspend fun EelFileSystemApi.changeAttributes(path: EelPath.Absolute, setup: EelFileSystemApi.ChangeAttributesOptions.() -> Unit) {
+  val options = EelFileSystemApi.changeAttributesBuilder().apply(setup)
+  return changeAttributes(path, options)
+}
+
+suspend fun EelFileSystemApi.openForWriting(path: EelPath.Absolute, setup: (EelFileSystemApi.WriteOptions).() -> Unit): EelResult<EelOpenedFile.Writer, EelFileSystemApi.FileWriterError> {
+  val options = EelFileSystemApi.writeOptionsBuilder(path).apply(setup)
+  return openForWriting(options)
+}
+
+suspend fun EelFileSystemApi.copy(source: EelPath.Absolute, target: EelPath.Absolute, setup: (EelFileSystemApi.CopyOptions).() -> Unit) {
+  val options = EelFileSystemApi.copyOptionsBuilder(source, target).apply(setup)
+  return copy(options)
+}
+
+suspend fun EelFileSystemApi.createTemporaryDirectory(setup: (EelFileSystemApi.CreateTemporaryDirectoryOptions).() -> Unit): EelResult<EelPath.Absolute, EelFileSystemApi.CreateTemporaryDirectoryError> {
+  val options = EelFileSystemApi.createTemporaryDirectoryOptions().apply(setup)
+  return createTemporaryDirectory(options)
 }

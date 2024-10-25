@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
+import com.intellij.platform.eel.EelExecApi.Arguments.executeProcessBuilder
 import com.intellij.platform.eel.impl.ExecuteProcessBuilderImpl
 
 /**
@@ -73,12 +74,18 @@ interface EelExecApi {
 }
 
 /** Docs: [EelExecApi.executeProcessBuilder] */
+suspend fun EelExecApi.execute(exe: String, setup: (EelExecApi.ExecuteProcessBuilder).() -> Unit): EelResult<EelProcess, EelExecApi.ExecuteProcessError> {
+  val builder = executeProcessBuilder(exe).apply(setup)
+  return execute(builder)
+}
+
+/** Docs: [EelExecApi.executeProcessBuilder] */
 suspend fun EelExecApi.executeProcess(exe: String, vararg args: String): EelResult<EelProcess, EelExecApi.ExecuteProcessError> =
-  execute(EelExecApi.executeProcessBuilder(exe).args(listOf(*args)))
+  execute(executeProcessBuilder(exe).args(listOf(*args)))
 
 /** Docs: [EelExecApi.executeProcessBuilder] */
 fun executeProcessBuilder(exe: String, arg1: String, vararg args: String): EelExecApi.ExecuteProcessBuilder =
-  EelExecApi.executeProcessBuilder(exe).args(listOf(arg1, *args))
+  executeProcessBuilder(exe).args(listOf(arg1, *args))
 
 fun EelExecApi.ExecuteProcessBuilder.args(first: String, vararg other: String): EelExecApi.ExecuteProcessBuilder =
   args(listOf(first, *other))
