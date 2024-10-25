@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -30,7 +31,6 @@ import java.util.Set;
  * @see #assertSlowOperationsAreAllowed()
  */
 public final class SlowOperations {
-  private static final Logger LOG = Logger.getInstance(SlowOperations.class);
 
   private static final String ERROR_EDT = "Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.";
   private static final String ERROR_RA = "Non-cancelable slow operations are prohibited inside read action. See SlowOperations.assertNonCancelableSlowOperationsAreAllowed javadoc.";
@@ -109,7 +109,7 @@ public final class SlowOperations {
     if (isInSection(FORCE_THROW) && !Cancellation.isInNonCancelableSection()) {
       throw new SlowOperationCanceledException();
     }
-    LOG.error(error);
+    report(error);
   }
 
   /**
@@ -123,7 +123,7 @@ public final class SlowOperations {
                    EDT.isCurrentThreadEdt() ? (isSlowOperationAllowed() ? null : ERROR_EDT) :
                    (ApplicationManager.getApplication().isReadAccessAllowed() ? ERROR_RA : null);
     if (error == null || isAlreadyReported()) return;
-    LOG.error(error);
+    report(error);
   }
 
   private static boolean isSlowOperationAllowed() {
@@ -155,6 +155,13 @@ public final class SlowOperations {
     }
     Throwable throwable = new Throwable();
     return ThrowableInterner.intern(throwable) != throwable;
+  }
+
+  private static void report(String error) {
+    Logger logger = Logger.getInstance(SlowOperations.class);
+    if (!(logger instanceof DefaultLogger)) {
+      logger.error(error);
+    }
   }
 
   @ApiStatus.Internal
