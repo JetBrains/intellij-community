@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -52,6 +53,7 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     applyLayoutSettings(javaSettings);
     myFqnInJavadocOption.apply(settings);
     javaSettings.setDoNotImportInner(getInnerClassesNames());
+    javaSettings.setLayoutOnDemandImportFromSamePackageFirst(myImportLayoutPanel.isLayoutOnDemandImportsFromSamePackageFirst());
   }
 
   @Override
@@ -62,6 +64,8 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     for (String name : javaSettings.getDoNotImportInner()) {
       doNotInsertInnerListModel.addRow(new InnerClassItem(name));
     }
+    JBCheckBox checkBox = myImportLayoutPanel.getCbLayoutOnDemandImportsFromSamePackageFirst();
+    if (checkBox != null) checkBox.setSelected(javaSettings.isLayoutOnDemandImportFromSamePackageFirst());
   }
 
   @Override
@@ -70,6 +74,8 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     boolean isModified = isModifiedLayoutSettings(javaSettings);
     isModified |= myFqnInJavadocOption.isModified(settings);
     isModified |= !javaSettings.getDoNotImportInner().equals(getInnerClassesNames());
+    JBCheckBox checkBox = myImportLayoutPanel.getCbLayoutOnDemandImportsFromSamePackageFirst();
+    if (checkBox != null) isModified |= isModified(checkBox, javaSettings.isLayoutOnDemandImportFromSamePackageFirst());
     return isModified;
   }
 
@@ -94,6 +100,11 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
       }
     }
     return items;
+  }
+
+  @Override
+  protected boolean isShowLayoutOnDemandImportFromSamePackageFirstCheckbox() {
+    return true;
   }
 
   private abstract static class MyColumnInfo extends ColumnInfo<InnerClassItem, String> {

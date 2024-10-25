@@ -37,8 +37,7 @@ import java.awt.*;
 public abstract class ImportLayoutPanel extends JPanel {
   private final JBCheckBox myCbLayoutStaticImportsSeparately =
     new JBCheckBox(JavaBundle.message("import.layout.static.imports.separately"));
-  private final JBCheckBox myCbLayoutOnDemandImportsFromSamePackageFirst =
-    new JBCheckBox(JavaBundle.message("import.layout.on.demand.import.from.same.package.first"));
+  @Nullable private final JBCheckBox myCbLayoutOnDemandImportsFromSamePackageFirst;
   private final JBTable myImportLayoutTable;
 
   private final PackageEntryTable myImportLayoutList = new PackageEntryTable();
@@ -55,11 +54,12 @@ public abstract class ImportLayoutPanel extends JPanel {
     return myCbLayoutStaticImportsSeparately;
   }
 
+  @Nullable
   public JBCheckBox getCbLayoutOnDemandImportsFromSamePackageFirst() {
     return myCbLayoutOnDemandImportsFromSamePackageFirst;
   }
 
-  public ImportLayoutPanel() {
+  public ImportLayoutPanel(boolean showLayoutOnDemandImportFromSamePackageFirstCheckbox) {
     super(new BorderLayout());
 
     myCbLayoutStaticImportsSeparately.addItemListener(e -> {
@@ -114,6 +114,10 @@ public abstract class ImportLayoutPanel extends JPanel {
       .setPreferredSize(new Dimension(-1, JBUI.scale(180)))
       .createPanel();
 
+    myCbLayoutOnDemandImportsFromSamePackageFirst =
+      showLayoutOnDemandImportFromSamePackageFirstCheckbox
+      ? new JBCheckBox(JavaBundle.message("import.layout.on.demand.import.from.same.package.first"))
+      : null;
     final ImportLayoutPanelUI UI = new ImportLayoutPanelUI(myCbLayoutStaticImportsSeparately,
                                                            myCbLayoutOnDemandImportsFromSamePackageFirst,
                                                            importLayoutPanel);
@@ -224,7 +228,7 @@ public abstract class ImportLayoutPanel extends JPanel {
   }
 
   public boolean isLayoutOnDemandImportsFromSamePackageFirst() {
-    return myCbLayoutOnDemandImportsFromSamePackageFirst.isSelected();
+    return myCbLayoutOnDemandImportsFromSamePackageFirst != null && myCbLayoutOnDemandImportsFromSamePackageFirst.isSelected();
   }
 
   public static JBTable createTableForPackageEntries(final PackageEntryTable packageTable, final ImportLayoutPanel panel) {

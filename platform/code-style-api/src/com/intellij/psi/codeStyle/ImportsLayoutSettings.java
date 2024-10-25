@@ -4,8 +4,6 @@ package com.intellij.psi.codeStyle;
 public interface ImportsLayoutSettings {
   boolean isLayoutStaticImportsSeparately();
   void setLayoutStaticImportsSeparately(boolean value);
-  default boolean isLayoutOnDemandImportFromSamePackageFirst() { return false; }
-  default void setLayoutOnDemandImportFromSamePackageFirst(boolean value) {}
   int getNamesCountToUseImportOnDemand();
   void setNamesCountToUseImportOnDemand(int value);
   int getClassCountToUseImportOnDemand();

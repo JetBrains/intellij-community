@@ -291,12 +291,10 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     LAYOUT_STATIC_IMPORTS_SEPARATELY = value;
   }
 
-  @Override
   public boolean isLayoutOnDemandImportFromSamePackageFirst() {
     return LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST;
   }
 
-  @Override
   public void setLayoutOnDemandImportFromSamePackageFirst(boolean value) {
     this.LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST = value;
   }
