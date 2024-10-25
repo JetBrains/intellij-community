@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
@@ -22,8 +23,6 @@ import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.PopupMenuListenerAdapter;
@@ -50,8 +49,10 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseListener;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -636,7 +637,7 @@ public final class CustomizationUtil {
     @Override
     public void apply() throws ConfigurationException {
       super.apply();
-      updateActionToolbars();
+      ActionToolbarImpl.updateAllToolbarsImmediately();
       onModified();
     }
 
@@ -644,28 +645,6 @@ public final class CustomizationUtil {
       this.myApplyAction = applyAction;
       if (applyAction != null) {
         applyAction.setEnabled(isModified(false));
-      }
-    }
-
-    private void updateActionToolbars() {
-      HashSet<String> editedChildrenSet = new HashSet<>();
-      if (ActionManager.getInstance().getAction(myGroupID) instanceof ActionGroup group) {
-        editedChildrenSet.addAll(Arrays.stream(group.getChildren(null)).map(action -> {
-          return ActionManager.getInstance().getId(action);
-        }).toList());
-      }
-
-      for (IdeFrame frame: WindowManager.getInstance().getAllProjectFrames()) {
-        for (Component c : UIUtil.uiTraverser(frame.getComponent()).traverse()) {
-          if (c instanceof ActionToolbar toolbar) {
-            AnAction foundGroup = ActionUtil.getDelegateChainRootAction(toolbar.getActionGroup());
-
-            String foundId = ActionManager.getInstance().getId(foundGroup);
-            if (myGroupID.equals(foundId) || editedChildrenSet.contains(foundId)) {
-              toolbar.updateActionsAsync();
-            }
-          }
-        }
       }
     }
 
