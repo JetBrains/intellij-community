@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
+import com.intellij.platform.eel.EelTunnelsApi.Arguments.hostAddressBuilder
 import com.intellij.platform.eel.EelTunnelsApi.Connection
+import com.intellij.platform.eel.impl.HostAddressBuilderImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
@@ -10,6 +12,9 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import kotlin.time.Duration
 
+/**
+ * API for sockets. Use [hostAddressBuilder] to create arguments.
+ */
 sealed interface EelTunnelsApi {
 
   /**
@@ -37,16 +42,6 @@ sealed interface EelTunnelsApi {
    */
   suspend fun getConnectionToRemotePort(address: HostAddress): EelResult<Connection, EelConnectionError>
 
-  /**
-   * Creates a builder for address on the remote host.
-   */
-  fun hostAddressBuilder(port: UShort): HostAddress.Builder
-
-  /**
-   * Creates a builder for address `localhost:0`.
-   * This can be useful in remote port forwarding, as it allocates a random port on the remote host side.
-   */
-  fun hostAddressBuilder(): HostAddress.Builder
 
   sealed interface ResolvedSocketAddress {
     val port: UShort
@@ -225,6 +220,19 @@ sealed interface EelTunnelsApi {
      * Stops the server from accepting connections.
      */
     suspend fun close()
+  }
+
+  companion object Arguments {
+    /**
+     * Creates a builder for address on the remote host.
+     */
+    fun hostAddressBuilder(port: UShort): HostAddress.Builder = HostAddressBuilderImpl(port)
+
+    /**
+     * Creates a builder for address `localhost:0`.
+     * This can be useful in remote port forwarding, as it allocates a random port on the remote host side.
+     */
+    fun hostAddressBuilder(): HostAddress.Builder = HostAddressBuilderImpl(0u)
   }
 }
 
