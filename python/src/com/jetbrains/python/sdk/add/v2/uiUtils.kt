@@ -17,15 +17,19 @@ import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
 import com.intellij.openapi.util.IconLoader
-import com.intellij.ui.*
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.ColoredListCellRenderer
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.components.ValidationType
 import com.intellij.ui.dsl.builder.components.validationTooltip
 import com.intellij.ui.util.preferredHeight
+import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.CREATE_NEW
@@ -44,14 +48,18 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import java.awt.Component
+import java.nio.file.InvalidPathException
 import java.nio.file.Paths
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.JTextField
 import javax.swing.plaf.basic.BasicComboBoxEditor
 import kotlin.coroutines.CoroutineContext
+import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 
@@ -139,7 +147,7 @@ internal fun SimpleColoredComponent.customizeForPythonInterpreter(interpreter: P
   when (interpreter) {
     is DetectedSelectableInterpreter, is ManuallyAddedSelectableInterpreter -> {
       icon = IconLoader.getTransparentIcon(PythonPsiApiIcons.Python)
-      append(interpreter.homePath)
+      append(replaceHomePathToTilde(interpreter.homePath))
       append(" " + message("sdk.rendering.detected.grey.text"), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
     is InstallableSelectableInterpreter -> {
@@ -150,8 +158,36 @@ internal fun SimpleColoredComponent.customizeForPythonInterpreter(interpreter: P
     is ExistingSelectableInterpreter -> {
       icon = PythonPsiApiIcons.Python
       append(interpreter.sdk.versionString!!)
-      append(" " + interpreter.homePath, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+      append(" " + replaceHomePathToTilde(interpreter.homePath), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
+  }
+}
+
+private val userHomePath = lazy {
+  try {
+    Path(SystemProperties.getUserHome()).normalize()
+  }
+  catch (_: InvalidPathException) {
+    null
+  }
+}
+
+/**
+ * Replaces [userHomePath] in  [sdkHomePath] to `~`
+ */
+@ApiStatus.Internal
+fun replaceHomePathToTilde(sdkHomePath: @NonNls String): @NlsSafe String {
+  try {
+    val path = Path(sdkHomePath.trim()).normalize()
+    userHomePath.value?.let { homePath ->
+      if (path.startsWith(homePath)) {
+        return "~${homePath.fileSystem.separator}" + homePath.relativize(path).normalize().toString()
+      }
+    }
+    return path.toString()
+  }
+  catch (_: InvalidPathException) {
+    return sdkHomePath.trim()
   }
 }
 
