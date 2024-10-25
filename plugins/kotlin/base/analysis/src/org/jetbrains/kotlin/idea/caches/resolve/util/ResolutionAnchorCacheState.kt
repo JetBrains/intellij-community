@@ -14,7 +14,8 @@ import org.jetbrains.annotations.TestOnly
 @Service(Service.Level.PROJECT)
 class ResolutionAnchorCacheState : PersistentStateComponent<ResolutionAnchorCacheState.State>  {
     data class State(
-        val moduleNameToAnchorName: Map<String, String> = emptyMap()
+        // should be `var` for the component serialization to work
+        var moduleNameToAnchorName: Map<String, String> = emptyMap()
     )
 
     @JvmField
@@ -26,7 +27,6 @@ class ResolutionAnchorCacheState : PersistentStateComponent<ResolutionAnchorCach
     override fun loadState(state: State) {
         XmlSerializerUtil.copyBean(state, myState)
     }
-
 
     @TestOnly
     fun setAnchors(mapping: Map<String, String>) {
