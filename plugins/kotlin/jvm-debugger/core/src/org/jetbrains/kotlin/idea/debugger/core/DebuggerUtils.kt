@@ -6,7 +6,6 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.PositionManagerImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
-import com.intellij.debugger.impl.DebuggerUtilsImpl.getLocalVariableBorders
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -19,6 +18,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FileBasedIndex
+import com.jetbrains.jdi.LocalVariableImpl
 import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import com.sun.jdi.ReferenceType
@@ -201,8 +201,8 @@ object DebuggerUtils {
         matches(IR_BACKEND_LAMBDA_REGEX)
 
     fun LocalVariable.getBorders(): ClosedRange<Location>? {
-        val range = getLocalVariableBorders(this) ?: return null
-        return range.from..range.to
+        val localVariableImpl = this as? LocalVariableImpl ?: return null
+        return localVariableImpl.scopeStart..localVariableImpl.scopeEnd
     }
 
     @RequiresReadLock

@@ -35,7 +35,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.rt.debugger.ExceptionDebugHelper;
 import com.intellij.rt.execution.CommandLineWrapper;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Range;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
@@ -45,7 +44,6 @@ import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
-import com.jetbrains.jdi.LocalVariableImpl;
 import com.jetbrains.jdi.MethodImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.connect.Connector;
@@ -539,13 +537,6 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     }
 
     return null;
-  }
-
-
-  @Nullable
-  public static Range<Location> getLocalVariableBorders(@NotNull LocalVariable variable) {
-    if (!(variable instanceof LocalVariableImpl variableImpl)) return null;
-    return new Range<>(variableImpl.getScopeStart(), variableImpl.getScopeEnd());
   }
 
   public static @Nullable Value invokeClassMethod(@NotNull EvaluationContext evaluationContext,
