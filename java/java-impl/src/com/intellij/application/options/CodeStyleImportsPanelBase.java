@@ -18,10 +18,10 @@ public abstract class CodeStyleImportsPanelBase extends JPanel {
   private final PackageEntryTable myPackageList = new PackageEntryTable();
   private final CodeStyleImportsBaseUI kotlinUI;
   private final JBTable myPackageTable;
-  private final ImportLayoutPanel myImportLayoutPanel;
+  protected final ImportLayoutPanel myImportLayoutPanel;
 
   public CodeStyleImportsPanelBase() {
-    myImportLayoutPanel = new ImportLayoutPanel() {
+    myImportLayoutPanel = new ImportLayoutPanel(isShowLayoutOnDemandImportFromSamePackageFirstCheckbox()) {
       @Override
       public void refresh() {
         refreshTable(myPackageTable, myPackageList);
@@ -63,7 +63,6 @@ public abstract class CodeStyleImportsPanelBase extends JPanel {
     myPackageList.copyFrom(settings.getPackagesToUseImportOnDemand());
 
     myImportLayoutPanel.getCbLayoutStaticImportsSeparately().setSelected(settings.isLayoutStaticImportsSeparately());
-    myImportLayoutPanel.getCbLayoutOnDemandImportsFromSamePackageFirst().setSelected(settings.isLayoutOnDemandImportFromSamePackageFirst());
 
     final JBTable importLayoutTable = myImportLayoutPanel.getImportLayoutTable();
     AbstractTableModel model = (AbstractTableModel)importLayoutTable.getModel();
@@ -84,7 +83,6 @@ public abstract class CodeStyleImportsPanelBase extends JPanel {
     stopTableEditing();
 
     settings.setLayoutStaticImportsSeparately(myImportLayoutPanel.areStaticImportsEnabled());
-    settings.setLayoutOnDemandImportFromSamePackageFirst(myImportLayoutPanel.isLayoutOnDemandImportsFromSamePackageFirst());
     kotlinUI.apply(settings);
     PackageEntryTable list = myImportLayoutPanel.getImportLayoutList();
     settings.getImportLayoutTable().copyFrom(getCopyWithoutEmptyPackages(list));
@@ -93,7 +91,6 @@ public abstract class CodeStyleImportsPanelBase extends JPanel {
 
   public boolean isModifiedLayoutSettings(ImportsLayoutSettings settings) {
     boolean isModified = isModified(myImportLayoutPanel.getCbLayoutStaticImportsSeparately(), settings.isLayoutStaticImportsSeparately());
-    isModified |= isModified(myImportLayoutPanel.getCbLayoutOnDemandImportsFromSamePackageFirst(), settings.isLayoutOnDemandImportFromSamePackageFirst());
     isModified |= kotlinUI.isModified(settings);
 
     PackageEntryTable list = myImportLayoutPanel.getImportLayoutList();
@@ -136,6 +133,10 @@ public abstract class CodeStyleImportsPanelBase extends JPanel {
       }
     }
 
+    return false;
+  }
+
+  protected boolean isShowLayoutOnDemandImportFromSamePackageFirstCheckbox() {
     return false;
   }
 }
