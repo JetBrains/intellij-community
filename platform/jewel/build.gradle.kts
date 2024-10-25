@@ -22,6 +22,20 @@ dependencies {
     sarif(projects.ui)
 }
 
+// TODO remove this once the Skiko fix makes it into CMP 1.7.1
+allprojects {
+    configurations.all {
+        resolutionStrategy {
+            eachDependency {
+                if (requested.group == "org.jetbrains.skiko") {
+                    useVersion("0.8.17")
+                    because("Contains important memory usage fix")
+                }
+            }
+        }
+    }
+}
+
 tasks {
     //    val mergeSarifReports by
     //        registering(MergeSarifTask::class) {
