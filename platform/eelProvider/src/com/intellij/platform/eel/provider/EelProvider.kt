@@ -17,11 +17,13 @@ import com.intellij.platform.eel.impl.local.LocalWindowsEelApiImpl
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+import kotlin.io.path.Path
 
 private val CannotGuessProjectDirLoggingKey = Key.create<MutableSet<String>>("Eel.CannotGuessProjectDirLoggingKey")
 
 private fun Project.guessProjectDirAndLogWarn(callLocation: String): VirtualFile? {
-  val dir = guessProjectDir()
+  val dirResult = runCatching { guessProjectDir() }
+  val dir = dirResult.getOrNull()
 
   if (dir == null) {
     val shouldLog = (if (this is UserDataHolderEx) {
@@ -30,7 +32,7 @@ private fun Project.guessProjectDirAndLogWarn(callLocation: String): VirtualFile
     else getOrCreateUserDataUnsafe(CannotGuessProjectDirLoggingKey) { mutableSetOf<String>() }).add(callLocation)
 
     if (shouldLog) {
-      LOG.warn("$callLocation: Cannot guess project dir for $this")
+      LOG.warn("$callLocation: Cannot guess project dir for $this", dirResult.exceptionOrNull())
     }
   }
 
@@ -41,12 +43,13 @@ private fun Project?.computeProjectPath(callLocation: String): Path? {
   if (this == null || this.isDefault) return null
 
   val projectDir = guessProjectDirAndLogWarn(callLocation)
+  val basePath = basePath?.let(::Path)
 
   return try {
-    projectDir?.toNioPath()
+    projectDir?.toNioPath() ?:basePath
   }
   catch (e: UnsupportedOperationException) {
-    null
+    basePath
   }
 }
 
