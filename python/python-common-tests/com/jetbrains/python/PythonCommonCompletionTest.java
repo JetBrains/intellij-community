@@ -537,28 +537,6 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     doTest();
   }
 
-  public void testEpydocParamTag() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, this::doTest);
-  }
-
-  public void testEpydocTags() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> {
-      myFixture.configureByFile("epydocTags.py");
-      myFixture.completeBasic();
-      final List<String> lookupElementStrings = myFixture.getLookupElementStrings();
-      assertNotNull(lookupElementStrings);
-      assertTrue(lookupElementStrings.contains("@param"));
-    });
-  }
-
-  public void testEpydocTagsMiddle() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> {
-      myFixture.configureByFile("epydocTagsMiddle.py");
-      myFixture.completeBasic();
-      myFixture.checkResultByFile("epydocTagsMiddle.after.py");
-    });
-  }
-
   public void testIdentifiersInPlainDocstring() {
     runWithDocStringFormat(DocStringFormat.PLAIN, () -> {
       myFixture.configureByFile("identifiersInPlainDocstring.py");
@@ -628,7 +606,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-16870, PY-16972
   public void testClassNameInDocstring() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, this::doTest);
+    runWithDocStringFormat(DocStringFormat.REST, this::doTest);
   }
 
   // PY-17002

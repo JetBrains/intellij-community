@@ -100,7 +100,7 @@ public class PythonInspectionsTest extends PyTestCase {
 
   //PY-3373
   public void testPyDocstringParametersInspection() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON34));
+    runWithDocStringFormat(DocStringFormat.REST, () -> doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON34));
   }
 
   // PY-9795
