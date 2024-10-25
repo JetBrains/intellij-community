@@ -347,13 +347,40 @@ public final class DefUseUtil {
     }
   }
 
+  /// @see #getRefs(PsiCodeBlock, PsiVariable, PsiElement, boolean)
   public static PsiElement @NotNull [] getRefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref) {
     return getRefs(body, def, ref, false);
   }
 
-  /**
-   * Returns variable {@code def} references which read assigned value {@code ref}
-   */
+  /// Returns references to variable `def` which have the value of `ref` in the scope of `block`.
+  /// `ref` is the value assigned to the variable `def`.
+  ///
+  /// ### Example
+  ///
+  /// Consider the following code:
+  ///
+  /// ```java
+  /// void testHighlightBecauseIncorrect() {
+  ///   String name = "foo ".trim();
+  ///   println(name);
+  ///   println(name);
+  ///   name = "bar";
+  ///   println(name);
+  /// }
+  /// ```
+  ///
+  /// Here's an example of arguments that you could call this method with (in the context of the sample code above):
+  ///  * `block` is the method's body
+  ///  * `def` is [PsiLocalVariable]: `String name = "foo ".trim()`
+  ///  * `ref` is [PsiMethodCallExpression]: `"foo ".trim()`
+  ///
+  /// In the code above there are 3 [PsiReferenceExpression]s of `name`, but this method would only return the first two.
+  /// The third [PsiReferenceExpression] of `name` would not be included, because `name` was redefined by that point and no longer
+  /// has the value of `def` (which at this point is not `"foo ".trim()`, but `"bar"`).
+  ///
+  /// ### See also:
+  ///  * `DeclarationSearchUtils.findDefinition` to find the definition of the [PsiReferenceExpression]
+  ///  * {@link PsiTreeUtil#getParentOfType(PsiElement, Class)} to find the block containing the code you want to analyze
   public static PsiElement[] getRefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
     try {
       RefsDefs refsDefs = new RefsDefs(body) {
