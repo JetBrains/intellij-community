@@ -159,15 +159,15 @@ public final class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
     private static void saveEquations(@NotNull DataOutput out, Equations eqs) throws IOException {
       out.writeBoolean(eqs.stable);
       DataInputOutputUtil.writeINT(out, eqs.results.size());
+      int maxFinal = Value.values().length;
       for (DirectionResultPair pair : eqs.results) {
         DataInputOutputUtil.writeINT(out, pair.directionKey);
         Result rhs = pair.result;
         if (rhs instanceof Value finalResult) {
-          out.writeBoolean(true); // final flag
           DataInputOutputUtil.writeINT(out, finalResult.ordinal());
         }
         else if (rhs instanceof Pending pendResult) {
-          out.writeBoolean(false); // pending flag
+          DataInputOutputUtil.writeINT(out, maxFinal); // pending flag
           DataInputOutputUtil.writeINT(out, pendResult.delta.length);
 
           for (Component component : pendResult.delta) {
@@ -187,6 +187,7 @@ public final class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
           writeDataValue(out, effects.returnValue);
         }
         else if (rhs instanceof FieldAccess fieldAccess) {
+          DataInputOutputUtil.writeINT(out, maxFinal + 1);
           out.writeUTF(fieldAccess.name());
         }
         else {
@@ -199,6 +200,7 @@ public final class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
       boolean stable = in.readBoolean();
       int size = DataInputOutputUtil.readINT(in);
       ArrayList<DirectionResultPair> results = new ArrayList<>(size);
+      Value[] values = Value.values();
       for (int k = 0; k < size; k++) {
         int directionKey = DataInputOutputUtil.readINT(in);
         Direction direction = Direction.fromInt(directionKey);
@@ -211,23 +213,16 @@ public final class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
           DataValue returnValue = readDataValue(in);
           results.add(new DirectionResultPair(directionKey, new Effects(returnValue, Set.copyOf(effects))));
         }
-        else if (direction == Direction.Access) {
-          results.add(new DirectionResultPair(directionKey, new FieldAccess(in.readUTF())));
-        }
         else {
-          boolean isFinal = in.readBoolean(); // flag
-          if (isFinal) {
-            int ordinal = DataInputOutputUtil.readINT(in);
-            Value value = Value.values()[ordinal];
-            results.add(new DirectionResultPair(directionKey, value));
-          }
-          else {
+          int resultKind = DataInputOutputUtil.readINT(in);
+          if (resultKind == values.length) {
+            // pending
             int sumLength = DataInputOutputUtil.readINT(in);
             Component[] components = new Component[sumLength];
 
             for (int i = 0; i < sumLength; i++) {
               int ordinal = DataInputOutputUtil.readINT(in);
-              Value value = Value.values()[ordinal];
+              Value value = values[ordinal];
               int componentSize = DataInputOutputUtil.readINT(in);
               EKey[] ids = new EKey[componentSize];
               for (int j = 0; j < componentSize; j++) {
@@ -236,6 +231,13 @@ public final class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
               components[i] = new Component(value, ids);
             }
             results.add(new DirectionResultPair(directionKey, new Pending(components)));
+          }
+          else if (resultKind == values.length + 1) {
+            results.add(new DirectionResultPair(directionKey, new FieldAccess(in.readUTF())));
+          }
+          else {
+            Value value = values[resultKind];
+            results.add(new DirectionResultPair(directionKey, value));
           }
         }
       }

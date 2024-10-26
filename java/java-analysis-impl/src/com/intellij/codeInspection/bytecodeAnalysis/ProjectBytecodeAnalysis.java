@@ -76,9 +76,9 @@ public class ProjectBytecodeAnalysis {
   public @Nullable PsiField findFieldForGetter(@NotNull PsiMethod getter) {
     EKey eKey = getKey(getter);
     if (eKey == null) return null;
-    EKey accessKey = myEquationProvider.adaptKey(eKey.withDirection(Access));
+    EKey accessKey = myEquationProvider.adaptKey(eKey.withDirection(Out));
     for (Equations equation : myEquationProvider.getEquations(accessKey.member)) {
-      if (equation.find(Access).orElse(null) instanceof FieldAccess access) {
+      if (equation.find(Out).orElse(null) instanceof FieldAccess access) {
         PsiClass containingClass = getter.getContainingClass();
         return containingClass != null ? containingClass.findFieldByName(access.name(), false) : null;
       }
@@ -458,6 +458,9 @@ public class ProjectBytecodeAnalysis {
 
       for (Equations equations : myEquationProvider.getEquations(curKey.member)) {
         Result result = equations.find(curKey.getDirection()).orElseGet(solver::getUnknownResult);
+        if (result instanceof FieldAccess) {
+          continue;
+        }
         solver.addEquation(new Equation(withStability(curKey, equations.stable), result));
         result.processDependencies(dep -> {
           if (queued.add(dep)) {

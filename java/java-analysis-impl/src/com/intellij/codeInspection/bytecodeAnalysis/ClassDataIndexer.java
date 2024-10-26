@@ -53,7 +53,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
   static final BinaryOperator<Equations> MERGER =
     (eq1, eq2) -> eq1.equals(eq2) ? eq1 : new Equations(Collections.emptyList(), false);
 
-  private static final int VERSION = 17; // change when inference algorithm changes
+  private static final int VERSION = 18; // change when inference algorithm changes
   private static final int VERSION_MODIFIER = HardCodedPurity.AGGRESSIVE_HARDCODED_PURITY ? 1 : 0;
   private static final int FINAL_VERSION = VERSION * 2 + VERSION_MODIFIER;
   private static final VirtualFileGist<Map<HMember, Equations>> ourGist = GistManager.getInstance().newVirtualFileGist(
@@ -694,7 +694,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
       }
       String name = fieldAccess.name;
       if (!isReturn(instructions.get(1 + shift))) return null;
-      return new Equation(new EKey(method, Access, stable), new FieldAccess(name));
+      return new Equation(new EKey(method, Out, stable), new FieldAccess(name));
     }
 
     private static boolean isReturn(AbstractInsnNode insn) {
