@@ -5,6 +5,7 @@ import com.intellij.execution.Executor
 import com.intellij.execution.configurations.*
 import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.ProcessHandler
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -14,15 +15,18 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.pathSeparator
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
+import com.intellij.platform.ide.progress.ModalTaskOwner.project
 import com.intellij.platform.ijent.tunnels.forwardLocalPort
-import kotlinx.coroutines.GlobalScope
+import com.intellij.platform.util.coroutines.childScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
+import org.jetbrains.idea.maven.MavenCoroutineScopeHolder
 import org.jetbrains.idea.maven.server.AbstractMavenServerRemoteProcessSupport
 import org.jetbrains.idea.maven.server.MavenDistribution
 import org.jetbrains.idea.maven.server.MavenServerCMDState
+import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenUtil.parseMavenProperties
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
 import kotlin.io.path.Path
 
 private val logger = logger<EelMavenServerRemoteProcessSupport>()
@@ -44,13 +48,11 @@ class EelMavenServerRemoteProcessSupport(
     return "127.0.0.1"
   }
 
+  @OptIn(DelicateCoroutinesApi::class)
   override fun publishPort(port: Int): Int {
-    val deferred = CompletableFuture<Unit>()
-    GlobalScope.launch {
+    MavenCoroutineScopeProvider.getCoroutineScope(myProject).launch {
       forwardLocalPort(eel.tunnels, port, EelTunnelsApi.hostAddressBuilder(port.toUShort()).hostname(remoteHost).build())
-      deferred.complete(Unit)
     }
-    deferred.join()
     return port
   }
 
@@ -67,6 +69,11 @@ private class EelMavenCmdState(
   mavenDistribution: MavenDistribution,
   debugPort: Int?,
 ) : MavenServerCMDState(jdk, vmOptions, mavenDistribution, debugPort) {
+  // TODO: dispose?
+  private val scope by lazy {
+    MavenCoroutineScopeProvider.getCoroutineScope(project).childScope("scope for: $this")
+  }
+
   override fun getWorkingDirectory(): String {
     return eel.exec.fetchLoginShellEnvVariablesBlocking()["HOME"] ?: TODO()
   }
@@ -104,7 +111,9 @@ private class EelMavenCmdState(
 
     eelParams.charset = parameters.charset
     eelParams.vmParametersList.add("-classpath")
-    eelParams.vmParametersList.add(parameters.classPath.pathList.mapNotNull { runBlockingCancellable { eel.mapper.maybeUploadPath(Path(it), GlobalScope)?.toString() } }.joinToString(eel.fs.pathSeparator))
+    eelParams.vmParametersList.add(parameters.classPath.pathList.mapNotNull {
+      runBlockingCancellable { eel.mapper.maybeUploadPath(Path(it), scope).toString() }
+    }.joinToString(eel.fs.pathSeparator))
 
     return eelParams
   }
@@ -116,7 +125,7 @@ private class EelMavenCmdState(
           when (part) {
             is ParameterTargetValuePart.Const -> append(part.localValue)
             is ParameterTargetValuePart.Path -> runBlockingCancellable {
-              append(eel.mapper.maybeUploadPath(Path.of(part.localValue), GlobalScope).toString())
+              append(eel.mapper.maybeUploadPath(Path.of(part.localValue), scope).toString())
             }
             ParameterTargetValuePart.PathSeparator -> append(eel.fs.pathSeparator)
             is ParameterTargetValuePart.PromiseValue -> append(part.localValue) // todo?
