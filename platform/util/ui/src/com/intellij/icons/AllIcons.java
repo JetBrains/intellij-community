@@ -21,6 +21,7 @@ public class AllIcons {
   }
 
   public static final class Actions {
+    /** 16x16 */ public static final @NotNull Icon AddDirectory = load("expui/actions/addDirectory.svg", 1001061326, 2);
     /** 16x16 */ public static final @NotNull Icon AddFile = load("expui/actions/addFile.svg", "actions/addFile.svg", -401992031, 2);
     /** 16x16 */ public static final @NotNull Icon AddList = load("expui/bookmarks/addBookmarksList.svg", "actions/addList.svg", 687312006, 2);
     /** 16x16 */ public static final @NotNull Icon AddMulticaret = load("expui/general/add.svg", "actions/AddMulticaret.svg", 14246848, 2);
