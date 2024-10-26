@@ -92,7 +92,7 @@ public final class MavenNavigationUtil {
 
   @Nullable
   public static VirtualFile getArtifactFile(Project project, MavenId id) {
-    Path path = MavenArtifactUtil.getArtifactFile(MavenProjectsManager.getInstance(project).getReposirotyPath(), id);
+    Path path = MavenArtifactUtil.getArtifactFile(MavenProjectsManager.getInstance(project).getRepositoryPath(), id);
     return Files.exists(path) ? LocalFileSystem.getInstance().findFileByNioFile(path) : null;
   }
 

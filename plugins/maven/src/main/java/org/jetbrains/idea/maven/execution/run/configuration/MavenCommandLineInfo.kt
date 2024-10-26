@@ -64,7 +64,7 @@ class MavenCommandLineInfo(project: Project, projectPathField: WorkingDirectoryF
       val projectsManager = MavenProjectsManager.getInstance(project)
       val mavenProject = readAction { projectsManager.findContainingProject(projectDirectory) }
                          ?: return emptyList()
-      val localRepository = blockingContext { projectsManager.reposirotyPath }
+      val localRepository = blockingContext { projectsManager.repositoryPath }
       return blockingContext {
         mavenProject.declaredPluginInfos
           .mapNotNull { MavenArtifactUtil.readPluginInfo(it.artifact) }

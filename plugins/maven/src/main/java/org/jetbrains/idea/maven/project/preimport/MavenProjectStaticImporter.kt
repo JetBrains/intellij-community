@@ -42,7 +42,7 @@ import java.util.concurrent.ConcurrentHashMap
 @Service(Service.Level.PROJECT)
 @Internal
 class MavenProjectStaticImporter(val project: Project, val coroutineScope: CoroutineScope) {
-  private val localRepo = MavenProjectsManager.getInstance(project).reposirotyPath
+  private val localRepo = MavenProjectsManager.getInstance(project).repositoryPath
 
   suspend fun syncStatic(
     rootProjectFiles: List<VirtualFile>,

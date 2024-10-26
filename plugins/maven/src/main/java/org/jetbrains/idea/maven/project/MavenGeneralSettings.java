@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNullElse;
 import static org.jetbrains.idea.maven.config.MavenConfigSettings.*;
@@ -156,8 +157,7 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   /**
-   * @deprecated
-   * This method mix paths to maven home and labels like "Use bundled maven" and should be avoided
+   * @deprecated This method mix paths to maven home and labels like "Use bundled maven" and should be avoided
    * use {@link #getMavenHomeType getMavenHomeType} instead
    */
   @Nullable
@@ -172,8 +172,7 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   /**
-   * @deprecated
-   * This method mix paths to maven home and labels like "Use bundled maven" and should be avoided
+   * @deprecated This method mix paths to maven home and labels like "Use bundled maven" and should be avoided
    * use {@link #setMavenHomeType setMavenHomeType} instead
    */
   @Deprecated(forRemoval = true)
@@ -286,14 +285,27 @@ public class MavenGeneralSettings implements Cloneable {
     }
   }
 
-  public Path getEffectiveRepositoryPath() {
+  private Path doGetEffectiveRepositoryPath(Supplier<Path> producer) {
     Path result = myEffectiveLocalRepositoryCache;
     if (result != null) return result;
 
-    result =
-      MavenEelUtil.getLocalRepo(myProject, overriddenLocalRepository, staticOrBundled(mavenHomeType), mavenSettingsFile, getMavenConfig());
+    result = producer.get();
     myEffectiveLocalRepositoryCache = result;
     return result;
+  }
+
+  public Path getEffectiveRepositoryPathUnderModalProgress() {
+    return doGetEffectiveRepositoryPath(() -> {
+      return MavenEelUtil.getLocalRepoUnderModalProgress(myProject, overriddenLocalRepository, staticOrBundled(mavenHomeType),
+                                                         mavenSettingsFile, getMavenConfig());
+    });
+  }
+
+  public Path getEffectiveRepositoryPath() {
+    return doGetEffectiveRepositoryPath(() -> {
+      return MavenEelUtil.getLocalRepo(myProject, overriddenLocalRepository, staticOrBundled(mavenHomeType), mavenSettingsFile,
+                                       getMavenConfig());
+    });
   }
 
 

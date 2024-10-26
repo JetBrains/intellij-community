@@ -1071,7 +1071,7 @@ public class MavenUtil {
       return null;
     }
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    return makeLocalRepositoryFile(id, projectsManager.getReposirotyPath(), extension, classifier);
+    return makeLocalRepositoryFile(id, projectsManager.getRepositoryPath(), extension, classifier);
   }
 
   @NotNull
@@ -1118,7 +1118,7 @@ public class MavenUtil {
       return null;
     }
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    return getParentFile(id, projectsManager.getReposirotyPath());
+    return getParentFile(id, projectsManager.getRepositoryPath());
   }
 
   private static Path getParentFile(@NotNull MavenId id, Path localRepository) {

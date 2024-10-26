@@ -412,7 +412,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       PsiManager psiManager = context.getPsiManager();
 
       Path artifactFile = MavenArtifactUtil
-        .getArtifactNioPath(projectsManager.getReposirotyPath(), id.getGroupId(), id.getArtifactId(), id.getVersion(), "pom");
+        .getArtifactNioPath(projectsManager.getRepositoryPath(), id.getGroupId(), id.getArtifactId(), id.getVersion(), "pom");
 
       VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByNioFile(artifactFile);
       if (virtualFile != null) {

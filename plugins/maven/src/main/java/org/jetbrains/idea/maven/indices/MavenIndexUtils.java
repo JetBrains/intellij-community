@@ -101,7 +101,7 @@ public final class MavenIndexUtils {
   @Nullable
   public static MavenRepositoryInfo getLocalRepository(Project project) {
     if (project.isDisposed()) return null;
-    Path repository = MavenProjectsManager.getInstance(project).getReposirotyPath();
+    Path repository = MavenProjectsManager.getInstance(project).getRepositoryPath();
     return repository == null
            ? null
            : new MavenRepositoryInfo(LOCAL_REPOSITORY_ID, LOCAL_REPOSITORY_ID, repository.toString(), RepositoryKind.LOCAL);
