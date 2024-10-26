@@ -2,59 +2,7 @@
 package fleet.kernel.rete
 
 import com.jetbrains.rhizomedb.*
-import com.jetbrains.rhizomedb.impl.LegacySchema
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
-import kotlin.reflect.KProperty1
-
-internal fun <E : LegacyEntity, T : Any> SubscriptionScope.get(producer: Producer<E>, property: KProperty1<E, *>): Producer<T> = run {
-  withAttribute(property) { attribute ->
-    val attrValues = getAttribute(producer.rawMap { it.value.eid }, attribute)
-    when {
-      attribute.schema.isRef ->
-        (attrValues as Producer<EID>).rawMap { entity(it.value) as T }
-      else ->
-        attrValues as Producer<T>
-    }
-  }
-}
-
-internal fun <E : LegacyEntity, T : Any> SubscriptionScope.lookup(producer: Producer<T>, property: KProperty1<E, T?>): Producer<E> = run {
-  withAttribute(property) { attribute ->
-    val attributeValues = when {
-      attribute.schema.isRef -> producer.rawMap { (it.value as Entity).eid }
-      else -> producer
-    }
-    lookupAttribute(attributeValues, attribute as Attribute<Any>)
-      .rawMap { entity(it.value) as E }
-  }
-}
-
-internal fun <U> SubscriptionScope.withAttribute(property: KProperty1<out LegacyEntity, *>,
-                                                 delayedQuery: (Attribute<*>) -> Producer<U>): Producer<U> = let { outerScope ->
-  when (val attribute = attribute(property)) {
-    null -> {
-      var sub: Subscription? = null
-      var delayedProducer: Producer<U>? = null
-      val broadcast = Broadcaster<U>()
-      sub = scope {
-        subscribe(null, LegacySchema.Attr.kProperty, property) { datom ->
-          sub?.close()
-          sub = null
-          val p = delayedQuery(Attribute<Any>(datom.eid))
-          delayedProducer = p
-          outerScope.run { p.collect(broadcast) }
-        }
-      }
-      Producer { emit ->
-        when (val p = delayedProducer) {
-          null -> broadcast.collect(emit)
-          else -> p.collect(emit)
-        }
-      }
-    }
-    else -> delayedQuery(attribute)
-  }
-}
 
 internal fun <T : Any> SubscriptionScope.getAttribute(query: Producer<EID>, attribute: Attribute<T>): Producer<T> = run {
   // eid -> #{input-matches}
@@ -163,19 +111,6 @@ internal fun <T : Any> SubscriptionScope.lookupAttribute(query: Producer<T>, att
     broadcast.collect(emit)
   }
 }
-
-internal fun <E : LegacyEntity, T> SubscriptionScope.column(property: KProperty1<E, T>): Producer<Pair<E, T>> =
-  withAttribute(property) { attribute ->
-    column(attribute).rawMap { datomMatch ->
-      val datom = datomMatch.value
-      val entity = entity(datom.eid) as E
-      val value = when {
-        attribute.schema.isRef -> entity(datom.value as EID)
-        else -> datom.value
-      } as T
-      entity to value
-    }
-  }
 
 internal fun SubscriptionScope.column(attribute: Attribute<*>): Producer<EAV> = run {
   val broadcast = Broadcaster<EAV>()

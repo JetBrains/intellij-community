@@ -78,6 +78,3 @@ interface Entity {
   @Deprecated("use EntityType", ReplaceWith("entityType"))
   val entityClass: KClass<out Entity> get() = this::class
 }
-
-@Deprecated("use new rhizome API with EntityType as a companion")
-interface LegacyEntity  : Entity

@@ -250,16 +250,4 @@ interface ChangeScope {
         builder.build(it)
       }
     }
-
-  /**
-   * Support for legacy entity definitions
-   * */
-  fun <T : LegacyEntity> new(
-    c: KClass<T>,
-    part: Part = defaultPart,
-    constructor: T.() -> Unit = {},
-  ): T =
-    withDefaultPart(part) {
-      context.new(c, constructor)
-    }
 }

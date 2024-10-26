@@ -8,9 +8,7 @@ import com.jetbrains.rhizomedb.Schema.Companion.NothingMask
 import com.jetbrains.rhizomedb.Schema.Companion.RefMask
 import com.jetbrains.rhizomedb.Schema.Companion.RequiredMask
 import com.jetbrains.rhizomedb.Schema.Companion.UniqueMask
-import com.jetbrains.rhizomedb.impl.LegacySchema
 import com.jetbrains.rhizomedb.impl.generateSeed
-import com.jetbrains.rhizomedb.impl.initAttributes
 import fleet.kernel.rebase.deserialize
 import fleet.kernel.rebase.encodeDbValue
 import fleet.tracing.span
@@ -163,12 +161,12 @@ internal fun DbContext<Mut>.applySnapshot(snapshot: DurableSnapshot, json: ISeri
 
   span("applySnapshot", { set("entitiesNum", snapshot.entities.size.toString()) }) {
     val typeAttr = DurableSnapshot.Attr(Entity.Type.ident, Entity.Type.attr.schema.value)
-    val legacyTypeAttr = DurableSnapshot.Attr(LegacySchema.TypeIdent, Entity.Type.attr.schema.value)
+    val legacyTypeAttr = DurableSnapshot.Attr("TYPE", Entity.Type.attr.schema.value)
     val entities: List<MyEntity> = snapshot.entities.map { entity ->
       val attrs = entity.attrs.flatMap { (attr, oneOrMany) ->
         val (ident, schema) = attr
         val attribute = when {
-          ident == LegacySchema.TypeIdent -> Entity.Type.attr
+          ident == "TYPE" -> Entity.Type.attr
           else -> {
             attributeByIdent(ident) ?: run {
               val createAttribute = createUnknownAttribute(ident, Schema(schema), 0L)
@@ -197,8 +195,6 @@ internal fun DbContext<Mut>.applySnapshot(snapshot: DurableSnapshot, json: ISeri
         mutate(createEntityType)
         createEntityType.eid
       }
-
-      initAttributes(entityTypeEid)
 
       MyEntity(
         entityTypeEid = entityTypeEid,

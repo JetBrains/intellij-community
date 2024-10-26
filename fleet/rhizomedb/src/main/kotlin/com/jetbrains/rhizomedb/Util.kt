@@ -2,28 +2,15 @@
 package com.jetbrains.rhizomedb
 
 import com.jetbrains.rhizomedb.impl.EidGen
-import com.jetbrains.rhizomedb.impl.LegacySchema
-import com.jetbrains.rhizomedb.impl.entityTypeDefinedAttributes
 import com.jetbrains.rhizomedb.impl.entityTypePossibleAttributes
 import com.jetbrains.rhizomedb.impl.generateSeed
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
-import kotlin.reflect.KClass
-import kotlin.reflect.KProperty
 
 fun DbContext<Q>.displayAttribute(attribute: Attribute<*>): String = impl.displayAttribute(attribute)
-fun Q.displayAttribute(attribute: Attribute<*>): String = run {
-  attributeIdent(attribute)
-  ?: when (attribute) {
-    LegacySchema.EntityType.ancestorKClasses -> "EntityType.ancestorKClasses"
-    LegacySchema.EntityType.kClass -> "EntityType.kClass"
-    LegacySchema.EntityType.definedAttributes -> "EntityType.definedAttributes"
-    LegacySchema.EntityType.schemaRegistrar -> "EntityType.schemaRegistrar"
-    LegacySchema.Attr.kProperty -> "rhizomedb.Attribute/kProperty"
-    else -> "unknown(${attribute.eid})"
-  }
-}
+fun Q.displayAttribute(attribute: Attribute<*>): String = 
+  attributeIdent(attribute)!!
 
 fun entityType(entityEID: EID): EID? = DbContext.threadBound.entityType(entityEID)
 fun DbContext<Q>.entityType(entityEID: EID): EID? = impl.entityType(entityEID)
@@ -195,7 +182,7 @@ fun DbContext<Q>.missingRequiredAttrs(entityEID: EID, entityTypeEID: EID): List<
   impl.missingRequiredAttrs(entityEID, entityTypeEID)
 
 internal fun Q.missingRequiredAttrs(entityEID: EID, entityTypeEID: EID): List<MissingRequiredAttribute> =
-  (entityTypeDefinedAttributes(entityTypeEID) + entityTypePossibleAttributes(entityTypeEID))
+  (entityTypePossibleAttributes(entityTypeEID))
     .mapNotNull { attr ->
       when {
         attr.schema.required && queryIndex(IndexQuery.GetOne(entityEID, attr)) == null ->
@@ -203,14 +190,6 @@ internal fun Q.missingRequiredAttrs(entityEID: EID, entityTypeEID: EID): List<Mi
         else -> null
       }
     }
-
-fun DbContext<Q>.attributeForProperty(prop: KProperty<*>): Attribute<*>? = impl.attributeForProperty(prop)
-fun Q.attributeForProperty(prop: KProperty<*>): Attribute<*>? =
-  queryIndex(IndexQuery.LookupUnique(LegacySchema.Attr.kProperty, prop))?.let { eid -> Attribute<Any>(eid.eid) }
-
-internal fun DbContext<Q>.entityTypeForClass(kClass: KClass<out Entity>): EID? = impl.entityTypeForClass(kClass)
-internal fun Q.entityTypeForClass(kClass: KClass<out Entity>): EID? =
-  queryIndex(IndexQuery.LookupUnique(LegacySchema.EntityType.kClass, kClass))?.eid
 
 fun <T> DbContext<Q>.queryIndex(indexQuery: IndexQuery<T>): T =
   impl.queryIndex(indexQuery)

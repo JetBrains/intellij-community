@@ -2,9 +2,6 @@
 package fleet.kernel.rete
 
 import com.jetbrains.rhizomedb.*
-import com.jetbrains.rhizomedb.impl.LegacySchema
-import kotlin.reflect.KClass
-import kotlin.reflect.KProperty1
 
 /**
  * Emits a single unconditional match with the given value [t]
@@ -25,19 +22,6 @@ fun <T> Iterable<T>.asQuery(): Query<T> = let { iter ->
 }
 
 /**
- * Provides a match for every entity of a certain type.
- * */
-fun <E : LegacyEntity> each(c: KClass<E>): Query<E> =
-  queryOf(c as KClass<out Entity>)
-    .lookupAttribute(LegacySchema.EntityType.ancestorKClasses)
-    .lookupAttribute(Entity.Type.attr as Attribute<EID>)
-    .rawMap { eid ->
-      @Suppress("UNCHECKED_CAST")
-      (entity(eid.value) as? E) ?: error("entity does not exist for $c")
-    }
-    .intern("each", c)
-
-/**
  * Provides a match for every entity of a given [EntityType].
  * */
 fun <E : Entity> EntityType<E>.each(): Query<E> = let { entityType ->
@@ -49,11 +33,6 @@ fun <E : Entity> EntityType<E>.each(): Query<E> = let { entityType ->
     }
     .intern("each", entityType)
 }
-
-/**
- * Provides a match for every entity of a certain type.
- * */
-inline fun <reified E : LegacyEntity> each(): Query<E> = each(E::class)
 
 /**
  * Query<Unit> can be seen as predicate.
@@ -262,13 +241,6 @@ fun <T, U> Query<T>.onMatch(f: (Match<T>) -> U): JoinHand<T, U> = let { query ->
 }
 
 /**
- * Given a [Query] parametarized by entity type these function would perform a typical property get in a reactive and efficient way
- * */
-fun <E : LegacyEntity, T : Any> Query<E>.getOne(property: KProperty1<E, T?>): Query<T> = let { query ->
-  Query { get(query.producer(), property) }
-}
-
-/**
  * Emits a match for every value of an [attribute] of input [Query].
  * Similar to [Entity.get] but for [Query]
  * */
@@ -278,36 +250,12 @@ operator fun <E : Entity, T : Any> Query<E>.get(attribute: EntityAttribute<E, T>
     .rawMap { match -> attribute.fromIndexValue(match.value) }
 
 /**
- * Given a [Query] parametarized by entity type these function would perform a typical property get in a reactive and efficient way
- * for multi-value attributes
- * */
-fun <E : LegacyEntity, T : Any> Query<E>.getMany(property: KProperty1<E, Set<T>>): Query<T> = let { query ->
-  Query { get(query.producer(), property) }
-}
-
-/**
- * Given a [Query] parametarized by value of some property these function would perform a typical property lookup in a reactive and efficient way
- * Property has to be @Indexed or represent a reference
- * */
-fun <E : LegacyEntity, T : Any> Query<T>.lookup(property: KProperty1<E, T?>): Query<E> = let { query ->
-  Query { lookup(query.producer(), property) }
-}
-
-/**
  * Similar to [Entity.lookup] but for [Query]
  * */
 fun <E : Entity, T : Any> Query<T>.lookup(attribute: EntityAttribute<E, T>): Query<E> =
   rawMap { attribute.toIndexValue(it.value) }
     .lookupAttribute(attribute.attr as Attribute<Any>)
     .rawMap { entity(it.value) as E }
-
-/**
- * Yields all values of the property in the db, together with corrsponding entities
- * This is more memory-efficient than `each<E>().getOne(E::name)`, because the latter one has to remember incoming entities,
- * while [column] uses the fact that we are talking about ALL the entities in db.
- * */
-fun <E : LegacyEntity, T> column(property: KProperty1<E, T>): Query<Pair<E, T>> =
-  Query { column(property) }
 
 /**
  * Column query for [EntityAttribute],

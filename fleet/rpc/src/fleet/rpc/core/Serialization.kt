@@ -234,7 +234,6 @@ internal object CoroutineScopeSerializer : DataSerializer<CoroutineScope, Scope>
   }
 }
 
-
 class Serialization(internal val serializersModule: Lazy<SerializersModule> = lazyOf(SerializersModule {  })) : CoroutineContext.Element, ISerialization {
   companion object : CoroutineContext.Key<Serialization>
 
@@ -250,66 +249,7 @@ class Serialization(internal val serializersModule: Lazy<SerializersModule> = la
     }
   }
 
-  data class SerializerKey(val key: KType,
-                           val classifier: KClassifier?)
-
-  private val serializersCache: ConcurrentHashMap<SerializerKey, KSerializer<Any?>> = ConcurrentHashMap()
-
   fun cleanup() {
-    serializersCache.clear()
-  }
-
-  @Suppress("UNCHECKED_CAST")
-  override fun kSerializer(type: KType): KSerializer<Any?> = SerializerKey(type, type.classifier).let { serializerKey ->
-    serializersCache[serializerKey] ?: run {
-      val pKlass = type.jvmErasure
-      val hackySerializer = when {
-        // hacks for foreign types
-        // contextual serialization cannot be configured with parameterized serializers
-        // to define custom serializer for your types use @Serializable(with = CustomSerializer::class)
-        pKlass.fasterIsSubclassOf(ReceiveChannel::class) -> {
-          val argType = requireNotNull(type.arguments.single().type)
-          ReceiveChannelSerializer(kSerializer(argType)) as KSerializer<Any>
-        }
-        pKlass.fasterIsSubclassOf(SendChannel::class) -> {
-          val argType = requireNotNull(type.arguments.single().type)
-          SendChannelSerializer(kSerializer(argType)) as KSerializer<Any>
-        }
-        pKlass.fasterIsSubclassOf(Flow::class) -> {
-          val argType = requireNotNull(type.arguments.single().type)
-          @Suppress("DEPRECATION") FlowSerializer(kSerializer(argType)) as KSerializer<Any>
-        }
-        pKlass.fasterIsSubclassOf(Deferred::class) -> {
-          val argType = requireNotNull(type.arguments.single().type)
-          DeferredSerializer(kSerializer(argType)) as KSerializer<Any>
-        }
-        //interfaces are always serialized with Polymorphic serializers
-        pKlass.fasterIsSubclassOf(CoroutineScope::class) -> {
-          CoroutineScopeSerializer as KSerializer<Any>
-        }
-        pKlass.fasterIsSubclassOf(fleet.util.bifurcan.List::class) -> {
-          val argType = requireNotNull(type.arguments.single().type)
-          BifurcanListSerializer(kSerializer(argType)) as KSerializer<Any>
-        }
-        pKlass.fasterIsSubclassOf(io.lacuna.bifurcan.IMap::class) -> {
-          val keyType = requireNotNull(type.arguments[0].type)
-          val valueType = requireNotNull(type.arguments[1].type)
-          BifurcanMapSerializer(kSerializer(keyType), kSerializer(valueType)) as KSerializer<Any>
-        }
-        pKlass.fasterIsSubclassOf(kotlinx.collections.immutable.PersistentMap::class) -> {
-          val keyType = requireNotNull(type.arguments[0].type)
-          val valueType = requireNotNull(type.arguments[1].type)
-          KPersistentMapSerializer(kSerializer(keyType), kSerializer(valueType)) as KSerializer<Any>
-        }
-        pKlass.fasterIsSubclassOf(PersistentList::class) -> {
-          val argType = requireNotNull(type.arguments.single().type)
-          PersistentListSerializer(kSerializer(argType)) as KSerializer<Any>
-        }
-        else -> null
-      }
-      val serializer = hackySerializer?.nullable(type.isMarkedNullable) ?: serializersModule.value.serializer(type)
-      serializersCache.putIfAbsent(serializerKey, serializer) ?: serializer
-    }
   }
 }
 

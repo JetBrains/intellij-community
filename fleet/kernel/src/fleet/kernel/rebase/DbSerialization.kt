@@ -2,14 +2,11 @@
 package fleet.kernel.rebase
 
 import com.jetbrains.rhizomedb.*
-import com.jetbrains.rhizomedb.impl.LegacySchema
 import com.jetbrains.rhizomedb.impl.attributeSerializer
 import fleet.kernel.*
 import fleet.util.serialization.ISerialization
 import fleet.util.UID
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonElement
-import kotlin.reflect.KType
 
 fun DbContext<Q>.sharedId(eid: EID, uidAttribute: Attribute<UID>): UID? =
   when {

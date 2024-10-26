@@ -285,11 +285,6 @@ suspend fun <T> withTransactor(
                 register(OfferContributorEntity)
                 register(RemoteKernelConnectionEntity)
                 register(WorkspaceClockEntity)
-                entityClasses.map { def -> def to addEntityClass(def) }.forEach { (def, entityTypeEID) ->
-                  if (def.kClass.isShared()) {
-                    initAttributes(entityTypeEID)
-                  }
-                }
               }
             }
           }

@@ -15,45 +15,8 @@ data class DB(
         queryCache = QueryCache.empty()
       ).change {
         register(EntityType)
-
-        listOf(LegacySchema.EntityType.kClass,
-               LegacySchema.EntityType.ancestorKClasses,
-               LegacySchema.EntityType.definedAttributes,
-               LegacySchema.EntityType.schemaRegistrar).forEach { attr ->
-          mutate(Add(
-            eid = EntityType.eid,
-            attribute = EntityType.PossibleAttributes.attr as Attribute<EID>,
-            value = attr.eid,
-            seed = generateSeed()
-          ))
-        }
-
         registerMixin(Entity)
         register(EntityAttribute)
-
-        mutate(Add(
-          eid = EntityAttribute.eid,
-          attribute = EntityType.PossibleAttributes.attr as Attribute<EID>,
-          value = LegacySchema.Attr.kProperty.eid,
-          seed = generateSeed()
-        ))
-
-        context.addEntityClass(
-          EntityTypeDefinition(
-            kClass = Entity::class,
-            schemaRegistrar = SchemaRegistrar { AnEntity },
-            ident = entityTypeNameForClass(Entity::class.java),
-            module = "rhizome",
-          )
-        )
-        context.addEntityClass(
-          EntityTypeDefinition(
-            kClass = LegacyEntity::class,
-            schemaRegistrar = SchemaRegistrar { ALegacyEntity },
-            ident = entityTypeNameForClass(LegacyEntity::class.java),
-            module = "rhizome",
-          )
-        )
       }.dbAfter
     }
 

@@ -3,9 +3,12 @@ package fleet.kernel
 
 import com.jetbrains.rhizomedb.ChangeScope
 import com.jetbrains.rhizomedb.ChangeScopeKey
+import com.jetbrains.rhizomedb.Entity
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
-import kotlin.reflect.KClass
+
+val Entity.isShared: Boolean
+  get() = com.jetbrains.rhizomedb.partition(eid) == SharedPart
 
 /**
  * UGLY HACK for UNSHARED documents, please don't use it

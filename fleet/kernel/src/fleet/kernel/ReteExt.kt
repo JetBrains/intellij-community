@@ -2,9 +2,7 @@
 package fleet.kernel
 
 import com.jetbrains.rhizomedb.*
-import com.jetbrains.rhizomedb.impl.BaseEntity
 import fleet.kernel.rete.*
-import fleet.rpc.client.durable
 import fleet.util.AtomicRef
 import fleet.util.logging.logger
 import kotlinx.coroutines.*
@@ -25,18 +23,9 @@ import kotlin.reflect.KClass
 suspend fun <T> queryAsFlow(f: () -> T): Flow<T> =
   query { f() }.asValuesFlow()
 
-suspend inline fun <reified T : LegacyEntity> launchOnEachEntity(noinline f: suspend CoroutineScope.(T) -> Unit) {
-  launchOnEachEntity(T::class, f)
-}
 
 suspend fun <T : Entity> launchOnEachEntity(entityType: EntityType<T>, f: suspend CoroutineScope.(T) -> Unit) {
   entityType.each().launchOnEach { v ->
-    f(v)
-  }
-}
-
-suspend fun <T : LegacyEntity> launchOnEachEntity(kclass: KClass<T>, f: suspend CoroutineScope.(T) -> Unit) {
-  each(kclass).launchOnEach { v ->
     f(v)
   }
 }
@@ -52,9 +41,6 @@ private sealed class State11 {
  */
 fun Entity.onDispose(rete: Rete, action: () -> Unit = {}): DisposableHandle =
   let { entity ->
-    require((entity as? BaseEntity)?.initialized != false) {
-      "Entity is not initialized, call onDispose later"
-    }
     when {
       !exists() -> {
         action()

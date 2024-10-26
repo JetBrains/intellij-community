@@ -14,7 +14,6 @@ import kotlin.reflect.KType
  * */
 interface ISerialization {
   val json: Json
-  fun kSerializer(type: KType): KSerializer<Any?>
 }
 
 val DefaultJson = Json {
