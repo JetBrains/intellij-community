@@ -21,6 +21,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.jsonProtocol.Request
 import java.io.IOException
 import java.util.*
+import kotlin.Throws
 
 interface MessageProcessor {
   fun cancelWaitingRequests()
@@ -65,7 +66,7 @@ class MessageManager<REQUEST: Request<*>, INCOMING, INCOMING_WITH_SEQ : Any, SUC
     }
     catch (e: Throwable) {
       try {
-        failedToSend(sequence)
+        failedToSend(sequence, message.methodName)
       }
       finally {
         LOG.error("Failed to send", e)
@@ -74,7 +75,7 @@ class MessageManager<REQUEST: Request<*>, INCOMING, INCOMING_WITH_SEQ : Any, SUC
     }
 
     if (!success) {
-      failedToSend(sequence)
+      failedToSend(sequence, message.methodName)
     }
   }
 
@@ -95,8 +96,8 @@ class MessageManager<REQUEST: Request<*>, INCOMING, INCOMING_WITH_SEQ : Any, SUC
     }
   }
 
-  private fun failedToSend(sequence: Int) {
-    callbackMap.remove(sequence)?.onError("Failed to send")
+  private fun failedToSend(sequence: Int, methodName: String) {
+    callbackMap.remove(sequence)?.onError("Failed to send ($methodName)")
   }
 
   fun processIncoming(incomingParsed: INCOMING) {
