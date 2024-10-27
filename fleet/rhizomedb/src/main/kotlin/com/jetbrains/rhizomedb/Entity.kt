@@ -2,7 +2,7 @@
 package com.jetbrains.rhizomedb
 
 import kotlinx.serialization.builtins.serializer
-import kotlin.reflect.KClass
+import com.jetbrains.rhizomedb.impl.*
 
 /**
  * All interfaces used with entity apis should extend this interface.
@@ -74,7 +74,23 @@ interface Entity {
   }
 
   val eid: EID
-
-  @Deprecated("use EntityType", ReplaceWith("entityType"))
-  val entityClass: KClass<out Entity> get() = this::class
 }
+
+
+/**
+ * Verify that this entity exists in context database.
+ *
+ * Entity object is just a pointer that retrieves its properties from context db,
+ * as such it is possible that there is no knowledge of this entity in current db:
+ * perhaps it was already deleted or this entity object comes from alternative db version.
+ *
+ * Always returns true for bound entities
+ */
+fun Entity.exists(): Boolean = DbContext.threadBound.impl.entityExists(eid)
+
+fun Q.entityExists(eid: EID): Boolean =
+  queryIndex(IndexQuery.GetOne(eid, Entity.Type.attr as Attribute<EID>)) != null
+
+fun <T : Entity> T?.takeIfExists(): T? = if (this?.exists() == true) this else null
+
+fun entity(eid: EID): Entity? = with(DbContext.threadBound) { entity(eid) }

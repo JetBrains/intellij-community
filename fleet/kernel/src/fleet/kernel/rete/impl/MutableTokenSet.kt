@@ -1,5 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package fleet.kernel.rete
+package fleet.kernel.rete.impl
+
+import fleet.kernel.rete.Match
+import fleet.kernel.rete.Token
+import fleet.kernel.rete.TokenSet
 
 internal class MutableTokenSet : Iterable<Token<*>> {
   val asserted: HashSet<Match<*>> = HashSet()

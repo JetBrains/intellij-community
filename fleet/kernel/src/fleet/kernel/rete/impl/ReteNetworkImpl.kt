@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package fleet.kernel.rete
+package fleet.kernel.rete.impl
 
 import com.jetbrains.rhizomedb.*
-import fleet.kernel.rete.SubscriptionsIndex.PatternIndexEntry.DatomEntry
-import fleet.kernel.rete.SubscriptionsIndex.PatternIndexEntry.RevalidationEntry
+import fleet.kernel.rete.*
+import fleet.kernel.rete.ReteNetwork
+import fleet.kernel.rete.impl.SubscriptionsIndex.PatternIndexEntry.DatomEntry
+import fleet.kernel.rete.impl.SubscriptionsIndex.PatternIndexEntry.RevalidationEntry
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.longs.LongSet
 import kotlinx.coroutines.flow.MutableStateFlow

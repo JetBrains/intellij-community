@@ -2,6 +2,9 @@
 package fleet.kernel.rete
 
 import com.jetbrains.rhizomedb.*
+import fleet.kernel.rete.impl.*
+import fleet.kernel.rete.impl.DummyQueryScope
+import fleet.kernel.rete.impl.distinct
 
 /**
  * Emits a single unconditional match with the given value [t]
@@ -450,3 +453,7 @@ inline fun <T> Query<T>.intern(vararg key: Any, crossinline callSiteMarker: () -
    but false if called from another module
  */
   internImpl(listOf(*key, { callSiteMarker() }.javaClass))
+
+@PublishedApi
+internal fun <T> Query<T>.internImpl(key: Any): Query<T> = 
+  InternedQuery(key, this)

@@ -1,12 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package fleet.kernel.rete
+package fleet.kernel.rete.impl
 
 import com.jetbrains.rhizomedb.Attribute
 import com.jetbrains.rhizomedb.EID
+import fleet.kernel.rete.DatomPort
+import fleet.kernel.rete.Producer
+import fleet.kernel.rete.Query
+import fleet.kernel.rete.RevalidationPort
 import fleet.util.logging.KLogger
 import it.unimi.dsi.fastutil.longs.LongSet
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 
 data class QueryTracingKey(val tracingKey: Any,
@@ -19,13 +21,6 @@ data class QueryTracingKey(val tracingKey: Any,
   override fun toString(): String = "[${tracingKey}]"
 }
 
-/**
- * Enables debug logging of everything what happens to all the queries collected in [body].
- * It logs with debug level to [logger]
- * [key] is a human-readable value, which will prepend all log messages in this block
- * */
-suspend fun <T> withQueriesTracing(logger: KLogger, key: Any, body: suspend CoroutineScope.() -> T): T =
-  withContext(QueryTracingKey(key, logger), body)
 
 internal fun <T> Query<T>.tracing(trackingKey: QueryTracingKey?): Query<T> = let { query ->
   when (trackingKey) {

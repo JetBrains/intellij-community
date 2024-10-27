@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package fleet.kernel.rete
+package fleet.kernel.rete.impl
 
+import fleet.kernel.rete.*
 import java.util.concurrent.ConcurrentHashMap
 
 internal fun <T : Any> SubscriptionScope.distinct(producer: Producer<T>): Producer<T> =

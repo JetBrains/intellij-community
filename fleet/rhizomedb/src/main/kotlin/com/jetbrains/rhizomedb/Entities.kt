@@ -179,32 +179,3 @@ fun Entity.entityTypeIdent(): String {
     } ?: error("")
   }
 }
-
-/**
- * Verify that this entity exists in context database.
- *
- * Entity object is just a pointer that retrieves its properties from context db,
- * as such it is possible that there is no knowledge of this entity in current db:
- * perhaps it was already deleted or this entity object comes from alternative db version.
- *
- * Always returns true for bound entities
- */
-fun Entity.exists(): Boolean = DbContext.threadBound.impl.entityExists(eid)
-
-fun Q.entityExists(eid: EID): Boolean =
-  queryIndex(IndexQuery.GetOne(eid, Entity.Type.attr as Attribute<EID>)) != null
-
-fun <T : Entity> T?.takeIfExists(): T? = if (this?.exists() == true) this else null
-
-fun entity(eid: EID): Entity? = with(DbContext.threadBound) { entity(eid) }
-
-class OutOfDbContext :
-  RuntimeException("Free entities require context db to be used. Open transaction with db.tx or setup db to read with asOf(db)")
-
-class OutOfMutableDbContext :
-  RuntimeException("Free entities require mutable context db to be updated. Open transaction with db.tx or setup db to read with asOf(db)")
-
-class EntityDoesNotExistException(message: String) : RuntimeException(message)
-
-class EntityAttributeIsNotInitialized(entityDisplay: String, attributeDisplay: String) :
-  RuntimeException("Access to not initialized attribute $attributeDisplay of entity $entityDisplay")

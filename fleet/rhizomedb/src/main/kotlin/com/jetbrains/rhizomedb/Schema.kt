@@ -59,3 +59,11 @@ internal fun Schema.validate() {
     }
   }
 }
+
+/**
+ * Represents cardinality of a particular [Attribute].
+ * Every [Attribute] is either multi-valued or no-more-than-single-valued.
+ * */
+enum class Cardinality {
+  One, Many
+}

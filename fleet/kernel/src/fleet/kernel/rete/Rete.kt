@@ -3,10 +3,12 @@ package fleet.kernel.rete
 
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.*
+import fleet.kernel.rete.impl.*
 import fleet.tracing.spannedScope
 import fleet.util.async.conflateReduce
 import fleet.util.async.use
 import fleet.util.channels.channels
+import fleet.util.logging.KLogger
 import fleet.util.logging.logger
 import fleet.util.openmap.merge
 import fleet.util.singleOrNullOrThrow
@@ -68,6 +70,15 @@ class ReteEntity(override val eid: EID) : Entity {
     fun forKernel(transactor: Transactor): Rete? = entity(TransactorAttr, transactor)?.get(ReteAttr)
   }
 }
+
+
+/**
+ * Enables debug logging of everything what happens to all the queries collected in [body].
+ * It logs with debug level to [logger]
+ * [key] is a human-readable value, which will prepend all log messages in this block
+ * */
+suspend fun <T> withQueriesTracing(logger: KLogger, key: Any, body: suspend CoroutineScope.() -> T): T =
+  withContext(QueryTracingKey(key, logger), body)
 
 /**
  * Sets up [Rete] for use inside [body]

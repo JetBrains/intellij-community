@@ -1,10 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package fleet.kernel.rete
+package fleet.kernel.rete.impl
 
 import com.jetbrains.rhizomedb.DbContext
 import com.jetbrains.rhizomedb.Q
 import com.jetbrains.rhizomedb.ReadTrackingContext
 import com.jetbrains.rhizomedb.withReadTrackingContext
+import fleet.kernel.rete.*
 import fleet.preferences.FleetFromSourcesPaths
 import fleet.preferences.isFleetTestMode
 import fleet.util.logging.logger

@@ -1,8 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package fleet.kernel.rete
+package fleet.kernel.rete.impl
 
 import com.jetbrains.rhizomedb.Attribute
 import com.jetbrains.rhizomedb.EID
+import fleet.kernel.rete.DatomPort
+import fleet.kernel.rete.RevalidationPort
+import fleet.kernel.rete.Subscription
 import it.unimi.dsi.fastutil.longs.LongSet
 
 @JvmInline
@@ -12,14 +15,16 @@ internal value class SubscriptionsIndex(private val patternIndex: PatternIndex<P
 
     class RevalidationEntry(override val node: Node,
                             val depth: Int,
-                            val port: RevalidationPort) : PatternIndexEntry()
+                            val port: RevalidationPort
+    ) : PatternIndexEntry()
 
     class DatomEntry(override val node: Node,
                      val eid: EID?,
                      val attribute: Attribute<*>?,
                      val value: Any?,
                      val depth: Int,
-                     val port: DatomPort) : PatternIndexEntry()
+                     val port: DatomPort
+    ) : PatternIndexEntry()
   }
 
   fun sub(key: PatternIndexEntry, patterns: LongSet): Subscription {

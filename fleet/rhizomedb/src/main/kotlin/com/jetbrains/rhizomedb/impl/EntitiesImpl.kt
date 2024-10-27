@@ -6,13 +6,10 @@ package com.jetbrains.rhizomedb.impl
 import com.jetbrains.rhizomedb.*
 import fleet.util.logging.logger
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.json.JsonElement
 import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
-import kotlin.reflect.KProperty1
-import kotlin.reflect.full.withNullability
 
 private const val ENTITIES_LIST_PATH = "META-INF/listOfEntities.txt"
 private const val ENTITY_TYPES_PROVIDERS_LIST_PATH = "META-INF/com.jetbrains.rhizomedb.impl.EntityTypeProvider.txt"
@@ -131,7 +128,7 @@ internal fun RTset(entity: Entity, attrL: Long, v: Any?) {
   }
 }
 abstract class BaseEntity(override val eid: EID,
-                          override val entityClass: KClass<out Entity>,
+                          val entityClass: KClass<out Entity>,
                           var initialized: Boolean) : Entity
 
 internal fun DbContext<Q>.entityTypePossibleAttributes(entityTypeEID: EID): List<Attribute<*>> =

@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package fleet.kernel.rete
+package fleet.kernel.rete.impl
 
 import com.jetbrains.rhizomedb.Change
+import fleet.kernel.rete.*
+import fleet.kernel.rete.ReteNetwork
 import fleet.kernel.timestamp
 import kotlinx.coroutines.flow.StateFlow
 import fleet.util.PriorityQueue
