@@ -56,8 +56,7 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
       }
 
       return moduleName != "intellij.rider.test.framework" &&
-             moduleName != "intellij.rider.test.api" &&
-             moduleName != "intellij.rider.test.api.teamcity"
+             moduleName != "intellij.rider.test.framework.core"
     }
     return moduleName.endsWith("._test")
   }
