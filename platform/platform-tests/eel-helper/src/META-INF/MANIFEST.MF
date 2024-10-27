@@ -1,3 +1,3 @@
 Manifest-Version: 1.0
-Main-Class: com.intellij.platform.tests.eelHelper.EelHelper
+Main-Class: com.intellij.platform.tests.eelHelpers.EelHelper
 

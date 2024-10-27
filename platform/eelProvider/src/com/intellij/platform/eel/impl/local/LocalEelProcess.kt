@@ -2,7 +2,6 @@
 package com.intellij.platform.eel.impl.local
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.EelApiBase
@@ -10,7 +9,6 @@ import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.KillableProcess
 import com.intellij.platform.eel.impl.local.processKiller.PosixProcessKiller
 import com.intellij.platform.eel.impl.local.processKiller.WinProcessKiller
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.io.awaitExit
 import com.pty4j.PtyProcess
 import com.pty4j.WinSize
@@ -28,7 +26,7 @@ internal class LocalEelProcess private constructor(
   constructor(ptyProcess: PtyProcess) : this(ptyProcess, ptyProcess::setWinSize)
   constructor(process: Process) : this(process, null)
 
-  private val scope: CoroutineScope = ApplicationManager.getApplication().service<ExecLocalProcessService>().scope()
+  private val scope: CoroutineScope = ApplicationManager.getApplication().service<EelLocalApiService>().scope(LocalEelProcess::class)
 
   override val pid: EelApiBase.Pid = LocalPid(process.pid())
   override val stdin: SendChannel<ByteArray> = StreamWrapper.OutputStreamWrapper(scope, process.outputStream).connectChannel()
@@ -69,7 +67,3 @@ internal class LocalEelProcess private constructor(
   }
 }
 
-@Service
-private class ExecLocalProcessService(private val scope: CoroutineScope) {
-  fun scope(): CoroutineScope = scope.childScope("ExecLocalProcessService")
-}

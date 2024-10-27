@@ -22,10 +22,10 @@ import kotlin.io.path.pathString
 /**
  * Searches for module with [clazz] in [PathManager.ourHomePath] an executes [clazz] `main` with all dependencies
  */
-internal class JavaMainClassExecutor(clazz: Class<*>) {
+internal class JavaMainClassExecutor(clazz: Class<*>, vararg args: String) {
   private val exe = Path(ProcessHandle.current().info().command().get()).toString()
   private val env = mapOf("CLASSPATH" to getClassPathForClass(clazz))
-  private val args = listOf(clazz.canonicalName)
+  private val args = listOf(clazz.canonicalName) + args.toList()
 
   /**
    * Execute `main` method

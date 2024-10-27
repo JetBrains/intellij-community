@@ -10,6 +10,8 @@ import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryDirectoryErr
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi
 import com.intellij.platform.eel.fs.EelFileSystemWindowsApi
 import com.intellij.platform.eel.fs.getPath
+import com.intellij.platform.eel.impl.local.tunnels.EelLocalTunnelsPosixApi
+import com.intellij.platform.eel.impl.local.tunnels.EelLocalTunnelsWindowsApi
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.EelFsResultImpl.Error
 import com.intellij.platform.eel.provider.EelFsResultImpl.Ok
@@ -45,7 +47,7 @@ internal class LocalWindowsEelApiImpl(nioFs: FileSystem = FileSystems.getDefault
     check(SystemInfo.isWindows)
   }
 
-  override val tunnels: EelTunnelsWindowsApi get() = TODO("Not yet implemented")
+  override val tunnels: EelTunnelsWindowsApi get() = EelLocalTunnelsWindowsApi
   override val platform: EelPlatform.Windows get() = if (SystemInfo.isAarch64) TODO("Not yet implemented") else EelPlatform.X64Windows
   override val exec: EelExecApi = EelLocalExecApi()
   override val userInfo: EelUserWindowsInfo = EelUserWindowsInfoImpl
@@ -66,7 +68,7 @@ class LocalPosixEelApiImpl(nioFs: FileSystem = FileSystems.getDefault()) : Local
     check(SystemInfo.isUnix)
   }
 
-  override val tunnels: EelTunnelsPosixApi get() = TODO("Not yet implemented")
+  override val tunnels: EelTunnelsPosixApi get() = EelLocalTunnelsPosixApi
   override val platform: EelPlatform.Posix = if (SystemInfo.isAarch64) EelPlatform.Aarch64Linux else EelPlatform.X8664Linux
   override val exec: EelExecApi = EelLocalExecApi()
   override val mapper: EelPathMapper = LocalEelPathMapper(this)

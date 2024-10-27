@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.tests.eelHelper
+package com.intellij.platform.tests.eelHelpers.ttyAndExit
 
 import org.jetbrains.annotations.TestOnly
 import org.jline.terminal.Terminal
@@ -24,8 +24,14 @@ private object OnSigint : SignalHandler, Terminal.SignalHandler {
 }
 
 
+/**
+ * 1. prints hello into stderr
+ * 2. prints tty and its size to stdout
+ * 3. waits for command exit (exit 0) or sleep (sleep 15_000)
+ * 4. installs signal for SIGINT to return 42
+ */
 @TestOnly
-internal fun startHelper() {
+internal fun startTtyAndExitHelper() {
 
   // Exit once SIGINT sent without terminal
   Signal.handle(Signal("INT"), OnSigint)
@@ -40,7 +46,7 @@ internal fun startHelper() {
   System.err.print(HELLO + "\n")
   System.err.flush()
 
-  val ttyState = TTYState(terminalSize?.let{ Size(cols = it.columns, rows = it.rows )})
+  val ttyState = TTYState(terminalSize?.let { Size(cols = it.columns, rows = it.rows) })
 
   // Then, print terminal info to the stdout
   println(ttyState.serialize())
