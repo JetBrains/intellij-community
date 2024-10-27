@@ -119,17 +119,17 @@ public final class MavenDistributionsCache {
 
   private @NotNull MavenDistribution getWrapperDistribution(@NotNull String multiModuleDir) {
     String distributionUrl = getWrapperDistributionUrl(multiModuleDir);
-    return (distributionUrl == null) ? resolveEmbeddedMavenHome() : getMavenWrapper(distributionUrl);
+    return (distributionUrl == null) ? resolveEmbeddedMavenHome() : getMavenWrapper(myProject, distributionUrl);
   }
 
   public @Nullable MavenDistribution getWrapper(@NotNull String workingDirectory) {
     String multiModuleDir = myWorkingDirToMultiModuleMap.computeIfAbsent(workingDirectory, this::resolveMultiModuleDirectory);
     String distributionUrl = getWrapperDistributionUrl(multiModuleDir);
-    return (distributionUrl != null) ? MavenWrapperSupport.getCurrentDistribution(distributionUrl) : null;
+    return (distributionUrl != null) ? MavenWrapperSupport.getCurrentDistribution(myProject, distributionUrl) : null;
   }
 
-  private static MavenDistribution getMavenWrapper(String distributionUrl) {
-    MavenDistribution distribution = MavenWrapperSupport.getCurrentDistribution(distributionUrl);
+  private static MavenDistribution getMavenWrapper(Project project, String distributionUrl) {
+    MavenDistribution distribution = MavenWrapperSupport.getCurrentDistribution(project, distributionUrl);
     if (distribution == null) {
       distribution = resolveEmbeddedMavenHome();
     }

@@ -47,7 +47,7 @@ public final class MavenWrapperDownloader {
       return;
     }
 
-    MavenDistribution distribution = MavenWrapperSupport.getCurrentDistribution(distributionUrl);
+    MavenDistribution distribution = MavenWrapperSupport.getCurrentDistribution(project, distributionUrl);
     if (distribution != null) return;
 
     MavenLog.LOG.info("start install wrapper " + distributionUrl);

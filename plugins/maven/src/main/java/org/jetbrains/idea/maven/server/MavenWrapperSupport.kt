@@ -10,7 +10,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.EelPosixApi
+import com.intellij.platform.eel.provider.LocalEelKey
 import com.intellij.platform.eel.provider.getEelApiBlocking
+import com.intellij.platform.eel.provider.getEelApiKey
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.zip.JBZipFile
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
@@ -65,7 +67,7 @@ private const val DISTS_DIR = "wrapper/dists"
 internal class MavenWrapperSupport {
   @Throws(IOException::class)
   fun downloadAndInstallMaven(urlString: String, indicator: ProgressIndicator?, project: Project): MavenDistribution {
-    val current = getCurrentDistribution(urlString)
+    val current = getCurrentDistribution(project, urlString)
     if (current != null) return current
 
     val zipFile = getZipFile(urlString, project)
@@ -90,7 +92,7 @@ internal class MavenWrapperSupport {
       throw RuntimeException(SyncBundle.message("cannot.download.zip.from", urlString))
     }
     val home = unpackZipFile(zipFile, indicator).toRealPath()
-    MavenWrapperMapping.getInstance().myState.mapping[urlString] = home.toAbsolutePath().toString()
+    setDistributionPath(project, urlString, home)
     return LocalMavenDistribution(home, urlString)
   }
 
@@ -195,7 +197,6 @@ internal class MavenWrapperSupport {
     }
   }
 
-
   companion object {
     private val DISTRIBUTION_URL_PROPERTY = "distributionUrl"
 
@@ -230,17 +231,27 @@ internal class MavenWrapperSupport {
                          position)
     }
 
+    private fun createDistributionKey(project: Project, urlString: String): String {
+      val eelKey = project.getEelApiKey()
+      return if (eelKey == LocalEelKey) urlString else "$eelKey:$urlString"
+    }
+
+    fun setDistributionPath(project: Project, urlString: String, path: Path) {
+      MavenWrapperMapping.getInstance().myState.mapping[createDistributionKey(project, urlString)] = path.toAbsolutePath().toString()
+    }
+
     @JvmStatic
-    fun getCurrentDistribution(urlString: String): MavenDistribution? {
+    fun getCurrentDistribution(project: Project, urlString: String): MavenDistribution? {
       val mapping = MavenWrapperMapping.getInstance()
-      val cachedHome = mapping.myState.mapping[urlString]
+      val key = createDistributionKey(project, urlString)
+      val cachedHome = mapping.myState.mapping[key]
       if (cachedHome != null) {
         val path = Path.of(cachedHome)
         if (path.isDirectory()) {
           return LocalMavenDistribution(path, urlString)
         }
         else {
-          mapping.myState.mapping.remove(urlString)
+          mapping.myState.mapping.remove(key)
         }
       }
       return null
