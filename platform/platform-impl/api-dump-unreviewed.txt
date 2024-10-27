@@ -1852,13 +1852,17 @@ f:com.intellij.formatting.DefaultCaretRestorationDecider
 f:com.intellij.formatting.FormatConstants
 - sf:RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS:I
 - s:getReservedLineWrapWidthInColumns(com.intellij.openapi.editor.Editor):I
-com.intellij.formatting.visualLayer.VirtualFormattingIndentGuideInfo
-- sf:Companion:com.intellij.formatting.visualLayer.VirtualFormattingIndentGuideInfo$Companion
-- s:getInstance():com.intellij.formatting.visualLayer.VirtualFormattingIndentGuideInfo
+com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo
+- sf:Companion:com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo$Companion
+- s:getInstance():com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo
 - a:getVisualFormattingInlineInlays(com.intellij.openapi.editor.Editor,I,I):java.util.List
 - a:isVirtualFormattingEnabled(com.intellij.openapi.editor.Editor):Z
-f:com.intellij.formatting.visualLayer.VirtualFormattingIndentGuideInfo$Companion
-- f:getInstance():com.intellij.formatting.visualLayer.VirtualFormattingIndentGuideInfo
+- s:measureVirtualFormattingInlineInlays(com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo,com.intellij.openapi.editor.Editor,I,I):I
+- s:measureVirtualFormattingInlineInlays(com.intellij.openapi.editor.Editor,I,I):I
+f:com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo$Companion
+- f:getInstance():com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo
+- f:measureVirtualFormattingInlineInlays(com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo,com.intellij.openapi.editor.Editor,I,I):I
+- f:measureVirtualFormattingInlineInlays(com.intellij.openapi.editor.Editor,I,I):I
 a:com.intellij.formatting.visualLayer.VisualFormattingLayerService
 - sf:Companion:com.intellij.formatting.visualLayer.VisualFormattingLayerService$Companion
 - <init>():V
