@@ -6,11 +6,7 @@ import com.intellij.openapi.actionSystem.DataKey.Companion.create
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.vcs.impl.frontend.changes.CHANGE_LISTS_KEY
-import com.intellij.vcs.impl.frontend.changes.ChangeList
-import com.intellij.vcs.impl.frontend.changes.ChangesTree
-import com.intellij.vcs.impl.frontend.changes.ExactlySelectedData
-import com.intellij.vcs.impl.frontend.changes.SelectedData
+import com.intellij.vcs.impl.frontend.changes.*
 import com.intellij.vcs.impl.shared.changes.GroupingUpdatePlaces
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
@@ -18,7 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
 
-class ShelfTree(project: Project, private val treeRoot: ChangesBrowserRootNode, cs: CoroutineScope) : ChangesTree(project, cs, GroupingUpdatePlaces.SHELF_TREE) {
+class ShelfTree(project: Project, cs: CoroutineScope) : ChangesTree(project, cs, GroupingUpdatePlaces.SHELF_TREE) {
 
   override fun isPathEditable(path: TreePath): Boolean {
     return isEditable && selectionCount == 1 && path.lastPathComponent is ShelvedChangeListNode
@@ -39,16 +35,16 @@ class ShelfTree(project: Project, private val treeRoot: ChangesBrowserRootNode, 
     sink[CHANGE_LISTS_KEY] = groupedChanges.map { ChangeList(it.first, it.second) }
   }
 
-  fun rebuildTree() {
-    updateTreeModel(DefaultTreeModel(treeRoot))
-  }
-
   private fun ChangesBrowserNode<*>.findParentOfType(clazz: Class<*>): ChangesBrowserNode<*>? {
     var parent = this
     while (true) {
       if (clazz.isInstance(parent)) return parent
       parent = parent.parent as? ChangesBrowserNode ?: return null
     }
+  }
+
+  fun updateModel(model: DefaultTreeModel) {
+    updateTreeModel(model)
   }
 
   fun getSelectedLists(): Set<ShelvedChangeListEntity> {
