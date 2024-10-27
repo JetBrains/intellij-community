@@ -15,7 +15,7 @@ internal value class AVET(private val trie: IntMapWithEditor<MapWithEditor<Any, 
   fun <T : Any> lookupUnique(attribute: Attribute<T>, value: T): VersionedEID? =
     trie.get(attribute)?.map?.get(value) as VersionedEID?
 
-  fun <T : Any> lookupMany(attribute: Attribute<T>, value: T, sink: (Datom) -> Unit) {
+  inline fun <T : Any> lookupMany(attribute: Attribute<T>, value: T, crossinline sink: (Datom) -> Unit) {
     trie.get(attribute)?.map?.get(value)?.let { es ->
       (es as RadixTrie<TX>).forEach { e, t ->
         sink(Datom(e, attribute, value, t, true))

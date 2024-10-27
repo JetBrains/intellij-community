@@ -30,7 +30,7 @@ internal value class AEVT(private val trie: IntMapWithEditor<RadixTrie<Any>>) {
   fun entityExists(eid: EID): Boolean =
     trie.get(Entity.Type.attr as Attribute<EID>)?.get(eid) != null
 
-  fun <T : Any> getMany(eid: EID, attribute: Attribute<T>, sink: (Datom) -> Unit) {
+  inline fun <T : Any> getMany(eid: EID, attribute: Attribute<T>, crossinline sink: (Datom) -> Unit) {
     when (attribute.schema.cardinality) {
       Cardinality.Many ->
         trie.get(attribute)?.get(eid)?.let { values ->
@@ -138,7 +138,7 @@ internal value class AEVT(private val trie: IntMapWithEditor<RadixTrie<Any>>) {
         }
     }
 
-  fun column(attribute: Attribute<*>, sink: (Datom) -> Unit) {
+  inline fun column(attribute: Attribute<*>, crossinline sink: (Datom) -> Unit) {
     trie.get(attribute)?.let { evt ->
       when (attribute.schema.cardinality) {
         Cardinality.One ->
