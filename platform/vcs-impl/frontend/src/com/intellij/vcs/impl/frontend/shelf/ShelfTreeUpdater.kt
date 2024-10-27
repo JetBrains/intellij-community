@@ -8,6 +8,7 @@ import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asEntity
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.vcs.impl.frontend.changes.ChangesTreeModel
 import com.intellij.vcs.impl.frontend.shelf.tree.ChangesBrowserRootNode
 import com.intellij.vcs.impl.frontend.shelf.tree.ShelfTree
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
@@ -22,7 +23,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.swing.tree.DefaultMutableTreeNode
-import javax.swing.tree.DefaultTreeModel
 
 @Service(Service.Level.PROJECT)
 class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineScope) {
@@ -39,8 +39,10 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
 
   fun initToolWindowPanel(): ShelfToolWindowPanel {
     cs.launch {
-      val rootNode = findRootEntity()?.convertToTreeNodeRecursive() as ChangesBrowserRootNode
-      tree.model = DefaultTreeModel(rootNode)
+      withKernel {
+        val rootNode = findRootEntity()?.convertToTreeNodeRecursive() as ChangesBrowserRootNode
+        tree.model = ChangesTreeModel(rootNode)
+      }
     }
     return ShelfToolWindowPanel(project, tree, cs)
   }
@@ -57,7 +59,7 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
         ShelvesTreeRootEntity.each().collectLatest {
           val rootNode = it.convertToTreeNodeRecursive() ?: return@collectLatest
           cs.launch(Dispatchers.EDT) {
-            tree.model = DefaultTreeModel(rootNode)
+            tree.model = ChangesTreeModel(rootNode)
           }
         }
       }
@@ -69,7 +71,7 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
       withKernel {
         val rootNode = rootEntity.convertToTreeNodeRecursive() ?: return@withKernel
         cs.launch(Dispatchers.EDT) {
-          tree.updateModel(DefaultTreeModel(rootNode))
+          tree.updateModel(ChangesTreeModel(rootNode))
         }
       }
     }
@@ -92,5 +94,4 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
   companion object {
     fun getInstance(project: Project): ShelfTreeUpdater = project.getService(ShelfTreeUpdater::class.java)
   }
-
 }

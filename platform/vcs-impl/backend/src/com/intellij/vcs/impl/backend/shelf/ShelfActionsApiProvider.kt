@@ -3,6 +3,7 @@ package com.intellij.vcs.impl.backend.shelf
 
 import com.intellij.platform.project.ProjectEntity
 import com.intellij.platform.rpc.backend.RemoteApiProvider
+import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import com.intellij.vcs.impl.shared.rpc.ChangeListDto
 import com.intellij.vcs.impl.shared.rpc.RemoteShelfActionsApi
 import fleet.kernel.SharedRef

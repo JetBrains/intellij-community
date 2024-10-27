@@ -7,6 +7,7 @@ import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.ProjectEntity
 import com.intellij.platform.project.asProject
 import com.intellij.platform.rpc.backend.RemoteApiProvider
+import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import com.intellij.vcs.impl.shared.rpc.ChangeListDto
 import com.intellij.vcs.impl.shared.rpc.RemoteShelfApi
 import com.intellij.vcs.impl.shared.rpc.UpdateStatus
@@ -52,6 +53,12 @@ class BackendShelfApi : RemoteShelfApi {
 
     ShelfTreeHolder.getInstance(project).changeGrouping(groupingKeys)
     return CompletableDeferred(UpdateStatus.OK)
+  }
+
+  override suspend fun renameShelvedChangeList(projectRef: SharedRef<ProjectEntity>, changeList: SharedRef<ShelvedChangeListEntity>, newName: String) {
+    val project = projectRef.asProject()
+
+    ShelfTreeHolder.getInstance(project).renameChangeList(changeList, newName)
   }
 
 }

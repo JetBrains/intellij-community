@@ -2,6 +2,7 @@
 package com.intellij.vcs.impl.shared.rpc
 
 import com.intellij.platform.project.ProjectEntity
+import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import fleet.kernel.SharedRef
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc

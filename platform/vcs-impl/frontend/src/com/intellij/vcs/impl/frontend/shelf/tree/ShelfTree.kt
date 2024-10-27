@@ -39,7 +39,7 @@ class ShelfTree(project: Project, cs: CoroutineScope) : ChangesTree(project, cs,
     var parent = this
     while (true) {
       if (clazz.isInstance(parent)) return parent
-      parent = parent.parent as? ChangesBrowserNode ?: return null
+      parent = parent.parent ?: return null
     }
   }
 

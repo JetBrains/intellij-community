@@ -8,6 +8,7 @@ import com.jetbrains.rhizomedb.asOf
 import com.jetbrains.rhizomedb.exists
 import fleet.kernel.rete.Rete
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.Nls
 import javax.swing.JTree
 
 @Suppress("SSBasedInspection")

@@ -16,6 +16,7 @@ interface RemoteShelfApi : RemoteApi<Unit> {
   suspend fun showDiffForChanges(projectRef: SharedRef<ProjectEntity>, changeListDto: ChangeListDto)
   suspend fun notifyNodeSelected(projectRef: SharedRef<ProjectEntity>, changeListDto: ChangeListDto)
   suspend fun applyTreeGrouping(projectRef: SharedRef<ProjectEntity>, groupingKeys: Set<String>): Deferred<UpdateStatus>
+  suspend fun renameShelvedChangeList(projectRef: SharedRef<ProjectEntity>, changeList: SharedRef<ShelvedChangeListEntity>, newName: String)
 }
 
 @Serializable

@@ -12,6 +12,8 @@ import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import com.intellij.vcs.impl.shared.rpc.ChangeListDto
 import com.intellij.vcs.impl.shared.rpc.RemoteShelfActionsApi
+import com.intellij.vcs.impl.shared.rpc.RemoteShelfApi
+import fleet.kernel.change
 import fleet.kernel.rete.collectLatest
 import fleet.kernel.rete.each
 import fleet.kernel.rete.filter
@@ -42,6 +44,18 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
         }
         val projectRef = project.asEntity().sharedRef()
         RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).showStandaloneDiff(projectRef, changeLists, withLocal)
+      }
+    }
+  }
+
+  fun renameChangeList(changeList: ShelvedChangeListEntity, newName: String) {
+    cs.launch {
+      withKernel {
+        val projectRef = project.asEntity().sharedRef()
+        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).renameShelvedChangeList(projectRef, changeList.sharedRef(), newName)
+        change {
+          changeList[ShelvedChangeListEntity.Description] = newName
+        }
       }
     }
   }

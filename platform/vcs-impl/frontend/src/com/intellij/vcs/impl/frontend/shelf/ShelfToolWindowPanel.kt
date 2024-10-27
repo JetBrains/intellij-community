@@ -33,6 +33,7 @@ class ShelfToolWindowPanel(project: Project, tree: ShelfTree, cs: CoroutineScope
     toolbar.setTargetComponent(tree)
     shelvePanel.addToTop(toolbar.component)
     tree.isEditable = true
+    tree.cellEditor = ShelfRenameTreeCellEditor(tree)
 
     PopupHandler.installPopupMenu(tree, "ShelvedChangesPopupMenuFrontend", SHELF_CONTEXT_MENU);
   }

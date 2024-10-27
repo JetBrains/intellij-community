@@ -47,6 +47,7 @@
       <action id="Frontend.ChangesView.Shelf.CreatePatchFromChanges.Clipboard" class="com.intellij.vcs.impl.frontend.changes.actions.CreatePatchForShelvedChangeActionClipboard"
               icon="AllIcons.Vcs.Patch"/>
       <action id="Frontend.ChangesView.Shelf.ImportFromPatches" class="com.intellij.vcs.impl.frontend.shelf.actions.ImportShelvesFromPatchesAction"/>
+      <action id="Frontend.ChangesView.Shelf.Rename" class="com.intellij.vcs.impl.frontend.shelf.actions.RenameShelvedChangelistAction"/>
     </group>
   </actions>
 </idea-plugin>

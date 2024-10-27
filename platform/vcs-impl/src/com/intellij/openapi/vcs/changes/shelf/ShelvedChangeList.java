@@ -208,7 +208,7 @@ public final class ShelvedChangeList implements ExternalizableScheme {
     return Objects.requireNonNullElse(DESCRIPTION, "");
   }
 
-  void setDescription(@NotNull @NlsSafe String description) {
+  public void setDescription(@NotNull @NlsSafe String description) {
     DESCRIPTION = description;
   }
 

@@ -101,15 +101,24 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
   }
 
   internal fun findChangesInTree(changeListDto: ChangeListDto): List<ShelvedChangeNode> {
-    val changeListNode = TreeUtil.treeTraverser(tree)
-                           .bfsTraversal()
-                           .find { (it as ChangesBrowserNode<*>).getUserData(ENTITY_ID_KEY) == changeListDto.changeList } as? ChangesBrowserNode<*>
+    val changeListNode = findChangeListNode(changeListDto.changeList)
                          ?: return emptyList()
     val selectedChanges = changeListNode.traverse().filter(ShelvedChangeNode::class.java).filter {
       val changeRef = it.getUserData(ENTITY_ID_KEY) as? SharedRef<*> ?: return@filter false
       return@filter changeListDto.changes.isEmpty() || changeListDto.changes.contains(changeRef)
     }
     return selectedChanges.toList()
+  }
+
+  private fun findChangeListNode(changeList: SharedRef<ShelvedChangeListEntity>): ChangesBrowserNode<*>? {
+    return TreeUtil.treeTraverser(tree)
+      .bfsTraversal()
+      .find { (it as ChangesBrowserNode<*>).getUserData(ENTITY_ID_KEY) == changeList } as? ChangesBrowserNode<*>
+  }
+
+  fun renameChangeList(changeList: SharedRef<ShelvedChangeListEntity>, newName: String) {
+    val changeListNode = findChangeListNode(changeList) as? ShelvedListNode ?: return
+    changeListNode.changeList.description = newName
   }
 
   fun showDiff(changeListDto: ChangeListDto) {
