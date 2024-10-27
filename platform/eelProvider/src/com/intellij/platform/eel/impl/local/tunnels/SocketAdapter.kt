@@ -85,11 +85,11 @@ internal class SocketAdapter(private val channel: SocketChannel) : EelTunnelsApi
   private companion object {
     @Throws(IOException::class)
     suspend fun connect(from: ReceiveChannel<ByteBuffer>, to: WritableByteChannel): Unit = withContext(Dispatchers.IO) {
-      while (isActive) {
-        for (data in from) {
-          to.write(data)
-        }
+      for (data in from) {
+        to.write(data)
       }
+      // from closed: close to and exit
+      to.close()
     }
 
     @Throws(IOException::class)
@@ -97,6 +97,8 @@ internal class SocketAdapter(private val channel: SocketChannel) : EelTunnelsApi
       val buffer = ByteBuffer.allocate(4096)
       while (isActive) {
         if (from.read(buffer) == -1) {
+          // from closed: close to and exit
+          to.close()
           break
         }
         buffer.flip()

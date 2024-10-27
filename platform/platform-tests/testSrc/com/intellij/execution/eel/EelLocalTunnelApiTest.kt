@@ -5,7 +5,6 @@ import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelTunnelsApi
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.platform.eel.provider.utils.awaitProcessResult
 import com.intellij.platform.tests.eelHelpers.EelHelper
 import com.intellij.platform.tests.eelHelpers.network.NetworkConstants
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -43,11 +42,16 @@ class EelLocalTunnelApiTest {
     val helper = localEel.exec.execute(executor.createBuilderToExecuteMain()).getOrThrow()
     try {
       val port = helper.stdout.receive().decodeToString().trim().toInt()
-      val connection = localEel.tunnels.getConnectionToRemotePort(EelTunnelsApi.hostAddressBuilder(port.toUShort()).build()).getOrThrow()
+      val address = EelTunnelsApi
+        .hostAddressBuilder(port.toUShort())
+        .preferIPv4()
+        .build()
+      val connection = localEel.tunnels.getConnectionToRemotePort(address).getOrThrow()
       val buffer = connection.receiveChannel.receive()
       Assertions.assertEquals(NetworkConstants.HELLO_FROM_SERVER, NetworkConstants.fromByteBuffer(buffer))
       connection.sendChannel.send(NetworkConstants.HELLO_FROM_CLIENT.toBuffer())
-      helper.awaitProcessResult()
+      // Helper closes the stream, so does the channel
+      Assertions.assertFalse(connection.receiveChannel.iterator().hasNext())
     }
     finally {
       helper.kill()
