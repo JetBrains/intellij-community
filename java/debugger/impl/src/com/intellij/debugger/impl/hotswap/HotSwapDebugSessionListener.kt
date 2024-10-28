@@ -77,8 +77,8 @@ private class HotSwapStatusListenerAdapter(private val originalSession: Debugger
   }
 
   override fun onFailure(sessions: MutableList<DebuggerSession>?) {
-    sessions?.createListeners(originalSession)?.forEach { it.onFinish() }
-    listener.onFinish()
+    sessions?.createListeners(originalSession)?.forEach { it.onFailure() }
+    listener.onFailure()
   }
 
   override fun onCancel(sessions: MutableList<DebuggerSession>?) {
