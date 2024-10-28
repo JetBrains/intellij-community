@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.conversion.copy
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.AbstractCopyPasteTest
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -13,7 +14,7 @@ import org.jetbrains.kotlin.idea.test.runAll
 import java.awt.datatransfer.StringSelection
 import java.io.File
 
-abstract class AbstractTextJavaToKotlinCopyPasteConversionTest : AbstractJ2kCopyPasteTest() {
+abstract class AbstractTextJavaToKotlinCopyPasteConversionTest : AbstractCopyPasteTest() {
     private var oldEditorOptions: KotlinEditorOptions? = null
 
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()

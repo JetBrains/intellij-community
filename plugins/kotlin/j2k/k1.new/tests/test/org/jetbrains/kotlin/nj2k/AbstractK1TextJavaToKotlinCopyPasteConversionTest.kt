@@ -5,5 +5,4 @@ package org.jetbrains.kotlin.nj2k
 import org.jetbrains.kotlin.idea.conversion.copy.AbstractTextJavaToKotlinCopyPasteConversionTest
 
 abstract class AbstractK1TextJavaToKotlinCopyPasteConversionTest : AbstractTextJavaToKotlinCopyPasteConversionTest() {
-    override fun isNewJ2K(): Boolean = true
 }
