@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.withPolicyController
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.AttributedElementsAddingPolicy
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.psi.KtCallElement
@@ -200,11 +200,14 @@ internal object Completions {
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
     ) {
-        withPolicyController(policyController).complete(
-            positionContext = @Suppress("UNCHECKED_CAST") (sessionParameters.positionContext as C), // TODO address dirty cast
-            weighingContext = weighingContext,
-            sessionParameters = sessionParameters,
-        )
+        val policy = AttributedElementsAddingPolicy(contributorClass = this@completeWithPolicyController.javaClass)
+        policyController.invokeWithPolicy(policy) {
+            complete(
+                positionContext = @Suppress("UNCHECKED_CAST") (sessionParameters.positionContext as C), // TODO address dirty cast
+                weighingContext = weighingContext,
+                sessionParameters = sessionParameters,
+            )
+        }
     }
 }
 
