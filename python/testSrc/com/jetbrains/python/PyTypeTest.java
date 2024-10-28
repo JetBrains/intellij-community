@@ -4168,17 +4168,17 @@ public class PyTypeTest extends PyTestCase {
   public void testTypingLiteralEnum() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
-      () -> doTest("A",
-                   """
-                     from typing_extensions import Literal
-                     
-                     from enum import Enum
-                     
-                     class A(Enum):
-                         V1 = 1
-                         V2 = 2
-                     
-                     expr: Literal[A.V1] = undefined""")
+      () -> doTest("Literal[A.V1]",
+                            """
+                              from typing_extensions import Literal
+
+                              from enum import Enum
+
+                              class A(Enum):
+                                  V1 = 1
+                                  V2 = 2
+
+                              expr: Literal[A.V1] = undefined""")
     );
   }
 

@@ -393,6 +393,46 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-46385
+  public void testAliasingEnumClassNameInLiteralType() {
+    doTestByText("""
+             from enum import Enum
+             from typing import Literal
+     
+             class Colors(Enum):
+                 RED = 1
+                 GREEN = 1
+                 BLUE = 3
+     
+             AliasColors = Colors
+     
+             x: AliasColors = Colors.RED
+             y: Literal[Colors.RED] = <warning descr="Expected type 'Literal[Colors.RED]', got 'Literal[Colors.GREEN]' instead">Colors.GREEN</warning>
+             z: Literal[AliasColors.RED] = Colors.RED""");
+  }
+
+  // PY-46385
+  public void testAliasingEnumMemberNameInLiteralType() {
+    doTestByText("""
+                   from enum import Enum
+                   from typing import Literal
+                   
+                   class Colors(Enum):
+                       RED = 1
+                       GREEN = 2
+                       BLUE = 3
+                   
+                   SpecialColors = Literal[Colors.RED]
+                   
+                   def special_painter(color: SpecialColors):
+                       assert color == Colors.RED
+                   
+                   special_painter(<warning descr="Expected type 'Literal[Colors.RED]', got 'Literal[Colors.GREEN]' instead">Colors.GREEN</warning>)
+                   
+                   costs: dict[SpecialColors, int] = <warning descr="Expected type 'dict[Literal[Colors.RED], int]', got 'dict[Literal[Colors.GREEN], Literal[7]]' instead">{Colors.GREEN: 7}</warning>""");
+  }
+
+
   // PY-42418
   public void testParametrizedBuiltinCollectionsAndTheirTypingAliasesAreEquivalent() {
     doTest();
