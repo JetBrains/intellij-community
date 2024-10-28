@@ -40,9 +40,15 @@ object MachineIdManager {
     }.onFailure { LOG.debug(it) }.getOrNull()
   }
 
-  /** See [Win32_ComputerSystemProduct](https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-computersystemproduct). */
+  /**
+   * See [MachineGuid](https://learn.microsoft.com/en-us/answers/questions/1489139/identifying-unique-windows-installation),
+   *     [Win32_ComputerSystemProduct](https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-computersystemproduct).
+   */
   private fun getWindowsMachineId(): String? =
     runCatching {
+      Advapi32Util.registryGetStringValue(WinReg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Cryptography", "MachineGuid")
+    }.recover {
+      LOG.debug(it)
       Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_APARTMENTTHREADED)
       WbemcliUtil.WmiQuery("Win32_ComputerSystemProduct", ComputerSystemProductProperty::class.java)
         .execute(2000)
@@ -50,9 +56,6 @@ object MachineIdManager {
           if (result.resultCount > 0) result.getValue(ComputerSystemProductProperty.UUID, 0).toString()
           else null
         }
-    }.recover {
-      LOG.debug(it)
-      Advapi32Util.registryGetStringValue(WinReg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Cryptography", "MachineGuid")
     }.getOrThrow()
 
   enum class ComputerSystemProductProperty { UUID }
