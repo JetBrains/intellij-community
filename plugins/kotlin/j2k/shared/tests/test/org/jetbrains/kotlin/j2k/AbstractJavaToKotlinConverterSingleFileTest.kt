@@ -100,7 +100,8 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         if (defaultText != customText) return customFile
 
         customFile.delete()
-        throw AssertionError("""
+        throw AssertionError(
+            """
             Custom expected file text is the same as the default one.
             Deleting custom file: ${customFile.path}.
             Please rerun the test now.""".trimIndent()
@@ -110,7 +111,6 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
     private fun getCustomExpectedFileExtension(): String = when (pluginMode) {
         KotlinPluginMode.K1 -> ".k1.kt"
         KotlinPluginMode.K2 -> ".k2.kt"
-        else -> error("Can't determine the plugin mode")
     }
 
     private fun addDependencies(directives: Directives) {
@@ -162,10 +162,16 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         }
 
     private fun convertJavaToKotlin(prefix: String, javaCode: String, settings: ConverterSettings, directives: Directives): String {
-        val preprocessorExtensions =
-            if (directives.contains(PREPROCESSOR_EXTENSIONS_DIRECTIVE)) (listOf(J2kTestPreprocessorExtension) + J2kPreprocessorExtension.EP_NAME.extensionList) else J2kPreprocessorExtension.EP_NAME.extensionList
-        val postprocessorExtensions =
-            if (directives.contains(POSTPROCESSOR_EXTENSIONS_DIRECTIVE)) (listOf(J2kTestPostprocessorExtension) + J2kPostprocessorExtension.EP_NAME.extensionList) else J2kPostprocessorExtension.EP_NAME.extensionList
+        val preprocessorExtensions = if (directives.contains(PREPROCESSOR_EXTENSIONS_DIRECTIVE)) {
+            listOf(J2kTestPreprocessorExtension) + J2kPreprocessorExtension.EP_NAME.extensionList
+        } else {
+            J2kPreprocessorExtension.EP_NAME.extensionList
+        }
+        val postprocessorExtensions = if (directives.contains(POSTPROCESSOR_EXTENSIONS_DIRECTIVE)) {
+            listOf(J2kTestPostprocessorExtension) + J2kPostprocessorExtension.EP_NAME.extensionList
+        } else {
+            J2kPostprocessorExtension.EP_NAME.extensionList
+        }
 
         return when (prefix) {
             "expression" -> expressionToKotlin(javaCode, settings)
@@ -183,7 +189,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         postprocessorExtensions: List<J2kPostprocessorExtension> = J2kPostprocessorExtension.EP_NAME.extensionList
     ): String {
         val file = createJavaFile(text)
-        val j2kKind = if (isFirPlugin) K2 else K1_NEW
+        val j2kKind = if (pluginMode === KotlinPluginMode.K2) K2 else K1_NEW
         val extension = J2kConverterExtension.extension(j2kKind)
         val converter = extension.createJavaToKotlinConverter(project, module, settings)
         val postProcessor = extension.createPostProcessor()

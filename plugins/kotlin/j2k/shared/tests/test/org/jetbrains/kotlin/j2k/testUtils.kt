@@ -37,7 +37,7 @@ internal fun getK2FileTextWithErrors(file: KtFile): String {
         analyze(file) {
             val diagnostics = file.collectDiagnostics(filter = ONLY_COMMON_CHECKERS).asSequence()
             diagnostics
-                // TODO: For some reason, there is a "redeclaration" error on every declaration for K2 tests
+                // TODO KTIJ-29640: For some reason, there is a "redeclaration" error on every declaration for K2 tests
                 .filter { it.factoryName != "CLASSIFIER_REDECLARATION" && it.factoryName != "PACKAGE_CONFLICTS_WITH_CLASSIFIER" }
                 .filter { it.severity == KaSeverity.ERROR }
                 .map { it.defaultMessage.replace(oldChar = '\n', newChar = ' ') }

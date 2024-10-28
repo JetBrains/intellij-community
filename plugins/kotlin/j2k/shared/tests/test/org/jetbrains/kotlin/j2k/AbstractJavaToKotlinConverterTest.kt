@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.IGNORE_K1
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.IGNORE_K2
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
@@ -42,7 +43,7 @@ abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixture
     }
 
     protected fun getDisableTestDirective(): String =
-        if (isFirPlugin) IGNORE_K2 else IGNORE_K1
+        if (pluginMode === KotlinPluginMode.K2) IGNORE_K2 else IGNORE_K1
 
     protected fun File.getFileTextWithoutDirectives(): String =
         readText().getTextWithoutDirectives()
@@ -51,7 +52,7 @@ abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixture
         split("\n").filterNot { it.trim() in ignoreDirectives }.joinToString(separator = "\n")
 
     protected fun KtFile.getFileTextWithErrors(): String =
-        if (isFirPlugin) getK2FileTextWithErrors(this) else dumpTextWithErrors()
+        if (pluginMode === KotlinPluginMode.K2) getK2FileTextWithErrors(this) else dumpTextWithErrors()
 
     // Needed to make the Kotlin compiler think it is running on JDK 16+
     // see org.jetbrains.kotlin.resolve.jvm.checkers.JvmRecordApplicabilityChecker
