@@ -17,7 +17,7 @@ interface BuildTasks {
   suspend fun buildDistributions()
 
   /**
-   * Compiles required modules and builds zip archives of the specified plugins in [artifacts][BuildPaths.artifactDir]/&lt;product-code&gt;-plugins
+   * Compiles required modules and builds zip archives of the specified plugins in [BuildContext.nonBundledPlugins]
    * directory.
    */
   suspend fun buildNonBundledPlugins(mainPluginModules: List<String>)

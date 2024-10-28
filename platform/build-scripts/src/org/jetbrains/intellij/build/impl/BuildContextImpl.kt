@@ -94,6 +94,10 @@ class BuildContextImpl internal constructor(
 
   internal val jarPackagerDependencyHelper: JarPackagerDependencyHelper by lazy { JarPackagerDependencyHelper(this) }
 
+  override val nonBundledPlugins: Path by lazy { paths.artifactDir.resolve("${applicationInfo.productCode}-plugins") }
+
+  override val nonBundledPluginsToBePublished: Path by lazy { nonBundledPlugins.resolve("auto-uploading") }
+
   init {
     @Suppress("DEPRECATION")
     if (productProperties.productCode == null) {

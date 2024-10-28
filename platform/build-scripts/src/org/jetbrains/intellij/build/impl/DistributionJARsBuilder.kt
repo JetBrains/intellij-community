@@ -398,14 +398,12 @@ internal suspend fun buildNonBundledPlugins(
       return@executeStep emptyList()
     }
 
-    val nonBundledPluginsArtifacts = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-plugins")
-    val autoUploadingDir = nonBundledPluginsArtifacts.resolve("auto-uploading")
     var buildKeymapPluginsTask = if (context.options.buildStepsToSkip.contains(BuildOptions.KEYMAP_PLUGINS_STEP)) {
       null
     }
     else {
       async(CoroutineName("build keymap plugins")) {
-        buildKeymapPlugins(targetDir = autoUploadingDir, context = context)
+        buildKeymapPlugins(targetDir = context.nonBundledPluginsToBePublished, context = context)
       }
     }
     val moduleOutputPatcher = ModuleOutputPatcher()
@@ -439,7 +437,11 @@ internal suspend fun buildNonBundledPlugins(
         ).pluginVersion
       }
 
-      val targetDirectory = if (autoPublishPluginChecker.test(plugin)) autoUploadingDir else nonBundledPluginsArtifacts
+      val targetDirectory = if (autoPublishPluginChecker.test(plugin)) {
+        context.nonBundledPluginsToBePublished
+      } else {
+        context.nonBundledPlugins
+      }
       val destFile = targetDirectory.resolve("${plugin.directoryName}-$pluginVersion.zip")
       val pluginXml = moduleOutputPatcher.getPatchedPluginXml(plugin.mainModule)
       pluginSpecs.add(PluginRepositorySpec(destFile, pluginXml))
@@ -453,7 +455,7 @@ internal suspend fun buildNonBundledPlugins(
       val spec = buildHelpPlugin(
         helpPlugin = helpPlugin,
         pluginsToPublishDir = stageDir,
-        targetDir = autoUploadingDir,
+        targetDir = context.nonBundledPluginsToBePublished,
         moduleOutputPatcher = moduleOutputPatcher,
         state = state,
         searchableOptionSetDescriptor = searchableOptionSet,
@@ -470,8 +472,8 @@ internal suspend fun buildNonBundledPlugins(
 
     if (prepareCustomPluginRepository) {
       val list = pluginSpecs.sortedBy { it.pluginZip }
-      generatePluginRepositoryMetaFile(list, nonBundledPluginsArtifacts, context)
-      generatePluginRepositoryMetaFile(list.filter { it.pluginZip.startsWith(autoUploadingDir) }, autoUploadingDir, context)
+      generatePluginRepositoryMetaFile(list, context.nonBundledPlugins, context)
+      generatePluginRepositoryMetaFile(list.filter { it.pluginZip.startsWith(context.nonBundledPluginsToBePublished) }, context.nonBundledPluginsToBePublished, context)
     }
 
     validatePlugins(context, pluginSpecs)

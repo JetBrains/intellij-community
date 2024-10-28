@@ -39,8 +39,8 @@ class ProductModulesLayout {
   var bundledPluginModules: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS
 
   /**
-   * Main module names (containing META-INF/plugin.xml) of the plugins which aren't bundled with the product but may be installed
-   * into it. Zip archives of these plugins will be built and placed under "&lt;product-code&gt;-plugins" directory in the build artifacts.
+   * Main module names (containing META-INF/plugin.xml) of the plugins which aren't bundled with the product but may be installed into it.
+   * Zip archives of these plugins will be built and placed under [BuildContext.nonBundledPlugins] directory in the build artifacts.
    * Layouts of the plugins are specified in [pluginLayouts] list.
    */
   var pluginModulesToPublish: PersistentSet<String> = persistentSetOf()
@@ -104,7 +104,8 @@ class ProductModulesLayout {
   var prepareCustomPluginRepositoryForPublishedPlugins: Boolean = true
 
   /**
-   * If `true` then all plugins that compatible with an IDE will be built. By default, these plugins will be placed to "auto-uploading"
+   * If `true` then all plugins that compatible with an IDE will be built.
+   * By default, these plugins will be placed to [BuildContext.nonBundledPluginsToBePublished]
    * subdirectory and may be automatically uploaded to plugins.jetbrains.com.
    * <br>
    * If `false` only plugins from [pluginModulesToPublish] will be considered.

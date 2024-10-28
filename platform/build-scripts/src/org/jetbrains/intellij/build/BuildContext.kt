@@ -102,6 +102,18 @@ interface BuildContext : CompilationContext {
   val appInfoXml: String
 
   /**
+   * [BuildPaths.artifactDir]/[ApplicationInfoProperties.productCode]-plugins/
+   */
+  val nonBundledPlugins: Path
+
+  /**
+   * [nonBundledPlugins]/auto-uploading/
+   *
+   * See [ProductModulesLayout.buildAllCompatiblePlugins]
+   */
+  val nonBundledPluginsToBePublished: Path
+
+  /**
    * Add the file to be copied into an application.
    */
   fun addDistFile(file: DistFile)
