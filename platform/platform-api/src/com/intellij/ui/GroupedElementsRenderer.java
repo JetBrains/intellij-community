@@ -5,6 +5,7 @@ import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorContextProvider;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.ui.JBUI;
@@ -256,10 +257,12 @@ public abstract class GroupedElementsRenderer implements Accessible {
     return myRendererComponent.getAccessibleContext();
   }
 
+  @NlsSafe
   protected String getDelegateAccessibleName() {
     return myTextLabel != null ? myTextLabel.getAccessibleContext().getAccessibleName() : null;
   }
 
+  @NlsSafe
   protected String getDelegateAccessibleDescription() {
     return myTextLabel != null ? myTextLabel.getAccessibleContext().getAccessibleDescription() : null;
   }
