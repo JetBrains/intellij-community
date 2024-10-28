@@ -1,4 +1,4 @@
-def foo() -> object:
+def foo() -> None:
     @decorator
     def bar():
         pass
