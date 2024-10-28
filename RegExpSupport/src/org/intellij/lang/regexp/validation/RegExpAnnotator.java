@@ -22,6 +22,7 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
@@ -43,7 +44,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public final class RegExpAnnotator extends RegExpElementVisitor implements Annotator {
+public final class RegExpAnnotator extends RegExpElementVisitor implements Annotator, DumbAware {
   @NonNls private static final Set<String> POSIX_CHARACTER_CLASSES = ContainerUtil.newHashSet(
     "alnum", "alpha", "ascii", "blank", "cntrl", "digit", "graph", "lower", "print", "punct", "space", "upper", "word", "xdigit");
   private AnnotationHolder myHolder;
