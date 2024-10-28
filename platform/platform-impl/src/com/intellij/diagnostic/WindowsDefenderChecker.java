@@ -218,7 +218,7 @@ public class WindowsDefenderChecker {
     }
   }
 
-  public final boolean excludeProjectPaths(@NotNull Project project, @NotNull List<Path> paths) {
+  public final boolean excludeProjectPaths(@Nullable Project project, @NotNull List<Path> paths) {
     logCaller("paths=" + paths);
 
     try {
@@ -271,7 +271,11 @@ public class WindowsDefenderChecker {
       }
       else {
         LOG.info("OK; script output:\n" + output.getStdout().trim());
-        PropertiesComponent.getInstance(project).setValue(IGNORE_STATUS_CHECK, true);
+        if (project != null) {
+          PropertiesComponent.getInstance(project).setValue(IGNORE_STATUS_CHECK, true);
+        } else {
+          WindowsDefenderExcludeUtil.INSTANCE.addPathsToExcluded(paths);
+        }
         return true;
       }
     }

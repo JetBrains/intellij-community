@@ -32,14 +32,14 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
 
   override suspend fun execute(project: Project) {
     val checker = serviceAsync<WindowsDefenderChecker>()
-    val pathsToExclude = WindowsDefenderExcludeUtil.getPathsToExclude()
-    if (pathsToExclude.isNotEmpty()) {
-      WindowsDefenderExcludeUtil.updateDefenderConfig(checker, project, pathsToExclude) { WindowsDefenderExcludeUtil.clearPathsToExclude() }
-    }
     val projectPath = project.basePath
     if (checker.isStatusCheckIgnored(project) || (projectPath != null && WindowsDefenderExcludeUtil.isDefenderShown(Path(projectPath)))) {
       LOG.info("status check is disabled")
       WindowsDefenderStatisticsCollector.protectionCheckSkipped(project)
+      //It's necessary because we have no project instance when exclude was performed (via Trust and Open dialog)
+      if  (projectPath != null && WindowsDefenderExcludeUtil.pathWasExcluded(Path(projectPath))) {
+        WindowsDefenderChecker.getInstance().ignoreStatusCheck(project, true)
+      }
       return
     }
 
@@ -67,7 +67,10 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
     val auto = DiagnosticBundle.message("exclude.folders")
     val manual = DiagnosticBundle.message("defender.config.manual")
     Notification(NOTIFICATION_GROUP, DiagnosticBundle.message("notification.group.defender.config"), DiagnosticBundle.message("defender.config.prompt", pathList, auto, manual), NotificationType.INFORMATION)
-      .addAction(createSimpleExpiring(auto) { WindowsDefenderExcludeUtil.updateDefenderConfig(checker, project, paths, true) })
+      .addAction(createSimpleExpiring(auto) {
+        WindowsDefenderExcludeUtil.updateDefenderConfig(checker, project, paths)
+        WindowsDefenderStatisticsCollector.auto(project)
+      })
       .addAction(createSimpleExpiring(DiagnosticBundle.message("defender.config.suppress1")) { suppressCheck(checker, project, globally = false) })
       .addAction(createSimpleExpiring(DiagnosticBundle.message("defender.config.suppress2")) { suppressCheck(checker, project, globally = true) })
       .addAction(Separator.getInstance())

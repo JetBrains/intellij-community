@@ -11,7 +11,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
@@ -28,37 +28,42 @@ internal object WindowsDefenderExcludeUtil {
     return defenderExclusions.containsKey(path)
   }
 
-  fun addPathsToExclude(paths: List<Path>) {
+  fun addPathsToExcluded(paths: List<Path>) {
     paths.forEach { defenderExclusions.put(it, true) }
   }
 
-  fun getPathsToExclude(): List<Path> {
-    return defenderExclusions.filterValues { it }.keys.toImmutableList()
+  fun pathWasExcluded(path: Path): Boolean {
+    return defenderExclusions.getOrDefault(path, false)
   }
 
-  fun clearPathsToExclude() {
-    defenderExclusions.replaceAll { _, _ -> false }
-  }
-
-  fun updateDefenderConfig(checker: WindowsDefenderChecker, project: Project, paths: List<Path>, isUpdatedFromNotification: Boolean = false, afterFinish: () -> Unit = {}) {
+  fun updateDefenderConfig(checker: WindowsDefenderChecker, project: Project, paths: List<Path>, afterFinish: () -> Unit = {}) {
     service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
       @Suppress("DialogTitleCapitalization")
       withBackgroundProgress(project, DiagnosticBundle.message("defender.config.progress"), false) {
-        val success = checker.excludeProjectPaths(project, paths)
-        if (success) {
-          Notification(NOTIFICATION_GROUP, DiagnosticBundle.message("defender.config.success"), NotificationType.INFORMATION)
-            .notify(project)
-        }
-        else {
-          Notification(NOTIFICATION_GROUP, DiagnosticBundle.message("defender.config.failed"), NotificationType.ERROR)
-            .addAction(ShowLogAction.notificationAction())
-            .notify(project)
-        }
-        afterFinish()
-        WindowsDefenderStatisticsCollector.configured(project, success)
+        updateDefenderConfig(checker, project, paths, afterFinish)
       }
     }
-    if (isUpdatedFromNotification) WindowsDefenderStatisticsCollector.auto(project)
+  }
+
+  fun updateDefenderConfigWithoutModalProgress(checker: WindowsDefenderChecker, paths: List<Path>, afterFinish: () -> Unit = {}) {
+    service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+      updateDefenderConfig(checker, null, paths, afterFinish = afterFinish)
+    }
+  }
+
+  private fun CoroutineScope.updateDefenderConfig(checker: WindowsDefenderChecker, project: Project?, paths: List<Path>, afterFinish: () -> Unit = {}) {
+    val success = checker.excludeProjectPaths(project, paths)
+    if (success) {
+      Notification(NOTIFICATION_GROUP, DiagnosticBundle.message("defender.config.success"), NotificationType.INFORMATION)
+        .notify(project)
+    }
+    else {
+      Notification(NOTIFICATION_GROUP, DiagnosticBundle.message("defender.config.failed"), NotificationType.ERROR)
+        .addAction(ShowLogAction.notificationAction())
+        .notify(project)
+    }
+    afterFinish()
+    WindowsDefenderStatisticsCollector.configured(project, success)
   }
 
   fun getPathsToExclude(project: Project?, projectPath: Path?): List<Path> {

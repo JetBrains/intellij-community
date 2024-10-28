@@ -94,12 +94,11 @@ object TrustedProjectsDialog {
       WindowsDefenderExcludeUtil.markPathAsShownDefender(projectRoot)
       if (windowDefenderPathsToExclude.isNotEmpty()) {
         WindowsDefenderStatisticsCollector.excludedFromTrustDialog(dialog.isTrustAll())
+        val checker = serviceAsync<WindowsDefenderChecker>()
         if (project != null) {
-          val checker = serviceAsync<WindowsDefenderChecker>()
           WindowsDefenderExcludeUtil.updateDefenderConfig(checker, project, windowDefenderPathsToExclude)
-        }
-        else {
-          WindowsDefenderExcludeUtil.addPathsToExclude(windowDefenderPathsToExclude)
+        } else {
+          WindowsDefenderExcludeUtil.updateDefenderConfigWithoutModalProgress(checker, windowDefenderPathsToExclude)
         }
       }
     }
