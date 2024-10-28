@@ -1273,6 +1273,11 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
             runTest("../testData/stepping/custom/breakpointInInlineLambda.kt");
         }
 
+        @TestMetadata("breakpointInLambdaInEnum.kt")
+        public void testBreakpointInLambdaInEnum() throws Exception {
+            runTest("../testData/stepping/custom/breakpointInLambdaInEnum.kt");
+        }
+
         @TestMetadata("breakpointInLambdaWithManyLambdas.kt")
         public void testBreakpointInLambdaWithManyLambdas() throws Exception {
             runTest("../testData/stepping/custom/breakpointInLambdaWithManyLambdas.kt");
