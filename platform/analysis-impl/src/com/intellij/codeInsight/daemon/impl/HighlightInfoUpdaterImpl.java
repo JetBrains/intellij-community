@@ -1084,9 +1084,9 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
     List<HighlightInfo> result = List.copyOf(newInfosToStore == null ? sorted : newInfosToStore);
     for (int i = 0; i < result.size(); i++) {
       HighlightInfo info = result.get(i);
-      assert info.getHighlighter() != null;
-      assert info.getHighlighter().isValid();
-      assert HighlightInfo.fromRangeHighlighter(info.getHighlighter()) == info;
+      assert info.getHighlighter() != null : info;
+      assert info.getHighlighter().isValid() : info;
+      assert HighlightInfo.fromRangeHighlighter(info.getHighlighter()) == info : "from RH: "+HighlightInfo.fromRangeHighlighter(info.getHighlighter())+"; but expected: "+info;
       if (i>0) {
         assert Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(result.get(i-1), result.get(i)) <= 0 : "assignRangeHighlighters returned unsorted list: "+result;
       }
