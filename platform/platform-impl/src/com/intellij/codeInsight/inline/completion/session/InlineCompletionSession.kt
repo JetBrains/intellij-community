@@ -192,9 +192,14 @@ class InlineCompletionSession private constructor(
     @RequiresEdt
     internal fun remove(editor: Editor) {
       getOrNull(editor)?.apply {
-        Disposer.dispose(this)
+        if (!context.isDisposed) {
+          Disposer.dispose(this)
+          LOG.trace("[Inline Completion] Remove inline completion session")
+        }
+        else {
+          LOG.warn("[Inline Completion] Cannot dispose session because it's already disposed.")
+        }
         editor.putUserData(INLINE_COMPLETION_SESSION, null)
-        LOG.trace("Remove inline completion session")
       }
     }
   }
