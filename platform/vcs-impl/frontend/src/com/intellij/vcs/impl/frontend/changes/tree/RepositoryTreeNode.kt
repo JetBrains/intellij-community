@@ -15,6 +15,7 @@ import com.intellij.vcs.impl.frontend.changes.getBranchPresentationBackground
 import com.intellij.vcs.impl.frontend.shelf.tree.ChangesBrowserNodeRenderer
 import com.intellij.vcs.impl.frontend.shelf.tree.EntityChangesBrowserNode
 import com.intellij.vcs.impl.shared.rhizome.RepositoryNodeEntity
+import org.jetbrains.annotations.Nls
 import java.awt.Color
 
 class RepositoryTreeNode(entity: RepositoryNodeEntity) : EntityChangesBrowserNode<RepositoryNodeEntity>(entity) {
@@ -51,6 +52,10 @@ class RepositoryTreeNode(entity: RepositoryNodeEntity) : EntityChangesBrowserNod
     val repositoryEntity = getUserObject()
     val color = Color(repositoryEntity.colorRed, repositoryEntity.colorGreen, repositoryEntity.colorBlue)
     return CheckboxIcon.createAndScale(color)
+  }
+
+  override fun doGetTextPresentation(): @Nls String? {
+    return getUserObject().name
   }
 
 

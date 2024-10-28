@@ -7,6 +7,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.vcs.impl.frontend.shelf.tree.ChangesBrowserNodeRenderer
 import com.intellij.vcs.impl.frontend.shelf.tree.EntityChangesBrowserNode
 import com.intellij.vcs.impl.shared.rhizome.ModuleNodeEntity
+import org.jetbrains.annotations.Nls
 
 class ModuleTreeNode(entity: ModuleNodeEntity) : EntityChangesBrowserNode<ModuleNodeEntity>(entity) {
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
@@ -24,5 +25,9 @@ class ModuleTreeNode(entity: ModuleNodeEntity) : EntityChangesBrowserNode<Module
       val icon = ModuleTypeManager.getInstance().findByID(moduleTypeID).icon
       renderer.setIcon(icon)
     }
+  }
+
+  override fun doGetTextPresentation(): @Nls String? {
+    return getUserObject().name
   }
 }

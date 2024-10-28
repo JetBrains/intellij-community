@@ -3,11 +3,16 @@ package com.intellij.vcs.impl.frontend.shelf.tree
 
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.vcs.impl.shared.rhizome.TagNodeEntity
+import org.jetbrains.annotations.Nls
 
 class TagNode(private val entity: TagNodeEntity, private val attributes: SimpleTextAttributes) : EntityChangesBrowserNode<TagNodeEntity>(entity) {
 
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
     renderer.append(entity.text, attributes)
     appendCount(renderer)
+  }
+
+  override fun doGetTextPresentation(): @Nls String? {
+    return getUserObject().text
   }
 }

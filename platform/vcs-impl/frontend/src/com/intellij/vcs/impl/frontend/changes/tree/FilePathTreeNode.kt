@@ -44,4 +44,8 @@ class FilePathTreeNode(entity: FilePathNodeEntity) : EntityChangesBrowserNode<Fi
     }
   }
 
+  override fun doGetTextPresentation(): @Nls String? {
+    return getUserObject().name
+  }
+
 }

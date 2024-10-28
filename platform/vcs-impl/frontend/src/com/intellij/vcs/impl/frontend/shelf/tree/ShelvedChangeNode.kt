@@ -11,6 +11,7 @@ import com.intellij.util.FontUtil
 import com.intellij.util.PathUtil
 import com.intellij.vcs.impl.frontend.changes.findFileStatusById
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
+import org.jetbrains.annotations.Nls
 
 class ShelvedChangeNode(val entity: ShelvedChangeEntity) : EntityChangesBrowserNode<ShelvedChangeEntity>(entity) {
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
@@ -26,5 +27,9 @@ class ShelvedChangeNode(val entity: ShelvedChangeEntity) : EntityChangesBrowserN
       renderer.append(FontUtil.spaceAndThinSpace() + FileUtil.toSystemDependentName(directory), SimpleTextAttributes.GRAYED_ATTRIBUTES)
     }
     renderer.icon = FileTypeManager.getInstance().getFileTypeByFileName(fileName).getIcon()
+  }
+
+  override fun doGetTextPresentation(): @Nls String? {
+    return PathUtil.getFileName(getUserObject().filePath)
   }
 }

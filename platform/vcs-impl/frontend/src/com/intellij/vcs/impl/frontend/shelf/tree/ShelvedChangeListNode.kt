@@ -32,9 +32,7 @@ class ShelvedChangeListNode(private val changeList: ShelvedChangeListEntity) : E
     renderer.append(FontUtil.spaceAndThinSpace() + loadingError, SimpleTextAttributes.ERROR_ATTRIBUTES)
   }
 
-  override fun getTextPresentation(): @Nls String? {
-    return asOf(KernelService.instance.kernelCoroutineScope.getCompleted().coroutineContext[Rete]!!.lastKnownDb.value) {
-      changeList.description
-    }
+  override fun doGetTextPresentation(): @Nls String? {
+    return getUserObject().description
   }
 }

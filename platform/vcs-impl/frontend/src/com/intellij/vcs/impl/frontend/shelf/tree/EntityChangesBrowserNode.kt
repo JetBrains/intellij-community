@@ -24,4 +24,11 @@ open class EntityChangesBrowserNode<T : NodeEntity>(entity: T) : ChangesBrowserN
     return (userObject as NodeEntity).children.size
   }
 
+  override fun getTextPresentation(): @Nls String? {
+    return asOf(KernelService.instance.kernelCoroutineScope.getCompleted().coroutineContext[Rete]!!.lastKnownDb.value) {
+      doGetTextPresentation()
+    }
+  }
+
+  abstract fun doGetTextPresentation(): @Nls String?
 }

@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DataKey.Companion.create
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.Project
+import com.intellij.ui.TreeSpeedSearch
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.impl.frontend.changes.*
 import com.intellij.vcs.impl.frontend.navigation.FrontendShelfNavigatable
@@ -21,6 +22,10 @@ import javax.swing.tree.TreePath
 class ShelfTree(project: Project, cs: CoroutineScope) : ChangesTree(project, cs, GroupingUpdatePlaces.SHELF_TREE) {
 
   private val deleteProvider: DeleteProvider = ShelveDeleteProvider(project, this)
+
+  init {
+    TreeSpeedSearch.installOn(this, true) { (it.lastPathComponent as EntityChangesBrowserNode<*>).textPresentation }
+  }
 
   override fun isPathEditable(path: TreePath): Boolean {
     return isEditable && selectionCount == 1 && path.lastPathComponent is ShelvedChangeListNode
