@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public final class WindowsDefenderStatisticsCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("defender", 2);
+  private static final EventLogGroup GROUP = new EventLogGroup("defender", 3);
 
   private enum Status {Skipped, Enabled, Disabled, Error}
   private enum Reaction {Auto, Manual, ProjectMute, GlobalMute}
@@ -24,7 +24,7 @@ public final class WindowsDefenderStatisticsCollector extends CounterUsagesColle
 
   private enum ExcludedScope {
     PROJECT_ONLY,
-    PARENT_FOLDER_AND_IDE
+    PARENT_FOLDER
   }
   
   static void protectionCheckSkipped(@NotNull Project project) {
@@ -53,7 +53,7 @@ public final class WindowsDefenderStatisticsCollector extends CounterUsagesColle
 
   public static void excludedFromTrustDialog(boolean parentExcluded) {
     if (parentExcluded) {
-      EXCLUDED_FROM_TRUST_DIALOG.log(ExcludedScope.PARENT_FOLDER_AND_IDE);
+      EXCLUDED_FROM_TRUST_DIALOG.log(ExcludedScope.PARENT_FOLDER);
     } else {
       EXCLUDED_FROM_TRUST_DIALOG.log(ExcludedScope.PROJECT_ONLY);
     }
