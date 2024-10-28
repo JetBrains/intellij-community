@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
+import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ProjectViewNodeDecorator;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -20,7 +22,11 @@ public abstract class AbstractCoverageProjectViewNodeDecorator implements Projec
   public AbstractCoverageProjectViewNodeDecorator(@SuppressWarnings("unused") @NotNull Project project) {
   }
 
-  protected static boolean isApplicable(@NotNull Project project) {
+  /**
+   * This method checks whether showing coverage in the project view is enabled.
+   * If not, this decorator should do nothing and immediately return from {@link #decorate(ProjectViewNode, PresentationData)}.
+   */
+  protected static boolean isShowingCoverageInProjectViewEnabled(@NotNull Project project) {
     return CoverageOptionsProvider.getInstance(project).showInProjectView();
   }
 
