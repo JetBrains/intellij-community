@@ -71,8 +71,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             convertedText
         }
 
-        val actualTextWithoutRedundantImports = removeRedundantImports(actualText)
-        KotlinTestUtils.assertEqualsToFile(expectedFile, actualTextWithoutRedundantImports)
+        KotlinTestUtils.assertEqualsToFile(expectedFile, actualText)
     }
 
     // 1. ".k1.kt" testdata is for trivial differences between K1 and K2 (for example, different wording of error messages).

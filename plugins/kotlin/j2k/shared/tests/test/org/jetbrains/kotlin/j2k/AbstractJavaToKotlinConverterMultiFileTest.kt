@@ -91,8 +91,7 @@ abstract class AbstractJavaToKotlinConverterMultiFileTest : AbstractJavaToKotlin
         for ((i, kotlinFile) in resultFiles.withIndex()) {
             val expectedFile = expectedResultFile(i)
             val actualText = kotlinFile.getFileTextWithErrors()
-            val actualTextWithoutRedundantImports = removeRedundantImports(actualText)
-            KotlinTestUtils.assertEqualsToFile(expectedFile, actualTextWithoutRedundantImports)
+            KotlinTestUtils.assertEqualsToFile(expectedFile, actualText)
         }
 
         for ((externalFile, externalPsiFile) in externalFiles.zip(externalPsiFiles)) {
