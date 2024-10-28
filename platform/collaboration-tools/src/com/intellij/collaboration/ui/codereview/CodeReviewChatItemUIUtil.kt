@@ -8,6 +8,7 @@ import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.avatar.Avatar
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.util.CodeReviewColorUtil
+import com.intellij.ui.JBColor
 import com.intellij.ui.hover.HoverStateListener
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
@@ -76,8 +77,8 @@ object CodeReviewChatItemUIUtil {
     SUPER_COMPACT {
       override val iconSize: Int = Avatar.Sizes.BASE
       override val iconGap: Int = 10
-      override val paddingInsets: Insets = Insets(0,0,0,0)
-      override val inputPaddingInsets: Insets = Insets(0,0,0,0)
+      override val paddingInsets: Insets = Insets(0, 0, 0, 0)
+      override val inputPaddingInsets: Insets = Insets(0, 0, 0, 0)
     };
 
     /**
@@ -113,16 +114,20 @@ object CodeReviewChatItemUIUtil {
       get() = iconSize + iconGap
   }
 
-  fun build(type: ComponentType,
-            iconProvider: (iconSize: Int) -> Icon,
-            content: JComponent,
-            init: Builder.() -> Unit): JComponent =
+  fun build(
+    type: ComponentType,
+    iconProvider: (iconSize: Int) -> Icon,
+    content: JComponent,
+    init: Builder.() -> Unit,
+  ): JComponent =
     buildDynamic(type, { iconSize -> SingleValueModel(iconProvider(iconSize)) }, content, init)
 
-  fun buildDynamic(type: ComponentType,
-                   iconValueProvider: (iconSize: Int) -> SingleValueModel<Icon>,
-                   content: JComponent,
-                   init: Builder.() -> Unit): JComponent =
+  fun buildDynamic(
+    type: ComponentType,
+    iconValueProvider: (iconSize: Int) -> SingleValueModel<Icon>,
+    content: JComponent,
+    init: Builder.() -> Unit,
+  ): JComponent =
     Builder(type, iconValueProvider, content).apply(init).build()
 
   /**
@@ -131,7 +136,7 @@ object CodeReviewChatItemUIUtil {
   class Builder(
     private val type: ComponentType,
     private val iconValueProvider: (Int) -> SingleValueModel<Icon>,
-    private val content: JComponent
+    private val content: JComponent,
   ) {
     /**
      * Tooltip for a main icon
@@ -148,6 +153,11 @@ object CodeReviewChatItemUIUtil {
      * Actions component will only be visible on item hover
      */
     var header: HeaderComponents? = null
+
+    /**
+     * The color to use as the background color on-hover.
+     */
+    var hoverHighlight: JBColor = CodeReviewColorUtil.Review.Chat.hover
 
     /**
      * Helper fun to setup [HeaderComponents]
@@ -175,7 +185,9 @@ object CodeReviewChatItemUIUtil {
         actionsVisibleOnHover(it, header?.actions)
       }.apply {
         border = JBUI.Borders.empty(type.paddingInsets)
-      }.let { withHoverHighlight(it) }
+      }.let {
+        withHoverHighlight(it, hoverHighlight)
+      }
 
     private fun <T> JComponent.wrapIfNotNull(value: T?, block: (JComponent, T) -> JComponent): JComponent = let {
       if (value != null) block(it, value) else it
@@ -218,7 +230,7 @@ object CodeReviewChatItemUIUtil {
     }
   }
 
-  fun withHoverHighlight(comp: JComponent): JComponent {
+  fun withHoverHighlight(comp: JComponent, hoverHighlight: JBColor): JComponent {
     val highlighterPanel = JPanelWithBackground(BorderLayout()).apply {
       isOpaque = false
       background = null
@@ -228,7 +240,7 @@ object CodeReviewChatItemUIUtil {
         override fun hoverChanged(component: Component, hovered: Boolean) {
           // TODO: extract to theme colors
           component.background = if (hovered) {
-            CodeReviewColorUtil.Review.Chat.hover
+            hoverHighlight
           }
           else {
             null

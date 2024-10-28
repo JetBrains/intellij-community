@@ -14,6 +14,10 @@
                     interface="org.jetbrains.plugins.github.ai.GHPRAIReviewExtension"
                     dynamic="true"/>
 
+    <extensionPoint qualifiedName="intellij.vcs.github.aiSummaryExtension"
+                    interface="org.jetbrains.plugins.github.ai.GHPRAISummaryExtension"
+                    dynamic="true"/>
+
     <extensionPoint qualifiedName="com.intellij.vcs.github.gistContentsCollector"
                     interface="org.jetbrains.plugins.github.GithubGistContentsCollector"
                     dynamic="true"/>
