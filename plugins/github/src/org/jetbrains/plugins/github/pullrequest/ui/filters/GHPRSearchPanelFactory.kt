@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.filters
 
 import com.intellij.collaboration.ui.codereview.avatar.Avatar
@@ -25,6 +25,7 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
       if (assignee != null) append("assignee:$assignee").append(" ")
       if (reviewState != null) append("""reviewState:"${getShortText(reviewState)}"""").append(" ")
       if (author != null) append("author:$author").append(" ")
+      if (sort != null) append("""sort:"${getShortText(sort)}"""").append(" ")
     }.toString()
   }
 
@@ -32,7 +33,7 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
     DropDownComponentFactory(vm.stateFilterState)
       .create(viewScope,
               filterName = GithubBundle.message("pull.request.list.filter.state"),
-              items = GHPRListSearchValue.State.values().asList(),
+              items = GHPRListSearchValue.State.entries,
               onSelect = {},
               valuePresenter = Companion::getShortText),
     DropDownComponentFactory(vm.authorFilterState)
@@ -72,10 +73,17 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
     DropDownComponentFactory(vm.reviewFilterState)
       .create(viewScope,
               filterName = GithubBundle.message("pull.request.list.filter.review"),
-              items = GHPRListSearchValue.ReviewState.values().asList(),
+              items = GHPRListSearchValue.ReviewState.entries,
               onSelect = {},
               valuePresenter = Companion::getShortText,
-              popupItemPresenter = { PopupItemPresentation.Simple(getFullText(it)) })
+              popupItemPresenter = { PopupItemPresentation.Simple(getFullText(it)) }),
+    DropDownComponentFactory(vm.sortFilterState)
+      .create(viewScope,
+              filterName = GithubBundle.message("pull.request.list.filter.sort"),
+              items = GHPRListSearchValue.Sort.entries,
+              onSelect = {},
+              valuePresenter = Companion::getShortText,
+              popupItemPresenter = { PopupItemPresentation.Simple(getShortText(it)) }),
   )
 
   override fun GHPRListQuickFilter.getQuickFilterTitle(): String = when (this) {
@@ -100,6 +108,15 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
       GHPRListSearchValue.ReviewState.REVIEWED_BY_ME -> GithubBundle.message("pull.request.list.filter.review.reviewed.short")
       GHPRListSearchValue.ReviewState.NOT_REVIEWED_BY_ME -> GithubBundle.message("pull.request.list.filter.review.not.short")
       GHPRListSearchValue.ReviewState.AWAITING_REVIEW -> GithubBundle.message("pull.request.list.filter.review.awaiting.short")
+    }
+
+    private fun getShortText(sortFilterValue: GHPRListSearchValue.Sort): @Nls String = when (sortFilterValue) {
+      GHPRListSearchValue.Sort.NEWEST -> GithubBundle.message("pull.request.list.filter.sort.newest")
+      GHPRListSearchValue.Sort.OLDEST -> GithubBundle.message("pull.request.list.filter.sort.oldest")
+      GHPRListSearchValue.Sort.MOST_COMMENTED -> GithubBundle.message("pull.request.list.filter.sort.most.commented")
+      GHPRListSearchValue.Sort.LEAST_COMMENTED -> GithubBundle.message("pull.request.list.filter.sort.least.commented")
+      GHPRListSearchValue.Sort.RECENTLY_UPDATED -> GithubBundle.message("pull.request.list.filter.sort.recently.updated")
+      GHPRListSearchValue.Sort.LEAST_RECENTLY_UPDATED -> GithubBundle.message("pull.request.list.filter.sort.least.recently.updated")
     }
 
     private fun getFullText(reviewStateFilterValue: GHPRListSearchValue.ReviewState): @Nls String = when (reviewStateFilterValue) {

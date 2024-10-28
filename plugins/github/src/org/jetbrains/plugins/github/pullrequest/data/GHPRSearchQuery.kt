@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GithubIssueState
-import org.jetbrains.plugins.github.api.data.request.search.GithubIssueSearchSort
 import java.text.ParseException
 import java.text.SimpleDateFormat
 
@@ -31,22 +30,14 @@ class GHPRSearchQuery(val terms: List<Term<*>>) {
   @Suppress("EnumEntryName")
   enum class QualifierName(val apiName: String) {
     `is`("is"),
-    after("created") {
-      override fun createTerm(value: String): Term<*> = Term.Qualifier.Date.After.from(this, value)
-    },
     assignee("assignee"),
     author("author"),
-    before("created") {
-      override fun createTerm(value: String): Term<*> = Term.Qualifier.Date.Before.from(this, value)
-    },
     label("label"),
     repo("repo"),
     review("review"),
     reviewRequested("review-requested"),
     reviewedBy("reviewed-by"),
-    sortBy("sort") {
-      override fun createTerm(value: String): Term<*> = Term.Qualifier.Enum.from<GithubIssueSearchSort>(this, value)
-    },
+    sortBy("sort"),
     state("state") {
       override fun createTerm(value: String): Term<*> = Term.Qualifier.Enum.from<GithubIssueState>(this, value)
     },
