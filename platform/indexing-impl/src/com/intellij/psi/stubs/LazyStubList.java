@@ -1,6 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
+import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
@@ -94,7 +97,9 @@ final class LazyStubList extends StubList {
     catch (Exception | Error e) {
       PsiFileStub<?> fileStub = myStubs.get(0).getContainingFileStub();
       PsiFile file = fileStub == null ? null : fileStub.getPsi();
-      throw new RuntimeException(StubSerializationUtil.brokenStubFormat(myRootSerializer, file), e);
+      PluginDescriptor plugin = PluginManager.getPluginByClass(myRootSerializer.getClass());
+      String message = StubSerializationUtil.brokenStubFormat(myRootSerializer, file);
+      throw new PluginException(message, e, plugin == null ? null : plugin.getPluginId());
     }
   }
 
