@@ -10,6 +10,7 @@ import fleet.rpc.Rpc
 @Rpc
 interface RemoteShelfActionsApi : RemoteApi<Unit> {
   suspend fun unshelve(projectRef: SharedRef<ProjectEntity>, changeListDto: List<ChangeListDto>, withDialog: Boolean)
+  suspend fun delete(projectRef: SharedRef<ProjectEntity>, selectedLists: List<SharedRef<ShelvedChangeListEntity>>, selectedChanges: List<ChangeListDto>)
   suspend fun createPatchForShelvedChanges(projectRef: SharedRef<ProjectEntity>, changeListsDto: List<ChangeListDto>, silentClipboard: Boolean)
   suspend fun showStandaloneDiff(projectRef: SharedRef<ProjectEntity>, changeListsDto: List<ChangeListDto>, withLocal: Boolean)
   suspend fun importShelvesFromPatches(projectRef: SharedRef<ProjectEntity>)

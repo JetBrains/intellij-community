@@ -23,6 +23,10 @@ class BackendShelfActionsApi : RemoteShelfActionsApi {
     getShelfRemoteActionExecutor(projectRef).unshelve(changeListDto, withDialog)
   }
 
+  override suspend fun delete(projectRef: SharedRef<ProjectEntity>, selectedLists: List<SharedRef<ShelvedChangeListEntity>>, selectedChanges: List<ChangeListDto>) {
+    getShelfRemoteActionExecutor(projectRef).delete(selectedLists, selectedChanges)
+  }
+
   override suspend fun createPatchForShelvedChanges(projectRef: SharedRef<ProjectEntity>, changeListDto: List<ChangeListDto>, silentClipboard: Boolean) {
     getShelfRemoteActionExecutor(projectRef).createPatchForShelvedChanges(changeListDto, silentClipboard)
   }

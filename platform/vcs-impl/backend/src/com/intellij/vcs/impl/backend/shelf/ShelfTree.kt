@@ -27,7 +27,6 @@ import javax.swing.tree.TreePath
 @ApiStatus.Internal
 class ShelfTree internal constructor(project: Project) : AsyncChangesTree(project, false, false, false) {
   override val changesTreeModel: AsyncChangesTreeModel = ShelfTreeAsyncModel(project, scope)
-  private val deleteProvider: DeleteProvider = ShelveDeleteProvider(myProject, this)
 
   var selectedChanges: List<ShelvedWrapper> = listOf()
     set(value) {
@@ -74,9 +73,6 @@ class ShelfTree internal constructor(project: Project) : AsyncChangesTree(projec
       .iterateUserObjects(ShelvedWrapper::class.java)
       .filterMap { it.binaryFile }
       .toList()
-    if (!isEditing()) {
-      sink[PlatformDataKeys.DELETE_ELEMENT_PROVIDER] = deleteProvider
-    }
     val shelvedChanges = VcsTreeModelData.selected(this).userObjects(ShelvedWrapper::class.java)
     if (!shelvedChanges.isEmpty()) {
       sink[VcsDataKeys.CHANGES] = shelvedChanges.map {

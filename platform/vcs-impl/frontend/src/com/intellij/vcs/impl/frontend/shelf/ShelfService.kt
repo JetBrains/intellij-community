@@ -27,11 +27,23 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
   fun unshelve(changeListsMap: Map<ShelvedChangeListEntity, List<ShelvedChangeEntity>>, withDialog: Boolean) {
     cs.launch {
       withKernel {
-        val changeLists = changeListsMap.map {
-          ChangeListDto(it.key.sharedRef(), it.value.map { it.sharedRef() })
-        }
+        val changeLists = changeListsMap.toDtos()
         val projectRef = project.asEntity().sharedRef()
         RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).unshelve(projectRef, changeLists, withDialog)
+      }
+    }
+  }
+
+  fun deleteChangeList(changeLists: Set<ShelvedChangeListEntity>, changes: Map<ShelvedChangeListEntity, List<ShelvedChangeEntity>>) {
+    cs.launch {
+      withKernel {
+        val exactlySelectedLists = changeLists.map {
+          it.sharedRef()
+        }
+
+        val projectRef = project.asEntity().sharedRef()
+        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).delete(projectRef, exactlySelectedLists, changes.toDtos())
+
       }
     }
   }
@@ -39,13 +51,15 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
   fun compareWithLocal(changeListsMap: Map<ShelvedChangeListEntity, List<ShelvedChangeEntity>>, withLocal: Boolean) {
     cs.launch {
       withKernel {
-        val changeLists = changeListsMap.map {
-          ChangeListDto(it.key.sharedRef(), it.value.map { it.sharedRef() })
-        }
+        val changeLists = changeListsMap.toDtos()
         val projectRef = project.asEntity().sharedRef()
         RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).showStandaloneDiff(projectRef, changeLists, withLocal)
       }
     }
+  }
+
+  private fun Map<ShelvedChangeListEntity, List<ShelvedChangeEntity>>.toDtos(): List<ChangeListDto> = map {
+    ChangeListDto(it.key.sharedRef(), it.value.map { it.sharedRef() })
   }
 
   fun renameChangeList(changeList: ShelvedChangeListEntity, newName: String) {

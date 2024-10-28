@@ -52,7 +52,6 @@ internal class ShelvedChangeListToEntityConverter : NodeToEntityConverter<Shelve
             it[ShelvedChangeListEntity.Date] = changeList.date.toInstant().toEpochMilli()
             it[ShelvedChangeListEntity.Recycled] = changeList.isRecycled
             it[ShelvedChangeListEntity.Deleted] = changeList.isDeleted
-            it[ShelvedChangeListEntity.MarkedToDelete] = changeList.isMarkedToDelete
             it[NodeEntity.Order] = orderInParent
           }
         }

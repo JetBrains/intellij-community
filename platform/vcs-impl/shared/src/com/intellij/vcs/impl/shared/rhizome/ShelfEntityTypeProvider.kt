@@ -42,8 +42,6 @@ data class ShelvedChangeListEntity(override val eid: EID) : NodeEntity {
   val isRecycled: Boolean by Recycled
   val isDeleted: Boolean by Deleted
 
-  val isMarkedToDelete: Boolean by MarkedToDelete
-
   companion object : DurableEntityType<ShelvedChangeListEntity>(ShelvedChangeListEntity::class.java.name, "com.intellij", ::ShelvedChangeListEntity, NodeEntity) {
     val Name = requiredValue("name", String.serializer())
     val Description = requiredValue("description", String.serializer())
@@ -51,7 +49,6 @@ data class ShelvedChangeListEntity(override val eid: EID) : NodeEntity {
     val Error = optionalValue("error", String.serializer())
     val Recycled = requiredValue("recycled", Boolean.serializer())
     val Deleted = requiredValue("deleted", Boolean.serializer())
-    val MarkedToDelete = requiredValue("markedToDelete", Boolean.serializer())
   }
 }
 

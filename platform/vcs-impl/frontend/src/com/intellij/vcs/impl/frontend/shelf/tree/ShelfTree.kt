@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.impl.frontend.shelf.tree
 
+import com.intellij.ide.DeleteProvider
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataKey.Companion.create
 import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.impl.frontend.changes.*
@@ -15,6 +17,8 @@ import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
 
 class ShelfTree(project: Project, cs: CoroutineScope) : ChangesTree(project, cs, GroupingUpdatePlaces.SHELF_TREE) {
+
+  private val deleteProvider: DeleteProvider = ShelveDeleteProvider(project, this)
 
   override fun isPathEditable(path: TreePath): Boolean {
     return isEditable && selectionCount == 1 && path.lastPathComponent is ShelvedChangeListNode
@@ -33,6 +37,9 @@ class ShelfTree(project: Project, cs: CoroutineScope) : ChangesTree(project, cs,
       }
     sink[GROUPED_CHANGES_KEY] = groupedChanges.toMap()
     sink[CHANGE_LISTS_KEY] = groupedChanges.map { ChangeList(it.first, it.second) }
+    if (!isEditing()) {
+      sink[PlatformDataKeys.DELETE_ELEMENT_PROVIDER] = deleteProvider
+    }
   }
 
   private fun ChangesBrowserNode<*>.findParentOfType(clazz: Class<*>): ChangesBrowserNode<*>? {

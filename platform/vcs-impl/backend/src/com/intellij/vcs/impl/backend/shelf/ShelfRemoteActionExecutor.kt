@@ -43,22 +43,12 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
       withContext(Dispatchers.EDT) {
         FileDocumentManager.getInstance().saveAllDocuments()
       }
-      val changeLists = mutableListOf<ShelvedChangeList>()
-      val changes = mutableListOf<ShelvedChange>()
-      val files = mutableListOf<ShelvedBinaryFile>()
+
       val nodes = changeListDto.flatMap {
         shelfTreeHolder.findChangesInTree(it)
       }
-      nodes.forEach { node ->
-        val change = node.shelvedChange
-        changeLists.add(change.changeList)
-        if (change.binaryFile != null) {
-          files.add(change.binaryFile!!)
-        }
-        else {
-          changes.add(change.shelvedChange!!)
-        }
-      }
+      val shelvedChanges = findChanges(nodes)
+      val changeLists = shelvedChanges.changeLists
       cs.launch(Dispatchers.EDT) {
         if (withDialog) {
           if (changeLists.size == 1) {
@@ -66,11 +56,44 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
             UnshelveWithDialogAction.unshelveSingleChangeList(changeLists.first(), project, changesToUnshelve)
           }
           else {
-            UnshelveWithDialogAction.unshelveMultipleShelveChangeLists(project, changeLists, files, changes)
+            UnshelveWithDialogAction.unshelveMultipleShelveChangeLists(project, changeLists, shelvedChanges.files, shelvedChanges.changes)
           }
           return@launch
         }
-        ShelveChangesManager.getInstance(project).unshelveSilentlyAsynchronously(project, changeLists, changes, files, null)
+        ShelveChangesManager.getInstance(project).unshelveSilentlyAsynchronously(project, changeLists, shelvedChanges.changes, shelvedChanges.files, null)
+      }
+    }
+  }
+
+  private fun findChanges(
+    nodes: List<ShelvedChangeNode>,
+  ): ShelvedChanges {
+    val changes = mutableListOf<ShelvedChange>()
+    val files = mutableListOf<ShelvedBinaryFile>()
+    val changeLists = mutableListOf<ShelvedChangeList>()
+
+    nodes.forEach { node ->
+      val change = node.shelvedChange
+      changeLists.add(change.changeList)
+      if (change.binaryFile != null) {
+        files.add(change.binaryFile!!)
+      }
+      else {
+        changes.add(change.shelvedChange!!)
+      }
+    }
+    return ShelvedChanges(changeLists, changes, files)
+  }
+
+  fun delete(selectedLists: List<SharedRef<ShelvedChangeListEntity>>, selectedChanges: List<ChangeListDto>) {
+    cs.launch {
+      val nodes = selectedChanges.flatMap {
+        shelfTreeHolder.findChangesInTree(it)
+      }
+      val changes = findChanges(nodes)
+      val changelists = selectedLists.map { shelfTreeHolder.findChangeListNode(it) }.filterIsInstance<ShelvedListNode>().map { it.changeList }
+      cs.launch(Dispatchers.EDT) {
+        ShelvedChangesViewManager.deleteShelves(project, changelists, changes.changeLists, changes.changes, changes.files)
       }
     }
   }
@@ -102,5 +125,7 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
   companion object {
     fun getInstance(project: Project): ShelfRemoteActionExecutor = project.service<ShelfRemoteActionExecutor>()
   }
+
+  private class ShelvedChanges(val changeLists: List<ShelvedChangeList>, val changes: List<ShelvedChange>, val files: List<ShelvedBinaryFile>)
 
 }
