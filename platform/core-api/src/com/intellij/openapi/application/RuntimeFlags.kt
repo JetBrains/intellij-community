@@ -39,4 +39,5 @@ val isLockStoredInContext: Boolean =
  * `false` means that [backgroundWriteAction] will perform write actions from a non-modal context on a background thread.
  * `true` means that [backgroundWriteAction] will perform write actions in and old way (on EDT).
  */
-internal val useBackgroundWriteAction: Boolean = System.getProperty("idea.background.write.action.enabled", "false").toBoolean()
+@ApiStatus.Internal
+val useBackgroundWriteAction: Boolean = System.getProperty("idea.background.write.action.enabled", "false").toBoolean()
