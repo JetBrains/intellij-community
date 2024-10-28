@@ -77,17 +77,6 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
 
         val basicContext = FirBasicCompletionContext.createFromParameters(parameters, resultSet) ?: return
 
-        analyzeInContext(basicContext, positionContext) {
-            recordOriginalFile(basicContext)
-            Completions.complete(basicContext, positionContext, resultController)
-        }
-    }
-
-    private inline fun analyzeInContext(
-        basicContext: FirBasicCompletionContext,
-        positionContext: KotlinRawPositionContext,
-        action: KaSession.() -> Unit
-    ) {
         analyze(basicContext.fakeKtFile) {
             when (positionContext) {
                 is KotlinSimpleParameterPositionContext -> recordOriginalDeclaration(basicContext, positionContext.ktParameter)
@@ -95,7 +84,8 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
                 else -> {}
             }
 
-            action()
+            recordOriginalFile(basicContext)
+            Completions.complete(basicContext, positionContext, resultController)
         }
     }
 
