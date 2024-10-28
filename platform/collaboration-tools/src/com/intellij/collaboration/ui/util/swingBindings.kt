@@ -321,6 +321,18 @@ fun <D> Wrapper.bindContentIn(
   }
 }
 
+@ApiStatus.Internal
+fun Wrapper.bindContent(
+  debugName: String, contentFlow: Flow<JComponent?>,
+) {
+  showingScope(debugName) {
+    contentFlow.collect {
+      setContent(it)
+      repaint()
+    }
+  }
+}
+
 private suspend fun <D> Wrapper.bindContentImpl(
   dataFlow: Flow<D>,
   componentFactory: CoroutineScope.(D) -> JComponent?,
