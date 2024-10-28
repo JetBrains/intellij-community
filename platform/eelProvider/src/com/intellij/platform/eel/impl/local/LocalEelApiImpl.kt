@@ -70,7 +70,26 @@ class LocalPosixEelApiImpl(nioFs: FileSystem = FileSystems.getDefault()) : Local
   }
 
   override val tunnels: EelTunnelsPosixApi get() = EelLocalTunnelsPosixApi
-  override val platform: EelPlatform.Posix = if (SystemInfo.isAarch64) EelPlatform.Aarch64Linux else EelPlatform.X8664Linux
+  override val platform: EelPlatform.Posix = if (SystemInfo.isMac) {
+    if (SystemInfo.isAarch64) {
+      EelPlatform.Arm64Darwin
+    }
+    else {
+      EelPlatform.X8664Darwin
+    }
+  }
+  else if (SystemInfo.isLinux) {
+    if (SystemInfo.isAarch64) {
+      EelPlatform.Aarch64Linux
+    }
+    else {
+      EelPlatform.X8664Linux
+    }
+  }
+  else {
+    LOG.info("Eel is not supported on current platform")
+    EelPlatform.X8664Linux
+  }
   override val exec: EelExecApi = EelLocalExecApi()
   override val mapper: EelPathMapper = LocalEelPathMapper(this)
   override val archive: EelArchiveApi = LocalEelArchiveApiImpl
