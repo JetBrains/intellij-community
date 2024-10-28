@@ -34,6 +34,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
   protected final ListPopupImpl myPopup;
   private @Nullable JLabel myShortcutLabel;
+  private @Nullable JLabel mySecondaryIconLabel;
   private @Nullable JLabel mySecondaryTextLabel;
   protected JLabel myMnemonicLabel;
   protected JLabel myIconLabel;
@@ -126,12 +127,22 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     };
     panel.add(myTextLabel, BorderLayout.WEST);
 
+    JPanel secondary = new JPanel(new BorderLayout());
+    JBEmptyBorder secondaryBorder = ExperimentalUI.isNewUI() ? JBUI.Borders.empty() : JBUI.Borders.empty(0, 8, 1, 0);
+    secondary.setBorder(secondaryBorder);
+
     mySecondaryTextLabel = new JLabel();
     mySecondaryTextLabel.setEnabled(false);
-    JBEmptyBorder valueBorder = ExperimentalUI.isNewUI() ? JBUI.Borders.empty() : JBUI.Borders.empty(0, 8, 1, 0);
-    mySecondaryTextLabel.setBorder(valueBorder);
     mySecondaryTextLabel.setForeground(UIManager.getColor("MenuItem.acceleratorForeground"));
-    panel.add(mySecondaryTextLabel, BorderLayout.CENTER);
+    secondary.add(mySecondaryTextLabel, BorderLayout.EAST);
+
+    mySecondaryIconLabel = new JLabel();
+    JBEmptyBorder secondaryIconBorder = JBUI.Borders.emptyLeft(JBUI.CurrentTheme.ActionsList.elementIconGap() - 2);
+    mySecondaryIconLabel.setBorder(secondaryIconBorder);
+    mySecondaryIconLabel.setVisible(false);
+    secondary.add(mySecondaryIconLabel, BorderLayout.WEST);
+
+    panel.add(secondary, BorderLayout.CENTER);
 
     myShortcutLabel = new JLabel();
     JBEmptyBorder shortcutBorder = ExperimentalUI.isNewUI() ? JBUI.Borders.empty() : JBUI.Borders.empty(0,0,1,3);
@@ -387,6 +398,21 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       setForegroundSelected(mySecondaryTextLabel, selected);
     }
 
+    if (mySecondaryIconLabel != null) {
+      Icon icon = isShowSecondaryIcon() && step instanceof ListPopupStepEx<Object> o ?
+                  o.getSecondaryIconFor(value) : null;
+
+      if (icon != null) {
+        mySecondaryIconLabel.setIcon(icon);
+        boolean selected = isSelected && isSelectable && !nextStepButtonSelected;
+        setForegroundSelected(mySecondaryIconLabel, selected);
+        mySecondaryIconLabel.setVisible(true);
+      }
+      else {
+        mySecondaryIconLabel.setVisible(false);
+      }
+    }
+
     if (ExperimentalUI.isNewUI() && getItemComponent() instanceof SelectablePanel selectablePanel) {
       selectablePanel.setSelectionColor(isSelected && isSelectable ? UIUtil.getListSelectionBackground(true) : null);
       setSelected(myMainPane, isSelected && isSelectable);
@@ -394,6 +420,10 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   }
 
   protected boolean isShowSecondaryText() {
+    return true;
+  }
+
+  protected boolean isShowSecondaryIcon() {
     return true;
   }
 
