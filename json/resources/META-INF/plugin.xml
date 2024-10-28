@@ -36,6 +36,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <virtualFileCustomDataProvider implementation="com.intellij.json.split.JsonCodeStyleSettingsCustomDataSynchronizer"/>
 
+    <registryKey key="json.schema.object.v2.enable.nested.remote.schema.resolve" defaultValue="false" description="Try loading remote schema parts on the fly"/>
     <registryKey key="json.schema.object.v2" defaultValue="true" description="Use lightweight implementation of JsonSchemaObject"/>
     <registryKey key="remote.schema.cache.validity.duration" defaultValue="1"
                  description="The time period (in minutes) a file is being kept in cache for. Applicable to references that contain remote URLs."/>
