@@ -5,7 +5,7 @@ import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.notebooks.visualization.cellSelectionModel
 import com.intellij.notebooks.visualization.context.NotebookDataContext.notebookEditor
 import com.intellij.notebooks.visualization.context.NotebookDataContext.selectedCellIntervals
-import com.intellij.notebooks.visualization.ui.EditorCellOutput
+import com.intellij.notebooks.visualization.ui.EditorCellOutputView
 import com.intellij.notebooks.visualization.ui.NOTEBOOK_CELL_OUTPUT_DATA_KEY
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -32,7 +32,7 @@ internal class NotebookOutputCollapseAllAction private constructor() : ToggleAct
     }
   }
 
-  private fun allCollapsingComponents(e: AnActionEvent): Sequence<EditorCellOutput> {
+  private fun allCollapsingComponents(e: AnActionEvent): Sequence<EditorCellOutputView> {
     val inlayManager = e.notebookCellInlayManager ?: return emptySequence()
     return getCollapsingComponents(inlayManager.editor, NotebookCellLines.get(inlayManager.editor).intervals)
   }
@@ -58,7 +58,7 @@ open class NotebookOutputCollapseAllInSelectedCellsAction() : ToggleAction(), Du
     }
   }
 
-  private fun getSelectedCollapsingComponents(e: AnActionEvent): Sequence<EditorCellOutput> {
+  private fun getSelectedCollapsingComponents(e: AnActionEvent): Sequence<EditorCellOutputView> {
     val inlayManager = e.notebookCellInlayManager ?: return emptySequence()
     val selectedCells = inlayManager.editor.cellSelectionModel?.selectedCells ?: return emptySequence()
     return getCollapsingComponents(inlayManager.editor, selectedCells)
@@ -100,18 +100,18 @@ internal class NotebookOutputCollapseSingleInCellAction private constructor() : 
     getExpectedComponent(e)?.collapsed = state
   }
 
-  private fun getExpectedComponent(e: AnActionEvent): EditorCellOutput? =
+  private fun getExpectedComponent(e: AnActionEvent): EditorCellOutputView? =
     e.dataContext.getData(NOTEBOOK_CELL_OUTPUT_DATA_KEY)
 }
 
-private fun getCollapsingComponents(e: AnActionEvent): List<EditorCellOutput> {
+private fun getCollapsingComponents(e: AnActionEvent): List<EditorCellOutputView> {
   val selectedCellIntervals = e.dataContext.selectedCellIntervals ?: return emptyList()
   val notebookEditor = e.dataContext.notebookEditor ?: return emptyList()
 
   return selectedCellIntervals.flatMap { getCollapsingComponents(notebookEditor, it) }
 }
 
-private fun getCollapsingComponents(editor: Editor, interval: NotebookCellLines.Interval): List<EditorCellOutput> =
+private fun getCollapsingComponents(editor: Editor, interval: NotebookCellLines.Interval): List<EditorCellOutputView> =
   NotebookCellInlayManager.get(editor)
     ?.cells?.get(interval.ordinal)
     ?.view
@@ -119,7 +119,7 @@ private fun getCollapsingComponents(editor: Editor, interval: NotebookCellLines.
     ?.outputs
   ?: emptyList()
 
-private fun getCollapsingComponents(editor: Editor, intervals: Iterable<NotebookCellLines.Interval>): Sequence<EditorCellOutput> =
+private fun getCollapsingComponents(editor: Editor, intervals: Iterable<NotebookCellLines.Interval>): Sequence<EditorCellOutputView> =
   intervals.asSequence()
     .filter { it.type == NotebookCellLines.CellType.CODE }
     .flatMap { getCollapsingComponents(editor, it) }

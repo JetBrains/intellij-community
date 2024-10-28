@@ -14,9 +14,9 @@ import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
-val NOTEBOOK_CELL_OUTPUT_DATA_KEY = DataKey.create<EditorCellOutput>("NOTEBOOK_CELL_OUTPUT")
+val NOTEBOOK_CELL_OUTPUT_DATA_KEY = DataKey.create<EditorCellOutputView>("NOTEBOOK_CELL_OUTPUT")
 
-class EditorCellOutput internal constructor(
+class EditorCellOutputView internal constructor(
   private val editor: EditorImpl,
   private val component: CollapsingComponent,
   private val toDispose: Disposable?
@@ -67,7 +67,7 @@ class EditorCellOutput internal constructor(
   }
 
   override fun calculateBounds(): Rectangle {
-    val allCellOutputs = parent as? EditorCellOutputs ?: return Rectangle(0, 0, 0, 0)
+    val allCellOutputs = parent as? EditorCellOutputsView ?: return Rectangle(0, 0, 0, 0)
 
     //Need validate because swing component can be invalid on update
     allCellOutputs.innerComponent.validate()

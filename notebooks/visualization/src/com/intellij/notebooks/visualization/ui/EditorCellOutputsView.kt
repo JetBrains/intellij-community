@@ -29,10 +29,10 @@ import java.awt.Rectangle
 import java.awt.Toolkit
 import javax.swing.JComponent
 
-class EditorCellOutputs(
+class EditorCellOutputsView(
   private val editor: EditorImpl,
   private val cell: EditorCell,
-  private val onInlayDisposed: (EditorCellOutputs) -> Unit = {},
+  private val onInlayDisposed: (EditorCellOutputsView) -> Unit = {},
 ) : EditorCellViewComponent(), Disposable {
 
   var foldingsVisible: Boolean = false
@@ -51,8 +51,8 @@ class EditorCellOutputs(
       }
     }
 
-  private val _outputs = mutableListOf<EditorCellOutput>()
-  val outputs: List<EditorCellOutput>
+  private val _outputs = mutableListOf<EditorCellOutputView>()
+  val outputs: List<EditorCellOutputView>
     get() = _outputs
 
   internal val innerComponent = InnerComponent().also {
@@ -88,8 +88,12 @@ class EditorCellOutputs(
     }
 
   init {
-    cell.outputs.afterChange(this) { keys ->
+    cell.outputs.outputs.afterChange(this) { keys ->
       updateView(keys)
+    }
+    cell.outputs.scrollingEnabled.afterChange(this) {
+      innerComponent.scrollingEnabled = it
+      innerComponent.revalidate()
     }
     update()
   }
@@ -99,12 +103,12 @@ class EditorCellOutputs(
   }
 
   fun update() = runInEdt {
-    updateView(cell.outputs.get())
+    updateView(cell.outputs.outputs.get())
     onViewportChange()
   }
 
-  fun updateView(newDataKeys: Collection<NotebookOutputDataKey>) = runInEdt {
-    updateData(newDataKeys)
+  fun updateView(newDataKeys: List<EditorCellOutput>) = runInEdt {
+    updateData(newDataKeys.map { it.dataKey.get() })
     recreateInlayIfNecessary()
   }
 
@@ -252,7 +256,7 @@ class EditorCellOutputs(
     document.getLineEndOffset(lines.last)
 
   private fun addIntoInnerComponent(newComponent: NotebookOutputComponentFactory.CreatedComponent<*>, pos: Int = -1) {
-    lateinit var outputComponent: EditorCellOutput
+    lateinit var outputComponent: EditorCellOutputView
     val collapsingComponent = object : CollapsingComponent(
       editor,
       newComponent.component,
@@ -264,7 +268,7 @@ class EditorCellOutputs(
       }
     }
 
-    outputComponent = EditorCellOutput(editor, collapsingComponent, newComponent.disposable)
+    outputComponent = EditorCellOutputView(editor, collapsingComponent, newComponent.disposable)
 
     innerComponent.add(
       collapsingComponent,

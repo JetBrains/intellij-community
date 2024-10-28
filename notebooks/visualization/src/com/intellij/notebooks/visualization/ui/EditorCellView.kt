@@ -63,7 +63,7 @@ class EditorCellView(
 
   val input: EditorCellInput = createEditorCellInput()
 
-  var outputs: EditorCellOutputs? = null
+  var outputs: EditorCellOutputsView? = null
     private set
 
   var selected = false
@@ -189,7 +189,7 @@ class EditorCellView(
   private fun updateOutputs() = runInEdt {
     if (hasOutputs()) {
       if (outputs == null) {
-        outputs = EditorCellOutputs(editor, cell).also {
+        outputs = EditorCellOutputsView(editor, cell).also {
           add(it)
         }
         updateCellHighlight()
