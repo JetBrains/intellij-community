@@ -10,6 +10,7 @@ import com.intellij.ui.Gray
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
+import kotlinx.serialization.Serializable
 
 /**
  * The Jupyter Notebook has a modal user interface.
@@ -20,6 +21,7 @@ import com.intellij.util.messages.Topic
  *   Notebook Modal Editor
  *   </a>
  */
+@Serializable
 enum class NotebookEditorMode {
   EDIT,
   COMMAND
@@ -63,4 +65,3 @@ fun Editor.setMode(mode: NotebookEditorMode) {
 
 internal val INVISIBLE_CARET = CaretVisualAttributes(Gray.TRANSPARENT,
                                                      CaretVisualAttributes.Weight.NORMAL)
-
