@@ -16,7 +16,7 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.analysis.AnalysisBundle;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -65,7 +65,7 @@ class SuppressByCommentOutAction extends SuppressIntentionAction {
     else {
       editor.getDocument().insertString(lineEndOffset, " " + commentText);
     }
-    DaemonCodeAnalyzer.getInstance(project).restart(); //comment replacement not necessarily rehighlights
+    DaemonCodeAnalyzerEx.getInstanceEx(project).restart("SuppressByCommentOutAction.invoke"); //comment replacement not necessarily rehighlights
   }
 
   @Override

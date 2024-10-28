@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -61,7 +61,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     Editor editor = instance.openTextEditor(new OpenFileDescriptor(myProject, file, 0), false);
     ((EditorImpl)editor).setCaretActive();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    DaemonCodeAnalyzer.getInstance(getProject()).restart();
+    DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart("JavaCodeInsightTestCase.createEditor " + file);
 
     return editor;
   }

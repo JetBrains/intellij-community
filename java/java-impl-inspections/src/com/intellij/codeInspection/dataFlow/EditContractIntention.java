@@ -5,7 +5,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.DefaultInferredAnnotationProvider;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -121,7 +121,7 @@ public final class EditContractIntention extends BaseIntentionAction implements 
       }
       catch (ExternalAnnotationsManager.CanceledConfigurationException ignored) {}
     }
-    DaemonCodeAnalyzer.getInstance(project).restart();
+    DaemonCodeAnalyzerEx.getInstanceEx(project).restart("EditContractIntention.updateContract");
   }
 
   private static @Nullable @NlsContexts.DialogMessage String getMutatesErrorMessage(String mutates, PsiMethod method) {

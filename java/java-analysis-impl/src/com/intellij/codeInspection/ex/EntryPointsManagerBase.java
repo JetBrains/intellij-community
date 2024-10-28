@@ -3,8 +3,8 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.MetaAnnotationUtil;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptionContainer;
@@ -89,7 +89,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       if (ADDITIONAL_ANNOS != null) {
         ADDITIONAL_ANNOS = null;
       }
-      DaemonCodeAnalyzer.getInstance(project).restart();
+      DaemonCodeAnalyzerEx.getInstanceEx(project).restart("EntryPointsManagerBase.DEAD_CODE_EP_NAME changed");
     }, this);
   }
 
