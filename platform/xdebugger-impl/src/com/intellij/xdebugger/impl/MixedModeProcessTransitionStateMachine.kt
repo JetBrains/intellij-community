@@ -101,20 +101,20 @@ class MixedModeProcessTransitionStateMachine(
             state = WaitingForHighProcessPositionReached
             //.await().also { logger.info("High level process has been stopped") }
           }
-          else -> TODO()
+          else -> throwTransitionIsNotImplemented(event)
         }
       }
 
       is HighLevelPositionReached -> {
         when (currentState) {
-          is WaitingForHighProcessPositionReached, WaitForHighProcessPositionReachLowProcessResumedExceptEventThread -> {
+          is WaitingForHighProcessPositionReached, WaitForHighProcessPositionReachLowProcessResumedExceptEventThread, BothRunning -> {
             withContext(Dispatchers.EDT) {
               low.pauseMixedModeSession()
             }
             state = HighStoppedWaitingForLowProcessToStop(event.suspendContext)
             //.await().also { logger.info("Low level process has been stopped") }
           }
-          else -> TODO()
+          else -> throwTransitionIsNotImplemented(event)
         }
       }
 
@@ -141,7 +141,7 @@ class MixedModeProcessTransitionStateMachine(
             val highSuspendCtx = currentState.highSuspendContext!!
             state = BothStopped(lowSuspendCtx, highSuspendCtx)
           }
-          else -> TODO()
+          else -> throwTransitionIsNotImplemented(event)
         }
       }
 
@@ -154,7 +154,7 @@ class MixedModeProcessTransitionStateMachine(
             }
             state = BothRunning
           }
-          else -> TODO()
+          else -> throwTransitionIsNotImplemented(event)
         }
       }
 
@@ -167,7 +167,7 @@ class MixedModeProcessTransitionStateMachine(
           is BothStopped -> {
             state = OnlyHighStopped(currentState.high)
           }
-          else -> TODO()
+          else -> throwTransitionIsNotImplemented(event)
         }
       }
     }
@@ -200,4 +200,8 @@ class MixedModeProcessTransitionStateMachine(
   }
 
   fun get(): State = state
+
+  fun throwTransitionIsNotImplemented(event : Event) {
+    TODO("Transition from ${get()} by event $event is not implemented");
+  }
 }
