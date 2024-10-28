@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
@@ -10,6 +11,12 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 
 internal abstract class GitAutoSquashCommitAction : GitSingleCommitEditingAction() {
+  override fun update(e: AnActionEvent, commitEditingData: SingleCommitEditingData) {
+    if (ChangeListManager.getInstance(commitEditingData.project).defaultChangeList.changes.isEmpty()) {
+      e.presentation.description = GitBundle.message("action.Git.Fixup.To.Commit.description.nothing.to.commit")
+      e.presentation.isEnabled = false
+    }
+  }
 
   override fun actionPerformedAfterChecks(commitEditingData: SingleCommitEditingData) {
     val commit = commitEditingData.selectedCommit
