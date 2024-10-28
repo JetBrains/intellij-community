@@ -2076,18 +2076,19 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   }
 
   private GutterIconRenderer myCalculatingInBackground;
-  private ProgressIndicator myBackgroundIndicator = new EmptyProgressIndicator();
+  private volatile ProgressIndicator myBackgroundIndicator = new EmptyProgressIndicator();
 
   private void computeTooltipInBackground(@NotNull PointInfo pointInfo) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     GutterIconRenderer renderer = pointInfo.renderer;
     if (myCalculatingInBackground == renderer && !myBackgroundIndicator.isCanceled()) return; // not yet calculated
     myCalculatingInBackground = renderer;
     myBackgroundIndicator.cancel();
-    myBackgroundIndicator = new ProgressIndicatorBase();
+    ProgressIndicatorBase newIndicator = new ProgressIndicatorBase();
+    myBackgroundIndicator = newIndicator;
     myBackgroundIndicator.setModalityProgress(null);
     Point point = pointInfo.iconCenterPosition;
-    Balloon.Position relativePosition = pointInfo.renderersInLine > 1 && pointInfo.rendererPosition == 0 ? Balloon.Position.below
-                                                                                                         : Balloon.Position.atRight;
+    Balloon.Position relativePosition = pointInfo.renderersInLine > 1 && pointInfo.rendererPosition == 0 ? Balloon.Position.below : Balloon.Position.atRight;
     AtomicReference<@NlsContexts.Tooltip String> tooltip = new AtomicReference<>();
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(
       new Task.Backgroundable(myEditor.getProject(), IdeBundle.message("progress.title.constructing.tooltip")) {
@@ -2101,7 +2102,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
         public void onSuccess() {
           showToolTip(tooltip.get(), point, relativePosition);
         }
-      }, myBackgroundIndicator);
+      }, newIndicator);
   }
 
   void showToolTip(@Nullable @NlsContexts.Tooltip String toolTip, @NotNull Point location, @NotNull Balloon.Position relativePosition) {

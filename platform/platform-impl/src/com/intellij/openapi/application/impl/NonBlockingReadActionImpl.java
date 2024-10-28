@@ -469,7 +469,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
         acquire();
       }
       try {
-        Runnable r = () -> {
+        ContextAwareRunnable r = () -> {
           if (LOG.isTraceEnabled()) {
             LOG.trace("Running in background " + this);
           }
@@ -492,7 +492,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
             }
           }
         };
-        backendExecutor.execute((ContextAwareRunnable)() -> r.run());
+        backendExecutor.execute(r);
       }
       catch (RejectedExecutionException e) {
         LOG.warn("Rejected: " + this);
