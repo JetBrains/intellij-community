@@ -9,7 +9,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedR
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 
-interface GHPRDetailsService {
+internal interface GHPRDetailsService {
   suspend fun findPRId(number: Long): GHPRIdentifier?
 
   suspend fun loadDetails(pullRequestId: GHPRIdentifier): GHPullRequest

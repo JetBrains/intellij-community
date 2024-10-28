@@ -8,9 +8,9 @@ import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRInfoViewModel
 import javax.swing.Icon
 import javax.swing.JComponent
 
@@ -20,7 +20,7 @@ interface GHPRAIReviewExtension {
     val EP = ExtensionPointName.Companion.create<GHPRAIReviewExtension>("intellij.vcs.github.aiReviewExtension")
   }
 
-  fun provideReviewVm(project: Project, parentCs: CoroutineScope, prVm: GHPRInfoViewModel): GHPRAIReviewViewModel
+  fun provideReviewVm(project: Project, parentCs: CoroutineScope, dataContext: GHPRDataContext, dataProvider: GHPRDataProvider): GHPRAIReviewViewModel
 
   fun provideCommentVms(
     project: Project,
