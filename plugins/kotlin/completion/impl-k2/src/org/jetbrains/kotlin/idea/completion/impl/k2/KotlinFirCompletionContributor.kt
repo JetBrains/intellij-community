@@ -67,12 +67,25 @@ class KotlinFirCompletionContributor : CompletionContributor() {
 
 private object KotlinFirCompletionProvider : CompletionProvider<CompletionParameters>() {
 
-    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+    override fun addCompletions(
+        parameters: CompletionParameters,
+        context: ProcessingContext,
+        result: CompletionResultSet,
+    ) {
         @Suppress("NAME_SHADOWING") val parameters = KotlinFirCompletionParametersProvider.provide(parameters)
 
         if (shouldSuppressCompletion(parameters.ijParameters, result.prefixMatcher)) return
         val positionContext = KotlinPositionContextDetector.detect(parameters.ijParameters.position)
-        val (resultController, resultSet) = createResultSet(parameters, positionContext, result)
+
+        val result = result.withRelevanceSorter(
+            parameters = parameters.ijParameters,
+            positionContext = positionContext,
+        ).withPrefixMatcher(
+            parameters = parameters.ijParameters,
+        )
+
+        val policyController = PolicyController(result)
+        val resultSet = PolicyObeyingResultSet(result, policyController)
 
         val basicContext = FirBasicCompletionContext.createFromParameters(parameters, resultSet) ?: return
 
@@ -97,33 +110,38 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
 
             completionFile.recordOriginalKtFile(originalFile)
 
-            Completions.complete(basicContext, positionContext, resultController)
+            Completions.complete(
+                basicContext = basicContext,
+                positionContext = positionContext,
+                policyController = policyController,
+            )
         }
     }
 
-    private fun createResultSet(
-        parameters: KotlinFirCompletionParameters,
-        positionContext: KotlinRawPositionContext,
-        result: CompletionResultSet
-    ): Pair<PolicyController, CompletionResultSet> {
+    private fun CompletionResultSet.withPrefixMatcher(
+        parameters: CompletionParameters,
+    ): CompletionResultSet {
         val prefix = CompletionUtil.findIdentifierPrefix(
-            parameters.ijParameters.position.containingFile,
-            parameters.ijParameters.offset,
+            parameters.position.containingFile,
+            parameters.offset,
             kotlinIdentifierPartPattern(),
-            kotlinIdentifierStartPattern()
+            kotlinIdentifierStartPattern(),
         )
-        val resultWithSorter = result.withRelevanceSorter(createSorter(parameters.ijParameters, positionContext, result)).withPrefixMatcher(prefix)
-        val controller = PolicyController(resultWithSorter)
-        val obeyingResultSet = PolicyObeyingResultSet(resultWithSorter, controller)
-        return controller to obeyingResultSet
+
+        return withPrefixMatcher(prefix)
     }
 
-    private fun createSorter(
+    private fun CompletionResultSet.withRelevanceSorter(
         parameters: CompletionParameters,
         positionContext: KotlinRawPositionContext,
-        result: CompletionResultSet
-    ): CompletionSorter = CompletionSorter.defaultSorter(parameters, result.prefixMatcher)
-        .let { Weighers.addWeighersToCompletionSorter(it, positionContext) }
+    ): CompletionResultSet {
+        val sorter = Weighers.addWeighersToCompletionSorter(
+            sorter = CompletionSorter.defaultSorter(parameters, prefixMatcher),
+            positionContext = positionContext,
+        )
+
+        return withRelevanceSorter(sorter)
+    }
 
     private val AFTER_NUMBER_LITERAL = PsiJavaPatterns.psiElement().afterLeafSkipping(
         PsiJavaPatterns.psiElement().withText(""),
