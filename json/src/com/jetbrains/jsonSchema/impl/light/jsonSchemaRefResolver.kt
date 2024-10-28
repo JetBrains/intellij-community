@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.light
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
@@ -30,6 +32,11 @@ internal data object RemoteSchemaReferenceResolver : JsonSchemaReferenceResolver
     referenceOwner: JsonSchemaObjectBackedByJacksonBase,
     service: JsonSchemaService,
   ): JsonSchemaObject? {
+    // leave tests with default behaviour to not accidentally miss even more bugs
+    if (!ApplicationManager.getApplication().isUnitTestMode && !Registry.`is`("json.schema.object.v2.enable.nested.remote.schema.resolve")) {
+      return null
+    }
+
     val resolvedRemoteSchema = resolveRemoteSchemaByUrl(reference, referenceOwner, service) ?: return null
     return resolvedRemoteSchema
   }
@@ -53,6 +60,7 @@ internal fun resolveLocalSchemaNode(
   return when {
     maybeEmptyReference.startsWith("#/") -> resolveReference(maybeEmptyReference, currentSchemaNode)
     maybeEmptyReference.startsWith("/") -> resolveReference(maybeEmptyReference, currentSchemaNode)
+    maybeEmptyReference == "#" -> currentSchemaNode.rootSchemaObject
     maybeEmptyReference.startsWith("#") -> resolveIdOrDynamicAnchor(maybeEmptyReference, currentSchemaNode)
     else -> null
   }
