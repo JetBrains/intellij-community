@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlin-script-runtime" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-script-runtime:2.0.21-RC">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-script-runtime:2.0.21-488">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.0.21-RC/kotlin-script-runtime-2.0.21-RC.jar">
-          <sha256sum>23f602af8812a962800a3422228176d7a20852da669566e542debdf739c795e4</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.0.21-488/kotlin-script-runtime-2.0.21-488.jar">
+          <sha256sum>3bff3ded240642153bfff4546931503f604574627a2d2b69d2d932587862cb25</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.0.21-RC/kotlin-script-runtime-2.0.21-RC.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.0.21-488/kotlin-script-runtime-2.0.21-488.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.0.21-RC/kotlin-script-runtime-2.0.21-RC-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.0.21-488/kotlin-script-runtime-2.0.21-488-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

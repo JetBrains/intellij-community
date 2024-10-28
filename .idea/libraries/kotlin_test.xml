@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="kotlin-test" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-test:2.0.21-RC">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-test:2.0.21-488">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.0.21-RC/kotlin-test-2.0.21-RC.jar">
-          <sha256sum>9d2b8d690e8038c825af6a6644c7d81476958b298e37770e85229dd73a348ce8</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.0.21-488/kotlin-test-2.0.21-488.jar">
+          <sha256sum>42ee6ff01f0e60aa77bd74c2f7216e7d1c823eaafe6c83002d9ebba7ea667cbb</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -11,11 +11,11 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.0.21-RC/kotlin-test-2.0.21-RC.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.0.21-488/kotlin-test-2.0.21-488.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.0.21-RC/kotlin-test-2.0.21-RC-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.0.21-488/kotlin-test-2.0.21-488-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
