@@ -95,7 +95,7 @@ interface BuildContext : CompilationContext {
   suspend fun getBundledPluginModules(): List<String>
 
   /**
-   * see BuildTasksImpl.buildProvidedModuleList
+   * See [BuildOptions.PROVIDED_MODULES_LIST_STEP]
    */
   var builtinModule: BuiltinModulesFileData?
 
