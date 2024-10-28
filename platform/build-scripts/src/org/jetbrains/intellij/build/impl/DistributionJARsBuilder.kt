@@ -319,13 +319,15 @@ private suspend fun buildOsSpecificBundledPlugins(
   pluginDirs: List<Pair<SupportedDistribution, Path>>,
   moduleOutputPatcher: ModuleOutputPatcher,
 ): Map<SupportedDistribution, List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>> {
+  // we do not support arch-dependent plugins for now, so, use only current arch
+  val currentArch = JvmArchitecture.currentJvmArch
   return spanBuilder("build os-specific bundled plugins")
     .setAttribute("isUpdateFromSources", isUpdateFromSources)
     .setAttribute(AttributeKey.stringArrayKey("pluginDirectoriesToSkip"), context.options.bundledPluginDirectoriesToSkip.toList())
-    .block {
+    .use {
       pluginDirs.mapNotNull { (dist, targetDir) ->
         val (os, arch) = dist
-        if (!context.shouldBuildDistributionForOS(os = os, arch = arch)) {
+        if (arch != currentArch || !context.shouldBuildDistributionForOS(os = os, arch = arch)) {
           return@mapNotNull null
         }
 
@@ -336,7 +338,7 @@ private suspend fun buildOsSpecificBundledPlugins(
           return@mapNotNull null
         }
 
-        dist to async(Dispatchers.IO + CoroutineName("build bundled plugins")) {
+        dist to async(CoroutineName("build bundled plugins")) {
           spanBuilder("build bundled plugins")
             .setAttribute("os", os.osName)
             .setAttribute("arch", arch.name)
@@ -579,6 +581,8 @@ internal suspend fun generateProjectStructureMapping(platformLayout: PlatformLay
   }
 }
 
+private class ScrambleTask(@JvmField val plugin: PluginLayout, @JvmField val pluginDir: Path, @JvmField val targetDir: Path)
+
 internal suspend fun buildPlugins(
   moduleOutputPatcher: ModuleOutputPatcher,
   plugins: Collection<PluginLayout>,
@@ -592,8 +596,6 @@ internal suspend fun buildPlugins(
 ): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
   val scrambleTool = context.proprietaryBuildTools.scrambleTool
   val isScramblingSkipped = context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
-
-  class ScrambleTask(@JvmField val plugin: PluginLayout, @JvmField val pluginDir: Path, @JvmField val targetDir: Path)
 
   val scrambleTasks = mutableListOf<ScrambleTask>()
 
