@@ -80,7 +80,7 @@ internal class GitLinkToCommitResolver(private val project: Project) {
 
     val visibleGraph = visiblePack.visibleGraph
 
-    resolveQueue.queue(Update.create(logId + startFrom) {
+    resolveQueue.queue(Update.create(logId) {
       for (i in rowRange) {
         val commitId = visibleGraph.getRowInfo(i).commit
         val commit = logData.commitMetadataCache.getCachedData(commitId) ?: continue
