@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.ai.GHPRAIReviewExtension
 import org.jetbrains.plugins.github.ai.GHPRAIReviewViewModel
+import org.jetbrains.plugins.github.ai.GHPRAISummaryExtension
+import org.jetbrains.plugins.github.ai.GHPRAISummaryViewModel
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -36,6 +38,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWind
 @ApiStatus.Internal
 interface GHPRViewModelContainer {
   val aiReviewVm: StateFlow<GHPRAIReviewViewModel?>
+  val aiSummaryVm: StateFlow<GHPRAISummaryViewModel?>
 
   val infoVm: GHPRInfoViewModel
   val branchWidgetVm: GHPRBranchWidgetViewModel
@@ -51,7 +54,7 @@ internal class GHPRViewModelContainerImpl(
   dataContext: GHPRDataContext,
   private val projectVm: GHPRToolWindowProjectViewModel,
   private val pullRequestId: GHPRIdentifier,
-  cancelWith: Disposable
+  cancelWith: Disposable,
 ) : GHPRViewModelContainer {
   private val cs = parentCs.childScope(javaClass.name).cancelledWith(cancelWith)
 
@@ -70,6 +73,13 @@ internal class GHPRViewModelContainerImpl(
   override val aiReviewVm: StateFlow<GHPRAIReviewViewModel?> =
     GHPRAIReviewExtension.EP.singleExtensionFlow()
       .mapScoped { it?.provideReviewVm(project, this, dataContext, dataProvider) }
+      .stateIn(cs, SharingStarted.Eagerly, null)
+  override val aiSummaryVm: StateFlow<GHPRAISummaryViewModel?> =
+    GHPRAISummaryExtension.singleFlow
+      .mapScoped { extension ->
+        val cs = this@mapScoped
+        extension?.provideSummaryVm(cs, project, dataContext, dataProvider)
+      }
       .stateIn(cs, SharingStarted.Eagerly, null)
 
   private val branchStateVm by lazy {

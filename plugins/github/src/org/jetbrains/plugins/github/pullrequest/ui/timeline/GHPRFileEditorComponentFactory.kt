@@ -14,6 +14,7 @@ import com.intellij.collaboration.ui.codereview.comment.submitActionIn
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
+import com.intellij.collaboration.ui.util.bindContent
 import com.intellij.collaboration.ui.util.bindTextHtmlIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
@@ -38,6 +39,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.github.ai.GHPRAISummaryExtension
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsFull
@@ -52,11 +54,13 @@ import javax.swing.JPanel
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 
-internal class GHPRFileEditorComponentFactory(private val cs: CoroutineScope,
-                                              private val project: Project,
-                                              private val projectVm: GHPRToolWindowProjectViewModel,
-                                              private val timelineVm: GHPRTimelineViewModel,
-                                              private val initialDetails: GHPRDetailsFull) {
+internal class GHPRFileEditorComponentFactory(
+  private val cs: CoroutineScope,
+  private val project: Project,
+  private val projectVm: GHPRToolWindowProjectViewModel,
+  private val timelineVm: GHPRTimelineViewModel,
+  private val initialDetails: GHPRDetailsFull,
+) {
 
   private val uiDisposable = cs.nestedDisposable()
 
@@ -99,6 +103,18 @@ internal class GHPRFileEditorComponentFactory(private val cs: CoroutineScope,
       border = JBUI.Borders.empty(CodeReviewTimelineUIUtil.VERT_PADDING, 0)
 
       add(header)
+
+      add(Wrapper().apply {
+        val summaryComponent = combine(
+          projectVm.acquireAISummaryViewModel(loadedDetails.value.id, uiDisposable),
+          GHPRAISummaryExtension.singleFlow
+        ) { summaryVm, extension ->
+          summaryVm?.let { extension?.createTimelineComponent(it) }
+        }
+        bindVisibilityIn(cs, summaryComponent.map { it != null })
+        bindContent("${javaClass.name}.summaryComponent.content", summaryComponent)
+      })
+
       add(description)
       add(timeline)
 
@@ -126,7 +142,8 @@ internal class GHPRFileEditorComponentFactory(private val cs: CoroutineScope,
         }
       })
     }
-    UiNotifyConnector.doWhenFirstShown(scrollPane) {
+    UiNotifyConnector.doWhenFirstShown(scrollPane)
+    {
       timelineVm.requestMore()
     }
 

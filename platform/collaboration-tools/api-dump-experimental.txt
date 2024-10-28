@@ -399,14 +399,16 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - f:build(com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil$ComponentType,kotlin.jvm.functions.Function1,javax.swing.JComponent,kotlin.jvm.functions.Function1):javax.swing.JComponent
 - f:buildDynamic(com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil$ComponentType,kotlin.jvm.functions.Function1,javax.swing.JComponent,kotlin.jvm.functions.Function1):javax.swing.JComponent
 - f:getTEXT_CONTENT_WIDTH():I
-- f:withHoverHighlight(javax.swing.JComponent):javax.swing.JComponent
+- f:withHoverHighlight(javax.swing.JComponent,com.intellij.ui.JBColor):javax.swing.JComponent
 *f:com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil$Builder
 - <init>(com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil$ComponentType,kotlin.jvm.functions.Function1,javax.swing.JComponent):V
 - f:build():javax.swing.JComponent
 - f:getHeader():com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil$HeaderComponents
+- f:getHoverHighlight():com.intellij.ui.JBColor
 - f:getIconTooltip():java.lang.String
 - f:getMaxContentWidth():java.lang.Integer
 - f:setHeader(com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil$HeaderComponents):V
+- f:setHoverHighlight(com.intellij.ui.JBColor):V
 - f:setIconTooltip(java.lang.String):V
 - f:setMaxContentWidth(java.lang.Integer):V
 - f:withHeader(javax.swing.JComponent,javax.swing.JComponent):com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil$Builder
