@@ -586,7 +586,19 @@ public final class XDebugSessionImpl implements XDebugSession {
     if (ignoreBreakpoints) {
       setBreakpointsDisabledTemporarily(true);
     }
-    myDebugProcess.startStepOver(doResume());
+
+    var currentStackFrame = getCurrentStackFrame();
+    var suspendContext = doResume();
+    if (myMixedModeExtension != null) {
+      var mixedModeSuspendContext = Objects.requireNonNull((XMixedModeSuspendContext)suspendContext);
+      var suspendContextForStep = myMixedModeExtension.isLowStackFrame(Objects.requireNonNull(currentStackFrame))
+                                  ? mixedModeSuspendContext.getLowLevelDebugSuspendContext()
+                                  : mixedModeSuspendContext.getHighLevelDebugSuspendContext();
+      myMixedModeExtension.stepOver(suspendContextForStep);
+      return;
+    }
+
+    myDebugProcess.startStepOver(suspendContext);
   }
 
   @Override
