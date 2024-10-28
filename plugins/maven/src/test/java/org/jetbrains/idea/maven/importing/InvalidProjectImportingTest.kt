@@ -261,9 +261,15 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
     val root = rootProjects[0]
     val problems = root.problems
-    UsefulTestCase.assertSize(2, problems)
-    assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains("Could not find artifact test:parent:pom:1"))
-    assertTrue(problems[1]!!.description, problems[1]!!.description == "Module 'foo' not found")
+    forMaven3 {
+      UsefulTestCase.assertSize(2, problems)
+      assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains("Could not find artifact test:parent:pom:1"))
+      assertTrue(problems[1]!!.description, problems[1]!!.description == "Module 'foo' not found")
+    }
+    forMaven4 {
+      UsefulTestCase.assertSize(1, problems)
+      assertTrue(problems[0]!!.description, problems[0]!!.description == "Module 'foo' not found")
+    }
   }
 
   @Test
@@ -681,8 +687,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     forMaven4 {
       assertTrue(problems.isNotEmpty())
       assertTrue(
-        problems[0]!!.description!!.contains("Plugin xxx:yyy:1 or one of its dependencies could not be resolved")
-        || problems[0]!!.description!!.contains("xxx:yyy:jar:1 was not found")
+        problems[0]!!.description!!.contains("Could not find artifact xxx:yyy:jar:1")
       )
     }
 
@@ -888,8 +893,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     forMaven4 {
       UsefulTestCase.assertSize(1, problems)
       assertTrue(
-        problems[0]!!.description!!.contains("Plugin xxx:yyy:1 or one of its dependencies could not be resolved")
-        || problems[0]!!.description!!.contains("xxx:yyy:jar:1 was not found")
+        problems[0]!!.description!!.contains("Could not find artifact xxx:yyy:jar:1")
       )
     }
   }
