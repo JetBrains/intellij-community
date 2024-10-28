@@ -3271,11 +3271,11 @@ public class StringUtil {
     return StringUtilRt.rankForFileSize(fileSize);
   }
 
-  public static List<Integer> findAllIndexesOfSymbol(CharSequence charSequence, char character) {
+  public static @NotNull List<Integer> findAllIndexesOfSymbol(@NotNull CharSequence charSequence, char character) {
     return findAllIndexesOfSymbol(charSequence, character, 0 , false);
   }
   
-  public static List<Integer> findAllIndexesOfSymbol(CharSequence charSequence, char character, int startIndex, boolean ignoreCase) {
+  public static @NotNull List<Integer> findAllIndexesOfSymbol(@NotNull CharSequence charSequence, char character, int startIndex, boolean ignoreCase) {
     List<Integer> result = new ArrayList<>();
     int firstIndex = Math.max(startIndex, 0);
     int lastIndex = charSequence.length() - 1;
