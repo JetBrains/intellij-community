@@ -90,6 +90,7 @@ import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -1717,7 +1718,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals(expected, Arrays.toString(myEditor.getFoldingModel().getAllFoldRegions()));
   }
 
-  static void waitForDaemon(@NotNull Project project, @NotNull Document document) {
+  // return elapsed time in ms
+  static long waitForDaemon(@NotNull Project project, @NotNull Document document) {
     ThreadingAssertions.assertEventDispatchThread();
     long start = System.currentTimeMillis();
     long deadline = start + 60_000;
@@ -1734,6 +1736,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       }
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
+    return System.currentTimeMillis()-start;
   }
 
   static boolean daemonIsWorkingOrPending(@NotNull Project project, @NotNull Document document) {
@@ -2106,7 +2109,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       type(" // TS");
       assertEmpty(doHighlighting(HighlightSeverity.ERROR));
       assertEmpty(getErrorsFromMarkup(markupModel));
-      
+
       backspace();backspace();backspace();backspace();backspace();backspace();
       assertEmpty(doHighlighting(HighlightSeverity.ERROR));
       assertEmpty(getErrorsFromMarkup(markupModel));
@@ -2433,5 +2436,68 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         .filter(Objects::nonNull)
         .filter(info -> MSG.equals(info.getDescription())).toList();
     }
+  }
+
+  public void testDaemonRestartsEventWhenCanceledDuringRunUpdateMethodCallIsRunning() {
+    configureByText(JavaFileType.INSTANCE, """
+      class AClass<caret> {
+    
+      }
+    """);
+    Document document = getDocument(getFile());
+    assertEmpty(highlightErrors());
+    runWithReparseDelay(0, () -> {
+      // warmup highlighting first, calibrating before that would make little sense
+      for (int i = 0; i < 10; i++) {
+        type("x");
+        waitForDaemon(getProject(), document);
+        backspace();
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      }
+      long avgElapsedTime = 0;
+      int CALIBRATE_N = 100;
+      // compute time the highlighting takes to highlight this file completely
+      for (int i = 0; i < CALIBRATE_N; i++) {
+        type("x");
+        long elapsed = waitForDaemon(getProject(), document);
+        avgElapsedTime += elapsed;
+        backspace();
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      }
+
+      avgElapsedTime /= CALIBRATE_N; // compute avg time the daemon takes to highlight this sample. then we use that time to delay in hope that DAI.runUpdate() is about to run
+      LOG.debug("avgElapsedTime = " + avgElapsedTime);
+
+      Random random = new Random();
+      for (int i = 0; i < 1000; i++) {
+        LOG.debug("i = " + i);
+        type("x");
+        long delay = random.nextLong(avgElapsedTime+1);
+        Future<?> future = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+          myDaemonCodeAnalyzer.restart(getTestName(false));
+          //String edtTrace = ThreadDumper.dumpEdtStackTrace(ThreadDumper.getThreadInfos());
+          //System.out.println(edtTrace+"\n  delay ="+delay+"  --------------------------------");
+        }, delay, TimeUnit.MILLISECONDS);
+        while (!future.isDone()) {
+          UIUtil.dispatchAllInvocationEvents();
+        }
+        try {
+          future.get();
+        }
+        catch (Exception e) {
+          throw new AssertionError(e);
+        }
+
+        long deadline = System.currentTimeMillis() + 60_000;
+        while (!daemonIsWorkingOrPending(getProject(), document) && !myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile)) {
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+          if (System.currentTimeMillis() > deadline) {
+            fail("Too long waiting for daemon to start");
+          }
+        }
+        backspace();
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      }
+    });
   }
 }

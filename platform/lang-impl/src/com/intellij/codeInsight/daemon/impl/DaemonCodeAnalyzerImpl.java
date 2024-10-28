@@ -107,7 +107,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   private final DaemonListeners myListeners;
   private PsiDocumentManager psiDocumentManager;
   private FileEditorManager fileEditorManager;
-  private final Map<FileEditor, DaemonProgressIndicator> myUpdateProgress = new ConcurrentHashMap<>(); // modified under `this` lock
+  private final Map<FileEditor, DaemonProgressIndicator> myUpdateProgress = new HashMap<>(); // guarded by `this` lock
 
   private final UpdateRunnable myUpdateRunnable;
   private volatile @NotNull Future<?> myUpdateRunnableFuture = CompletableFuture.completedFuture(null);
@@ -899,10 +899,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
   }
 
-  synchronized void stopMyProcess(@NotNull DaemonProgressIndicator indicator, boolean toRestartAlarm, @Nullable Throwable cause, @NotNull @NonNls String reason) {
-    cancelIndicator(indicator, toRestartAlarm, cause, reason);
-    boolean restart = toRestartAlarm && !myDisposed;
-    if (restart) {
+  synchronized void stopAndRestartMyProcess(@NotNull FileEditor fileEditor,
+                                            @NotNull DaemonProgressIndicator indicator,
+                                            @Nullable Throwable cause,
+                                            @NotNull @NonNls String reason) {
+    cancelIndicator(fileEditor, indicator, true, cause, reason);
+    if (!myDisposed) {
       scheduleIfNotRunning();
     }
   }
@@ -929,14 +931,22 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   // return true if the progress really was canceled
   synchronized void cancelAllUpdateProgresses(boolean toRestartAlarm, @NotNull @NonNls String reason) {
     if (myDisposed || myProject.isDisposed() || myProject.getMessageBus().isDisposed()) return;
-    for (DaemonProgressIndicator updateProgress : myUpdateProgress.values()) {
-      cancelIndicator(updateProgress, toRestartAlarm, null, reason);
+    for (Map.Entry<FileEditor, DaemonProgressIndicator> entry : new ArrayList<>(myUpdateProgress.entrySet())) {
+      FileEditor fileEditor = entry.getKey();
+      DaemonProgressIndicator updateProgress = entry.getValue();
+      cancelIndicator(fileEditor, updateProgress, toRestartAlarm, null, reason);
     }
+    myUpdateProgress.clear();
     myPassExecutorService.cancelAll(false, reason);
     daemonCancelEventCount.incrementAndGet();
   }
 
-  private static void cancelIndicator(@NotNull DaemonProgressIndicator indicator, boolean toRestartAlarm, @Nullable Throwable cause, @NonNls @NotNull String reason) {
+  // must be called with `this` lock
+  private void cancelIndicator(@NotNull FileEditor fileEditor,
+                               @NotNull DaemonProgressIndicator indicator,
+                               boolean toRestartAlarm,
+                               @Nullable Throwable cause,
+                               @NonNls @NotNull String reason) {
     if (!indicator.isCanceled()) {
       PassExecutorService.log(indicator, null, "Cancel:", reason, toRestartAlarm);
       if (cause == null) {
@@ -946,6 +956,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         indicator.cancel(cause, reason);
       }
     }
+    myUpdateProgress.remove(fileEditor, indicator);
   }
 
   static boolean processHighlightsNearOffset(@NotNull Document document,
@@ -1206,6 +1217,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
     boolean submitted = false;
     ProcessCanceledException pce = null;
+    // have to store created indicators because myUpdateProgress removes canceled indicator immediately
+    List<ProgressIndicator> createdIndicators = new ArrayList<>();
     try {
       for (FileEditor fileEditor : activeEditors) {
         if (fileEditor instanceof TextEditor textEditor && !textEditor.isEditorLoaded()) {
@@ -1221,6 +1234,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           PsiFile psiFile = virtualFile == null ? null : findFileToHighlight(myProject, virtualFile);
           HighlightingSession session = psiFile == null ? null : queuePassesCreation(fileEditor, virtualFile, ArrayUtil.EMPTY_INT_ARRAY);
           submitted |= session != null;
+          if (session != null) {
+            createdIndicators.add(session.getProgressIndicator());
+          }
           if (PassExecutorService.LOG.isDebugEnabled()) {
             PassExecutorService.log(session==null?null:session.getProgressIndicator(), null, "submit psiFile:", psiFile + " (" + virtualFile + "); submitted=", submitted);
           }
@@ -1231,14 +1247,15 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       pce = e;
     }
     finally {
-      if (!submitted) {
+      boolean wasCanceledDuringSubmit = ContainerUtil.exists(createdIndicators, p -> p.isCanceled());
+      if (!submitted || wasCanceledDuringSubmit) {
         // happens e.g., when we are trying to open a directory and there's a FileEditor supporting this
         // invokeLater is required because we can't stop daemon from inside UpdateRunnable, since its future hasn't been scheduled yet
         // or when PCE happened in queuePassesCreation
-
-        ProcessCanceledException finalPce = pce;
-        ApplicationManager.getApplication().invokeLater(() ->
-        stopProcess(true, "Couldn't create session for "+ activeEditors+(finalPce==null?"":"; PCE was thrown: "+finalPce)), __->myDisposed);
+        String reason = "Couldn't create session for " + activeEditors
+                        + (pce == null ? "" : "; PCE was thrown: " + pce)
+                        + (wasCanceledDuringSubmit ? "; was canceled during queuePassesCreation(): "+getUpdateProgress() : "");
+        ApplicationManager.getApplication().invokeLater(() -> stopProcess(true, reason), __->myDisposed);
       }
     }
   }
@@ -1288,7 +1305,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       if (PassExecutorService.LOG.isDebugEnabled()) {
         PassExecutorService.log(progress, null, reason);
       }
-      stopMyProcess(progress, true, null, reason);
+      stopAndRestartMyProcess(fileEditor, progress, null, reason);
       return null;
     }
     EditorColorsScheme scheme = editor == null ? null : editor.getColorsScheme();
@@ -1304,7 +1321,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
             task -> ApplicationManager.getApplication().invokeLater(() -> ConcurrencyUtil.manifestExceptionsIn(task)));
     }
     if (PassExecutorService.LOG.isDebugEnabled()) {
-      PassExecutorService.log(progress, null, "queuePassesCreation completed. session=",session);
+      PassExecutorService.log(progress, null, "queuePassesCreation completed. session=", session);
     }
     return session;
   }
@@ -1346,12 +1363,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
               + (fileEditor.isValid() ? "" : " file editor "+fileEditor+" is invalid")
               + (psiFile.isValid() ? "" : " psiFile "+psiFile+" is invalid")
               ;
-            stopMyProcess(progress, true, null, reason);
+            stopAndRestartMyProcess(fileEditor, progress, null, reason);
             return HighlightingPass.EMPTY_ARRAY;
           }
           if (session.isCanceled()) {
             // editor or something was changed between commit document notification in EDT and this point in the FJP thread
-            stopMyProcess(progress, true, null, session + " is canceled");
+            stopAndRestartMyProcess(fileEditor, progress, null, session + " is canceled");
             throw new ProcessCanceledException();
           }
           myListeners.flushUpdateFileStatusQueue(); // finish updating FileStatusMap on PSI changes
@@ -1374,7 +1391,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         boolean hasPasses = passes.length != 0;
         if (!hasPasses) {
           // will be re-scheduled by HeavyLatch or some other listener in DaemonListeners
-          stopMyProcess(progress, true, null, " no passes created");
+          stopAndRestartMyProcess(fileEditor, progress, null, " no passes created");
           return;
         }
         // synchronize on TextEditorHighlightingPassRegistrarImpl instance to avoid concurrent modification of TextEditorHighlightingPassRegistrarImpl.nextAvailableId
@@ -1386,13 +1403,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
     catch (ProcessCanceledException e) {
       String reason = LOG.isDebugEnabled() ? ExceptionUtil.getThrowableText(e) : "PCE";
-      stopMyProcess(progress, true, e.getCause(), reason);
+      stopAndRestartMyProcess(fileEditor, progress, e.getCause(), reason);
       LOG.debug(e);
     }
     catch (Throwable e) {
       // make it manifestable in tests
       String reason = LOG.isDebugEnabled() ? ExceptionUtil.getThrowableText(e) : "PCE";
-      stopMyProcess(progress, true, e, reason);
+      stopAndRestartMyProcess(fileEditor, progress, e, reason);
       throw e;
     }
   }
