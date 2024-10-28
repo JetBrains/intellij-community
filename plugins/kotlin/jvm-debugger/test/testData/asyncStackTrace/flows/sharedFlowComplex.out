@@ -1,13 +1,18 @@
-LineBreakpoint created at sharedFlowComplex.kt:26
+LineBreakpoint created at sharedFlowComplex.kt:25
 Run Java
 Connected to the target VM
-sharedFlowComplex.kt:26
+sharedFlowComplex.kt:25
 vvv stack trace vvv
   emit
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
--- Async stack trace --
+  main
+  main
+^^^ stack trace ^^^
+sharedFlowComplex.kt:25
+vvv stack trace vvv
+  emit
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
@@ -19,13 +24,9 @@ vvv stack trace vvv
   main
   main
 ^^^ stack trace ^^^
-sharedFlowComplex.kt:26
+sharedFlowComplex.kt:25
 vvv stack trace vvv
   emit
-  <hidden frames>
--- Async stack trace --
-  <hidden frames>
--- Async stack trace --
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
@@ -37,13 +38,9 @@ vvv stack trace vvv
   main
   main
 ^^^ stack trace ^^^
-sharedFlowComplex.kt:26
+sharedFlowComplex.kt:25
 vvv stack trace vvv
   emit
-  <hidden frames>
--- Async stack trace --
-  <hidden frames>
--- Async stack trace --
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
@@ -55,13 +52,9 @@ vvv stack trace vvv
   main
   main
 ^^^ stack trace ^^^
-sharedFlowComplex.kt:26
+sharedFlowComplex.kt:25
 vvv stack trace vvv
   emit
-  <hidden frames>
--- Async stack trace --
-  <hidden frames>
--- Async stack trace --
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
@@ -73,13 +66,9 @@ vvv stack trace vvv
   main
   main
 ^^^ stack trace ^^^
-sharedFlowComplex.kt:26
+sharedFlowComplex.kt:25
 vvv stack trace vvv
   emit
-  <hidden frames>
--- Async stack trace --
-  <hidden frames>
--- Async stack trace --
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
@@ -91,13 +80,9 @@ vvv stack trace vvv
   main
   main
 ^^^ stack trace ^^^
-sharedFlowComplex.kt:26
+sharedFlowComplex.kt:25
 vvv stack trace vvv
   emit
-  <hidden frames>
--- Async stack trace --
-  <hidden frames>
--- Async stack trace --
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
@@ -109,13 +94,9 @@ vvv stack trace vvv
   main
   main
 ^^^ stack trace ^^^
-sharedFlowComplex.kt:26
+sharedFlowComplex.kt:25
 vvv stack trace vvv
   emit
-  <hidden frames>
--- Async stack trace --
-  <hidden frames>
--- Async stack trace --
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
@@ -127,13 +108,9 @@ vvv stack trace vvv
   main
   main
 ^^^ stack trace ^^^
-sharedFlowComplex.kt:26
+sharedFlowComplex.kt:25
 vvv stack trace vvv
   emit
-  <hidden frames>
--- Async stack trace --
-  <hidden frames>
--- Async stack trace --
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
@@ -145,13 +122,9 @@ vvv stack trace vvv
   main
   main
 ^^^ stack trace ^^^
-sharedFlowComplex.kt:26
+sharedFlowComplex.kt:25
 vvv stack trace vvv
   emit
-  <hidden frames>
--- Async stack trace --
-  <hidden frames>
--- Async stack trace --
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
@@ -163,13 +136,9 @@ vvv stack trace vvv
   main
   main
 ^^^ stack trace ^^^
-sharedFlowComplex.kt:26
+sharedFlowComplex.kt:25
 vvv stack trace vvv
   emit
-  <hidden frames>
--- Async stack trace --
-  <hidden frames>
--- Async stack trace --
   <hidden frames>
 -- Async stack trace --
   <hidden frames>

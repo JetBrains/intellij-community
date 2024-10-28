@@ -1,13 +1,29 @@
-LineBreakpoint created at stateFlowComplex.kt:26
+LineBreakpoint created at stateFlowComplex.kt:25
 Run Java
 Connected to the target VM
-stateFlowComplex.kt:26
+stateFlowComplex.kt:25
+vvv stack trace vvv
+  emit
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  main
+  main
+^^^ stack trace ^^^
+stateFlowComplex.kt:25
 vvv stack trace vvv
   emit
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
 -- Async stack trace --
+  <hidden frames>
+  ~~~!!! recognizableFrameWithEmitInAsyncStackTraceConstructor !!!~~~
+  <clinit>
+^^^ stack trace ^^^
+stateFlowComplex.kt:25
+vvv stack trace vvv
+  emit
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
@@ -19,13 +35,9 @@ vvv stack trace vvv
   main
   main
 ^^^ stack trace ^^^
-stateFlowComplex.kt:26
+stateFlowComplex.kt:25
 vvv stack trace vvv
   emit
-  <hidden frames>
--- Async stack trace --
-  <hidden frames>
--- Async stack trace --
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
@@ -37,13 +49,9 @@ vvv stack trace vvv
   main
   main
 ^^^ stack trace ^^^
-stateFlowComplex.kt:26
+stateFlowComplex.kt:25
 vvv stack trace vvv
   emit
-  <hidden frames>
--- Async stack trace --
-  <hidden frames>
--- Async stack trace --
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
@@ -55,13 +63,9 @@ vvv stack trace vvv
   main
   main
 ^^^ stack trace ^^^
-stateFlowComplex.kt:26
+stateFlowComplex.kt:25
 vvv stack trace vvv
   emit
-  <hidden frames>
--- Async stack trace --
-  <hidden frames>
--- Async stack trace --
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
@@ -73,13 +77,9 @@ vvv stack trace vvv
   main
   main
 ^^^ stack trace ^^^
-stateFlowComplex.kt:26
+stateFlowComplex.kt:25
 vvv stack trace vvv
   emit
-  <hidden frames>
--- Async stack trace --
-  <hidden frames>
--- Async stack trace --
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
@@ -91,13 +91,9 @@ vvv stack trace vvv
   main
   main
 ^^^ stack trace ^^^
-stateFlowComplex.kt:26
+stateFlowComplex.kt:25
 vvv stack trace vvv
   emit
-  <hidden frames>
--- Async stack trace --
-  <hidden frames>
--- Async stack trace --
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
@@ -109,13 +105,9 @@ vvv stack trace vvv
   main
   main
 ^^^ stack trace ^^^
-stateFlowComplex.kt:26
+stateFlowComplex.kt:25
 vvv stack trace vvv
   emit
-  <hidden frames>
--- Async stack trace --
-  <hidden frames>
--- Async stack trace --
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
@@ -127,13 +119,9 @@ vvv stack trace vvv
   main
   main
 ^^^ stack trace ^^^
-stateFlowComplex.kt:26
+stateFlowComplex.kt:25
 vvv stack trace vvv
   emit
-  <hidden frames>
--- Async stack trace --
-  <hidden frames>
--- Async stack trace --
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
@@ -145,13 +133,9 @@ vvv stack trace vvv
   main
   main
 ^^^ stack trace ^^^
-stateFlowComplex.kt:26
+stateFlowComplex.kt:25
 vvv stack trace vvv
   emit
-  <hidden frames>
--- Async stack trace --
-  <hidden frames>
--- Async stack trace --
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
@@ -163,13 +147,9 @@ vvv stack trace vvv
   main
   main
 ^^^ stack trace ^^^
-stateFlowComplex.kt:26
+stateFlowComplex.kt:25
 vvv stack trace vvv
   emit
-  <hidden frames>
--- Async stack trace --
-  <hidden frames>
--- Async stack trace --
   <hidden frames>
 -- Async stack trace --
   <hidden frames>

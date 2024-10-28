@@ -20,7 +20,6 @@ fun main(): Unit = runBlocking {
             .filter { it % 2 == 0 }
             .scan(0) { accumulator, value -> accumulator + value }
             .buffer(2)
-            .debounce(50.milliseconds)
             .collect {
                 //Breakpoint!
                 println(it)
@@ -28,6 +27,7 @@ fun main(): Unit = runBlocking {
     }
 
     launch {
+        delay(100)
         `~~~!!! recognizableFrameWithEmitInAsyncStackTrace 1 !!!~~~`(flow, 1)
         delay(100)
         `~~~!!! recognizableFrameWithEmitInAsyncStackTrace 2 !!!~~~`(flow, 2)
