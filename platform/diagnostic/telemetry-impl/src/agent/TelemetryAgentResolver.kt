@@ -4,6 +4,7 @@ package com.intellij.platform.diagnostic.telemetry.impl.agent
 import com.google.common.hash.Hashing
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -14,6 +15,7 @@ import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 
+@ApiStatus.Internal
 object TelemetryAgentResolver {
 
   private val LOGGER = logger<TelemetryAgentResolver>()
