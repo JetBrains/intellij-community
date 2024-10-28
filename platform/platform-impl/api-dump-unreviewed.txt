@@ -14040,6 +14040,8 @@ a:com.intellij.ui.GroupedComboBoxRenderer
 - p:getBackground():java.awt.Color
 - p:getCaption(javax.swing.JList,java.lang.Object):java.lang.String
 - f:getComponent():javax.swing.JComponent
+- p:getDelegateAccessibleDescription():java.lang.String
+- p:getDelegateAccessibleName():java.lang.String
 - p:getForeground():java.awt.Color
 - getIcon(java.lang.Object):javax.swing.Icon
 - getListCellRendererComponent(javax.swing.JList,java.lang.Object,I,Z,Z):java.awt.Component

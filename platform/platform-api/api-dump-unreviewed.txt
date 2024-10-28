@@ -6323,6 +6323,8 @@ a:com.intellij.ui.GroupedElementsRenderer
 - getAccessibleContext():javax.accessibility.AccessibleContext
 - pa:getBackground():java.awt.Color
 - p:getDefaultItemComponentBorder():javax.swing.border.Border
+- p:getDelegateAccessibleDescription():java.lang.String
+- p:getDelegateAccessibleName():java.lang.String
 - pa:getForeground():java.awt.Color
 - getItemComponent():javax.swing.JComponent
 - pa:getSelectionBackground():java.awt.Color
@@ -6347,6 +6349,7 @@ c:com.intellij.ui.GroupedElementsRenderer$MyComponent
 - com.intellij.ui.components.panels.OpaquePanel
 - com.intellij.internal.inspector.UiInspectorContextProvider
 - <init>(com.intellij.ui.GroupedElementsRenderer):V
+- getAccessibleContext():javax.accessibility.AccessibleContext
 - getPreferredSize():java.awt.Dimension
 - getUiInspectorContext():java.util.List
 - setPreferredWidth(I):V
