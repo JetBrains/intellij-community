@@ -9,9 +9,10 @@ import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.editor.impl.findEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.platform.kernel.withKernel
+import com.intellij.platform.kernel.backend.delete
+import com.intellij.platform.kernel.backend.findValueEntity
+import com.intellij.platform.kernel.backend.registerValueEntity
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.project.asEntity
 import com.intellij.platform.project.findProject
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.xdebugger.XDebuggerManager
@@ -22,10 +23,7 @@ import com.intellij.xdebugger.impl.evaluate.quick.XValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.RemoteValueHintId
-import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorId
 import com.intellij.xdebugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi
-import com.jetbrains.rhizomedb.entity
-import fleet.kernel.change
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -119,15 +117,8 @@ internal class BackendXDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupH
         val expressionInfo = getExpressionInfo(evaluator, project, hintType, editor, offset) ?: return@withContext null
         XValueHint(project, editor, point, hintType, expressionInfo, evaluator, session, false)
       }
-      val hintEntity = withKernel {
-        change {
-          LocalValueHintEntity.new {
-            it[LocalValueHintEntity.Project] = project.asEntity()
-            it[LocalValueHintEntity.Hint] = hint
-          }
-        }
-      }
-      RemoteValueHintId(hintEntity.eid)
+      val hintEntity = registerValueEntity(hint)
+      RemoteValueHintId(hintEntity.id)
     }
   }
 
@@ -150,9 +141,7 @@ internal class BackendXDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupH
   }
 
   override suspend fun showHint(hintId: RemoteValueHintId): Flow<Unit> {
-    val hint = withKernel {
-      (entity(hintId.eid) as? LocalValueHintEntity)?.hint
-    } ?: return emptyFlow()
+    val hint = hintId.eid.findValueEntity<AbstractValueHint>()?.value ?: return emptyFlow()
 
     return callbackFlow {
       withContext(Dispatchers.EDT) {
@@ -166,17 +155,17 @@ internal class BackendXDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupH
   }
 
   override suspend fun removeHint(hintId: RemoteValueHintId, force: Boolean) {
-    withKernel {
-      val hintEntity = entity(hintId.eid) as? LocalValueHintEntity ?: return@withKernel
-      val hint = hintEntity.hint
+    val hintEntity = hintId.eid.findValueEntity<AbstractValueHint>() ?: return
+    val hint = hintEntity.value
+    try {
       if (force) {
         withContext(Dispatchers.EDT) {
           hint.hideHint()
         }
       }
-      change {
-        hintEntity.delete()
-      }
+    }
+    finally {
+      hintEntity.delete()
     }
   }
 }

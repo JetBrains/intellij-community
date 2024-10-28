@@ -3,39 +3,30 @@ package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXDebuggerEvaluator
-import com.intellij.platform.util.coroutines.childScope
-import com.intellij.xdebugger.impl.XDebuggerActiveSessionEntity
-import fleet.kernel.rete.asQuery
-import fleet.kernel.rete.get
-import fleet.kernel.rete.tokensFlow
+import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
+import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.*
 
 internal class FrontendXDebuggerSession(
   private val project: Project,
   private val cs: CoroutineScope,
-  sessionEntity: XDebuggerActiveSessionEntity,
+  sessionId: XDebugSessionId,
 ) {
-  private var evaluatorCoroutineScope: CoroutineScope? = null
-
   val evaluator: StateFlow<FrontendXDebuggerEvaluator?> =
-    sessionEntity.asQuery()[XDebuggerActiveSessionEntity.EvaluatorId].tokensFlow()
-      .map { token -> token.value.takeIf { token.added } }
-      .map { evaluatorId ->
-        evaluatorCoroutineScope?.cancel()
-        if (evaluatorId != null) {
-          val newEvaluatorCoroutineScope = cs.childScope("FrontendXDebuggerEvaluator")
-          evaluatorCoroutineScope = newEvaluatorCoroutineScope
-          FrontendXDebuggerEvaluator(project, newEvaluatorCoroutineScope, evaluatorId)
+    channelFlow {
+      XDebugSessionApi.getInstance().currentEvaluator(sessionId).collectLatest { evaluatorId ->
+        if (evaluatorId == null) {
+          send(null)
+          return@collectLatest
         }
-        else {
-          evaluatorCoroutineScope = null
-          null
+        coroutineScope {
+          val evaluator = FrontendXDebuggerEvaluator(project, this, evaluatorId)
+          send(evaluator)
+          awaitCancellation()
         }
       }
-      .stateIn(cs, SharingStarted.Eagerly, null)
+    }.stateIn(cs, SharingStarted.Eagerly, null)
 }

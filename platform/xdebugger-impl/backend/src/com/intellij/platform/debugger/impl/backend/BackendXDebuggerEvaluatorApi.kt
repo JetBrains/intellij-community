@@ -4,30 +4,30 @@ package com.intellij.platform.debugger.impl.backend
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.kernel.withKernel
-import com.intellij.platform.project.asProject
+import com.intellij.platform.kernel.backend.cascadeDeleteBy
+import com.intellij.platform.kernel.backend.delete
+import com.intellij.platform.kernel.backend.findValueEntity
+import com.intellij.platform.kernel.backend.registerValueEntity
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.XDebuggerBundle
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator.XEvaluationCallback
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil.XValuePresentationTextExtractor
-import com.jetbrains.rhizomedb.entity
-import fleet.kernel.change
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.emptyFlow
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
 internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
-  override suspend fun evaluate(evaluatorId: XDebuggerEvaluatorId, expression: String): Deferred<XEvaluationResult> = withKernel {
-    val evaluatorEntity = entity(evaluatorId.eid) as? LocalXDebuggerSessionEvaluatorEntity
-                          ?: return@withKernel CompletableDeferred(XEvaluationResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.no.evaluator.id")))
-    val evaluator = evaluatorEntity.evaluator
+  override suspend fun evaluate(evaluatorId: XDebuggerEvaluatorId, expression: String): Deferred<XEvaluationResult> {
+    val evaluator = evaluatorId.eid.findValueEntity<XDebuggerEvaluator>()?.value
+                    ?: return CompletableDeferred(XEvaluationResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.no.evaluator.id")))
     val evaluationResult = CompletableDeferred<XValue>()
 
     withContext(Dispatchers.EDT) {
@@ -42,44 +42,32 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
         }
       }, null)
     }
-    val project = evaluatorEntity.sessionEntity.projectEntity.asProject()
-    val evaluationCoroutineScope = EvaluationCoroutineScopeProvider.getInstance(project).cs
+    val evaluationCoroutineScope = EvaluationCoroutineScopeProvider.getInstance().cs
 
-    evaluationCoroutineScope.async(Dispatchers.EDT) {
+    return evaluationCoroutineScope.async(Dispatchers.EDT) {
       val xValue = try {
         evaluationResult.await()
       }
       catch (e: EvaluationException) {
         return@async XEvaluationResult.EvaluationError(e.errorMessage)
       }
-      val xValueEntity = withKernel {
-        change {
-          LocalHintXValueEntity.new {
-            it[LocalHintXValueEntity.Project] = evaluatorEntity.sessionEntity.projectEntity
-            it[LocalHintXValueEntity.XValue] = xValue
-          }
-        }
-      }
-      XEvaluationResult.Evaluated(XValueId(xValueEntity.eid))
+      val xValueEntity = registerValueEntity(xValue)
+      XEvaluationResult.Evaluated(XValueId(xValueEntity.id))
     }
   }
 
   override suspend fun disposeXValue(xValueId: XValueId) {
-    withKernel {
-      val xValueEntity = entity(xValueId.eid) as? LocalHintXValueEntity ?: return@withKernel
-      change {
-        xValueEntity.delete()
-      }
-    }
+    val xValueEntity = xValueId.eid.findValueEntity<XValue>() ?: return
+    xValueEntity.delete()
   }
 
   private class EvaluationException(val errorMessage: @NlsContexts.DialogMessage String) : Exception(errorMessage)
 
-  override suspend fun computePresentation(xValueId: XValueId): Flow<XValuePresentation>? = withKernel {
-    val hintEntity = entity(xValueId.eid) as? LocalHintXValueEntity ?: return@withKernel null
+  override suspend fun computePresentation(xValueId: XValueId): Flow<XValuePresentation>? {
+    val xValueEntity = xValueId.eid.findValueEntity<XValue>() ?: return emptyFlow()
     val presentations = Channel<XValuePresentation>(capacity = Int.MAX_VALUE)
-    val xValue = hintEntity.xValue
-    channelFlow {
+    val xValue = xValueEntity.value
+    return channelFlow {
       var isObsolete = false
 
       val valueNode = object : XValueNode {
@@ -121,11 +109,11 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
     }
   }
 
-  override suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent>? = withKernel {
-    val xValueEntity = entity(xValueId.eid) as? LocalHintXValueEntity ?: return@withKernel null
+  override suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent>? {
+    val xValueEntity = xValueId.eid.findValueEntity<XValue>() ?: return emptyFlow()
     val computeEvents = Channel<XValueComputeChildrenEvent>(capacity = Int.MAX_VALUE)
-    val xValue = xValueEntity.xValue
-    channelFlow {
+    val xValue = xValueEntity.value
+    return channelFlow {
       var isObsolete = false
 
       val xCompositeNode = object : XCompositeNode {
@@ -137,20 +125,12 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
           val names = (0 until children.size()).map { children.getName(it) }
           val childrenXValues = (0 until children.size()).map { children.getValue(it) }
           launch {
-            val childrenXValueEntities = withKernel {
-              val projectEntity = xValueEntity.projectEntity
-              childrenXValues.map { childXValue ->
-                change {
-                  // TODO: leaked XValue entity, it is never disposed
-                  LocalHintXValueEntity.new {
-                    it[LocalHintXValueEntity.Project] = projectEntity
-                    it[LocalHintXValueEntity.XValue] = childXValue
-                    it[LocalHintXValueEntity.ParentXValue] = xValueEntity
-                  }
-                }
+            val childrenXValueEntities = childrenXValues.map { childXValue ->
+              registerValueEntity(childXValue).apply {
+                cascadeDeleteBy(xValueEntity)
               }
             }
-            val childrenXValueIds = childrenXValueEntities.map { XValueId(it.eid) }
+            val childrenXValueIds = childrenXValueEntities.map { XValueId(it.id) }
             computeEvents.trySend(XValueComputeChildrenEvent.AddChildren(names, childrenXValueIds, last))
           }
         }
@@ -194,10 +174,10 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
   }
 }
 
-@Service(Service.Level.PROJECT)
-private class EvaluationCoroutineScopeProvider(project: Project, val cs: CoroutineScope) {
+@Service(Service.Level.APP)
+private class EvaluationCoroutineScopeProvider(val cs: CoroutineScope) {
 
   companion object {
-    fun getInstance(project: Project): EvaluationCoroutineScopeProvider = project.service()
+    fun getInstance(): EvaluationCoroutineScopeProvider = service()
   }
 }

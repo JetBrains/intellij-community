@@ -3,6 +3,8 @@ package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorApi
+import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
+import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
 import com.intellij.xdebugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi
 import fleet.rpc.remoteApiDescriptor
 
@@ -13,6 +15,12 @@ private class BackendXDebuggerRemoteApiProviders : RemoteApiProvider {
     }
     remoteApi(remoteApiDescriptor<XDebuggerEvaluatorApi>()) {
       BackendXDebuggerEvaluatorApi()
+    }
+    remoteApi(remoteApiDescriptor<XDebuggerManagerApi>()) {
+      BackendXDebuggerManagerApi()
+    }
+    remoteApi(remoteApiDescriptor<XDebugSessionApi>()) {
+      BackendXDebugSessionApi()
     }
   }
 }
