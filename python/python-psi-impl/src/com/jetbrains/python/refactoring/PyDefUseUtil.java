@@ -31,6 +31,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.PyNarrowedType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -141,7 +142,7 @@ public final class PyDefUseUtil {
   private static boolean unreachableDueToVersionGuard(@NotNull Instruction instruction) {
     PsiElement element = instruction.getElement();
     if (element == null) return false;
-    LanguageLevel languageLevel = LanguageLevel.forElement(element);
+    LanguageLevel languageLevel = PythonLanguageLevelPusher.getLanguageLevelForFile(element.getContainingFile());
     Version version = new Version(languageLevel.getMajorVersion(), languageLevel.getMinorVersion(), 0);
     return !evaluateVersionsForElement(element).contains(version);
   }
