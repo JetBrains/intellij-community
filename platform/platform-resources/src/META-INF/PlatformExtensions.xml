@@ -1402,9 +1402,6 @@
       </components>
     </obsoleteStorage>
 
-    <backgroundPostStartupActivity implementation="com.intellij.diagnostic.MemorySizeConfigurator"/>
-    <applicationService serviceImplementation="com.intellij.diagnostic.MemorySizeConfiguratorService"/>
-
     <registryKey key="show.last.visited.timestamps" defaultValue="true"
                  description="Shows recent files or code locations last visited timestamps"/>
 
