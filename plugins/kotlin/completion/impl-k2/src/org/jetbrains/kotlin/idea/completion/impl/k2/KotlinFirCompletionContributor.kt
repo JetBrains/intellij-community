@@ -77,23 +77,19 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
 
         val basicContext = FirBasicCompletionContext.createFromParameters(parameters, resultSet) ?: return
 
-        analyze(basicContext.fakeKtFile) {
+        val completionFile = basicContext.fakeKtFile
+        analyze(completionFile) {
             when (positionContext) {
                 is KotlinSimpleParameterPositionContext -> recordOriginalDeclaration(basicContext, positionContext.ktParameter)
                 is KotlinClassifierNamePositionContext -> recordOriginalDeclaration(basicContext, positionContext.classLikeDeclaration)
                 else -> {}
             }
 
-            recordOriginalFile(basicContext)
+            val originalFile = basicContext.originalKtFile
+            completionFile.recordOriginalKtFile(originalFile)
+
             Completions.complete(basicContext, positionContext, resultController)
         }
-    }
-
-    context(KaSession)
-    private fun recordOriginalFile(basicCompletionContext: FirBasicCompletionContext) {
-        val originalFile = basicCompletionContext.originalKtFile
-        val fakeFile = basicCompletionContext.fakeKtFile
-        fakeFile.recordOriginalKtFile(originalFile)
     }
 
     context(KaSession)
