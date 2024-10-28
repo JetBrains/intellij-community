@@ -2,12 +2,13 @@
 package com.intellij.platform.diagnostic.telemetry.exporters
 
 import com.intellij.openapi.util.ShutDownTracker
-import com.intellij.platform.diagnostic.telemetry.*
+import com.intellij.platform.diagnostic.telemetry.AggregatedMetricExporter
+import com.intellij.platform.diagnostic.telemetry.MetricsExporterEntry
+import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils
 import com.intellij.platform.diagnostic.telemetry.exporters.meters.CsvMetricsExporter
 import com.intellij.platform.diagnostic.telemetry.exporters.meters.TelemetryMeterJsonExporter
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.SystemProperties.getLongProperty
-import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.addIfNotNull
 import io.opentelemetry.sdk.metrics.SdkMeterProvider
 import io.opentelemetry.sdk.metrics.SdkMeterProviderBuilder
@@ -64,12 +65,7 @@ object IdeaOtlpMeterProvider {
     val metricsCsvPath: Path = OpenTelemetryUtils.metricsCsvReportingPath() ?: return null
     return MetricsExporterEntry(
       metrics = listOf(
-        FilteredMetricsExporter(
-          underlyingExporter = SynchronizedClearableLazy {
-            CsvMetricsExporter(RollingFileSupplier(metricsCsvPath, OpenTelemetryUtils.csvHeadersLines()))
-          },
-          predicate = { metric -> metric.belongsToScope(PlatformMetrics) },
-        ),
+        CsvMetricsExporter(RollingFileSupplier(metricsCsvPath, OpenTelemetryUtils.csvHeadersLines())),
       ),
       duration = CSV_METRICS_REPORTING_PERIOD
     )
@@ -80,12 +76,7 @@ object IdeaOtlpMeterProvider {
     val metricsJsonPath: Path = OpenTelemetryUtils.metricsJsonReportingPath() ?: return null
     return MetricsExporterEntry(
       metrics = listOf(
-        FilteredMetricsExporter(
-          underlyingExporter = SynchronizedClearableLazy {
-            TelemetryMeterJsonExporter(RollingFileSupplier(basePath = metricsJsonPath, maxFilesToKeep = 30))
-          },
-          predicate = { metric -> metric.belongsToScope(PlatformMetrics) },
-        ),
+        TelemetryMeterJsonExporter(RollingFileSupplier(basePath = metricsJsonPath, maxFilesToKeep = 30)),
       ),
       duration = DEFAULT_METRICS_REPORTING_PERIOD
     )

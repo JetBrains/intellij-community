@@ -40,7 +40,6 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
         // TODO: Do not understand the implications of DO_NOT_CLEAR_BINDING_CONTEXT,
         //       but enforced by assertions in JvmIrCodegen
         compilerConfiguration.put(JVMConfigurationKeys.DO_NOT_CLEAR_BINDING_CONTEXT, true)
-        compilerConfiguration.put(JVMConfigurationKeys.IR, true)
     }
 
     override fun configureGenerationState(
@@ -51,7 +50,6 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
         methodDescriptor: FunctionDescriptor,
         parameterInfo: K1CodeFragmentParameterInfo
     ) {
-        builder.isIrBackend(true)
         builder.codegenFactory(
             codegenFactory(
                 bindingContext,
