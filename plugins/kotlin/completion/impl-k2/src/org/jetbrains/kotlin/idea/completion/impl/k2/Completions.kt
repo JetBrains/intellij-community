@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.addingPolicy.PolicyController
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
@@ -14,10 +13,8 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionCo
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.withPolicyController
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.psi.KtCallElement
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal object Completions {
@@ -28,7 +25,10 @@ internal object Completions {
         positionContext: KotlinRawPositionContext,
         policyController: PolicyController,
     ) {
-        val weighingContext = createWeighingContext(basicContext, positionContext)
+        val weighingContext = when (positionContext) {
+            is KotlinNameReferencePositionContext -> WeighingContext.create(basicContext, positionContext)
+            else -> WeighingContext.create(basicContext, elementInCompletionFile = positionContext.position)
+        }
         val sessionParameters = FirCompletionSessionParameters(basicContext, positionContext)
 
         when (positionContext) {
@@ -195,33 +195,6 @@ internal object Completions {
     }
 
     context(KaSession)
-    private fun createWeighingContext(
-        basicContext: FirBasicCompletionContext,
-        positionContext: KotlinRawPositionContext
-    ): WeighingContext = when (positionContext) {
-        is KotlinSuperReceiverNameReferencePositionContext ->
-            // Implicit receivers do not match for this position completion context.
-            WeighingContext.create(
-                basicContext = basicContext,
-                elementInCompletionFile = positionContext.position,
-                receiver = positionContext.superExpression,
-                expectedType = positionContext.nameExpression.expectedType,
-            )
-
-        is KotlinWithSubjectEntryPositionContext -> {
-            val subjectReference = (positionContext.subjectExpression as? KtSimpleNameExpression)?.mainReference
-            val symbolsToSkip = setOfNotNull(subjectReference?.resolveToSymbol())
-            createWeighingContextForNameReference(basicContext, positionContext, symbolsToSkip)
-        }
-
-        is KotlinNameReferencePositionContext -> createWeighingContextForNameReference(basicContext, positionContext)
-        else -> WeighingContext.create(
-            basicContext = basicContext,
-            elementInCompletionFile = positionContext.position,
-        )
-    }
-
-    context(KaSession)
     private fun <C : KotlinRawPositionContext> FirCompletionContributor<C>.completeWithPolicyController(
         policyController: PolicyController,
         weighingContext: WeighingContext,
@@ -231,34 +204,6 @@ internal object Completions {
             positionContext = @Suppress("UNCHECKED_CAST") (sessionParameters.positionContext as C), // TODO address dirty cast
             weighingContext = weighingContext,
             sessionParameters = sessionParameters,
-        )
-    }
-
-    context(KaSession)
-    private fun createWeighingContextForNameReference(
-        basicContext: FirBasicCompletionContext,
-        positionContext: KotlinNameReferencePositionContext,
-        symbolsToSkip: Set<KaSymbol> = emptySet(),
-    ): WeighingContext {
-        val expectedType = when (positionContext) {
-            // during the sorting of completion suggestions expected type from position and actual types of suggestions are compared;
-            // see `org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher`;
-            // currently in case of callable references actual types are calculated incorrectly, which is why we don't use information
-            // about expected type at all
-            // TODO: calculate actual types for callable references correctly and use information about expected type
-            is KotlinCallableReferencePositionContext -> null
-            else -> positionContext.nameExpression.expectedType
-        }
-        val scopeContext = basicContext.originalKtFile
-            .scopeContext(positionContext.nameExpression)
-
-        return WeighingContext.create(
-            basicContext = basicContext,
-            elementInCompletionFile = positionContext.position,
-            receiver = positionContext.explicitReceiver,
-            expectedType = expectedType,
-            implicitReceivers = scopeContext.implicitReceivers,
-            symbolsToSkip = symbolsToSkip,
         )
     }
 }

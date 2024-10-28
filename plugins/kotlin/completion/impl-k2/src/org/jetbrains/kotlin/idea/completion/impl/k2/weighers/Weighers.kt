@@ -28,8 +28,8 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.K2SoftDeprecationWe
 import org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinClassesWeigher
 import org.jetbrains.kotlin.idea.completion.isPositionInsideImportOrPackageDirective
 import org.jetbrains.kotlin.idea.completion.isPositionSuitableForNull
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinSuperReceiverNameReferencePositionContext
+import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -120,6 +120,52 @@ internal class WeighingContext private constructor(
                 ),
                 importableFqNameClassifier = ImportableFqNameClassifier(completionFile) { defaultImportPaths.hasImport(it) },
                 mySymbolsToSkip = symbolsToSkip,
+            )
+        }
+
+        context(KaSession)
+        fun create(
+            basicContext: FirBasicCompletionContext,
+            positionContext: KotlinNameReferencePositionContext,
+        ): WeighingContext {
+            val expectedType = when (positionContext) {
+                // during the sorting of completion suggestions expected type from position and actual types of suggestions are compared;
+                // see `org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher`;
+                // currently in case of callable references actual types are calculated incorrectly, which is why we don't use information
+                // about expected type at all
+                // TODO: calculate actual types for callable references correctly and use information about expected type
+                is KotlinCallableReferencePositionContext -> null
+                else -> positionContext.nameExpression.expectedType
+            }
+
+            val (receiver, implicitReceivers) = when (positionContext) {
+                is KotlinSuperReceiverNameReferencePositionContext -> {
+                    // Implicit receivers do not match for this position completion context.
+                    positionContext.superExpression to emptyList<KaImplicitReceiver>()
+                }
+
+                else -> {
+                    val scopeContext = basicContext.originalKtFile
+                        .scopeContext(positionContext.nameExpression)
+                    positionContext.explicitReceiver to scopeContext.implicitReceivers
+                }
+            }
+
+            val symbolToSkip = when (positionContext) {
+                is KotlinWithSubjectEntryPositionContext -> (positionContext.subjectExpression as? KtSimpleNameExpression)
+                    ?.mainReference
+                    ?.resolveToSymbol()
+
+                else -> null
+            }
+
+            return create(
+                basicContext = basicContext,
+                elementInCompletionFile = positionContext.position,
+                receiver = receiver,
+                expectedType = expectedType,
+                implicitReceivers = implicitReceivers,
+                symbolsToSkip = setOfNotNull(symbolToSkip),
             )
         }
 
