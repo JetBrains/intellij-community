@@ -1,0 +1,7 @@
+// "Convert to 'foldRight'" "true"
+// WITH_STDLIB
+fun test(list: List<String>) {
+    list.foldRight("") { s, acc ->
+        s + acc
+    }
+}
