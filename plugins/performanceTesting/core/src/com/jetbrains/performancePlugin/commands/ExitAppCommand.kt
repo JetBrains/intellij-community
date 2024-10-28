@@ -1,57 +1,49 @@
-package com.jetbrains.performancePlugin.commands;
+package com.jetbrains.performancePlugin.commands
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.ui.playback.PlaybackContext;
-import com.intellij.openapi.util.ActionCallback;
-import com.jetbrains.performancePlugin.utils.AbstractCallbackBasedCommand;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.ui.playback.PlaybackContext
+import com.intellij.openapi.util.ActionCallback
+import com.jetbrains.performancePlugin.commands.MemoryCapture.Companion.capture
+import com.jetbrains.performancePlugin.utils.AbstractCallbackBasedCommand
+import org.jetbrains.annotations.NonNls
+import java.io.File
+import java.io.IOException
 
-import java.io.File;
-import java.io.IOException;
-
-public final class ExitAppCommand extends AbstractCallbackBasedCommand {
-
-  public static final @NonNls String PREFIX = CMD_PREFIX + "exitApp";
-
-  public ExitAppCommand(@NotNull String text, int line) {
-    super(text, line, true);
+class ExitAppCommand(text: String, line: Int) : AbstractCallbackBasedCommand(text, line, true) {
+  companion object {
+    internal const val PREFIX: @NonNls String = CMD_PREFIX + "exitApp"
   }
 
-  @Override
-  protected void execute(@NotNull ActionCallback callback, @NotNull PlaybackContext context) {
-    writeExitMetricsIfNeeded();
+  override fun execute(callback: ActionCallback, context: PlaybackContext) {
+    writeExitMetricsIfNeeded()
 
-    String[] arguments = getText().split(" ", 2);
-    boolean forceExit = true;
-    if (arguments.length > 1) {
-      forceExit = Boolean.parseBoolean(arguments[1]);
+    val arguments = text.split(' ', limit = 2)
+    var forceExit = true
+    if (arguments.size > 1) {
+      forceExit = arguments[1].toBoolean()
     }
 
-    ApplicationManager.getApplication().exit(forceExit, true, false);
-    callback.setDone();
+    ApplicationManager.getApplication().exit(forceExit, true, false)
+    callback.setDone()
   }
+}
 
-  public static void writeExitMetricsIfNeeded() {
-    String exitMetricsPath = System.getProperty("idea.log.exit.metrics.file");
-    if (exitMetricsPath != null) {
-      writeExitMetrics(exitMetricsPath);
-    }
+private fun writeExitMetricsIfNeeded() {
+  System.getProperty("idea.log.exit.metrics.file")?.let {
+    writeExitMetrics(it)
   }
+}
 
-  private static void writeExitMetrics(String path) {
-    MemoryCapture capture = MemoryCapture.capture();
+private fun writeExitMetrics(path: String) {
+  val capture = capture()
 
-    MemoryMetrics memory = new MemoryMetrics(capture.getUsedMb(), capture.getMaxMb(), capture.getMetaspaceMb());
-    ExitMetrics metrics = new ExitMetrics(memory);
-
-    try {
-      new ObjectMapper().writeValue(new File(path), metrics);
-    }
-    catch (IOException e) {
-      //noinspection UseOfSystemOutOrSystemErr
-      System.err.println("Unable to write exit metrics from " + ExitAppCommand.class.getSimpleName() + " " + e.getMessage());
-    }
+  val memory = MemoryMetrics(capture.usedMb, capture.maxMb, capture.metaspaceMb)
+  val metrics = ExitMetrics(memory)
+  try {
+    ObjectMapper().writeValue(File(path), metrics)
+  }
+  catch (e: IOException) {
+    System.err.println("Unable to write exit metrics from " + ExitAppCommand::class.java.getSimpleName() + " " + e.message)
   }
 }
