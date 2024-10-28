@@ -19,7 +19,8 @@ internal object MetadataStorageImpl: MetadataStorageBase() {
         
         var typeMetadata: StorageTypeMetadata
         
-        typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySourceK2", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
+        typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptConfigurationsSource\$KotlinGradleScriptModuleEntitySource", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), supertypes = listOf("org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource",
+"com.intellij.platform.workspace.storage.EntitySource"))
         
         addMetadata(typeMetadata)
         
@@ -73,7 +74,10 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryRoot", metadataHash = 940316485)
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryRootTypeId", metadataHash = -2068549764)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 1946578919)
-        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySourceK2", metadataHash = -860768271)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource", metadataHash = -2106192691)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.CommonScriptConfigurationsSource\$KotlinCustomScriptModuleEntitySource", metadataHash = 1833006602)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptConfigurationsSource\$KotlinGradleScriptModuleEntitySource", metadataHash = 1681787859)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.script.k2.MainKtsScriptConfigurationsSource\$KotlinCustomScriptModuleEntitySource", metadataHash = -176266983)
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptEntitySource", metadataHash = 236614476)
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryEntitySource", metadataHash = 1353548779)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = -194396395)
