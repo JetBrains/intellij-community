@@ -43,7 +43,7 @@ class EditorCell(
 
   val executionStatus = AtomicProperty<ExecutionStatus>(ExecutionStatus())
 
-  val outputs = AtomicProperty<List<NotebookOutputDataKey>>(getOutputs())
+  val outputs = EditorCellOutputs(editor, this)
 
   private fun getSource(): String {
     val document = editor.document
@@ -111,20 +111,7 @@ class EditorCell(
   }
 
   fun updateOutputs() {
-    val outputDataKeys = getOutputs()
-    updateOutputs(outputDataKeys)
-  }
-
-  private fun getOutputs(): List<NotebookOutputDataKey> =
-    NotebookOutputDataKeyExtractor.EP_NAME.extensionList.asSequence()
-      .mapNotNull { it.extract(editor as EditorImpl, interval) }
-      .firstOrNull()
-      ?.takeIf { it.isNotEmpty() }
-    ?: emptyList()
-
-  // Made non-private to make it possible in RemoteDev to update outputs bypassing notebook JSON, which was accessed in updateOutputs().
-  fun updateOutputs(newOutputs: List<NotebookOutputDataKey>) = runInEdt {
-    outputs.set(newOutputs)
+    outputs.updateOutputs()
   }
 
   fun onExecutionEvent(event: ExecutionEvent) {
@@ -175,10 +162,45 @@ class EditorCell(
     CELL_EXTENSION_CONTAINER_KEY.get(this)?.values?.forEach { action(it) }
   }
 
+   fun updateOutputs(keys: List<NotebookOutputDataKey>) {
+    outputs.outputs.set(keys.map { EditorCellOutput(it) })
+  }
+
   data class ExecutionStatus(
     val status: ProgressStatus? = null,
     val count: Int? = null,
     val startTime: ZonedDateTime? = null,
     val endTime: ZonedDateTime? = null,
   )
+}
+
+class EditorCellOutputs(private val editor: EditorEx, private val cell: EditorCell) {
+
+  val scrollingEnabled = AtomicBooleanProperty(true)
+
+  val outputs = AtomicProperty<List<EditorCellOutput>>(getOutputs())
+
+  fun updateOutputs() {
+    val outputDataKeys = getOutputs()
+    updateOutputs(outputDataKeys)
+  }
+
+  private fun updateOutputs(newOutputs: List<EditorCellOutput>) = runInEdt {
+    outputs.set(newOutputs)
+  }
+
+  private fun getOutputs(): List<EditorCellOutput> =
+    NotebookOutputDataKeyExtractor.EP_NAME.extensionList.asSequence()
+      .mapNotNull { it.extract(editor as EditorImpl, cell.interval) }
+      .firstOrNull()
+      ?.takeIf { it.isNotEmpty() }
+      ?.map { EditorCellOutput(it) }
+    ?: emptyList()
+
+}
+
+class EditorCellOutput(dataKey: NotebookOutputDataKey) {
+
+  val dataKey = AtomicProperty<NotebookOutputDataKey>(dataKey)
+
 }
