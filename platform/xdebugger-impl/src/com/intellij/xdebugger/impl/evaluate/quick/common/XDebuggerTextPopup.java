@@ -182,6 +182,11 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
     myMainPanel.setBackground(myTextPanel.getBackground());
     setContent(myTextPanel, getToolbarActions(), ACTION_PLACE, null);
 
+    // We make the popup really small to prevent its moving by `myPopup.show()`,
+    // it would be resized later in `resizePopup()`, see IJPL-165368.
+    // However, it leads to blinking, see IJPL-165403.
+    myMainPanel.setPreferredSize(JBUI.size(0, 0));
+
     XFullValueEvaluator evaluator = myEvaluator != null ? myEvaluator : new ImmediateFullValueEvaluator(initialText);
 
     Runnable hideTextPopupRunnable = myHideRunnable == null ? null : () -> {
