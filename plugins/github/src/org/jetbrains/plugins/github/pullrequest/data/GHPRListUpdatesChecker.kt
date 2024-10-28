@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.data
 import com.intellij.openapi.Disposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
-interface GHPRListUpdatesChecker : Disposable {
+internal interface GHPRListUpdatesChecker : Disposable {
 
   @get:RequiresEdt
   val outdated: Boolean
