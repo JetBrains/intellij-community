@@ -387,7 +387,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     runBlockingMaybeCancellable { updateAllProjects() }
     if (failOnReadingError) {
       for (each in projectsManager.getProjectsTree().projects) {
-        assertFalse("Failed to import Maven project: " + each.problems, each.hasReadingProblems())
+        assertFalse("Failed to import Maven project: " + each.problems, each.hasUnrecoverableReadingProblems())
       }
     }
     IndexingTestUtil.waitUntilIndexesAreReady(project);
@@ -405,7 +405,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     updateAllProjects()
     if (failOnReadingError) {
       for (each in projectsManager.getProjectsTree().projects) {
-        assertFalse("Failed to import Maven project: " + each.problems, each.hasReadingProblems())
+        assertFalse("Failed to import Maven project: " + each.problems, each.hasUnrecoverableReadingProblems())
       }
     }
   }

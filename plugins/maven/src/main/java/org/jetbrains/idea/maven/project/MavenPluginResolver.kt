@@ -23,7 +23,7 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
     process: RawProgressReporter,
     eventHandler: MavenEventHandler) {
     val mavenProjects = mavenProjectsToResolvePlugins.filter {
-      !it.hasReadingProblems()
+      !it.hasUnrecoverableReadingProblems()
       && it.hasUnresolvedPlugins()
     }
 

@@ -105,7 +105,7 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
     Disposer.dispose(disposable)
 
     for (mavenProject in mavenProjectsManager.projects) {
-      val hasReadingProblems = mavenProject.hasReadingProblems()
+      val hasReadingProblems = mavenProject.hasUnrecoverableReadingProblems()
       if (hasReadingProblems) {
         throw IllegalStateException("Maven project ${mavenProject} has import problems:" + mavenProject.problems)
       }

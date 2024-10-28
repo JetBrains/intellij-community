@@ -441,7 +441,7 @@ class MavenProjectResolver(private val myProject: Project) {
     val changes = mavenProject.getChangesSinceSnapshot(snapshot)
     mavenProject.problems // need for fill problem cache
     tree.fireProjectResolved(Pair.create(mavenProject, changes))
-    if (!mavenProject.hasReadingProblems()) {
+    if (!mavenProject.hasUnrecoverableReadingProblems()) {
       projectsWithUnresolvedPlugins.add(mavenProject)
     }
   }

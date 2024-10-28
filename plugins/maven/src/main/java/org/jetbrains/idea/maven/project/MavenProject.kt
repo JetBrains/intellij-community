@@ -35,7 +35,6 @@ import java.io.*
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
-import kotlin.Throws
 
 class MavenProject(val file: VirtualFile) {
   enum class ConfigFileKind(val myRelativeFilePath: String, val myValueIfMissing: String) {
@@ -204,11 +203,8 @@ class MavenProject(val file: VirtualFile) {
   val profilesXmlFile: VirtualFile?
     get() = MavenUtil.findProfilesXmlFile(file)
 
-  val profilesXmlIoFile: File?
-    get() = MavenUtil.getProfilesXmlIoFile(file)
-
-  fun hasReadingProblems(): Boolean {
-    return !myState.readingProblems.isEmpty()
+  fun hasUnrecoverableReadingProblems(): Boolean {
+    return myState.readingProblems.any { !it.isRecoverable }
   }
 
   val name: @NlsSafe String?

@@ -34,7 +34,7 @@ class MavenFolderResolver(private val project: Project) {
   private suspend fun doResolveFoldersAndImport(projects: Collection<MavenProject>, progressReporter: RawProgressReporter) {
 
     val allProjectsWithChanges = resolveFolders(projects, progressReporter)
-    val projectsToImportWithChanges = allProjectsWithChanges.filter { !it.key.hasReadingProblems() && it.value.hasChanges() }
+    val projectsToImportWithChanges = allProjectsWithChanges.filter { !it.key.hasUnrecoverableReadingProblems() && it.value.hasChanges() }
 
     //actually a fix for https://youtrack.jetbrains.com/issue/IDEA-286455 to be rewritten, see IDEA-294209
     MavenUtil.restartMavenConnectors(project, false) { c: MavenServerConnector ->

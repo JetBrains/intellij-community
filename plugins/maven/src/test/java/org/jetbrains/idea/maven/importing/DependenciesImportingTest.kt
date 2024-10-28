@@ -1751,8 +1751,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
           <artifactId>yyy</artifactId>
           <version>1</version>
           <scope>system</scope>
-          <systemPath>
-      $projectPath/foo/bar.jar</systemPath>
+          <systemPath>$projectPath/foo/bar.jar</systemPath>
         </dependency>
       </dependencies>
       """.trimIndent())
@@ -1773,8 +1772,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
           <artifactId>yyy</artifactId>
           <version>1</version>
           <scope>system</scope>
-          <systemPath>
-      $projectPath/foo/xxx.jar</systemPath>
+          <systemPath>$projectPath/foo/xxx.jar</systemPath>
         </dependency>
       </dependencies>
       """.trimIndent())
