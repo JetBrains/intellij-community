@@ -130,6 +130,11 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
                 runTest("testData/editor/optimizeImports/jvm/allUnderImports/NestedStaticMembersFromJavaAreConsideredMembers.kt");
             }
 
+            @TestMetadata("NoRedundantThrowsImport.kt")
+            public void testNoRedundantThrowsImport() throws Exception {
+                runTest("testData/editor/optimizeImports/jvm/allUnderImports/NoRedundantThrowsImport.kt");
+            }
+
             @TestMetadata("PackagesToUseStarImport.kt")
             public void testPackagesToUseStarImport() throws Exception {
                 runTest("testData/editor/optimizeImports/jvm/allUnderImports/PackagesToUseStarImport.kt");
