@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.icons
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import fleet.util.openmap.SerializedValue
@@ -49,7 +50,10 @@ fun IconRpc.icon(): Icon {
     }
   }
 
-  return deserializedIcon ?: error("Cannot obtain icon from a remote model. Most probably plugin with serialization EP was disabled")
+  return deserializedIcon ?: run {
+    LOG.warn("Cannot deserialize icon from a remote model, empty icon is used instead.")
+    AllIcons.Empty
+  }
 }
 
 @ApiStatus.Internal
