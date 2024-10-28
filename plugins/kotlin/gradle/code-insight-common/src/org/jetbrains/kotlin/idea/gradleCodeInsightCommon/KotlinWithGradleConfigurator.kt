@@ -694,7 +694,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
          */
         @ApiStatus.Internal
         fun usesVersionCatalogVersionInBuildSrc(project: Project): Boolean {
-            val buildSrcModule = project.modules.firstOrNull { it.name.endsWith("buildSrc") } ?: return false
+            val buildSrcModule = project.modules.firstOrNull { it.name.endsWith(".buildSrc") } ?: return false
             val buildSrcBuildFile = buildSrcModule.getBuildScriptPsiFile() ?: return false
 
             val gradleFolder = project.guessProjectDir()?.findChild("gradle") ?: return false
