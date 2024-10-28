@@ -27,6 +27,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
@@ -1148,6 +1149,23 @@ public final class HighlightClassUtil {
         return info;
       }
 
+      if (!JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, superClass) &&
+          JavaModuleGraphUtil.findDescriptorByElement(aClass) == null) {
+        String description = StringUtil.capitalize(JavaErrorBundle.message(
+          "class.not.allowed.to.extend.sealed.class.from.another.package",
+          JavaElementKind.fromElement(aClass).subject(), HighlightUtil.formatClass(aClass, false),
+          JavaElementKind.fromElement(superClass).object(), HighlightUtil.formatClass(superClass, true)));
+        HighlightInfo.Builder info =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(description);
+        PsiFile parentFile = superClass.getContainingFile();
+        if (parentFile instanceof PsiClassOwner classOwner) {
+          String parentPackage = classOwner.getPackageName();
+          IntentionAction action = QuickFixFactory.getInstance().createMoveClassToPackageFix(aClass, parentPackage);
+          info.registerFix(action, null, null, null, null);
+        }
+        return info;
+      }
+
       PsiClassType[] permittedTypes = superClass.getPermitsListTypes();
       if (permittedTypes.length > 0) {
         PsiManager manager = superClass.getManager();
@@ -1262,12 +1280,15 @@ public final class HighlightClassUtil {
         }
         else {
           if (currentModule == null && !psiFacade.arePackagesTheSame(aClass, inheritorClass)) {
-            HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-              .range(permitted)
-              .descriptionAndTooltip(JavaErrorBundle.message("class.not.allowed.to.extend.sealed.class.from.another.package"));
+            String description = StringUtil.capitalize(
+              JavaErrorBundle.message("class.not.allowed.to.extend.sealed.class.from.another.package",
+                                      JavaElementKind.fromElement(inheritorClass).subject(), HighlightUtil.formatClass(inheritorClass, true),
+                                      JavaElementKind.fromElement(aClass).object(), HighlightUtil.formatClass(aClass, false)));
+            HighlightInfo.Builder info =
+              HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(permitted).descriptionAndTooltip(description);
             PsiFile parentFile = aClass.getContainingFile();
-            if (parentFile instanceof PsiClassOwner) {
-              String parentPackage = ((PsiClassOwner)parentFile).getPackageName();
+            if (parentFile instanceof PsiClassOwner classOwner) {
+              String parentPackage = classOwner.getPackageName();
               IntentionAction action = QuickFixFactory.getInstance().createMoveClassToPackageFix(inheritorClass, parentPackage);
               info.registerFix(action, null, null, null, null);
             }

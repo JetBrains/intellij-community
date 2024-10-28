@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
@@ -22,14 +23,29 @@ import org.jetbrains.annotations.Nullable;
 public class MoveToPackageFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance(MoveToPackageFix.class);
   private final String myTargetPackage;
+  private final @Nullable SmartPsiElementPointer<@NotNull PsiClass> myClass;
 
   public MoveToPackageFix(@NotNull PsiFile psiFile, @NotNull String targetPackage) {
     super(psiFile);
     myTargetPackage = targetPackage;
+    myClass = null;
+  }
+
+  public MoveToPackageFix(@NotNull PsiClass aClass, @NotNull String targetPackage) {
+    super(aClass.getContainingFile());
+    myTargetPackage = targetPackage;
+    myClass = SmartPointerManager.getInstance(aClass.getProject()).createSmartPsiElementPointer(aClass);
   }
 
   @Override
   public @IntentionName @NotNull String getText() {
+    if (myClass != null) {
+      PsiClass aClass = myClass.getElement();
+      if (aClass != null) {
+        return QuickFixBundle.message("move.class.0.to.package.text",
+                                      JavaElementKind.fromElement(aClass).object(), aClass.getName(), myTargetPackage);
+      }
+    }
     return QuickFixBundle.message("move.class.to.package.text", myTargetPackage);
   }
 

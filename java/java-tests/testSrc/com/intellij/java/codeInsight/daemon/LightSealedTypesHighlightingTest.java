@@ -29,7 +29,8 @@ public class LightSealedTypesHighlightingTest extends LightJavaCodeInsightFixtur
   public void testPermitsList() {
     myFixture.addClass("package p1; public class P1 extends p.AnotherPackage {}");
     myFixture.addClass("package p; public class P extends A {}");
-    doTest(); 
+    myFixture.addClass("package p1; public sealed class Envelope permits p.Mail {}");
+    doTest();
   }
   
   public void testPermitsListInLibrarySources() {

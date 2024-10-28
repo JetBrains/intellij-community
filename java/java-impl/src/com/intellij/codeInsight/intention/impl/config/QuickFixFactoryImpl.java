@@ -967,7 +967,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createMoveClassToPackageFix(@NotNull PsiClass classToMove, @NotNull String packageName) {
-    return new MoveToPackageFix(classToMove.getContainingFile(), packageName);
+    return new MoveToPackageFix(classToMove, packageName);
   }
 
   @Override
