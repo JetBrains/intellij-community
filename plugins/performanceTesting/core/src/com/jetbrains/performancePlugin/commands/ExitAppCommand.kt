@@ -1,35 +1,40 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.ui.playback.PlaybackContext
-import com.intellij.openapi.util.ActionCallback
+import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.jetbrains.performancePlugin.commands.MemoryCapture.Companion.capture
-import com.jetbrains.performancePlugin.utils.AbstractCallbackBasedCommand
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import java.io.File
 import java.io.IOException
 
-class ExitAppCommand(text: String, line: Int) : AbstractCallbackBasedCommand(text, line, true) {
+class ExitAppCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
     internal const val PREFIX: @NonNls String = CMD_PREFIX + "exitApp"
   }
 
-  override fun execute(callback: ActionCallback, context: PlaybackContext) {
+  override suspend fun doExecute(context: PlaybackContext) {
     writeExitMetricsIfNeeded()
 
     val arguments = text.split(' ', limit = 2)
-    var forceExit = true
-    if (arguments.size > 1) {
-      forceExit = arguments[1].toBoolean()
+
+    var flags = ApplicationEx.SAVE or ApplicationEx.EXIT_CONFIRMED
+    if (if (arguments.size > 1) arguments[1].toBoolean() else true) {
+      flags = flags or ApplicationEx.FORCE_EXIT
     }
 
-    ApplicationManager.getApplication().exit(forceExit, true, false)
-    callback.setDone()
+    withContext(Dispatchers.EDT) {
+      ApplicationManagerEx.getApplicationEx().exit(flags)
+    }
   }
 }
 
-private fun writeExitMetricsIfNeeded() {
+internal fun writeExitMetricsIfNeeded() {
   System.getProperty("idea.log.exit.metrics.file")?.let {
     writeExitMetrics(it)
   }
@@ -44,6 +49,6 @@ private fun writeExitMetrics(path: String) {
     ObjectMapper().writeValue(File(path), metrics)
   }
   catch (e: IOException) {
-    System.err.println("Unable to write exit metrics from " + ExitAppCommand::class.java.getSimpleName() + " " + e.message)
+    println("Unable to write exit metrics from ${ExitAppCommand::class.java.getSimpleName()} ${e.message}")
   }
 }
