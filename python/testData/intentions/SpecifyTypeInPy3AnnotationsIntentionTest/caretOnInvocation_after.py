@@ -1,4 +1,4 @@
-def foo(x, y) -> object:
+def foo(x, y) -> None:
     pass
 
 

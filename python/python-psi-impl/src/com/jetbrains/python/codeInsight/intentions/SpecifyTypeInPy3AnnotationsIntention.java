@@ -22,6 +22,7 @@ import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -32,11 +33,16 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonUiService;
+import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil.AnnotationInfo;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
+import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -144,24 +150,34 @@ public final class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
   }
 
 
-  static String returnType(@NotNull PyFunction function) {
+  static @NotNull AnnotationInfo returnType(@NotNull PyFunction function) {
     if (function.getAnnotation() != null && function.getAnnotation().getValue() != null) {
-      return function.getAnnotation().getValue().getText();
+      return new AnnotationInfo(function.getAnnotation().getValue().getText());
     }
 
     final PySignature signature = PySignatureCacheManager.getInstance(function.getProject()).findSignature(function);
     if (signature != null) {
       final String qualifiedName = signature.getReturnTypeQualifiedName();
-      if (qualifiedName != null) return qualifiedName;
+      if (qualifiedName != null) return new AnnotationInfo(qualifiedName);
     }
 
-    return PyNames.OBJECT;
+    final TypeEvalContext context = TypeEvalContext.userInitiated(function.getProject(), function.getContainingFile());
+    PyType inferredType = context.getReturnType(function);
+    if (function.isAsync()) {
+      inferredType = Ref.deref(PyTypingTypeProvider.unwrapCoroutineReturnType(inferredType));
+    }
+    return new AnnotationInfo(PythonDocumentationProvider.getTypeHint(inferredType, context), inferredType);
   }
 
   public static PyExpression annotateReturnType(Project project, PyFunction function, boolean createTemplate) {
-    String returnType = returnType(function);
+    AnnotationInfo returnTypeAnnotation = returnType(function);
 
-    final String annotationText = "-> " + returnType;
+    final String returnTypeText = returnTypeAnnotation.getAnnotationText();
+    final String annotationText = "-> " + returnTypeText;
+
+    final PsiFile file = function.getContainingFile();
+    final TypeEvalContext context = TypeEvalContext.userInitiated(project, file);
+    PyTypeHintGenerationUtil.addImportsForTypeAnnotations(returnTypeAnnotation.getTypes(), context, file);
 
     PyFunction annotatedFunction = PyUtil.updateDocumentUnblockedAndCommitted(function, document -> {
       final PyAnnotation oldAnnotation = function.getAnnotation();
@@ -196,7 +212,7 @@ public final class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
       final int offset = annotationValue.getTextOffset();
 
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(annotationValue);
-      builder.replaceRange(TextRange.create(0, returnType.length()), returnType);
+      builder.replaceRange(TextRange.create(0, returnTypeText.length()), returnTypeText);
       final Editor targetEditor = PythonUiService.getInstance().openTextEditor(project, annotatedFunction.getContainingFile().getVirtualFile(), offset);
       if (targetEditor != null) {
         builder.run(targetEditor, true);

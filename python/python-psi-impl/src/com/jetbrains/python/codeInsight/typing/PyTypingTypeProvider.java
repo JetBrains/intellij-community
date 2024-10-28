@@ -58,6 +58,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   public static final String GENERATOR = "typing.Generator";
   public static final String ASYNC_GENERATOR = "typing.AsyncGenerator";
   public static final String COROUTINE = "typing.Coroutine";
+  public static final String AWAITABLE = "typing.Awaitable";
   public static final String NAMEDTUPLE = "typing.NamedTuple";
   public static final String TYPED_DICT = "typing.TypedDict";
   public static final String TYPED_DICT_EXT = "typing_extensions.TypedDict";
@@ -2176,6 +2177,25 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   }
 
   @Nullable
+  public static Ref<PyType> unwrapCoroutineReturnType(@Nullable PyType coroutineType) {
+    final PyCollectionType genericType = as(coroutineType, PyCollectionType.class);
+
+    if (genericType != null) {
+      var qName = genericType.getClassQName();
+
+      if (AWAITABLE.equals(qName)) {
+        return Ref.create(ContainerUtil.getOrElse(genericType.getElementTypes(), 0, null));
+      }
+
+      if (COROUTINE.equals(qName)) {
+        return Ref.create(ContainerUtil.getOrElse(genericType.getElementTypes(), 2, null));
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
   public static Ref<PyType> coroutineOrGeneratorElementType(@Nullable PyType coroutineOrGeneratorType) {
     final PyCollectionType genericType = as(coroutineOrGeneratorType, PyCollectionType.class);
     final PyClassType classType = as(coroutineOrGeneratorType, PyClassType.class);
@@ -2183,7 +2203,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     if (genericType != null && classType != null) {
       var qName = classType.getClassQName();
 
-      if ("typing.Awaitable".equals(qName)) {
+      if (AWAITABLE.equals(qName)) {
         return Ref.create(ContainerUtil.getOrElse(genericType.getElementTypes(), 0, null));
       }
 
