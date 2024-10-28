@@ -8,6 +8,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.EventDispatcher
 import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -25,6 +26,10 @@ internal class GHPRListETagUpdateChecker(
   private val serverPath: GithubServerPath,
   private val repoPath: GHRepositoryPath,
 ) : GHPRListUpdatesChecker {
+  companion object {
+    private const val REFRESH_SECONDS_KEY = "github.pr.list.automatic.refresh.seconds"
+  }
+
   private val outdatedEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
   override var outdated by observableField(false, outdatedEventDispatcher)
     private set
@@ -42,16 +47,19 @@ internal class GHPRListETagUpdateChecker(
 
   override fun start() {
     if (scheduler == null) {
+      val secondsBetweenRefreshes = Registry.get(REFRESH_SECONDS_KEY).asInteger().toLong()
+
       val indicator = NonReusableEmptyProgressIndicator()
       progressIndicator = indicator
-      scheduler = JobScheduler.getScheduler().scheduleWithFixedDelay({
-                                                                       try {
-                                                                         lastETag = loadListETag(indicator)
-                                                                       }
-                                                                       catch (e: Exception) {
-                                                                         //ignore
-                                                                       }
-                                                                     }, 30, 30, TimeUnit.SECONDS)
+      scheduler = JobScheduler.getScheduler().scheduleWithFixedDelay(
+        {
+          try {
+            lastETag = loadListETag(indicator)
+          }
+          catch (_: Exception) {
+            //ignore
+          }
+        }, secondsBetweenRefreshes, secondsBetweenRefreshes, TimeUnit.SECONDS)
     }
   }
 
