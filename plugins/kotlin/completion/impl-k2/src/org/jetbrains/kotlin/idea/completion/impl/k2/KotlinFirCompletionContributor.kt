@@ -9,7 +9,6 @@ import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -20,7 +19,6 @@ import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
@@ -68,6 +66,7 @@ class KotlinFirCompletionContributor : CompletionContributor() {
 }
 
 private object KotlinFirCompletionProvider : CompletionProvider<CompletionParameters>() {
+
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         @Suppress("NAME_SHADOWING") val parameters = KotlinFirCompletionParametersProvider.provide(parameters)
 
@@ -78,26 +77,27 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         val basicContext = FirBasicCompletionContext.createFromParameters(parameters, resultSet) ?: return
 
         val completionFile = basicContext.fakeKtFile
+        val originalFile = basicContext.originalKtFile
+
         analyze(completionFile) {
-            when (positionContext) {
-                is KotlinSimpleParameterPositionContext -> recordOriginalDeclaration(basicContext, positionContext.ktParameter)
-                is KotlinClassifierNamePositionContext -> recordOriginalDeclaration(basicContext, positionContext.classLikeDeclaration)
-                else -> {}
+            val completionDeclaration = when (positionContext) {
+                is KotlinSimpleParameterPositionContext -> positionContext.ktParameter
+                is KotlinClassifierNamePositionContext -> positionContext.classLikeDeclaration
+                else -> null
             }
 
-            val originalFile = basicContext.originalKtFile
+            if (completionDeclaration != null) {
+                try {
+                    val originalDeclaration = PsiTreeUtil.findSameElementInCopy(completionDeclaration, originalFile)
+                    completionDeclaration.recordOriginalDeclaration(originalDeclaration)
+                } catch (_: IllegalStateException) {
+                    //declaration is written at empty space
+                }
+            }
+
             completionFile.recordOriginalKtFile(originalFile)
 
             Completions.complete(basicContext, positionContext, resultController)
-        }
-    }
-
-    context(KaSession)
-    private fun recordOriginalDeclaration(basicContext: FirBasicCompletionContext, declaration: KtDeclaration) {
-        try {
-            declaration.recordOriginalDeclaration(PsiTreeUtil.findSameElementInCopy(declaration, basicContext.originalKtFile))
-        } catch (ignore: IllegalStateException) {
-            //declaration is written at empty space
         }
     }
 
