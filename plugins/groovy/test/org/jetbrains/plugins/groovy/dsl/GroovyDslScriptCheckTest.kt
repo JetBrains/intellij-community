@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.groovy.dsl
 
 import com.intellij.openapi.application.readAction
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl
 
 class GroovyDslScriptCheckTest : LightJavaCodeInsightFixtureTestCase() {
@@ -29,4 +31,6 @@ class GroovyDslScriptCheckTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   override fun runInDispatchThread(): Boolean = false
+
+  override fun getProjectDescriptor(): LightProjectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST
 }
