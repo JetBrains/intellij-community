@@ -12,7 +12,7 @@
   ]]></description>
 
   <content>
-    <module name="intellij.turboComplete.languages.kotlin"/>
+    <module name="intellij.turboComplete.languages.kotlin.k1"/>
   </content>
 
   <dependencies>

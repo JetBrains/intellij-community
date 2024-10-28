@@ -1,4 +1,4 @@
-package com.intellij.turboComplete.languages.kotlin
+package com.intellij.turboComplete.languages.kotlin.k1
 
 import com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider
 import com.intellij.lang.Language

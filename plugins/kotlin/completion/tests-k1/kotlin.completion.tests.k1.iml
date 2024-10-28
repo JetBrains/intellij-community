@@ -27,7 +27,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="module" module-name="intellij.turboComplete" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.turboComplete.languages.kotlin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.turboComplete.languages.kotlin.k1" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ml.impl" scope="TEST" />
   </component>
 </module>

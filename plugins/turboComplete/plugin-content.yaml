@@ -1,6 +1,6 @@
-- name: lib/modules/intellij.turboComplete.languages.kotlin.jar
+- name: lib/modules/intellij.turboComplete.languages.kotlin.k1.jar
   contentModules:
-  - name: intellij.turboComplete.languages.kotlin
+  - name: intellij.turboComplete.languages.kotlin.k1
     libraries:
       completion-performance-kotlin:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/performance-kotlin/0/performance-kotlin-0.jar
