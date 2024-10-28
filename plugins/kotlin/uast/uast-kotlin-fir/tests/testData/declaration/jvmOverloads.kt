@@ -27,3 +27,15 @@ class Test(
         append(p2)
     }
 }
+
+object Util {
+    @JvmStatic
+    @JvmOverloads
+    fun Test.baz(flag: Boolean = true) {
+        if (flag) {
+            foo()
+        } else {
+            bar()
+        }
+    }
+}
