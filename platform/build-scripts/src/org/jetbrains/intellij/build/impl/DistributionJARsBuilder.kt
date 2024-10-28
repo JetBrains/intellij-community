@@ -134,7 +134,7 @@ internal suspend fun buildDistribution(
     }
     createBuildThirdPartyLibraryListJob(contentReport.bundled(), context)
     if (context.useModularLoader || context.generateRuntimeModuleRepository) {
-      launch(Dispatchers.IO + CoroutineName("generate runtime module repository")) {
+      launch(CoroutineName("generate runtime module repository")) {
         spanBuilder("generate runtime module repository").use {
           generateRuntimeModuleRepository(contentReport.bundled(), context)
         }
