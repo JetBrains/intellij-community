@@ -1078,12 +1078,12 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public int getDot() {
-      return editor.getCaretModel().getOffset();
+      return ReadAction.compute(() -> editor.getCaretModel().getOffset());
     }
 
     @Override
     public int getMark() {
-      return editor.getSelectionModel().getSelectionStart();
+      return ReadAction.compute(() -> editor.getSelectionModel().getSelectionStart());
     }
 
     @Override
