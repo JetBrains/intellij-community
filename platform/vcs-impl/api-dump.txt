@@ -2839,6 +2839,7 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesTreeDiffPreviewHandler
 - <init>():V
 - f:collectDiffProducers(com.intellij.openapi.vcs.changes.ui.ChangesTree,Z):com.intellij.openapi.ListSelection
 - f:hasContent(com.intellij.openapi.vcs.changes.ui.ChangesTree):Z
+- isShowAllChangesForEmptySelection():Z
 - a:iterateAllChanges(com.intellij.openapi.vcs.changes.ui.ChangesTree):java.lang.Iterable
 - a:iterateSelectedChanges(com.intellij.openapi.vcs.changes.ui.ChangesTree):java.lang.Iterable
 - a:selectChange(com.intellij.openapi.vcs.changes.ui.ChangesTree,com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper):V
@@ -3308,6 +3309,7 @@ c:com.intellij.openapi.vcs.changes.ui.TreeHandlerDiffRequestProcessor
 - f:iterateAllChanges():java.lang.Iterable
 - f:iterateSelectedChanges():java.lang.Iterable
 - pf:selectChange(com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper):V
+- p:showAllChangesForEmptySelection():Z
 a:com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
 - com.intellij.openapi.vcs.changes.ChangesTreeEditorDiffPreview
 - sf:Companion:com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview$Companion
