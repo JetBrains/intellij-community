@@ -5888,7 +5888,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       Rectangle r = getBounds();
       for (Component c : components) {
         if (c instanceof JScrollPane || isCustomLayer(c)) {
-          // Main scroll panel: MyScrollPane
+          // Custom layers or main scroll panel (MyScrollPane) occupy whole area
           c.setBounds(0, 0, r.width, r.height);
         }
         else if (c instanceof EditorFloatingToolbar){
