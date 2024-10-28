@@ -218,7 +218,16 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
   @RequiresEdt
   fun hide(context: InlineCompletionContext, finishType: FinishType = FinishType.OTHER) {
     ThreadingAssertions.assertEventDispatchThread()
-    LOG.assertTrue(!context.isDisposed)
+    val currentSession = InlineCompletionSession.getOrNull(editor)
+    if (context !== currentSession?.context) {
+      LOG.error("[Inline Completion] Cannot hide a session because an invalid context is passed.")
+      return
+    }
+    if (context.isDisposed) {
+      sessionManager.removeSession()
+      LOG.error("[Inline Completion] Cannot hide a session because the context is already disposed.")
+      return
+    }
     doHide(context, finishType)
   }
 
