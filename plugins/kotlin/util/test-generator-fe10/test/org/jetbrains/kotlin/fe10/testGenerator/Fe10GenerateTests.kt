@@ -1388,27 +1388,27 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
     }
 
     testGroup("j2k/k1.new/tests", testDataPath = "../../shared/tests/testData", category = J2K) {
-        testClass<AbstractNewJavaToKotlinConverterSingleFileTest> {
+        testClass<AbstractK1JavaToKotlinConverterSingleFileTest> {
             model("newJ2k", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
 
-        testClass<AbstractNewJavaToKotlinConverterSingleFileFullJDKTest> {
+        testClass<AbstractK1JavaToKotlinConverterSingleFileFullJDKTest> {
             model("fullJDK", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
 
-        testClass<AbstractNewJavaToKotlinConverterPartialTest> {
+        testClass<AbstractK1JavaToKotlinConverterPartialTest> {
             model("partialConverter", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
 
-        testClass<AbstractNewJavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
+        testClass<AbstractK1JavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
             model("copyPaste", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
 
-        testClass<AbstractTextNewJavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
+        testClass<AbstractK1TextJavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
             model("copyPastePlainText", pattern = Patterns.forRegex("""^([^.]+)\.txt$"""))
         }
 
-        testClass<AbstractNewJavaToKotlinConverterMultiFileTest>(commonSuite = false) {
+        testClass<AbstractK1JavaToKotlinConverterMultiFileTest>(commonSuite = false) {
             model("multiFile", pattern = DIRECTORY, isRecursive = false)
         }
     }

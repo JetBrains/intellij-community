@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../shared/tests/testData/copyPaste")
-public class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNewJavaToKotlinCopyPasteConversionTest {
+public class K1JavaToKotlinCopyPasteConversionTestGenerated extends AbstractK1JavaToKotlinCopyPasteConversionTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {

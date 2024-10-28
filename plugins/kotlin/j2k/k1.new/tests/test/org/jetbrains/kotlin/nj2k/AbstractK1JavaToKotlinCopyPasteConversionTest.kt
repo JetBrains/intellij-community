@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.conversion.copy.AbstractJavaToKotlinCopyPasteConversionTest
 import java.io.File
 
-abstract class AbstractNewJavaToKotlinCopyPasteConversionTest : AbstractJavaToKotlinCopyPasteConversionTest() {
+abstract class AbstractK1JavaToKotlinCopyPasteConversionTest : AbstractJavaToKotlinCopyPasteConversionTest() {
     override val testDataDirectory: File
         get() = KotlinRoot.DIR.resolve("j2k/shared/tests/testData/copyPaste")
 

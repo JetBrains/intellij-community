@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../shared/tests/testData/multiFile")
-public class NewJavaToKotlinConverterMultiFileTestGenerated extends AbstractNewJavaToKotlinConverterMultiFileTest {
+public class K1JavaToKotlinConverterMultiFileTestGenerated extends AbstractK1JavaToKotlinConverterMultiFileTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {
