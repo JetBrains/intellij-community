@@ -307,7 +307,7 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
       if (instanceOfType != null && instanceOfType.getType() instanceof PsiClassType classType && !classType.isRaw()) {
         typeElement = instanceOfType;
       }
-      PsiIfStatement psiIfStatement = PsiTreeUtil.getParentOfType(instanceOf, PsiIfStatement.class);
+      PsiStatement psiIfStatement = PsiTreeUtil.getParentOfType(instanceOf, PsiStatement.class);
       if (psiIfStatement == null || psiIfStatement.getParent() == null) return;
       var visitor = new JavaRecursiveElementVisitor() {
         final List<PsiTypeCastExpression> myCasts = new ArrayList<>();
