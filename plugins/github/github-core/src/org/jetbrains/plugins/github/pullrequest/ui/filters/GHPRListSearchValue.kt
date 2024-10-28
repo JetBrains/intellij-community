@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.filters
 
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue
@@ -19,7 +19,8 @@ data class GHPRListSearchValue(override val searchQuery: String? = null,
                                val assignee: String? = null,
                                val reviewState: ReviewState? = null,
                                val author: String? = null,
-                               val label: String? = null) : ReviewListSearchValue {
+                               val label: String? = null,
+                               val sort: Sort? = null) : ReviewListSearchValue {
 
   @Transient
   override val filterCount: Int = calcFilterCount()
@@ -32,6 +33,7 @@ data class GHPRListSearchValue(override val searchQuery: String? = null,
     if (reviewState != null) count++
     if (author != null) count++
     if (label != null) count++
+    if (sort != null) count++
     return count
   }
 
@@ -76,6 +78,18 @@ data class GHPRListSearchValue(override val searchQuery: String? = null,
       terms.add(QualifierName.label.createTerm(StringUtil.wrapWithDoubleQuote(label)))
     }
 
+    if (sort != null) {
+      val term = when (sort) {
+        Sort.NEWEST -> QualifierName.sortBy.createTerm("created-desc")
+        Sort.OLDEST -> QualifierName.sortBy.createTerm("created-asc")
+        Sort.MOST_COMMENTED -> QualifierName.sortBy.createTerm("comments-desc")
+        Sort.LEAST_COMMENTED -> QualifierName.sortBy.createTerm("comments-asc")
+        Sort.RECENTLY_UPDATED -> QualifierName.sortBy.createTerm("updated-desc")
+        Sort.LEAST_RECENTLY_UPDATED -> QualifierName.sortBy.createTerm("updated-asc")
+      }
+      terms.add(term)
+    }
+
     if (terms.isEmpty()) return null
     return GHPRSearchQuery(terms)
   }
@@ -99,5 +113,14 @@ data class GHPRListSearchValue(override val searchQuery: String? = null,
     REVIEWED_BY_ME,
     NOT_REVIEWED_BY_ME,
     AWAITING_REVIEW
+  }
+
+  enum class Sort {
+    NEWEST,
+    OLDEST,
+    MOST_COMMENTED,
+    LEAST_COMMENTED,
+    RECENTLY_UPDATED,
+    LEAST_RECENTLY_UPDATED,
   }
 }

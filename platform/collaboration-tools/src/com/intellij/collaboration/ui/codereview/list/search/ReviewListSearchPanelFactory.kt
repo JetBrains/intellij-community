@@ -119,7 +119,7 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : Revie
 
       viewScope.launch {
         vm.searchState.collect {
-          toolbar.updateActionsImmediately()
+          toolbar.updateActionsAsync()
         }
       }
       return toolbar.component

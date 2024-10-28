@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.internal.statistic.StructuredIdeActivity
@@ -26,7 +26,7 @@ import java.util.*
 
 // TODO: Fix or replace a whole bunch of these statistics as they're no longer being collected since generalizing to Collab Tools
 internal object GHPRStatisticsCollector : CounterUsagesCollector() {
-  private val COUNTERS_GROUP = EventLogGroup("vcs.github.pullrequest.counters", 8)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.github.pullrequest.counters", 9)
 
   private val LOG = logger<GHPRStatisticsCollector>()
 
@@ -52,6 +52,7 @@ internal object GHPRStatisticsCollector : CounterUsagesCollector() {
   private val FILTER_ASSIGNEE_PRESENT = EventFields.Boolean("has_assignee")
   private val FILTER_REVIEW_PRESENT = EventFields.Boolean("has_review_state")
   private val FILTER_LABEL_PRESENT = EventFields.Boolean("has_label")
+  private val FILTER_SORT_PRESENT = EventFields.Boolean("has_sort")
 
   private val FILTERS_APPLIED_EVENT = COUNTERS_GROUP.registerVarargEvent("list.filters.applied",
                                                                          FILTER_SEARCH_PRESENT,
@@ -59,7 +60,8 @@ internal object GHPRStatisticsCollector : CounterUsagesCollector() {
                                                                          FILTER_AUTHOR_PRESENT,
                                                                          FILTER_ASSIGNEE_PRESENT,
                                                                          FILTER_REVIEW_PRESENT,
-                                                                         FILTER_LABEL_PRESENT)
+                                                                         FILTER_LABEL_PRESENT,
+                                                                         FILTER_SORT_PRESENT)
 
   fun logListFiltersApplied(project: Project, filters: GHPRListSearchValue): Unit =
     FILTERS_APPLIED_EVENT.log(
@@ -69,7 +71,8 @@ internal object GHPRStatisticsCollector : CounterUsagesCollector() {
       EventPair(FILTER_AUTHOR_PRESENT, filters.author != null),
       EventPair(FILTER_ASSIGNEE_PRESENT, filters.assignee != null),
       EventPair(FILTER_REVIEW_PRESENT, filters.reviewState != null),
-      EventPair(FILTER_LABEL_PRESENT, filters.label != null)
+      EventPair(FILTER_LABEL_PRESENT, filters.label != null),
+      EventPair(FILTER_SORT_PRESENT, filters.label != null)
     )
   //endregion
 
@@ -105,7 +108,6 @@ internal object GHPRStatisticsCollector : CounterUsagesCollector() {
   private val DETAILS_ACTION_EVENT = COUNTERS_GROUP.registerEvent("details.additional.actions.invoked",
                                                                   EventFields.Enum<GHPRAction>("action"),
                                                                   EventFields.Boolean("is_default"))
-
   fun logDetailsBranchesOpened(project: Project) {
     DETAILS_BRANCHES_EVENT.log(project)
   }
