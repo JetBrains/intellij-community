@@ -68,8 +68,8 @@ internal class GHPRViewModelContainerImpl(
   private val reviewVmHelper: GHPRReviewViewModelHelper by lazy { GHPRReviewViewModelHelper(cs, dataProvider) }
 
   override val aiReviewVm: StateFlow<GHPRAIReviewViewModel?> =
-    GHPRAIReviewExtension.EP.extensionListFlow()
-      .mapScoped { it.firstOrNull()?.provideReviewVm(project, this, dataContext, dataProvider) }
+    GHPRAIReviewExtension.EP.singleExtensionFlow()
+      .mapScoped { it?.provideReviewVm(project, this, dataContext, dataProvider) }
       .stateIn(cs, SharingStarted.Eagerly, null)
 
   private val branchStateVm by lazy {
