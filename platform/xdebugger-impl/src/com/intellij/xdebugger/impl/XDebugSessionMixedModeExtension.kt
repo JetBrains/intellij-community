@@ -80,6 +80,14 @@ abstract class XDebugSessionMixedModeExtension(
       TODO("not yet supported")
   }
 
+  fun stepOut(suspendContext: XSuspendContext) {
+    if (isLowSuspendContext(suspendContext)) {
+      this.low.startStepOut(suspendContext)
+    }
+    else
+      TODO("not yet supported")
+  }
+
   fun onResumed(isLowLevel: Boolean) {
     coroutineScope.launch {
       val handled = stateMachine.onSessionResumed(isLowLevel)

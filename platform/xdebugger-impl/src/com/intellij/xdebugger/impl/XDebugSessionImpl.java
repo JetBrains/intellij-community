@@ -624,7 +624,18 @@ public final class XDebugSessionImpl implements XDebugSession {
     rememberUserActionStart(XDebuggerActions.STEP_OUT);
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
-    myDebugProcess.startStepOut(doResume());
+    var currentStackFrame = getCurrentStackFrame();
+    var suspendContext = doResume();
+    if (myMixedModeExtension != null) {
+      var mixedModeSuspendContext = Objects.requireNonNull((XMixedModeSuspendContext)suspendContext);
+      var suspendContextForStep = myMixedModeExtension.isLowStackFrame(Objects.requireNonNull(currentStackFrame))
+                                  ? mixedModeSuspendContext.getLowLevelDebugSuspendContext()
+                                  : mixedModeSuspendContext.getHighLevelDebugSuspendContext();
+      myMixedModeExtension.stepOut(suspendContextForStep);
+      return;
+    }
+
+    myDebugProcess.startStepOut(suspendContext);
   }
 
   @Override
