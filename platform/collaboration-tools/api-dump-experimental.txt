@@ -73,7 +73,6 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - sf:disposingMainScope(com.intellij.openapi.Disposable):kotlinx.coroutines.CoroutineScope
 - sf:disposingScope(com.intellij.openapi.Disposable,kotlin.coroutines.CoroutineContext):kotlinx.coroutines.CoroutineScope
 - bs:disposingScope$default(com.intellij.openapi.Disposable,kotlin.coroutines.CoroutineContext,I,java.lang.Object):kotlinx.coroutines.CoroutineScope
-- sf:extensionListFlow(com.intellij.openapi.extensions.ExtensionPointName):kotlinx.coroutines.flow.Flow
 - sf:inverted(kotlinx.coroutines.flow.Flow):kotlinx.coroutines.flow.Flow
 - sf:launchNow(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2):kotlinx.coroutines.Job
 - bs:launchNow$default(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,I,java.lang.Object):kotlinx.coroutines.Job

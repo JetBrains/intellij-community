@@ -78,19 +78,23 @@ fun <T> Flow<T>.launchNowIn(scope: CoroutineScope, context: CoroutineContext = E
   }
 
 @ApiStatus.Experimental
-fun <T1, T2, R> combineState(scope: CoroutineScope,
-                             state1: StateFlow<T1>,
-                             state2: StateFlow<T2>,
-                             transform: (T1, T2) -> R): StateFlow<R> =
+fun <T1, T2, R> combineState(
+  scope: CoroutineScope,
+  state1: StateFlow<T1>,
+  state2: StateFlow<T2>,
+  transform: (T1, T2) -> R,
+): StateFlow<R> =
   combine(state1, state2, transform)
     .stateIn(scope, SharingStarted.Eagerly, transform(state1.value, state2.value))
 
 @ApiStatus.Experimental
-fun <T1, T2, T3, R> combineState(scope: CoroutineScope,
-                                 state1: StateFlow<T1>,
-                                 state2: StateFlow<T2>,
-                                 state3: StateFlow<T3>,
-                                 transform: (T1, T2, T3) -> R): StateFlow<R> =
+fun <T1, T2, T3, R> combineState(
+  scope: CoroutineScope,
+  state1: StateFlow<T1>,
+  state2: StateFlow<T2>,
+  state3: StateFlow<T3>,
+  transform: (T1, T2, T3) -> R,
+): StateFlow<R> =
   combine(state1, state2, state3, transform)
     .stateIn(scope, SharingStarted.Eagerly, transform(state1.value, state2.value, state3.value))
 
@@ -98,7 +102,7 @@ fun <T1, T2, T3, R> combineState(scope: CoroutineScope,
 suspend fun <T1, T2> combineAndCollect(
   flow1: Flow<T1>,
   flow2: Flow<T2>,
-  action: suspend (T1, T2) -> Unit
+  action: suspend (T1, T2) -> Unit,
 ) {
   return combine(flow1, flow2) { value1, value2 ->
     value1 to value2
@@ -112,7 +116,7 @@ suspend fun <T1, T2, T3> combineAndCollect(
   flow1: Flow<T1>,
   flow2: Flow<T2>,
   flow3: Flow<T3>,
-  action: suspend (T1, T2, T3) -> Unit
+  action: suspend (T1, T2, T3) -> Unit,
 ) {
   return combine(flow1, flow2, flow3) { value1, value2, value3 ->
     Triple(value1, value2, value3)
@@ -126,13 +130,13 @@ fun Flow<Boolean>.inverted() = map { !it }
 @ApiStatus.Experimental
 fun <T, M> StateFlow<T>.mapState(
   scope: CoroutineScope,
-  mapper: (value: T) -> M
+  mapper: (value: T) -> M,
 ): StateFlow<M> = map { mapper(it) }.stateIn(scope, SharingStarted.Eagerly, mapper(value))
 
 @ApiStatus.Internal
 fun <T, M> StateFlow<T>.mapStateInNow(
   scope: CoroutineScope,
-  mapper: (value: T) -> M
+  mapper: (value: T) -> M,
 ): StateFlow<M> = map { mapper(it) }.stateInNow(scope, mapper(value))
 
 @ApiStatus.Experimental
@@ -164,13 +168,17 @@ fun <T1, T2, R> combineStateIn(cs: CoroutineScope, sf1: StateFlow<T1>, sf2: Stat
   combine(sf1, sf2, combiner).stateIn(cs, SharingStarted.Eagerly, combiner(sf1.value, sf2.value))
 
 @ApiStatus.Internal
-fun <T1, T2, T3, R> combineStateIn(cs: CoroutineScope, sf1: StateFlow<T1>, sf2: StateFlow<T2>, sf3: StateFlow<T3>,
-                                   combiner: (T1, T2, T3) -> R): StateFlow<R> =
+fun <T1, T2, T3, R> combineStateIn(
+  cs: CoroutineScope, sf1: StateFlow<T1>, sf2: StateFlow<T2>, sf3: StateFlow<T3>,
+  combiner: (T1, T2, T3) -> R,
+): StateFlow<R> =
   combine(sf1, sf2, sf3, combiner).stateIn(cs, SharingStarted.Eagerly, combiner(sf1.value, sf2.value, sf3.value))
 
 @ApiStatus.Internal
-inline fun <reified T, R> combineStatesIn(cs: CoroutineScope, sfs: List<StateFlow<T>>,
-                                          crossinline combiner: (Array<T>) -> R): StateFlow<R> =
+inline fun <reified T, R> combineStatesIn(
+  cs: CoroutineScope, sfs: List<StateFlow<T>>,
+  crossinline combiner: (Array<T>) -> R,
+): StateFlow<R> =
   combine(sfs, combiner).stateIn(cs, SharingStarted.Eagerly, combiner(sfs.map { it.value }.toTypedArray()))
 
 /**
@@ -183,7 +191,7 @@ inline fun <reified T, R> combineStatesIn(cs: CoroutineScope, sfs: List<StateFlo
  */
 private class DerivedStateFlow<T>(
   private val source: Flow<T>,
-  private val valueSupplier: () -> T
+  private val valueSupplier: () -> T,
 ) : StateFlow<T> {
 
   override val value: T get() = valueSupplier()
@@ -281,11 +289,13 @@ fun <T> Flow<T>.modelFlow(cs: CoroutineScope, log: Logger): SharedFlow<T> =
  * @see associateCachingBy
  */
 @ApiStatus.Obsolete
-fun <T, K, V> Flow<Iterable<T>>.associateCachingBy(keyExtractor: (T) -> K,
-                                                   hashingStrategy: HashingStrategy<K>,
-                                                   valueExtractor: CoroutineScope.(T) -> V,
-                                                   destroy: suspend V.() -> Unit,
-                                                   update: (suspend V.(T) -> Unit)? = null)
+fun <T, K, V> Flow<Iterable<T>>.associateCachingBy(
+  keyExtractor: (T) -> K,
+  hashingStrategy: HashingStrategy<K>,
+  valueExtractor: CoroutineScope.(T) -> V,
+  destroy: suspend V.() -> Unit,
+  update: (suspend V.(T) -> Unit)? = null,
+)
   : Flow<Map<K, V>> = flow {
   coroutineScope {
     val container = MappingScopedItemsContainer(this, keyExtractor, hashingStrategy, valueExtractor, destroy, update)
@@ -312,10 +322,12 @@ fun <T, K, V> Flow<Iterable<T>>.associateCachingBy(keyExtractor: (T) -> K,
  *
  * **Returned flow never completes**
  */
-fun <T, K, V> Flow<Iterable<T>>.associateCachingBy(keyExtractor: (T) -> K,
-                                                   hashingStrategy: HashingStrategy<K>,
-                                                   valueExtractor: CoroutineScope.(T) -> V,
-                                                   update: (suspend V.(T) -> Unit)? = null)
+fun <T, K, V> Flow<Iterable<T>>.associateCachingBy(
+  keyExtractor: (T) -> K,
+  hashingStrategy: HashingStrategy<K>,
+  valueExtractor: CoroutineScope.(T) -> V,
+  update: (suspend V.(T) -> Unit)? = null,
+)
   : Flow<Map<K, V>> = associateCachingBy(keyExtractor, hashingStrategy, valueExtractor, { }, update)
 
 /**
@@ -323,24 +335,28 @@ fun <T, K, V> Flow<Iterable<T>>.associateCachingBy(keyExtractor: (T) -> K,
  *
  * Shorthand for cases where key is the same as item destructor simply cancels the value scope
  */
-private fun <T, R> Flow<Iterable<T>>.associateCaching(hashingStrategy: HashingStrategy<T>,
-                                                      mapper: CoroutineScope.(T) -> R,
-                                                      update: (suspend R.(T) -> Unit)? = null): Flow<Map<T, R>> {
+private fun <T, R> Flow<Iterable<T>>.associateCaching(
+  hashingStrategy: HashingStrategy<T>,
+  mapper: CoroutineScope.(T) -> R,
+  update: (suspend R.(T) -> Unit)? = null,
+): Flow<Map<T, R>> {
   return associateCachingBy({ it }, hashingStrategy, { mapper(it) }, { }, update)
 }
 
 /**
  * Creates a list of model objects from DTOs
  */
-fun <T, R> Flow<Iterable<T>>.mapDataToModel(sourceIdentifier: (T) -> Any,
-                                            mapper: CoroutineScope.(T) -> R,
-                                            update: (suspend R.(T) -> Unit)): Flow<List<R>> =
+fun <T, R> Flow<Iterable<T>>.mapDataToModel(
+  sourceIdentifier: (T) -> Any,
+  mapper: CoroutineScope.(T) -> R,
+  update: (suspend R.(T) -> Unit),
+): Flow<List<R>> =
   associateCaching(HashingUtil.mappingStrategy(sourceIdentifier), mapper, update).map { it.values.toList() }
 
 /**
  * Create a list of view models from models
  */
-fun <T, R> Flow<Iterable<T>>. mapModelsToViewModels(mapper: CoroutineScope.(T) -> R): Flow<List<R>> =
+fun <T, R> Flow<Iterable<T>>.mapModelsToViewModels(mapper: CoroutineScope.(T) -> R): Flow<List<R>> =
   associateCaching(HashingStrategy.identity(), mapper).map { it.values.toList() }
 
 fun <T> Flow<Collection<T>>.mapFiltered(predicate: (T) -> Boolean): Flow<List<T>> = map { it.filter(predicate) }
@@ -379,7 +395,7 @@ private class ReferentiallyComparedValue<T : Any>(val value: T) {
 @ApiStatus.Internal
 fun <T, R> Flow<Result<T>>.transformConsecutiveSuccesses(
   resetOnFailure: Boolean = true,
-  transformer: suspend Flow<T>.() -> Flow<R>
+  transformer: suspend Flow<T>.() -> Flow<R>,
 ): Flow<Result<R>> =
   channelFlow {
     val successFlows = MutableStateFlow(ReferentiallyComparedValue(MutableSharedFlow<T>(1)))
@@ -416,7 +432,7 @@ fun <T, R> Flow<Result<T>>.transformConsecutiveSuccesses(
 @ApiStatus.Internal
 fun <T, R> Flow<ComputedResult<T>>.transformConsecutiveSuccesses(
   resetOnFailure: Boolean = true,
-  transformer: suspend Flow<T>.() -> Flow<R>
+  transformer: suspend Flow<T>.() -> Flow<R>,
 ): Flow<ComputedResult<R>> =
   channelFlow {
     val successFlows = MutableStateFlow(ReferentiallyComparedValue(MutableSharedFlow<T>(1)))
@@ -554,6 +570,7 @@ suspend fun <T> Deferred<T>.awaitCancelling(): T {
   }
 }
 
+@ApiStatus.Internal
 fun <T : Any> ExtensionPointName<T>.extensionListFlow(): Flow<List<T>> =
   channelFlow<List<T>> {
     addExtensionPointListener(this, object : ExtensionPointListener<T> {
@@ -567,3 +584,7 @@ fun <T : Any> ExtensionPointName<T>.extensionListFlow(): Flow<List<T>> =
     })
     send(extensionList)
   }
+
+@ApiStatus.Internal
+fun <T : Any> ExtensionPointName<T>.singleExtensionFlow(): Flow<T?> =
+  extensionListFlow().map { it.singleOrNull() }
