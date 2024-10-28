@@ -82,7 +82,9 @@ fun JEditorPane.setHtmlBody(@Language("HTML") body: String) {
     text = "<html><body>$body</body></html>"
   }
   // JDK bug JBR-2256 - need to force height recalculation
-  setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
+  if (height == 0) {
+    setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
+  }
 }
 
 fun JEditorPane.onHyperlinkActivated(listener: (HyperlinkEvent) -> Unit) {
