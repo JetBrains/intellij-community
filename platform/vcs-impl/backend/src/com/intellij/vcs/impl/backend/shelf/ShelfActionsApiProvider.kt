@@ -39,6 +39,10 @@ class BackendShelfActionsApi : RemoteShelfActionsApi {
     getShelfRemoteActionExecutor(projectRef).exportPatches()
   }
 
+  override suspend fun navigateToSource(projectRef: SharedRef<ProjectEntity>, navigatables: List<ChangeListDto>, focusEditor: Boolean) {
+    getShelfRemoteActionExecutor(projectRef).navigateToSource(navigatables, focusEditor)
+  }
+
   private suspend fun getShelfRemoteActionExecutor(projectRef: SharedRef<ProjectEntity>): ShelfRemoteActionExecutor {
     val project = projectRef.asProject()
 

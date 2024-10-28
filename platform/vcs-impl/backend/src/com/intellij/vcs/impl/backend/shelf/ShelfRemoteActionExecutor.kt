@@ -10,6 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction
 import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor
 import com.intellij.openapi.vcs.changes.shelf.*
+import com.intellij.pom.NavigatableAdapter
+import com.intellij.util.OpenSourceUtil
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import com.intellij.vcs.impl.shared.rpc.ChangeListDto
 import fleet.kernel.SharedRef
@@ -122,10 +124,26 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
     }
   }
 
+  fun navigateToSource(dtos: List<ChangeListDto>, focusEditor: Boolean) {
+    val navigatables = dtos.flatMap { shelfTreeHolder.findChangesInTree(it) }
+      .map { it.shelvedChange }
+      .map { wrapper -> ShelvedChangeNavigatable(wrapper, project) }
+      .toTypedArray()
+    cs.launch(Dispatchers.EDT) {
+      OpenSourceUtil.navigate(focusEditor, *navigatables);
+    }
+  }
+
   companion object {
     fun getInstance(project: Project): ShelfRemoteActionExecutor = project.service<ShelfRemoteActionExecutor>()
   }
 
   private class ShelvedChanges(val changeLists: List<ShelvedChangeList>, val changes: List<ShelvedChange>, val files: List<ShelvedBinaryFile>)
 
+  private class ShelvedChangeNavigatable(private val shelvedChange: ShelvedWrapper, private val project: Project) : NavigatableAdapter() {
+    override fun navigate(requestFocus: Boolean) {
+      val file = shelvedChange.getBeforeVFUnderProject(project) ?: return
+      navigate(project, file, true)
+    }
+  }
 }

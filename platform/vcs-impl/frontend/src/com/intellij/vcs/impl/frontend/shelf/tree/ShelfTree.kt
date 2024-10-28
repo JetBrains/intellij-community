@@ -2,6 +2,7 @@
 package com.intellij.vcs.impl.frontend.shelf.tree
 
 import com.intellij.ide.DeleteProvider
+import com.intellij.openapi.actionSystem.CommonDataKeys.NAVIGATABLE_ARRAY
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataKey.Companion.create
 import com.intellij.openapi.actionSystem.DataSink
@@ -9,6 +10,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.impl.frontend.changes.*
+import com.intellij.vcs.impl.frontend.navigation.FrontendShelfNavigatable
 import com.intellij.vcs.impl.shared.changes.GroupingUpdatePlaces
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
@@ -35,11 +37,13 @@ class ShelfTree(project: Project, cs: CoroutineScope) : ChangesTree(project, cs,
       .map { entry ->
         entry.key?.userObject as ShelvedChangeListEntity to entry.value.map { it.userObject as ShelvedChangeEntity }
       }
-    sink[GROUPED_CHANGES_KEY] = groupedChanges.toMap()
+    val groupedChangesMap = groupedChanges.toMap()
+    sink[GROUPED_CHANGES_KEY] = groupedChangesMap
     sink[CHANGE_LISTS_KEY] = groupedChanges.map { ChangeList(it.first, it.second) }
     if (!isEditing()) {
       sink[PlatformDataKeys.DELETE_ELEMENT_PROVIDER] = deleteProvider
     }
+    sink[NAVIGATABLE_ARRAY] = arrayOf(FrontendShelfNavigatable(project, groupedChangesMap))
   }
 
   private fun ChangesBrowserNode<*>.findParentOfType(clazz: Class<*>): ChangesBrowserNode<*>? {

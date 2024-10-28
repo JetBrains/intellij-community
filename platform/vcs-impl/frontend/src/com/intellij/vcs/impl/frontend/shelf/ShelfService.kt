@@ -20,6 +20,7 @@ import fleet.kernel.rete.filter
 import fleet.kernel.sharedRef
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Service(Service.Level.PROJECT)
@@ -79,6 +80,18 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
       withKernel {
         val projectRef = project.asEntity().sharedRef()
         RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).importShelvesFromPatches(projectRef)
+      }
+    }
+  }
+
+  fun navigateToSource(lists: Map<ShelvedChangeListEntity, List<ShelvedChangeEntity>>, focusEditor: Boolean) {
+    cs.launch(Dispatchers.IO) {
+      withKernel {
+        val changeLists = lists.map {
+          ChangeListDto(changeList = it.key.sharedRef(), changes = it.value.map { it.sharedRef() })
+        }
+        val projectRef = project.asEntity().sharedRef()
+        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).navigateToSource(projectRef, changeLists, focusEditor)
       }
     }
   }

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.impl.frontend.shelf
 
-import com.intellij.ide.actions.EditSourceAction
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
@@ -12,6 +11,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.impl.frontend.changes.EDITOR_TAB_DIFF_PREVIEW
 import com.intellij.vcs.impl.frontend.changes.actions.SHOW_DIFF_ACTION_ID
+import com.intellij.vcs.impl.frontend.navigation.FrontendNavigateToSourceAction
 import com.intellij.vcs.impl.frontend.shelf.tree.ShelfTree
 import com.intellij.vcs.impl.frontend.shelf.tree.ShelfTreeEditorDiffPreview
 import kotlinx.coroutines.CoroutineScope
@@ -33,7 +33,7 @@ class ShelfToolWindowPanel(project: Project, tree: ShelfTree, cs: CoroutineScope
     actionGroup.add(Separator.getInstance())
     val showDiffAction = actionManager.getAction(SHOW_DIFF_ACTION_ID)
     showDiffAction.registerCustomShortcutSet(showDiffAction.shortcutSet, tree)
-    val editSourceAction = EditSourceAction()
+    val editSourceAction = FrontendNavigateToSourceAction()
     editSourceAction.registerCustomShortcutSet(editSourceAction.shortcutSet, tree)
     val toolbar = actionManager.createActionToolbar("ShelvedChanges", actionGroup, true)
     toolbar.setTargetComponent(tree)

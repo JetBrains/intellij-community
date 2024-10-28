@@ -14,4 +14,5 @@ interface RemoteShelfActionsApi : RemoteApi<Unit> {
   suspend fun createPatchForShelvedChanges(projectRef: SharedRef<ProjectEntity>, changeListsDto: List<ChangeListDto>, silentClipboard: Boolean)
   suspend fun showStandaloneDiff(projectRef: SharedRef<ProjectEntity>, changeListsDto: List<ChangeListDto>, withLocal: Boolean)
   suspend fun importShelvesFromPatches(projectRef: SharedRef<ProjectEntity>)
+  suspend fun navigateToSource(projectRef: SharedRef<ProjectEntity>, navigatables: List<ChangeListDto>, focusEditor: Boolean)
 }
