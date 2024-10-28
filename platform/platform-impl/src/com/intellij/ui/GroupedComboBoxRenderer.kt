@@ -10,7 +10,6 @@ import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Color
@@ -157,9 +156,6 @@ abstract class GroupedComboBoxRenderer<T>(val component: JComponent? = null) : G
       }
     }
 
-    AccessibleContextUtil.setName(myRendererComponent, coloredComponent)
-    AccessibleContextUtil.setDescription(myRendererComponent, coloredComponent)
-
     list?.let { myRendererComponent.background = it.background }
     updateSelection(isSelected, itemComponent, coloredComponent)
 
@@ -177,4 +173,12 @@ abstract class GroupedComboBoxRenderer<T>(val component: JComponent? = null) : G
                                 value: T): @NlsContexts.Separator String? = (list?.model as ListPopupModel).getCaptionAboveOf(value)
 
   protected open fun isSeparatorVisible(list: JList<out T>?, value: T) = (list?.model as? ListPopupModel)?.isSeparatorAboveOf(value) == true
+
+  override fun getDelegateAccessibleName(): String {
+    return coloredComponent.accessibleContext.accessibleName
+  }
+
+  override fun getDelegateAccessibleDescription(): String {
+    return coloredComponent.accessibleContext.accessibleDescription
+  }
 }
