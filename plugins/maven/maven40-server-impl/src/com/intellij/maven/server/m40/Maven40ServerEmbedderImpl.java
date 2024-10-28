@@ -69,6 +69,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
@@ -482,6 +483,11 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
       getComponent(MavenExecutionRequestPopulator.class).populateFromSettings(result, myMavenSettings);
 
+      String multiModuleProjectDirectory = myEmbedderSettings.getMultiModuleProjectDirectory();
+      if (null != multiModuleProjectDirectory) {
+        Path baseDir = FileSystems.getDefault().getPath(multiModuleProjectDirectory);
+        result.setRootDirectory(baseDir);
+      }
       result.setPom(file);
 
       getComponent(MavenExecutionRequestPopulator.class).populateDefaults(result);

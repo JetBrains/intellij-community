@@ -632,6 +632,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                           <plugin>
                             <groupId>org.codehaus.groovy.maven</groupId>
                             <artifactId>gmaven-plugin</artifactId>
+                            <version>1.0</version>
                             <executions>
                               <execution>
                                 <goals>
