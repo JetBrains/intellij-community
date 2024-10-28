@@ -327,14 +327,20 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       else {
         source = file == null ? "" : file.getPath();
       }
-      myConsoleWrapper.error("Maven model problem: " +
-                             problem.getMessage() +
-                             " at " +
-                             problem.getSource() +
-                             ":" +
-                             problem.getLineNumber() +
-                             ":" +
-                             problem.getColumnNumber());
+      String message = "Maven model problem: " +
+                       problem.getMessage() +
+                       " at " +
+                       problem.getSource() +
+                       ":" +
+                       problem.getLineNumber() +
+                       ":" +
+                       problem.getColumnNumber();
+      if (problem.getSeverity() == ModelProblem.Severity.ERROR) {
+        myConsoleWrapper.error(message);
+      }
+      else {
+        myConsoleWrapper.warn(message);
+      }
       Exception problemException = problem.getException();
       if (problemException != null) {
         List<MavenProjectProblem> exceptionProblems = collectExceptionProblems(file, problemException);
