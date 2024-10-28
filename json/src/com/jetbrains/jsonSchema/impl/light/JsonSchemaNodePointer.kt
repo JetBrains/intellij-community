@@ -2,11 +2,14 @@
 package com.jetbrains.jsonSchema.impl.light
 
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface JsonSchemaNodePointer<T> {
   val rawSchemaNode: T
 }
 
+@ApiStatus.Internal
 interface JsonSchemaObjectFactory<T, V> where V : JsonSchemaObject, V : JsonSchemaNodePointer<T> {
   /**
    * @return an instance of schema object backed by physically existing schema node that can be found by a combined json pointer, where
@@ -32,18 +35,18 @@ interface RawJsonSchemaNodeAccessor<T> {
   /**
    * Resolve raw schema node from the given schema node by the given node's name
    */
-  fun resolveRelativeNode(node: T, vararg relativeChildPath: String): T?
+  fun resolveRelativeNode(node: T, relativeChildPath: String? = null): T?
 
-  fun hasChildNode(node: T, vararg relativeChildPath: String): Boolean
+  fun hasChildNode(node: T, relativeChildPath: String): Boolean
 
-  fun readTextNodeValue(node: T, vararg relativeChildPath: String): String?
-  fun readBooleanNodeValue(node: T, vararg relativeChildPath: String): Boolean?
-  fun readNumberNodeValue(node: T, vararg relativeChildPath: String): Number?
-  fun readUntypedNodeValueAsText(node: T, vararg relativeChildPath: String): String?
+  fun readTextNodeValue(node: T, relativeChildPath: String? = null): String?
+  fun readBooleanNodeValue(node: T, relativeChildPath: String? = null): Boolean?
+  fun readNumberNodeValue(node: T, relativeChildPath: String? = null): Number?
+  fun readUntypedNodeValueAsText(node: T, relativeChildPath: String? = null): String?
 
-  fun readNodeKeys(node: T, vararg relativeChildPath: String): Sequence<String>?
+  fun readNodeKeys(node: T, relativeChildPath: String? = null): Sequence<String>?
 
-  fun readUntypedNodesCollection(node: T, vararg relativeChildPath: String): Sequence<Any>?
-  fun readNodeAsMapEntries(node: T, vararg relativeChildPath: String): Sequence<Pair<String, T>>?
-  fun readNodeAsMultiMapEntries(node: T, vararg relativeChildPath: String): Sequence<Pair<String, List<String>>>?
+  fun readUntypedNodesCollection(node: T, relativeChildPath: String? = null): Sequence<Any>?
+  fun readNodeAsMapEntries(node: T, relativeChildPath: String? = null): Sequence<Pair<String, T>>?
+  fun readNodeAsMultiMapEntries(node: T, relativeChildPath: String? = null): Sequence<Pair<String, List<String>>>?
 }

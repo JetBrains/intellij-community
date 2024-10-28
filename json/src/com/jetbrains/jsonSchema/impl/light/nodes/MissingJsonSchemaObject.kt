@@ -270,7 +270,7 @@ internal object MissingJsonSchemaObject : JsonSchemaObjectBackedByJacksonBase(Mi
     throw UnsupportedOperationException(ERROR_MESSAGE)
   }
 
-  override fun hasChildFieldsExcept(namesToSkip: Array<String>): Boolean {
+  override fun hasChildFieldsExcept(namesToSkip: List<String>): Boolean {
     throw UnsupportedOperationException(ERROR_MESSAGE)
   }
 
