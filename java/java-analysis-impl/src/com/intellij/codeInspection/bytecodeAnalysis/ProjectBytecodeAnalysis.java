@@ -70,16 +70,19 @@ public class ProjectBytecodeAnalysis {
   }
 
   /**
-   * @param getter getter method
-   * @return field that this method reads and returns; null if the method is not identified as a getter
+   * @param accessor accessor method getter or setter
+   * @return field that this method reads or writes; null if the method is not identified as a getter
+   * or setter
    */
-  public @Nullable PsiField findFieldForGetter(@NotNull PsiMethod getter) {
-    EKey eKey = getKey(getter);
+  public @Nullable PsiField findFieldForAccessor(@NotNull PsiMethod accessor) {
+    int count = accessor.getParameterList().getParametersCount();
+    Direction direction = count == 0 ? Out : new In(0, true);
+    EKey eKey = getKey(accessor);
     if (eKey == null) return null;
-    EKey accessKey = myEquationProvider.adaptKey(eKey.withDirection(Out));
+    EKey accessKey = myEquationProvider.adaptKey(eKey);
     for (Equations equation : myEquationProvider.getEquations(accessKey.member)) {
-      if (equation.find(Out).orElse(null) instanceof FieldAccess access) {
-        PsiClass containingClass = getter.getContainingClass();
+      if (equation.find(direction).orElse(null) instanceof FieldAccess access) {
+        PsiClass containingClass = accessor.getContainingClass();
         return containingClass != null ? containingClass.findFieldByName(access.name(), false) : null;
       }
     }

@@ -9,7 +9,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public final class BytecodeAccessorTest extends LightJavaCodeInsightFixtureTestCase {
-  public void testAccessors() {
+  public void testGetters() {
     PsiClass psiClass =
       JavaPsiFacade.getInstance(getProject()).findClass("java.util.OptionalInt", GlobalSearchScope.allScope(getProject()));
     assertNotNull(psiClass);
@@ -19,10 +19,25 @@ public final class BytecodeAccessorTest extends LightJavaCodeInsightFixtureTestC
     PsiMethod emptyMethod = psiClass.findMethodsByName("empty", false)[0];
     assertTrue(emptyMethod.hasModifierProperty(PsiModifier.STATIC));
     ProjectBytecodeAnalysis analysis = ProjectBytecodeAnalysis.getInstance(getProject());
-    PsiField isPresentField = analysis.findFieldForGetter(isPresentMethod);
+    PsiField isPresentField = analysis.findFieldForAccessor(isPresentMethod);
     assertNotNull(isPresentField);
-    PsiField emptyField = analysis.findFieldForGetter(emptyMethod);
+    assertEquals("isPresent", isPresentField.getName());
+    PsiField emptyField = analysis.findFieldForAccessor(emptyMethod);
     assertNotNull(emptyField);
+    assertEquals("EMPTY", emptyField.getName());
+  }
+
+  public void testSetters() {
+    PsiClass psiClass =
+      JavaPsiFacade.getInstance(getProject()).findClass("java.text.MessageFormat", GlobalSearchScope.allScope(getProject()));
+    assertNotNull(psiClass);
+    assertInstanceOf(psiClass, PsiCompiledElement.class);
+    PsiMethod setLocaleMethod = psiClass.findMethodsByName("setLocale", false)[0];
+    assertFalse(setLocaleMethod.hasModifierProperty(PsiModifier.STATIC));
+    ProjectBytecodeAnalysis analysis = ProjectBytecodeAnalysis.getInstance(getProject());
+    PsiField localeField = analysis.findFieldForAccessor(setLocaleMethod);
+    assertNotNull(localeField);
+    assertEquals("locale", localeField.getName());
   }
 
   @Override
