@@ -22,3 +22,5 @@ class ShowDiffAction : AnAction() {
     e.presentation.isEnabled = !CHANGE_LISTS_KEY.getData(e.dataContext).isNullOrEmpty()
   }
 }
+
+const val SHOW_DIFF_ACTION_ID: String = "Frontend.ChangesView.ShowDiff"
