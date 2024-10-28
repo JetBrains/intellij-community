@@ -9,6 +9,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardBaseStep
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.java.JavaBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
@@ -39,12 +40,7 @@ import com.intellij.openapi.util.SystemInfo.isWindows
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.provider.EelApiKey
-import com.intellij.platform.eel.provider.LocalEelKey
-import com.intellij.platform.eel.provider.getEelApi
-import com.intellij.platform.eel.provider.getEelApiBlocking
-import com.intellij.platform.eel.provider.getEelApiKey
-import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED
@@ -56,6 +52,7 @@ import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
 import com.intellij.util.ui.EmptyIcon
 import kotlinx.coroutines.*
@@ -68,7 +65,6 @@ import javax.swing.DefaultComboBoxModel
 import javax.swing.Icon
 import javax.swing.JList
 import kotlin.io.path.Path
-import kotlin.text.isNotEmpty
 
 /**
  * Represents an intent to set up a JDK:
@@ -141,6 +137,7 @@ fun projectWizardJdkComboBox(
         commentCell.comment?.let { it.text = component.comment }
       }
     }
+    .validationInfo { validateJdkVersion(it) }
     .validationOnApply {
       val intent = it.selectedItem
 
@@ -193,6 +190,21 @@ private fun ValidationInfoBuilder.validateInstallDir(intent: DownloadJdk): Valid
     null -> error(JavaUiBundle.message("jdk.location.error", intent.task.plannedHomeDir))
     else -> null
   }
+}
+
+private fun ValidationInfoBuilder.validateJdkVersion(combo: ProjectWizardJdkComboBox): ValidationInfo? {
+  val intent = combo.selectedItem
+  val versionString = when (intent) {
+    is ExistingJdk -> intent.jdk.versionString
+    is DetectedJdk -> intent.version
+    else -> null
+  } ?: return null
+
+  if (!JavaVersion.parse(versionString).isAtLeast(8)) {
+    return warning(JavaBundle.message("unsupported.jdk.notification.content", versionString))
+  }
+
+  return null
 }
 
 private fun ValidationInfoBuilder.validateJdkAndProjectCompatibility(intent: Any?, location: () -> String): ValidationInfo? {
