@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
@@ -173,7 +174,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   @Override
   public boolean isScript() {
-    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+    return ReadAction.compute(() -> {
       final StubElement stub = getStub();
       if (stub instanceof GrFileStub) {
         return ((GrFileStub)stub).isScript();
@@ -185,9 +186,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
         myScript = isScript;
       }
       return isScript;
-    } else {
-      return myScript != null ? myScript : false;
-    }
+    });
   }
 
   private boolean checkIsScript() {
