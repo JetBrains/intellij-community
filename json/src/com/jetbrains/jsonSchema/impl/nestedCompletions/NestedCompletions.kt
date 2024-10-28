@@ -164,18 +164,23 @@ private fun addNewPropertyWithObjectValue(parentObject: JsonObjectValueAdapter, 
   }.let { walker.getParentPropertyAdapter(it)!! }
 }
 
-private tailrec fun doExpand(parentObject: JsonObjectValueAdapter,
-                             completionPath: List<String>,
-                             walker: JsonLikePsiWalker,
-                             element: PsiElement,
-                             index: Int,
-                             fakeProperty: PsiElement?): PsiElement? {
-  val parentProperty = walker.getParentPropertyAdapter(element.parent)
+private tailrec fun doExpand(
+  parentObject: JsonObjectValueAdapter,
+  completionPath: List<String>,
+  walker: JsonLikePsiWalker,
+  element: PsiElement,
+  index: Int,
+  fakeProperty: PsiElement?
+): PsiElement? {
+  val parentProperty = walker.getParentPropertyAdapter(element)
   val property = parentObject.propertyList.firstOrNull {
     // we match properties both by name and by parent
     // for languages with exotic syntaxes, there can be multiple same-named properties
     //  at different levels within the same object
-    it.name == completionPath[index] && (parentProperty == null || parentProperty.delegate.parent == it.delegate.parent)
+    it.name == completionPath[index] && (
+      parentProperty == null ||
+      walker.haveSameParentWithinObject(parentProperty.delegate, it.delegate)
+    )
   } ?: addNewPropertyWithObjectValue(parentObject, completionPath[index], walker, element, fakeProperty)
   fakeProperty?.let {
     cleanupWhitespacesAndDelete(it, walker)

@@ -111,4 +111,7 @@ public interface JsonLikePsiWalker {
   PsiElement getPropertyNameElement(@Nullable PsiElement property);
 
   default String getPropertyValueSeparator(@Nullable JsonSchemaType valueType) { return ":"; }
+
+  // handling of exotic syntaxes where object properties can be located within object subsections and not directly
+  default boolean haveSameParentWithinObject(@NotNull PsiElement property1, @NotNull PsiElement property2) { return true; }
 }
