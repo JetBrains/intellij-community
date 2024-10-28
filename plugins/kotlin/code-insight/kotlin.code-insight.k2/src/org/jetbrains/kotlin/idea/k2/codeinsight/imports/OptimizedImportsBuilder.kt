@@ -114,11 +114,7 @@ internal class OptimizedImportsBuilder(
                 symbols.asSequence()
                     .filter { it is ClassLikeSymbolInfo }
                     .mapNotNull { importSymbolWithMapping(it) }
-                    .filterTo(classNamesToCheck) {
-                        // TODO reconsider this after KTIJ-30991 is fixed
-                        //needExplicitImport(it)
-                        true
-                    }
+                    .filterTo(classNamesToCheck) { needExplicitImport(it) }
 
                 if (fqNames.all { needExplicitImport(it) }) {
                     importsToGenerate.add(starImportPath)
@@ -133,13 +129,7 @@ internal class OptimizedImportsBuilder(
             val foundClassifiers = hierarchicalScope.findClassifiers(fqName.shortName()).firstOrNull()
             val singleFoundClassifier = foundClassifiers?.singleOrNull()
 
-
-            val singleFoundClassifierFqName = singleFoundClassifier?.let {
-                // TODO reconsider this after KTIJ-30991 is fixed
-                importSymbolWithMapping(it)
-            }
-
-            if (singleFoundClassifierFqName != fqName) {
+            if (singleFoundClassifier?.importableFqName != fqName) {
                 // add explicit import if failed to import with * (or from current package)
                 importsToGenerate.add(ImportPath(fqName, false))
 
@@ -251,12 +241,6 @@ internal class OptimizedImportsBuilder(
 
     private fun KaSession.importSymbolWithMapping(symbol: SymbolInfo): FqName? {
         val importableName = symbol.run { computeImportableName() } ?: return null
-
-        return findCorrespondingKotlinFqName(importableName) ?: importableName
-    }
-
-    private fun KaSession.importSymbolWithMapping(symbol: KaClassifierSymbol): FqName? {
-        val importableName = symbol.importableFqName ?: return null
 
         return findCorrespondingKotlinFqName(importableName) ?: importableName
     }
