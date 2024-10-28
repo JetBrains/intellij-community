@@ -1,9 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.platform.eel.fs.EelFileSystemApi
-import com.intellij.platform.eel.path.EelPath
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.LinkOption
@@ -17,12 +14,6 @@ import kotlin.io.path.relativeTo
 @ApiStatus.Internal
 object EelPathUtils {
   private val LOG = com.intellij.openapi.diagnostic.logger<EelPathUtils>()
-
-  fun EelFileSystemApi.userHomeBlocking(): EelPath.Absolute? {
-    return runBlockingMaybeCancellable {
-      userHome()
-    }
-  }
 
   fun walkingTransfer(sourceRoot: Path, targetRoot: Path, removeSource: Boolean) {
     val sourceStack = ArrayDeque<Path>()

@@ -35,15 +35,8 @@ interface EelFileSystemApi {
   /**
    * There's a duplication of methods because [user] is required for checking file permissions correctly, but also it can be required
    * in other cases outside the filesystem.
-   *
-   * TODO If `user` is non-suspendable, then `userHome` should be non-suspendable too. Or not?
    */
   val user: EelUserInfo
-
-  /**
-   * A user may have no home directory on Unix-like systems, for example, the user `nobody`.
-   */
-  suspend fun userHome(): EelPath.Absolute?
 
   /**
    * Returns names of files in a directory. If [path] is a symlink, it will be resolved, but no symlinks are resolved among children.

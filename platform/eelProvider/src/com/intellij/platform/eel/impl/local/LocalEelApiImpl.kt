@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.impl.local
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -50,7 +51,7 @@ internal class LocalWindowsEelApiImpl(nioFs: FileSystem = FileSystems.getDefault
   override val tunnels: EelTunnelsWindowsApi get() = EelLocalTunnelsWindowsApi
   override val platform: EelPlatform.Windows get() = if (SystemInfo.isAarch64) TODO("Not yet implemented") else EelPlatform.X64Windows
   override val exec: EelExecApi = EelLocalExecApi()
-  override val userInfo: EelUserWindowsInfo = EelUserWindowsInfoImpl
+  override val userInfo: EelUserWindowsInfo = EelUserWindowsInfoImpl(getLocalUserHome(EelPath.Absolute.OS.WINDOWS))
   override val mapper: EelPathMapper = LocalEelPathMapper(this)
   override val archive: EelArchiveApi = LocalEelArchiveApiImpl
 
@@ -76,7 +77,7 @@ class LocalPosixEelApiImpl(nioFs: FileSystem = FileSystems.getDefault()) : Local
 
   override val userInfo: EelUserPosixInfo = run {
     val unix = UnixSystem()
-    EelUserPosixInfoImpl(uid = unix.uid.toInt(), gid = unix.gid.toInt())
+    EelUserPosixInfoImpl(uid = unix.uid.toInt(), gid = unix.gid.toInt(), home = getLocalUserHome(EelPath.Absolute.OS.UNIX))
   }
 
   override val fs: EelFileSystemPosixApi = object : PosixNioBasedEelFileSystemApi(nioFs, userInfo) {
@@ -113,4 +114,10 @@ private fun doCreateTemporaryDirectory(
     Ok(tempDirectoryEel)
   else
     Error(Other(EelPath.Absolute.parse(tempDirectory.toString(), null), "Can't map this path"))
+}
+
+private val LOG = Logger.getInstance(EelApi::class.java)
+
+private fun getLocalUserHome(os: EelPath.Absolute.OS): EelPath.Absolute {
+  return checkNotNull(EelPath.Absolute.parse(System.getProperty("user.home"), os)) { "" }
 }

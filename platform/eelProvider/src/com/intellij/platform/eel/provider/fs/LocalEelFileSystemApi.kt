@@ -32,9 +32,6 @@ import kotlin.streams.asSequence
 abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) : EelFileSystemApi {
   protected abstract val pathOs: EelPath.Absolute.OS
 
-  override suspend fun userHome(): EelPath.Absolute? =
-    EelPath.Absolute.parse(System.getProperty("user.home"), null)
-
   protected fun EelPath.toNioPath(): Path =
     fs.getPath(toString())
 

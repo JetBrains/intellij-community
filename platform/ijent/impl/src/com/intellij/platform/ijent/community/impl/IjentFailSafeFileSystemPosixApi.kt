@@ -101,10 +101,6 @@ private class IjentFailSafeFileSystemPosixApiImpl(
   override val user: EelUserPosixInfo,
   private val holder: DelegateHolder<IjentPosixApi, IjentFileSystemPosixApi>,
 ) : IjentFileSystemPosixApi {
-  override suspend fun userHome(): EelPath.Absolute? =
-    holder.withDelegateRetrying {
-      userHome()
-    }
 
   override suspend fun listDirectory(
     path: EelPath.Absolute,
