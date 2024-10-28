@@ -179,7 +179,6 @@ internal class KtCompilerPluginsProviderIdeImpl(
 
                 putIfNotNull(JVMConfigurationKeys.JVM_TARGET, compilerArguments.jvmTarget?.let(JvmTarget::fromString))
                 putIfNotNull(JVMConfigurationKeys.OUTPUT_DIRECTORY, outputUrl?.let { File(it) })
-                put(JVMConfigurationKeys.IR, true) // FIR cannot work with the old backend
             }
 
             processCompilerPluginsOptions(this, compilerArguments.pluginOptions?.toList(), commandLineProcessors)

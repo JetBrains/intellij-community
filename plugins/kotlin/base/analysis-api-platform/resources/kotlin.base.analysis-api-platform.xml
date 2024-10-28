@@ -33,6 +33,12 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinGlobalSearchScopeMerger"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.statistics.KotlinOpenTelemetryProvider"
+            serviceImplementation="org.jetbrains.kotlin.analysis.api.platform.statistics.KotlinGlobalOpenTelemetryProvider"/>
+
+    <postStartupActivity
+            implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinStatisticsStartupActivity"/>
   </extensions>
 
   <projectListeners>
