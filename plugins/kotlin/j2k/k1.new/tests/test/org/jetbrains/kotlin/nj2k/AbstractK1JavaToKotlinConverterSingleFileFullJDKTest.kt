@@ -3,4 +3,4 @@ package org.jetbrains.kotlin.nj2k
 
 import org.jetbrains.kotlin.j2k.AbstractJavaToKotlinConverterSingleFileFullJDKTest
 
-abstract class AbstractNewJavaToKotlinConverterSingleFileFullJDKTest : AbstractJavaToKotlinConverterSingleFileFullJDKTest()
+abstract class AbstractK1JavaToKotlinConverterSingleFileFullJDKTest : AbstractJavaToKotlinConverterSingleFileFullJDKTest()

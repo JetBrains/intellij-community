@@ -4,4 +4,4 @@ package org.jetbrains.kotlin.nj2k
 
 import org.jetbrains.kotlin.j2k.AbstractJavaToKotlinConverterPartialTest
 
-abstract class AbstractNewJavaToKotlinConverterPartialTest : AbstractJavaToKotlinConverterPartialTest()
+abstract class AbstractK1JavaToKotlinConverterPartialTest : AbstractJavaToKotlinConverterPartialTest()

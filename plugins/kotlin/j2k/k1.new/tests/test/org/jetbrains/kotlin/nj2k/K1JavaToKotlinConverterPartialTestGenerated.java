@@ -19,10 +19,10 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../shared/tests/testData/partialConverter")
-public abstract class NewJavaToKotlinConverterPartialTestGenerated extends AbstractNewJavaToKotlinConverterPartialTest {
+public abstract class K1JavaToKotlinConverterPartialTestGenerated extends AbstractK1JavaToKotlinConverterPartialTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/partialConverter/field")
-    public static class Field extends AbstractNewJavaToKotlinConverterPartialTest {
+    public static class Field extends AbstractK1JavaToKotlinConverterPartialTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -101,7 +101,7 @@ public abstract class NewJavaToKotlinConverterPartialTestGenerated extends Abstr
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/partialConverter/function")
-    public static class Function extends AbstractNewJavaToKotlinConverterPartialTest {
+    public static class Function extends AbstractK1JavaToKotlinConverterPartialTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {

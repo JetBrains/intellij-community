@@ -19,10 +19,10 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../shared/tests/testData/newJ2k")
-public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends AbstractNewJavaToKotlinConverterSingleFileTest {
+public abstract class K1JavaToKotlinConverterSingleFileTestGenerated extends AbstractK1JavaToKotlinConverterSingleFileTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/annotations")
-    public static class Annotations extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Annotations extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -216,7 +216,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/anonymousBlock")
-    public static class AnonymousBlock extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class AnonymousBlock extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -305,7 +305,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/anonymousClass")
-    public static class AnonymousClass extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class AnonymousClass extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -334,7 +334,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/arrayAccessExpression")
-    public static class ArrayAccessExpression extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class ArrayAccessExpression extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -368,7 +368,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/arrayInitializerExpression")
-    public static class ArrayInitializerExpression extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class ArrayInitializerExpression extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -447,7 +447,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/arrayType")
-    public static class ArrayType extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class ArrayType extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -516,7 +516,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/assertStatement")
-    public static class AssertStatement extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class AssertStatement extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -555,7 +555,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/assignmentExpression")
-    public static class AssignmentExpression extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class AssignmentExpression extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -704,7 +704,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/binaryExpression")
-    public static class BinaryExpression extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class BinaryExpression extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -848,7 +848,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/blocks")
-    public static class Blocks extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Blocks extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -872,7 +872,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/boxedType")
-    public static class BoxedType extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class BoxedType extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -961,7 +961,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/breakStatement")
-    public static class BreakStatement extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class BreakStatement extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -985,7 +985,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/callChainExpression")
-    public static class CallChainExpression extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class CallChainExpression extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1029,7 +1029,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/caseConversion")
-    public static class CaseConversion extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class CaseConversion extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1053,7 +1053,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/class")
-    public static class Class extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Class extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1252,7 +1252,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/classExpression")
-    public static class ClassExpression extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class ClassExpression extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1286,7 +1286,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/comments")
-    public static class Comments extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Comments extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1395,7 +1395,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/conditionalExpression")
-    public static class ConditionalExpression extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class ConditionalExpression extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1414,7 +1414,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/constructors")
-    public static class Constructors extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Constructors extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1653,7 +1653,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/continueStatement")
-    public static class ContinueStatement extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class ContinueStatement extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1677,7 +1677,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/declarationStatement")
-    public static class DeclarationStatement extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class DeclarationStatement extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1721,7 +1721,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/detectProperties")
-    public static class DetectProperties extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class DetectProperties extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -2130,7 +2130,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/doWhileStatement")
-    public static class DoWhileStatement extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class DoWhileStatement extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -2169,7 +2169,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/docComments")
-    public static class DocComments extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class DocComments extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -2258,7 +2258,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/enum")
-    public static class Enum extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Enum extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -2397,7 +2397,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/equals")
-    public static class Equals extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Equals extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -2446,7 +2446,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/explicitApiMode")
-    public static class ExplicitApiMode extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class ExplicitApiMode extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -2470,7 +2470,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/field")
-    public static class Field extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Field extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -2564,7 +2564,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/for")
-    public static class For extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class For extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -2848,7 +2848,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/foreachStatement")
-    public static class ForeachStatement extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class ForeachStatement extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -2892,7 +2892,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/formatting")
-    public static class Formatting extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Formatting extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -2971,7 +2971,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/function")
-    public static class Function extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Function extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -3210,7 +3210,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/functionalInterfaces")
-    public static class FunctionalInterfaces extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class FunctionalInterfaces extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -3264,7 +3264,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/identifier")
-    public static class Identifier extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Identifier extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -3298,7 +3298,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/ifStatement")
-    public static class IfStatement extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class IfStatement extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -3352,7 +3352,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/implicitCasts")
-    public static class ImplicitCasts extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class ImplicitCasts extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -3436,7 +3436,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/importStatement")
-    public static class ImportStatement extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class ImportStatement extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -3475,7 +3475,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/inheritance")
-    public static class Inheritance extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Inheritance extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -3514,7 +3514,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/interface")
-    public static class Interface extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Interface extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -3588,7 +3588,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/invalidCode")
-    public static class InvalidCode extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class InvalidCode extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -3622,7 +3622,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/isOperator")
-    public static class IsOperator extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class IsOperator extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -3651,7 +3651,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/issues")
-    public static class Issues extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Issues extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -4080,7 +4080,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/javaStandardMethods")
-    public static class JavaStandardMethods extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class JavaStandardMethods extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -4109,7 +4109,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/javaStreamsApi")
-    public static class JavaStreamsApi extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class JavaStreamsApi extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -4168,7 +4168,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/kotlinApiAccess")
-    public static class KotlinApiAccess extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class KotlinApiAccess extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -4277,7 +4277,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/labelStatement")
-    public static class LabelStatement extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class LabelStatement extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -4296,7 +4296,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/lambda")
-    public static class Lambda extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Lambda extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -4320,7 +4320,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/libraryUsage")
-    public static class LibraryUsage extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class LibraryUsage extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -4344,7 +4344,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/list")
-    public static class List extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class List extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -4368,7 +4368,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/literalExpression")
-    public static class LiteralExpression extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class LiteralExpression extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -4477,7 +4477,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/localVariable")
-    public static class LocalVariable extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class LocalVariable extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -4536,7 +4536,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/methodCallExpression")
-    public static class MethodCallExpression extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class MethodCallExpression extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -4665,7 +4665,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/misc")
-    public static class Misc extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Misc extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -4709,7 +4709,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/mutableCollections")
-    public static class MutableCollections extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class MutableCollections extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -4788,7 +4788,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/newClassExpression")
-    public static class NewClassExpression extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class NewClassExpression extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -4877,10 +4877,10 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/newJavaFeatures")
-    public abstract static class NewJavaFeatures extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public abstract static class NewJavaFeatures extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../shared/tests/testData/newJ2k/newJavaFeatures/enhancedSwitchStatement")
-        public static class EnhancedSwitchStatement extends AbstractNewJavaToKotlinConverterSingleFileTest {
+        public static class EnhancedSwitchStatement extends AbstractK1JavaToKotlinConverterSingleFileTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -4904,7 +4904,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../shared/tests/testData/newJ2k/newJavaFeatures/patternMatching")
-        public static class PatternMatching extends AbstractNewJavaToKotlinConverterSingleFileTest {
+        public static class PatternMatching extends AbstractK1JavaToKotlinConverterSingleFileTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -4938,7 +4938,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../shared/tests/testData/newJ2k/newJavaFeatures/recordClass")
-        public static class RecordClass extends AbstractNewJavaToKotlinConverterSingleFileTest {
+        public static class RecordClass extends AbstractK1JavaToKotlinConverterSingleFileTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -5032,7 +5032,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../shared/tests/testData/newJ2k/newJavaFeatures/switchExpression")
-        public static class SwitchExpression extends AbstractNewJavaToKotlinConverterSingleFileTest {
+        public static class SwitchExpression extends AbstractK1JavaToKotlinConverterSingleFileTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -5131,7 +5131,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../shared/tests/testData/newJ2k/newJavaFeatures/textBlocks")
-        public static class TextBlocks extends AbstractNewJavaToKotlinConverterSingleFileTest {
+        public static class TextBlocks extends AbstractK1JavaToKotlinConverterSingleFileTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -5195,7 +5195,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../shared/tests/testData/newJ2k/newJavaFeatures")
-        public static class Uncategorized extends AbstractNewJavaToKotlinConverterSingleFileTest {
+        public static class Uncategorized extends AbstractK1JavaToKotlinConverterSingleFileTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -5215,7 +5215,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/nullability")
-    public static class Nullability extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Nullability extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -5494,7 +5494,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/nullabilityGenerics")
-    public static class NullabilityGenerics extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class NullabilityGenerics extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -5643,7 +5643,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/objectLiteral")
-    public static class ObjectLiteral extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class ObjectLiteral extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -5682,7 +5682,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/overloads")
-    public static class Overloads extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Overloads extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -5736,7 +5736,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/packageStatement")
-    public static class PackageStatement extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class PackageStatement extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -5755,7 +5755,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/parenthesizedExpression")
-    public static class ParenthesizedExpression extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class ParenthesizedExpression extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -5809,7 +5809,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/polyadicExpression")
-    public static class PolyadicExpression extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class PolyadicExpression extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -5853,7 +5853,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/postProcessing")
-    public static class PostProcessing extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class PostProcessing extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6027,7 +6027,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/postfixOperator")
-    public static class PostfixOperator extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class PostfixOperator extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6051,7 +6051,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/preAndPostprocessorExtensions")
-    public static class PreAndPostprocessorExtensions extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class PreAndPostprocessorExtensions extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6075,7 +6075,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/prefixOperator")
-    public static class PrefixOperator extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class PrefixOperator extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6119,7 +6119,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/projections")
-    public static class Projections extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Projections extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6138,7 +6138,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/protected")
-    public static class Protected extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Protected extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6187,7 +6187,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/rawGenerics")
-    public static class RawGenerics extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class RawGenerics extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6221,7 +6221,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/returnStatement")
-    public static class ReturnStatement extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class ReturnStatement extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6265,7 +6265,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/settings")
-    public static class Settings extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Settings extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6299,7 +6299,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/simplifyNegatedBinaryExpression")
-    public static class SimplifyNegatedBinaryExpression extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class SimplifyNegatedBinaryExpression extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6343,7 +6343,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/staticMembers")
-    public static class StaticMembers extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class StaticMembers extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6402,7 +6402,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/strings")
-    public static class Strings extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Strings extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6421,7 +6421,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/superExpression")
-    public static class SuperExpression extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class SuperExpression extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6470,7 +6470,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/switch")
-    public static class Switch extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Switch extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6564,7 +6564,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/synchronizedStatement")
-    public static class SynchronizedStatement extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class SynchronizedStatement extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6583,7 +6583,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/thisExpression")
-    public static class ThisExpression extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class ThisExpression extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6607,7 +6607,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/throwStatement")
-    public static class ThrowStatement extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class ThrowStatement extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6626,7 +6626,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/toArray")
-    public static class ToArray extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class ToArray extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6645,7 +6645,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/toKotlinClasses")
-    public static class ToKotlinClasses extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class ToKotlinClasses extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6689,7 +6689,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/tryStatement")
-    public static class TryStatement extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class TryStatement extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6728,7 +6728,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/tryWithResource")
-    public static class TryWithResource extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class TryWithResource extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6802,7 +6802,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/typeCastExpression")
-    public static class TypeCastExpression extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class TypeCastExpression extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6906,7 +6906,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/typeParameters")
-    public static class TypeParameters extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class TypeParameters extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6995,7 +6995,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/types")
-    public static class Types extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Types extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -7039,7 +7039,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/varArg")
-    public static class VarArg extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class VarArg extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -7068,7 +7068,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/visibility")
-    public static class Visibility extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class Visibility extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -7147,7 +7147,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/whileStatement")
-    public static class WhileStatement extends AbstractNewJavaToKotlinConverterSingleFileTest {
+    public static class WhileStatement extends AbstractK1JavaToKotlinConverterSingleFileTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {

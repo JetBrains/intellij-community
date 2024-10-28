@@ -19,10 +19,10 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../shared/tests/testData/fullJDK")
-public abstract class NewJavaToKotlinConverterSingleFileFullJDKTestGenerated extends AbstractNewJavaToKotlinConverterSingleFileFullJDKTest {
+public abstract class K1JavaToKotlinConverterSingleFileFullJDKTestGenerated extends AbstractK1JavaToKotlinConverterSingleFileFullJDKTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/fullJDK/collections")
-    public static class Collections extends AbstractNewJavaToKotlinConverterSingleFileFullJDKTest {
+    public static class Collections extends AbstractK1JavaToKotlinConverterSingleFileFullJDKTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -61,7 +61,7 @@ public abstract class NewJavaToKotlinConverterSingleFileFullJDKTestGenerated ext
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/fullJDK/enum")
-    public static class Enum extends AbstractNewJavaToKotlinConverterSingleFileFullJDKTest {
+    public static class Enum extends AbstractK1JavaToKotlinConverterSingleFileFullJDKTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -80,7 +80,7 @@ public abstract class NewJavaToKotlinConverterSingleFileFullJDKTestGenerated ext
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/fullJDK/issues")
-    public static class Issues extends AbstractNewJavaToKotlinConverterSingleFileFullJDKTest {
+    public static class Issues extends AbstractK1JavaToKotlinConverterSingleFileFullJDKTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {

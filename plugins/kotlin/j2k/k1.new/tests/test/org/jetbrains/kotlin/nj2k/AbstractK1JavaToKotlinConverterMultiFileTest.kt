@@ -4,4 +4,4 @@ package org.jetbrains.kotlin.nj2k
 
 import org.jetbrains.kotlin.j2k.AbstractJavaToKotlinConverterMultiFileTest
 
-abstract class AbstractNewJavaToKotlinConverterMultiFileTest : AbstractJavaToKotlinConverterMultiFileTest()
+abstract class AbstractK1JavaToKotlinConverterMultiFileTest : AbstractJavaToKotlinConverterMultiFileTest()
