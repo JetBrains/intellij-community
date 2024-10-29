@@ -29,7 +29,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
   fun clickRow(predicate: (String) -> Boolean) {
     collectExpandedPaths().singleOrNull { predicate(it.path.last()) }?.let {
       clickRow(it.row)
-    } ?: PathNotFoundException("row not found")
+    } ?: throw PathNotFoundException("row not found")
   }
   fun rightClickRow(row: Int) = fixture.rightClickRow(row)
   fun doubleClickRow(row: Int) = fixture.doubleClickRow(row)
