@@ -578,7 +578,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
             ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), getProject(), true, false);
           incrementJobDoneAmount(getStdJobDescriptors().LOCAL_ANALYSIS, displayUrl);
         }
-        catch (ProcessCanceledException | IndexNotReadyException e) {
+        catch (CancellationException | IndexNotReadyException e) {
           throw e;
         }
         catch (Throwable e) {
