@@ -7,6 +7,8 @@ import com.intellij.codeInsight.hints.presentation.SpacePresentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.DumbModeTestUtils
@@ -22,7 +24,8 @@ class InlayHintsPassFactoryInternalTest : BasePlatformTestCase() {
       override fun getProvidersInfo(): List<ProviderInfo<out Any>> {
         val smart = ProviderInfo(language, DummyProvider(SettingsKey("smart.key"), object : InlayHintsCollector {
           override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
-            sink.addInlineElement(1, true, SpacePresentation(1, 1), false)
+            if (DumbService.isDumb(element.project)) throw IndexNotReadyException.create()
+            else sink.addInlineElement(1, true, SpacePresentation(1, 1), false)
             return false
           }
         }))

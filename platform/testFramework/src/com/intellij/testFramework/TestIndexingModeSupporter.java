@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.testFramework.DumbModeTestUtils.EternalTaskShutdownToken;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -142,6 +143,14 @@ public interface TestIndexingModeSupporter {
   void setIndexingMode(@NotNull IndexingMode mode);
 
   @NotNull IndexingMode getIndexingMode();
+
+  static void addAllTests(@NotNull Class<? extends TestIndexingModeSupporter> aClass, @NotNull TestSuite parentSuite) {
+    addTest(aClass, new FullIndexSuite(), parentSuite);
+    addTest(aClass, new RuntimeOnlyIndexSuite(), parentSuite);
+    if (Registry.is("ide.dumb.mode.check.awareness")) {
+      addTest(aClass, new EmptyIndexSuite(), parentSuite);
+    }
+  }
 
   static void addTest(@NotNull Class<? extends TestIndexingModeSupporter> aClass,
                       @NotNull TestIndexingModeSupporter.IndexingModeTestHandler handler,

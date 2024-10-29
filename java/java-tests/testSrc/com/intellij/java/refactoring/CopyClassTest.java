@@ -128,9 +128,7 @@ public class CopyClassTest extends LightMultiFileTestCase {
   public static Test suite() {
     TestSuite suite = new TestSuite();
     suite.addTestSuite(CopyClassTest.class);
-    TestIndexingModeSupporter.addTest(CopyClassTest.class, new TestIndexingModeSupporter.FullIndexSuite(), suite);
-    TestIndexingModeSupporter.addTest(CopyClassTest.class, new TestIndexingModeSupporter.RuntimeOnlyIndexSuite(), suite);
-    TestIndexingModeSupporter.addTest(CopyClassTest.class, new TestIndexingModeSupporter.EmptyIndexSuite(), suite);
+    TestIndexingModeSupporter.addAllTests(CopyClassTest.class, suite);
     return suite;
   }
 }
