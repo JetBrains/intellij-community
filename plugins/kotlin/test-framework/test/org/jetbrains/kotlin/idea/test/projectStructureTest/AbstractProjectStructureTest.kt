@@ -27,6 +27,7 @@ import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.Path
+import kotlin.io.path.div
 
 typealias ProjectLibrariesByName = Map<String, Library>
 typealias ModulesByName = Map<String, Module>
@@ -96,7 +97,7 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
         }
 
         val modulesByName = testStructure.modules.associate { moduleData ->
-            moduleData.name to createModuleWithSources(moduleData.name, testDirectory)
+            moduleData.name to createModuleWithSources(moduleData, testDirectory)
         }
 
         val duplicateNames = projectLibrariesByName.keys.intersect(modulesByName.keys)
@@ -142,27 +143,32 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
         }
     }
 
-    private fun createModuleWithSources(moduleName: String, testDirectory: String): Module {
+    private fun createModuleWithSources(testModule: TestProjectModule, testDirectory: String): Module {
         val tmpDir = createTempDirectory().toPath()
-        val module: Module = createModule("$tmpDir/$moduleName", moduleType)
-        val srcDir = tmpDir.createDirectory("src")
+        val module = createModule("$tmpDir/${testModule.name}", moduleType)
 
-        processModuleSources(moduleName, testDirectory, srcDir)
+        (testModule.sourceSets ?: listOf(null)).forEach { sourceSet ->
+            val contentRoot = tmpDir.createDirectory(sourceSet?.directory ?: "src")
+            val existingSourcesPath = run {
+                val base = Paths.get(testDirectory) / module.name
+                if (sourceSet == null) base else base / sourceSet.directory
+            }
+            processModuleSources(existingSourcesPath , contentRoot)
 
-        val srcRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(srcDir.toFile())!!
-        WriteCommandAction.writeCommandAction(module.project).run<RuntimeException> {
-            srcRoot.refresh(false, true)
+            val srcRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(contentRoot.toFile())!!
+            WriteCommandAction.writeCommandAction(module.project).run<RuntimeException> {
+                srcRoot.refresh(false, true)
+            }
+
+            PsiTestUtil.addSourceContentToRoots(module, srcRoot, /* testSource = */ sourceSet == SourceSet.TEST)
         }
-
-        PsiTestUtil.addSourceContentToRoots(module, srcRoot)
         return module
     }
 
     /**
-     * If the [moduleName] is also a directory in the test case's test data, we should include these sources.
+     * If the [existingSourcesPath] is also a directory in the test case's test data, we should include these sources.
      */
-    private fun processModuleSources(moduleName: String, testDirectory: String, destinationSrcDir: Path) {
-        val existingSourcesPath = Path(testDirectory, moduleName)
+    private fun processModuleSources(existingSourcesPath: Path, destinationSrcDir: Path) {
         val existingSources = existingSourcesPath.toFile()
         if (existingSources.isDirectory) {
             existingSources.walk().forEach { file ->

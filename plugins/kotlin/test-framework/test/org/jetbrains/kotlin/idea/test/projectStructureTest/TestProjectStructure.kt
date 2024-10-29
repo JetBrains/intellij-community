@@ -67,13 +67,37 @@ object TestProjectLibraryParser {
     }
 }
 
-data class TestProjectModule(val name: String, val targetPlatform: TargetPlatform, val dependencies: List<Dependency>)
+data class TestProjectModule(
+    val name: String,
+    val targetPlatform: TargetPlatform,
+    val dependencies: List<Dependency>,
+    /**
+     * `null` means production sourceset in module root directory
+     */
+    val sourceSets: List<SourceSet>?,
+)
+
 data class Dependency(val name: String, val kind: DependencyKind)
 
 enum class DependencyKind {
     REGULAR,
     FRIEND,
     REFINEMENT
+}
+
+enum class SourceSet(val directory: String) {
+    PRODUCTION("src"),
+    TEST("test")
+
+    ;
+
+    companion object {
+        fun fromString(string: String) = when (string) {
+            "production" -> PRODUCTION
+            "test" -> TEST
+            else -> error("Unexpected source set: $string")
+        }
+    }
 }
 
 /**
@@ -95,6 +119,7 @@ object TestProjectModuleParser {
     private const val FRIEND_DEPENDENCIES_FIELD = "friend_dependencies"
     private const val MODULE_NAME_FIELD = "name"
     private const val PLATFORM_FIELD = "platform"
+    private const val SOURCE_SETS_FIELD = "sourceSets"
 
     fun parse(json: JsonElement): TestProjectModule {
         require(json is JsonObject)
@@ -106,10 +131,13 @@ object TestProjectModuleParser {
             addAll(parseDependencies(json, FRIEND_DEPENDENCIES_FIELD, DependencyKind.FRIEND))
         }
 
+        val sourceSets = json.getAsStringList(SOURCE_SETS_FIELD)?.map { SourceSet.fromString(it) }
+
         return TestProjectModule(
             json.getString(MODULE_NAME_FIELD),
             platform,
             dependencies,
+            sourceSets,
         )
     }
 
@@ -128,3 +156,5 @@ object TestProjectModuleParser {
     private fun parseDependencies(json: JsonObject, jsonField: String, dependencyKind: DependencyKind): List<Dependency> =
         json.getAsStringList(jsonField).orEmpty().map { name -> Dependency(name, dependencyKind) }
 }
+
+
