@@ -383,3 +383,13 @@ class InsideAnAnonymousClass {
     }
   }
 }
+class ItMight {
+  final int a;
+  final int b = a = <error descr="Variable 'a' might not have been initialized">a</error>;
+}
+class Key {
+
+  private static final int COUNT;
+
+  private static final int count = <error descr="Variable 'COUNT' might not have been initialized">COUNT</error>++;
+}

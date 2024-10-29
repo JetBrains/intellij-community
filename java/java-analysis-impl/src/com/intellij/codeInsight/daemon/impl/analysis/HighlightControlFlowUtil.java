@@ -384,7 +384,8 @@ public final class HighlightControlFlowUtil {
           aClass = field.getContainingClass();
           PsiField anotherField = PsiTreeUtil.getTopmostParentOfType(expression, PsiField.class);
           if (aClass == null ||
-              isFieldInitializedInOtherFieldInitializer(aClass, field, field.hasModifierProperty(PsiModifier.STATIC), psiField -> startOffset > psiField.getTextOffset())) {
+              isFieldInitializedInOtherFieldInitializer(aClass, field, field.hasModifierProperty(PsiModifier.STATIC),
+                                                        f -> f != anotherField && startOffset > f.getTextOffset())) {
             return null;
           }
           if (anotherField != null && !anotherField.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.STATIC) &&
