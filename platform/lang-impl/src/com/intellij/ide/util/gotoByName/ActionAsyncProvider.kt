@@ -27,14 +27,9 @@ import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.CollectConsumer
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.channels.produce
-import kotlinx.coroutines.channels.toList
+import kotlinx.coroutines.channels.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.coroutineContext
-import kotlin.sequences.forEach
 
 private val LOG = logger<ActionAsyncProvider>()
 
@@ -283,51 +278,57 @@ internal class ActionAsyncProvider(private val model: GotoActionModel) {
                                             awaitJob: Job): Job = launch {
     val weightMatcher = buildWeightMatcher(pattern)
 
-    val map = model.configurablesNames
-    val registrar = serviceAsync<SearchableOptionsRegistrar>() as SearchableOptionsRegistrarImpl
 
-    val words = registrar.getProcessedWords(pattern)
-    val filterOutInspections = Registry.`is`("go.to.action.filter.out.inspections", true)
 
     // Use LinkedHashSet to preserve the order of the elements to iterate through them later
     val optionDescriptions = LinkedHashSet<OptionDescription>()
 
-    if (pattern.isNotBlank()) {
-      val matcher = buildMatcher(pattern)
-      for ((key, value) in map) {
-        if (matcher.matches(value)) {
-          optionDescriptions.add(OptionDescription(_option = null, configurableId = key, hit = value, path = null, groupName = value))
+    val mapDescriptionsPromise: Deferred<Collection<OptionDescription>> = async {
+      val res = mutableListOf<OptionDescription>()
+      val map = model.configurablesNames
+      if (pattern.isNotBlank()) {
+        val matcher = buildMatcher(pattern)
+        for ((key, value) in map) {
+          if (matcher.matches(value)) {
+            res.add(OptionDescription(_option = null, configurableId = key, hit = value, path = null, groupName = value))
+          }
         }
       }
+      res
     }
 
-    var registrarDescriptions: MutableSet<OptionDescription>? = null
-    registrar.initialize()
-    for (word in words) {
-      val descriptions = registrar.findAcceptableDescriptions(word)
-        ?.filter {
-          @Suppress("HardCodedStringLiteral")
-          !(it.path == "ActionManager" || filterOutInspections && it.groupName == "Inspections")
+    var registrarDescriptionsPromise: Deferred<Collection<OptionDescription>?> = async {
+      val registrar = serviceAsync<SearchableOptionsRegistrar>() as SearchableOptionsRegistrarImpl
+      val words = registrar.getProcessedWords(pattern)
+      val filterOutInspections = Registry.`is`("go.to.action.filter.out.inspections", true)
+      var registrarDescriptions: MutableSet<OptionDescription>? = null
+      registrar.initialize()
+      for (word in words) {
+        val descriptions = registrar.findAcceptableDescriptions(word)
+          ?.filter {
+            @Suppress("HardCodedStringLiteral")
+            !(it.path == "ActionManager" || filterOutInspections && it.groupName == "Inspections")
+          }
+          ?.toHashSet()
+        if (descriptions.isNullOrEmpty()) {
+          registrarDescriptions = null
+          break
         }
-        ?.toHashSet()
-      if (descriptions.isNullOrEmpty()) {
-        registrarDescriptions = null
-        break
-      }
 
-      if (registrarDescriptions == null) {
-        registrarDescriptions = descriptions
+        if (registrarDescriptions == null) {
+          registrarDescriptions = descriptions
+        }
+        else {
+          registrarDescriptions.retainAll(descriptions)
+        }
       }
-      else {
-        registrarDescriptions.retainAll(descriptions)
-      }
+      registrarDescriptions
     }
 
+    optionDescriptions.addAll(mapDescriptionsPromise.await())
     // Add registrar's options to the end of the `LinkedHashSet`
     // to guarantee that options from the `map` are going to be processed first
-    if (registrarDescriptions != null) {
-      optionDescriptions.addAll(registrarDescriptions)
-    }
+    registrarDescriptionsPromise.await()?.let { optionDescriptions.addAll(it) }
 
     if (optionDescriptions.isNotEmpty()) {
       val currentHits = HashSet<String>()
